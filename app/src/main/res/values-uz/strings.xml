@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="functionality_not_available">Funktsionallik mavjud emas!</string>
+    <string name="close">YOPISH</string>
+    <string name="navigation_drawer_open">Navigatsiya oynasi ochish</string>
+
+    <string name="jumpBottom">Pastga o\'tish</string>
+    <string name="send">Yubor</string>
+    <string name="author_me">men</string>
+    <string name="now">8:30 PM</string>
+    <string name="members">%d a`zolar</string>
+    <string name="textfield_hint">Xabar kiritish</string>
+    <string name="swipe_to_cancel_recording">&#x25C0; Bekor qilish uchun suring</string>
+    <string name="emojis_label">Emojilar</string>
+    <string name="stickers_label">Stikerlar</string>
+
+    <string name="message">Xabar</string>
+    <string name="edit_profile">Profilni tahrirlash</string>
+    <string name="profile_error">Profilni yuklashda xatolik yuz berdi</string>
+    <string name="display_name">Ko`rsatiladigan ism</string>
+    <string name="status">Holat</string>
+    <string name="timezone">Vaqt zonasi</string>
+    <string name="twitter">Twitter</string>
+
+    <!-- Accessibility descriptions -->
+
+    <string name="emoji_selector_desc">Emoji tanlash</string>
+    <string name="emoji_selector_bt_desc">Emoji tanlashni ko`rsat</string>
+    <string name="dm_desc">Shaxsiy xabar</string>
+    <string name="attach_photo_desc">Fotosurat biriktirish</string>
+    <string name="map_selector_desc">Joylashuvni tanlash</string>
+    <string name="videochat_desc">Video suhbatni boshlash</string>
+    <string name="textfield_desc">Matn kiritish</string>
+    <string name="not_available">Funktsionallik mavjud emas!</string>
+    <string name="attached_image">Biriktirilgan rasm</string>
+    <string name="search">Qidirish</string>
+    <string name="info">Ma`lumot</string>
+    <string name="more_options">Ko`proq</string>
+    <string name="touch_and_hold_to_record">Yozib olish uchun bosing va ushlab turing</string>
+    <string name="record_message">Ovozli xabarni yozib olish</string>
+
+</resources>

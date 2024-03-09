@@ -15,23 +15,11 @@
   -->
 
 <resources>
-    <string name="app_name">AndroChat</string>
-
+    <string name="app_name" translatable="false">AndroChat</string>
     <string name="functionality_not_available">Functionality not available!</string>
     <string name="close">CLOSE</string>
-
     <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">Composer</string>
-    <string name="nav_header_subtitle">android.studio@android.com</string>
-    <string name="nav_header_desc">Navigation header</string>
-    <string name="action_settings">Settings</string>
 
-    <string name="menu_home">Home</string>
-    <string name="menu_gallery">Gallery</string>
-    <string name="menu_slideshow">Slideshow</string>
-    <string name="conversations">Conversations</string>
-    <string name="profile">Profile</string>
     <string name="jumpBottom">Jump to bottom</string>
     <string name="send">Send</string>
     <string name="author_me">me</string>
@@ -45,13 +33,10 @@
     <string name="message">Message</string>
     <string name="edit_profile">Edit Profile</string>
     <string name="profile_error">There was an error loading the profile</string>
-    <string name="bio">Bio</string>
     <string name="display_name">Display name</string>
     <string name="status">Status</string>
     <string name="timezone">Timezone</string>
     <string name="twitter">Twitter</string>
-    <string name="common_channels">Channels in common</string>
-    <string name="lorem">Lorem or Ipsum</string>
 
     <!-- Accessibility descriptions -->
 
@@ -63,7 +48,6 @@
     <string name="videochat_desc">Start videochat</string>
     <string name="textfield_desc">Text input</string>
     <string name="not_available">Functionality currently not available</string>
-    <string name="not_available_subtitle">Grab a beverage and check back later!</string>
     <string name="attached_image">Attached image</string>
     <string name="search">Search</string>
     <string name="info">Information</string>

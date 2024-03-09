@@ -259,12 +259,6 @@ fun FunctionalityNotAvailablePanel() {
                 text = stringResource(id = R.string.not_available),
                 style = MaterialTheme.typography.titleMedium
             )
-            Text(
-                text = stringResource(id = R.string.not_available_subtitle),
-                modifier = Modifier.paddingFrom(FirstBaseline, before = 32.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
