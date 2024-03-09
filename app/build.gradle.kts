@@ -51,7 +51,7 @@ android {
 }
 
 dependencies {
-
+    implementation (libs.landscapist.glide)
     implementation (libs.androidx.ui.viewbinding)
     implementation(libs.androidx.compose.runtime.livedata)
     implementation (libs.androidx.ui.text.google.fonts)

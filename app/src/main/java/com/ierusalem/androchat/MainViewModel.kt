@@ -4,6 +4,12 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+/**
+ * MainViewModel
+ *
+ * @author A.H.I "andro" on 10/03/2024
+ */
+
 class MainViewModel: ViewModel() {
 
     private val _drawerShouldBeOpened = MutableStateFlow(false)

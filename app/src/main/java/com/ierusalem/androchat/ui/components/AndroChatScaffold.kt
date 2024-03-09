@@ -17,7 +17,6 @@ import com.ierusalem.androchat.ui.theme.AndroChatTheme
 @Composable
 fun AndroChatDrawer(
     drawerState: DrawerState = rememberDrawerState(initialValue = Closed),
-    onProfileClicked: (String) -> Unit,
     onChatClicked: (String) -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -27,7 +26,6 @@ fun AndroChatDrawer(
             drawerContent = {
                 ModalDrawerSheet {
                     AndroChatDrawerContent(
-                        onProfileClicked = onProfileClicked,
                         onChatClicked = onChatClicked
                     )
                 }

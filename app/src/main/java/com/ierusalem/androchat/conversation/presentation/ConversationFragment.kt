@@ -32,6 +32,12 @@ import com.ierusalem.androchat.MainViewModel
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
+/**
+ * ConversationFragment
+ *
+ * @author A.H.I "andro" on 7/03/2024
+ */
+
 class ConversationFragment : Fragment() {
 
     private val activityViewModel: MainViewModel by activityViewModels()

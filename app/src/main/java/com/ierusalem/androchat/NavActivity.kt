@@ -13,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.viewinterop.AndroidViewBinding
-import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -69,21 +68,20 @@ class NavActivity : AppCompatActivity() {
                     AndroChatDrawer(
                         drawerState = drawerState,
                         onChatClicked = {
+//                            val bundle = bundleOf("userId" to it)
+//                            findNavController().navigate(R.id.profileFragment, bundle)
+//                            scope.launch {
+//                                drawerState.close()
+//                            }
                             findNavController().popBackStack(R.id.conversationFragment, false)
                             scope.launch {
                                 drawerState.close()
                             }
                         },
-                        onProfileClicked = {
-                            val bundle = bundleOf("userId" to it)
-                            findNavController().navigate(R.id.profileFragment, bundle)
-                            scope.launch {
-                                drawerState.close()
-                            }
+                        content = {
+                            AndroidViewBinding(ActivityNavBinding::inflate)
                         }
-                    ) {
-                        AndroidViewBinding(ActivityNavBinding::inflate)
-                    }
+                    )
 
                 }
             }
