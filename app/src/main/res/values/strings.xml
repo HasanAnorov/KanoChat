@@ -9,7 +9,7 @@
 
     <string name="jumpBottom">Jump to bottom</string>
     <string name="send">Send</string>
-    <string name="author_me">me</string>
+    <string name="author_me">you</string>
     <string name="now">8:30 PM</string>
     <string name="members">%d members</string>
     <string name="textfield_hint">Message #composers</string>
@@ -24,6 +24,9 @@
     <string name="status">Status</string>
     <string name="timezone">Timezone</string>
     <string name="twitter">Twitter</string>
+
+    <!--Extra-->
+    <string name="today">Today</string>
 
     <!-- Accessibility descriptions -->
 

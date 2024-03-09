@@ -19,7 +19,6 @@ package com.ierusalem.androchat.conversation.presentation.components
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -46,7 +45,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.paddingFrom
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -77,6 +75,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -93,7 +92,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsPropertyKey
@@ -259,6 +257,7 @@ fun FunctionalityNotAvailablePanel() {
                 text = stringResource(id = R.string.not_available),
                 style = MaterialTheme.typography.titleMedium
             )
+
         }
     }
 }
@@ -387,7 +386,6 @@ private fun NotAvailablePopup(onDismissed: () -> Unit) {
 val KeyboardShownKey = SemanticsPropertyKey<Boolean>("KeyboardShownKey")
 var SemanticsPropertyReceiver.keyboardShownProperty by KeyboardShownKey
 
-@OptIn(ExperimentalAnimationApi::class)
 @ExperimentalFoundationApi
 @Composable
 private fun UserInputText(
@@ -398,7 +396,7 @@ private fun UserInputText(
     onTextFieldFocused: (Boolean) -> Unit,
     focusState: Boolean
 ) {
-    val swipeOffset = remember { mutableStateOf(0f) }
+    val swipeOffset = remember { mutableFloatStateOf(0f) }
     var isRecordingMessage by remember { mutableStateOf(false) }
     val a11ylabel = stringResource(id = R.string.textfield_desc)
     Row(
@@ -416,7 +414,7 @@ private fun UserInputText(
         ) { recording ->
             Box(Modifier.fillMaxSize()) {
                 if (recording) {
-                    RecordingIndicator { swipeOffset.value }
+                    RecordingIndicator { swipeOffset.floatValue }
                 } else {
                     UserInputTextField(
                         textFieldValue,
@@ -434,8 +432,8 @@ private fun UserInputText(
         }
         RecordButton(
             recording = isRecordingMessage,
-            swipeOffset = { swipeOffset.value },
-            onSwipeOffsetChange = { offset -> swipeOffset.value = offset },
+            swipeOffset = { swipeOffset.floatValue },
+            onSwipeOffsetChange = { offset -> swipeOffset.floatValue = offset },
             onStartRecording = {
                 val consumed = !isRecordingMessage
                 isRecordingMessage = true

@@ -10,7 +10,7 @@
 
     <string name="jumpBottom">Перейти вниз</string>
     <string name="send">Отправлять</string>
-    <string name="author_me">я</string>
+    <string name="author_me">ты</string>
     <string name="now">8:30 PM</string>
     <string name="members">%d члены</string>
     <string name="textfield_hint">Сообщение здесь</string>
@@ -25,6 +25,9 @@
     <string name="status">Статус</string>
     <string name="timezone">Часовой пояс</string>
     <string name="twitter">Твиттер</string>
+
+    <!--Extra-->
+    <string name="today">Сегодня</string>
 
     <!-- Accessibility descriptions -->
 

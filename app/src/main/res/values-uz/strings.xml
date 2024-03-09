@@ -10,9 +10,9 @@
 
     <string name="jumpBottom">Pastga o\'tish</string>
     <string name="send">Yubor</string>
-    <string name="author_me">men</string>
+    <string name="author_me">siz</string>
     <string name="now">8:30 PM</string>
-    <string name="members">%d a`zolar</string>
+    <string name="members">%d ta a`zolar</string>
     <string name="textfield_hint">Xabar kiritish</string>
     <string name="swipe_to_cancel_recording">&#x25C0; Bekor qilish uchun suring</string>
     <string name="emojis_label">Emojilar</string>
@@ -25,6 +25,9 @@
     <string name="status">Holat</string>
     <string name="timezone">Vaqt zonasi</string>
     <string name="twitter">Twitter</string>
+
+    <!--Extra-->
+    <string name="today">Bugun</string>
 
     <!-- Accessibility descriptions -->
 

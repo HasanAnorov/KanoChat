@@ -28,12 +28,12 @@ import com.ierusalem.androchat.profile.ProfileScreenState
 
 private val initialMessages = listOf(
     Message(
-        "me",
+        "you",
         "Check it out!",
         "8:07 PM"
     ),
     Message(
-        "me",
+        "you",
         "Thank you!$EMOJI_PINK_HEART",
         "8:06 PM",
         R.drawable.sticker
@@ -57,7 +57,7 @@ private val initialMessages = listOf(
         "8:04 PM"
     ),
     Message(
-        "me",
+        "you",
         "Compose newbie: I’ve scourged the internet for tutorials about async data " +
             "loading but haven’t found any good ones $EMOJI_MELTING $EMOJI_CLOUDS. " +
             "What’s the recommended way to load async data and emit composable widgets?",
