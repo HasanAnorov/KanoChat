@@ -17,11 +17,11 @@
 package com.ierusalem.androchat.data
 
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.conversation.presentation.components.ConversationUiState
-import com.ierusalem.androchat.conversation.presentation.components.Message
 import com.ierusalem.androchat.data.EMOJIS.EMOJI_FLAMINGO
 import com.ierusalem.androchat.data.EMOJIS.EMOJI_POINTS
-import com.ierusalem.androchat.profile.ProfileScreenState
+import com.ierusalem.androchat.features.conversation.presentation.components.ConversationUiState
+import com.ierusalem.androchat.features.conversation.presentation.components.Message
+import com.ierusalem.androchat.features.profile.ProfileScreenState
 
 private val initialMessages = listOf(
     Message(

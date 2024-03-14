@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/conversationFragment"
-        android:name="com.ierusalem.androchat.conversation.presentation.ConversationFragment"
+        android:name="com.ierusalem.androchat.features.conversation.presentation.ConversationFragment"
         android:label="ConversationFragment" >
         <action
             android:id="@+id/action_conversationFragment_to_profileFragment"
@@ -16,7 +16,7 @@
 
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.ierusalem.androchat.profile.ProfileFragment"
+        android:name="com.ierusalem.androchat.features.profile.ProfileFragment"
         android:label="ProfileFragment">
         <argument
             android:name="userId"
