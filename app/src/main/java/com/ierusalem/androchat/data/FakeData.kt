@@ -19,10 +19,7 @@ package com.ierusalem.androchat.data
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.conversation.presentation.components.ConversationUiState
 import com.ierusalem.androchat.conversation.presentation.components.Message
-import com.ierusalem.androchat.data.EMOJIS.EMOJI_CLOUDS
 import com.ierusalem.androchat.data.EMOJIS.EMOJI_FLAMINGO
-import com.ierusalem.androchat.data.EMOJIS.EMOJI_MELTING
-import com.ierusalem.androchat.data.EMOJIS.EMOJI_PINK_HEART
 import com.ierusalem.androchat.data.EMOJIS.EMOJI_POINTS
 import com.ierusalem.androchat.profile.ProfileScreenState
 
@@ -34,40 +31,50 @@ private val initialMessages = listOf(
     ),
     Message(
         "you",
-        "Thank you!$EMOJI_PINK_HEART",
+        "Thank you!$EMOJI_POINTS",
         "8:06 PM",
-        R.drawable.sticker
     ),
     Message(
-        "Taylor Brooks",
+        "you",
+        "Rate my pc setup, I can send even images $EMOJI_FLAMINGO",
+        "8:06 PM",
+        R.drawable.setup
+    ),
+    Message(
+        "Imaginary Person",
         "You can use all the same stuff",
         "8:05 PM"
     ),
     Message(
-        "Taylor Brooks",
-        "@aliconors Take a look at the `Flow.collectAsStateWithLifecycle()` APIs",
+        "Imaginary Person",
+        "@andro Like telegram `You can tag a person with his display name` " +
+                "use @ before `his display name`'",
         "8:05 PM"
     ),
     Message(
-        "John Glenn",
-        "Compose newbie as well $EMOJI_FLAMINGO, have you looked at the JetNews sample? " +
-            "Most blog posts end up out of date pretty fast but this sample is always up to " +
-            "date and deals with async data loading (it's faked but the same idea " +
-            "applies) $EMOJI_POINTS https://goo.gle/jetnews",
+        "Imaginary Person",
+        "“Bot tarmog‘i” – bu dasturiy ta’minot bo‘lib, " +
+                "bir nechta Internet tarmog‘iga ulangan qurilmalardan tashkil topadi. " +
+                "“Bot-tarmog‘i” ichidagi zararli dastur jabrlanuvchining qurilmasiga yashirincha " +
+                "o‘rnatiladi hamda tajovuzkorga zararlangan kompyuter resurslaridan foydalangan " +
+                "holda muayyan harakatlarni amalga oshirishga imkon yaratib beradi." +
+                " $EMOJI_POINTS https://csec.uz/uz/recomendations/antivirus-ilovalari/",
         "8:04 PM"
     ),
     Message(
         "you",
-        "Compose newbie: I’ve scourged the internet for tutorials about async data " +
-            "loading but haven’t found any good ones $EMOJI_MELTING $EMOJI_CLOUDS. " +
-            "What’s the recommended way to load async data and emit composable widgets?",
+        "“Bot-tarmoq”larga qarshi kurashning dolzarbligi va ahamiyatini inobatga olgan holda," +
+                " Windows va Android operatsion tizimlarida ishlovchi zararlangan (mobil telefonlar," +
+                " planshetlar, kompyuterlar va boshqalar) qurilmalarni virusdan tozalash va " +
+                "ehtimoliy zararlanishlarni oldini olishda antivirus dasturiy " +
+                "ta’minotlaridan foydalanishingizni so‘raymiz.",
         "8:03 PM"
     )
 )
 
 val exampleUiState = ConversationUiState(
     initialMessages = initialMessages,
-    channelName = "#composers",
+    channelName = "#cyber security learners",
     channelMembers = 42
 )
 
@@ -76,27 +83,27 @@ val exampleUiState = ConversationUiState(
  */
 val colleagueProfile = ProfileScreenState(
     userId = "12345",
-    photo = R.drawable.someone_else,
-    name = "Taylor Brooks",
+    photo = R.drawable.be_doer,
+    name = "Imaginary Person",
     status = "Away",
-    displayName = "taylor",
-    position = "Senior Android Dev at Openlane",
-    twitter = "twitter.com/taylorbrookscodes",
+    displayName = "person",
+    position = "Just a imaginary person",
+    twitter = "twitter.com/imaginary_person",
     timeZone = "12:25 AM local time (Eastern Daylight Time)",
     commonChannels = "2"
 )
 
 /**
- * Example "me" profile.
+ * Example "you" profile.
  */
 val meProfile = ProfileScreenState(
-    userId = "me",
-    photo = R.drawable.ali,
-    name = "Ali Conors",
+    userId = "you",
+    photo = R.drawable.mclaren,
+    name = "Andro Chat",
     status = "Online",
-    displayName = "aliconors",
-    position = "Senior Android Dev at Yearin\nGoogle Developer Expert",
-    twitter = "twitter.com/aliconors",
+    displayName = "andro",
+    position = "Cyber security learner\nLove coding and hacking",
+    twitter = "twitter.com/andro",
     timeZone = "In your timezone",
     commonChannels = null
 )
