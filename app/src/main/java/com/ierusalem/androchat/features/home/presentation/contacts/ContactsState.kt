@@ -8,8 +8,13 @@ sealed interface ContactsScreen {
 
     data class Success(val content: List<ContactsScreenData>) : ContactsScreen
 
-    data class Error(val message: String) : ContactsScreen
+    data class Error(val error: ErrorType) : ContactsScreen
 
+}
+
+sealed interface ErrorType{
+    data object NetworkError: ErrorType
+    data object InvalidResponse: ErrorType
 }
 
 @Immutable

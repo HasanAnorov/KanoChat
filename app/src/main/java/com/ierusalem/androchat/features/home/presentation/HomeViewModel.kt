@@ -3,6 +3,7 @@ package com.ierusalem.androchat.features.home.presentation
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreen
+import com.ierusalem.androchat.features.home.presentation.contacts.ErrorType
 import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,14 +42,13 @@ class HomeViewModel : ViewModel(),
         }
     }
 
-
 }
 
 @Immutable
 data class HomeScreenState(
     val tabItems: List<String> = listOf("All", "Contacts", "Groups"),
     val selectedTabIndex: Int = 0,
-    val contacts: ContactsScreen = ContactsScreen.Loading,
+    val contacts: ContactsScreen = ContactsScreen.Error(ErrorType.InvalidResponse),
 //    val contacts: ContactsScreen = ContactsScreen.Success(
 //        listOf(
 //            ContactsScreenData(
