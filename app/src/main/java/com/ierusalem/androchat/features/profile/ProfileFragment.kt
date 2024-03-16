@@ -41,9 +41,7 @@ import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import com.ierusalem.androchat.MainViewModel
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.ui.components.AndroChatAppBar
 import com.ierusalem.androchat.ui.components.FunctionalityNotAvailablePopup
@@ -52,7 +50,6 @@ import com.ierusalem.androchat.ui.theme.AndroChatTheme
 class ProfileFragment : Fragment() {
 
     private val viewModel: ProfileViewModel by viewModels()
-    private val activityViewModel: MainViewModel by activityViewModels()
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -80,7 +77,7 @@ class ProfileFragment : Fragment() {
                     AndroChatAppBar(
                         // Reset the minimum bounds that are passed to the root of a compose tree
                         modifier = Modifier.wrapContentSize(),
-                        onNavIconPressed = { activityViewModel.openDrawer() },
+                        onNavIconPressed = {  },
                         title = { },
                         actions = {
                             // More icon

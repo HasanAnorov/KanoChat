@@ -9,21 +9,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.ierusalem.androchat.ui.components.CommonTextField
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 @Composable
@@ -55,62 +50,20 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            TextField(
+            CommonTextField(
                 modifier = Modifier
                     .padding(top = 24.dp)
-                    .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                value = "",
-                textStyle = MaterialTheme.typography.titleMedium,
-                colors = TextFieldDefaults.colors(
-                    cursorColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledLabelColor = Color.Red,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                placeholder = {
-                    Text(
-                        text = "Username",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                },
-                onValueChange = {},
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Next, // ** Done. Close the keyboard **
-                    keyboardType = KeyboardType.Text
-                ),
-                shape = RoundedCornerShape(size = 12.dp),
-                singleLine = true,
+                label = "Username",
+                errorMessage = "Here error message displays"
             )
 
-            TextField(
+            CommonTextField(
                 modifier = Modifier
                     .padding(top = 12.dp)
-                    .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                value = "",
-                textStyle = MaterialTheme.typography.titleMedium,
-                colors = TextFieldDefaults.colors(
-                    cursorColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledLabelColor = Color.Red,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                placeholder = {
-                    Text(
-                        text = "Password",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                },
-                onValueChange = {},
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Next, // ** Done. Close the keyboard **
-                    keyboardType = KeyboardType.Text
-                ),
-                shape = RoundedCornerShape(size = 12.dp),
-                singleLine = true,
+                label = "Password",
+
             )
 
             Box(
@@ -123,14 +76,14 @@ fun LoginScreen(
                     .clickable { },
                 content = {
                     Text(
-                        text = "text",
+                        text = "Login",
                         modifier = Modifier
                             .padding(
                                 horizontal = 16.dp,
                                 vertical = 16.dp
                             )
                             .fillMaxWidth(),
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimary,
                         textAlign = TextAlign.Center
                     )
