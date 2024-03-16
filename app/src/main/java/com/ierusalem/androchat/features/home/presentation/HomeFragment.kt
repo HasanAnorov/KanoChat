@@ -13,8 +13,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.findNavController
-import com.ierusalem.androchat.R
 import com.ierusalem.androchat.ui.components.AndroChatDrawer
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import kotlinx.coroutines.launch
@@ -66,15 +64,15 @@ class HomeFragment : Fragment() {
 //                            scope.launch {
 //                                drawerState.close()
 //                            }
-                            findNavController().popBackStack(R.id.conversationFragment, false)
-                            scope.launch {
-                                drawerState.close()
-                            }
+//                            findNavController().popBackStack(R.id.conversationFragment, false)
+//                            scope.launch {
+//                                drawerState.close()
+//                            }
                         },
                         content = {
                             HomeScreen(
                                 state = state,
-                                intentReducer = {intent ->
+                                intentReducer = { intent ->
                                     viewModel.handleClickIntents(intent)
                                 }
                             )

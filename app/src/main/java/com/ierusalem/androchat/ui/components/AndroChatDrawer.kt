@@ -125,7 +125,7 @@ private fun DrawerHeader() {
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "ahi3646",
+                text = "Ierusalem)",
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
                 color = MaterialTheme.colorScheme.secondary

@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features.home.presentation
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,20 +18,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreen
 import com.ierusalem.androchat.ui.components.AndroChatAppBar
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import kotlinx.coroutines.launch
@@ -45,20 +42,12 @@ fun HomeScreen(
     intentReducer: (HomeScreenClickIntents) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val topBarState = rememberTopAppBarState()
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topBarState)
     val pagerState = rememberPagerState {
         state.tabItems.size
     }
-    var selectedTabIndex by remember{
-        mutableIntStateOf(0)
-    }
-//    LaunchedEffect(selectedTabIndex) {
-//        pagerState.animateScrollToPage(selectedTabIndex)
-//    }
     LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
         if (pagerState.isScrollInProgress) {
-            selectedTabIndex = pagerState.currentPage
+            intentReducer(HomeScreenClickIntents.TabItemClicked(pagerState.currentPage))
         }
     }
 
@@ -66,7 +55,6 @@ fun HomeScreen(
         topBar = {
             AndroChatAppBar(
                 title = { },
-                scrollBehavior = scrollBehavior,
                 onNavIconPressed = {
                     intentReducer(HomeScreenClickIntents.NavIconClicked)
                 }
@@ -77,7 +65,7 @@ fun HomeScreen(
             .contentWindowInsets
             .exclude(WindowInsets.navigationBars)
             .exclude(WindowInsets.ime),
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        modifier = modifier
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -85,87 +73,80 @@ fun HomeScreen(
                 .padding(paddingValues),
             content = {
                 TabRow(
-                    selectedTabIndex = selectedTabIndex,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    state.tabItems.forEachIndexed { index, currentTab ->
-                        Log.d("ahi3646", "HomeScreen: $index $selectedTabIndex ")
-                        Tab(
-                            selected = selectedTabIndex == index,
-                            selectedContentColor = MaterialTheme.colorScheme.primary,
-                            unselectedContentColor = MaterialTheme.colorScheme.outline,
-                            onClick = {
-                                selectedTabIndex = index
-                                scope.launch {
-                                    pagerState.animateScrollToPage(index)
-                                }
-                            },
-                            text = { Text(text = currentTab) },
-
+                    modifier = Modifier.fillMaxWidth(),
+                    selectedTabIndex = state.selectedTabIndex,
+                    indicator = { tabPositions ->
+                        if (state.selectedTabIndex < tabPositions.size) {
+                            SecondaryIndicator(
+                                modifier = Modifier.tabIndicatorOffset(tabPositions[state.selectedTabIndex]),
+                                color = MaterialTheme.colorScheme.onBackground
                             )
-                    }
-                }
+                        }
+                    },
+                    contentColor = MaterialTheme.colorScheme.onBackground,
+                    divider = {
 
+                    },
+                    tabs = {
+                        state.tabItems.forEachIndexed { index, currentTab ->
+                            Tab(
+                                selected = state.selectedTabIndex == index,
+                                selectedContentColor = MaterialTheme.colorScheme.onBackground,
+                                unselectedContentColor = MaterialTheme.colorScheme.onBackground.copy(
+                                    0.5F
+                                ),
+                                onClick = {
+                                    intentReducer(HomeScreenClickIntents.TabItemClicked(index))
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(index)
+                                    }
+                                },
+                                text = {
+                                    Text(
+                                        text = currentTab,
+                                        fontSize = 16.sp,
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                },
+                            )
+                        }
+                    }
+                )
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                ) {
-
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = state.tabItems[it])
+                ) { pageCount ->
+                    when (pageCount) {
+                        0 -> {
+                            ContactsScreen(
+                                state = state.contacts,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                        1 -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                                content = {
+                                    Text(text = "Contacts")
+                                }
+                            )
+                        }
+                        2 -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                                content = {
+                                    Text(text = "Groups")
+                                }
+                            )
+                        }
                     }
                 }
             }
         )
-//        Column(
-//            modifier = Modifier
-//                .padding(paddingValues)
-//                .fillMaxSize(),
-//        ) {
-//            TabRow(
-//                selectedTabIndex = state.selectedTabIndex,
-//                divider = {},
-//                tabs = {
-//                    state.tabItems.forEachIndexed { index, tabItem ->
-//                        Tab(
-//                            selected = index == state.selectedTabIndex,
-//                            onClick = {
-//                                scope.launch {
-//                                    pagerState.animateScrollToPage(index)
-//                                }
-////                                intentReducer(HomeScreenClickIntents.TabItemClicked(index))
-//                            },
-//                            content = {
-//                                Text(
-//                                    modifier = Modifier.padding(bottom = 12.dp, top = 8.dp),
-//                                    text = tabItem,
-//                                    style = MaterialTheme.typography.titleMedium
-//                                )
-//                            }
-//                        )
-//                    }
-//                }
-//            )
-//            HorizontalPager(
-//                state = pagerState,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .weight(1F),
-//            ) { index ->
-//                Box(
-//                    modifier = Modifier.fillMaxSize(),
-//                    contentAlignment = Alignment.Center,
-//                    content = {
-//                        Text(text = state.tabItems[index])
-//                    }
-//                )
-//            }
-//        }
     }
 }
 
@@ -176,7 +157,7 @@ fun HomeScreenPreviewLight() {
         HomeScreen(
             state = HomeScreenState(),
             modifier = Modifier,
-            intentReducer = {}
+            intentReducer = {},
         )
     }
 }
@@ -188,7 +169,7 @@ fun HomeScreenPreviewDark() {
         HomeScreen(
             modifier = Modifier,
             state = HomeScreenState(),
-            intentReducer = {}
+            intentReducer = {},
         )
     }
 }

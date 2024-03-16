@@ -24,7 +24,13 @@ val provider = GoogleFont.Provider(
 
 val MontserratFont = GoogleFont(name = "Montserrat")
 
+val DMSans = GoogleFont(name = "DM Sans")
+
 val KarlaFont = GoogleFont(name = "Karla")
+
+val DMSansFontFamily = FontFamily(
+    Font(googleFont = DMSans, fontProvider = provider, weight = FontWeight.Bold)
+)
 
 val MontserratFontFamily = FontFamily(
     Font(googleFont = MontserratFont, fontProvider = provider),
@@ -35,18 +41,6 @@ val MontserratFontFamily = FontFamily(
     Font(resId = R.font.montserrat_medium, weight = FontWeight.Medium),
     Font(googleFont = MontserratFont, fontProvider = provider, weight = FontWeight.SemiBold),
     Font(resId = R.font.montserrat_semibold, weight = FontWeight.SemiBold),
-)
-
-val poppinsFamily = FontFamily(
-    Font(R.font.poppins_black, FontWeight.Black),
-    Font(R.font.poppins_bold, FontWeight.Bold),
-    Font(R.font.poppins_light, FontWeight.Light),
-    Font(R.font.poppins_medium, FontWeight.Medium),
-    Font(R.font.poppins_regular, FontWeight.Normal),
-    Font(R.font.poppins_extra_bold, FontWeight.ExtraBold),
-    Font(R.font.poppins_semi_bold, FontWeight.SemiBold),
-    Font(R.font.poppins_thin, FontWeight.Thin),
-    Font(R.font.poppins_extra_light, FontWeight.ExtraLight),
 )
 
 val KarlaFontFamily = FontFamily(
@@ -114,7 +108,7 @@ val AndroChatTypography = Typography(
         letterSpacing = 0.15.sp
     ),
     titleSmall = TextStyle(
-        fontFamily = KarlaFontFamily,
+        fontFamily = DMSansFontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 14.sp,
         lineHeight = 20.sp,
@@ -142,15 +136,15 @@ val AndroChatTypography = Typography(
         letterSpacing = 0.4.sp
     ),
     labelLarge = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontFamily = DMSansFontFamily,
+        fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.1.sp
     ),
     labelMedium = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontFamily = DMSansFontFamily,
+        fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp

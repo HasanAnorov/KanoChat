@@ -43,7 +43,8 @@ private val AndroChatDarkColorScheme = darkColorScheme(
     inverseOnSurface = Grey20,
     surfaceVariant = BlueGrey30,
     onSurfaceVariant = BlueGrey80,
-    outline = BlueGrey60
+    outline = BlueGrey60,
+    outlineVariant = badgeColor
 )
 
 private val AndroChatLightColorScheme = lightColorScheme(
@@ -65,14 +66,15 @@ private val AndroChatLightColorScheme = lightColorScheme(
     errorContainer = Red90,
     onErrorContainer = Red10,
     background = Grey99,
-    onBackground = Grey10,
+    onBackground = dmSansTitle,
     surface = Grey99,
     onSurface = Grey10,
     inverseSurface = Grey20,
     inverseOnSurface = Grey95,
     surfaceVariant = BlueGrey90,
     onSurfaceVariant = BlueGrey30,
-    outline = BlueGrey50
+    outline = BlueGrey50,
+    outlineVariant = badgeColor
 )
 
 @Composable

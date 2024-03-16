@@ -2,6 +2,7 @@ package com.ierusalem.androchat.features.home.presentation
 
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
+import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreen
 import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +18,7 @@ class HomeViewModel : ViewModel(),
     private val _drawerShouldBeOpened = MutableStateFlow(false)
     val drawerShouldBeOpened = _drawerShouldBeOpened.asStateFlow()
 
-    fun openDrawer() {
+    private fun openDrawer() {
         _drawerShouldBeOpened.value = true
     }
 
@@ -35,7 +36,7 @@ class HomeViewModel : ViewModel(),
                 }
             }
             HomeScreenClickIntents.NavIconClicked -> {
-
+                openDrawer()
             }
         }
     }
@@ -47,4 +48,93 @@ class HomeViewModel : ViewModel(),
 data class HomeScreenState(
     val tabItems: List<String> = listOf("All", "Contacts", "Groups"),
     val selectedTabIndex: Int = 0,
+    val contacts: ContactsScreen = ContactsScreen.Loading,
+//    val contacts: ContactsScreen = ContactsScreen.Success(
+//        listOf(
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "12:12",
+//                2
+//            ),
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "02:34",
+//                12
+//            ),
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "4: 08",
+//                23
+//            ),
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "9:24",
+//                1
+//            ),
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "18:23",
+//                0,
+//            ),
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "02:34",
+//                12
+//            ),
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "4: 08",
+//                23
+//            ),
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "9:24",
+//                1
+//            ),
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "18:23",
+//                0,
+//            ),
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "02:34",
+//                12
+//            ),
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "4: 08",
+//                23
+//            ),
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "9:24",
+//                1
+//            ),
+//            ContactsScreenData(
+//                "Andro",
+//                "hey, I am preparing a big surprise for you :)",
+//                "18:23",
+//                0,
+//            ),
+//            ContactsScreenData(
+//                "Ierusalem",
+//                "haha, soon I will catch you all of you",
+//                "5:45",
+//                290
+//            )
+//        )
+//    ),
 )

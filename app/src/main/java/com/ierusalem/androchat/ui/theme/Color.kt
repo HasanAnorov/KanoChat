@@ -8,6 +8,10 @@ import androidx.compose.ui.graphics.Color
  * @author A.H.I "andro" on 07/03/2024
  */
 
+//custom colors from - https://www.figma.com/file/CZKMwES3MsRysf4s2LSXjU/Onchain-Group-Messaging-with-XMTP-%26-Airstack-(Community)?type=design&node-id=2001-994&mode=design&t=JaupHHfUf2lPUz7J-0
+val dmSansTitle = Color(0xFF1E1E1E)
+val badgeColor = Color(0xFF5458F7)
+
 val Blue10 = Color(0xFF000F5E)
 val Blue20 = Color(0xFF001E92)
 val Blue30 = Color(0xFF002ECC)

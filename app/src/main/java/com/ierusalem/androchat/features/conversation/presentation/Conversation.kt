@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features.conversation.presentation
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -246,7 +245,6 @@ fun Messages(
                 }
 
                 item {
-                    Log.d("ahi3646", "Messages: ${content.author} $authorMe ")
                     Message(
                         onAuthorClick = { name -> navigateToProfile(name) },
                         msg = content,
