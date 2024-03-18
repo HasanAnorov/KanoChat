@@ -27,7 +27,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreen
 import com.ierusalem.androchat.ui.components.AndroChatAppBar
@@ -120,20 +119,17 @@ fun HomeScreen(
                 ) { pageCount ->
                     when (pageCount) {
                         0 -> {
-                            ContactsScreen(
-                                state = state.contacts,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                        }
-                        1 -> {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center,
                                 content = {
-                                    Text(text = "Contacts")
+                                    Text(text = "All")
                                 }
                             )
                         }
+
+                        1 -> ContactsScreen(state = state.contacts)
+
                         2 -> {
                             Box(
                                 modifier = Modifier.fillMaxSize(),

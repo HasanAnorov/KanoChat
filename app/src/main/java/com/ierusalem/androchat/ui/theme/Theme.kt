@@ -44,7 +44,7 @@ private val AndroChatDarkColorScheme = darkColorScheme(
     surfaceVariant = BlueGrey30,
     onSurfaceVariant = BlueGrey80,
     outline = BlueGrey60,
-    outlineVariant = badgeColor
+    scrim = badgeColor
 )
 
 private val AndroChatLightColorScheme = lightColorScheme(
@@ -74,7 +74,7 @@ private val AndroChatLightColorScheme = lightColorScheme(
     surfaceVariant = BlueGrey90,
     onSurfaceVariant = BlueGrey30,
     outline = BlueGrey50,
-    outlineVariant = badgeColor
+    scrim = badgeColor
 )
 
 @Composable

@@ -44,8 +44,7 @@ fun ContactItem(
             modifier = Modifier
                 .padding(end = 12.dp, start = 8.dp)
                 .padding(top = 4.dp)
-                .height(IntrinsicSize.Max)
-                .clickable { },
+                .height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -135,7 +134,7 @@ fun ContactItemPreview() {
 @Preview
 @Composable
 fun ContactItemPreviewDark() {
-    AndroChatTheme {
+    AndroChatTheme(isDarkTheme = true) {
         ContactItem(
             modifier = Modifier
                 .fillMaxWidth()

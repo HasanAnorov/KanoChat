@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
@@ -31,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,42 +60,23 @@ fun AndroChatDrawerContent(
         DrawerHeader()
         DividerItem()
         Spacer(modifier = Modifier.height(2.dp))
-        ChatItem("Edit Profile", Icons.Default.Person) { onChatClicked("droidcon-nyc") }
-        DividerItem(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(vertical = 2.dp)
-        )
+        ChatItem("Profile", Icons.Default.Person) { onChatClicked("droidcon-nyc") }
+        //ChatItem("Requests", R.drawable.user_request) { onChatClicked("droidcon-nyc") }
         ChatItem("Settings", Icons.Default.Settings) { onChatClicked("composers") }
     }
 }
 
 @Composable
 private fun DrawerHeader() {
-    Column(
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.Center,
+    Row(
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colorScheme.background)
-            .padding(all = 16.dp)
+            .padding(all = 12.dp)
     ) {
         GlideImage(
-            failure = {
-                Image(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .border(
-                            width = 2.dp,
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = CircleShape
-                        ),
-                    imageVector = Icons.Default.AccountCircle,
-                    colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.onPrimaryContainer),
-                    contentDescription = null,
-                )
-            },
             imageModel = { "your_image_url" },
             modifier = Modifier
                 .size(64.dp)
@@ -114,21 +92,26 @@ private fun DrawerHeader() {
             )
         )
         Column(
-            verticalArrangement = Arrangement.SpaceEvenly,
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.Start,
-            modifier = Modifier.padding(top = 16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 12.dp)
         ) {
             Text(
-                text = "Andro Chat Drawer ",
+                text = "Hasan Anorov",
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Ierusalem)",
+                modifier = Modifier.padding(top = 4.dp),
+                text = "ierusalem",
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
-                color = MaterialTheme.colorScheme.secondary
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
     }
@@ -152,15 +135,15 @@ private fun ChatItem(
     ) {
         icon?.let {
             Icon(
-                imageVector = it,
+                imageVector = icon,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
                 contentDescription = null
             )
         }
         Text(
-            text,
-            style = MaterialTheme.typography.bodyMedium,
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(start = 12.dp)
         )
