@@ -1,19 +1,24 @@
 package com.ierusalem.androchat.features.auth.login.domain
 
-import android.util.Log
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.features.auth.login.presentation.LoginFormEvents
 import com.ierusalem.androchat.features.auth.login.presentation.LoginNavigation
 import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.emitNavigation
+import com.ierusalem.androchat.utils.FieldValidator
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class LoginViewModel : ViewModel(), DefaultLifecycleObserver,
+@HiltViewModel
+class LoginViewModel @Inject constructor(private val validator: FieldValidator ) : ViewModel(), DefaultLifecycleObserver,
     NavigationEventDelegate<LoginNavigation> by DefaultNavigationEventDelegate() {
 
     private val _state: MutableStateFlow<LoginScreenState> = MutableStateFlow(LoginScreenState())
@@ -22,7 +27,7 @@ class LoginViewModel : ViewModel(), DefaultLifecycleObserver,
     fun handleEvents(event: LoginFormEvents){
         when(event){
             LoginFormEvents.Login -> loginUser()
-            LoginFormEvents.ToRegister -> emitNavigation(LoginNavigation.ToHome)
+            LoginFormEvents.ToRegister -> emitNavigation(LoginNavigation.ToRegister)
             is LoginFormEvents.UsernameChanged -> {
                 _state.update {
                     it.copy(
@@ -47,8 +52,35 @@ class LoginViewModel : ViewModel(), DefaultLifecycleObserver,
         }
     }
 
-    private fun loginUser(){
-        Log.d("ahi3646", "loginUser: ")
+    private fun loginUser() {
+        val usernameResult = validator.validateUsername(state.value.username)
+        val passwordResult = validator.validatePassword(state.value.password)
+
+        val hasError = listOf(
+            usernameResult,
+            passwordResult,
+        ).any {
+            !it.successful
+        }
+
+        if (hasError) {
+            _state.update {
+                it.copy(
+                    usernameError = usernameResult.errorMessage,
+                    passwordError = passwordResult.errorMessage,
+                )
+            }
+            return
+        }
+        _state.update {
+            it.copy(
+                usernameError = null,
+                passwordError = null,
+            )
+        }
+        viewModelScope.launch {
+            emitNavigation(LoginNavigation.ToHome)
+        }
     }
 
 }
@@ -56,8 +88,8 @@ class LoginViewModel : ViewModel(), DefaultLifecycleObserver,
 @Immutable
 data class LoginScreenState(
     val username: String = "",
-    val usernameError: String? = "",
+    val usernameError: String? = null,
     val password: String = "",
-    val passwordError: String? = "",
+    val passwordError: String? = null,
     val passwordVisibility: Boolean = false
 )

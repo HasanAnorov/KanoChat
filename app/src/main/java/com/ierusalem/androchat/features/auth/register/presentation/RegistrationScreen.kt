@@ -6,10 +6,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,10 +39,13 @@ fun RegistrationScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .imePadding()
+            .verticalScroll(rememberScrollState())
             .background(color = MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.Start,
         content = {
+            Spacer(modifier = Modifier.height(60.dp))
             Text(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
@@ -67,7 +75,7 @@ fun RegistrationScreen(
 
             CommonTextFieldWithError(
                 modifier = Modifier
-                    .padding(top = 16.dp)
+                    .padding(top = 8.dp)
                     .padding(horizontal = 16.dp),
                 placeHolder = stringResource(R.string.lastname),
                 value = state.lastname,
@@ -77,7 +85,7 @@ fun RegistrationScreen(
 
             CommonTextFieldWithError(
                 modifier = Modifier
-                    .padding(top = 16.dp)
+                    .padding(top = 8.dp)
                     .padding(horizontal = 16.dp),
                 placeHolder = stringResource(R.string.username),
                 value = state.username,
@@ -89,10 +97,12 @@ fun RegistrationScreen(
 
             CommonPasswordTextField(
                 modifier = Modifier
+                    .padding(top = 8.dp)
                     .padding(horizontal = 16.dp),
                 label = stringResource(R.string.password),
                 value = state.password,
                 errorMessage = state.passwordError,
+                passwordVisibility = state.passwordVisibility,
                 onPasswordVisibilityChanged = {
                     intentReducer(RegistrationFormEvents.PasswordVisibilityChanged)
                 },
@@ -103,9 +113,11 @@ fun RegistrationScreen(
 
             CommonPasswordTextField(
                 modifier = Modifier
+                    .padding(top = 8.dp)
                     .padding(horizontal = 16.dp),
                 label = stringResource(R.string.password_confirmation),
                 value = state.repeatedPassword,
+                passwordVisibility = state.passwordVisibility,
                 errorMessage = state.repeatedPasswordError,
                 onPasswordVisibilityChanged = {
                     intentReducer(RegistrationFormEvents.PasswordVisibilityChanged)
@@ -122,7 +134,7 @@ fun RegistrationScreen(
                     .padding(top = 24.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(color = MaterialTheme.colorScheme.primary)
-                    .clickable { },
+                    .clickable { intentReducer(RegistrationFormEvents.Register) },
                 content = {
                     Text(
                         text = stringResource(R.string.register),
@@ -155,7 +167,7 @@ fun RegistrationScreen(
                         modifier = Modifier
                             .padding(start = 4.dp)
                             .padding(vertical = 6.dp)
-                            .clickable { },
+                            .clickable { intentReducer(RegistrationFormEvents.ToLogin) },
                         text = stringResource(R.string.log_in),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary

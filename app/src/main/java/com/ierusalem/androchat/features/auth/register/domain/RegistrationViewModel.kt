@@ -3,18 +3,23 @@ package com.ierusalem.androchat.features.auth.register.domain
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ierusalem.androchat.features.auth.register.domain.use_case.ValidatorUseCase
+import com.ierusalem.androchat.utils.FieldValidator
 import com.ierusalem.androchat.features.auth.register.presentation.RegistrationFormEvents
 import com.ierusalem.androchat.features.auth.register.presentation.RegistrationNavigation
 import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.emitNavigation
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class RegistrationViewModel(private val validator: ValidatorUseCase) : ViewModel(),
+@HiltViewModel
+class RegistrationViewModel @Inject constructor(
+    private val validator: FieldValidator
+) : ViewModel(),
     NavigationEventDelegate<RegistrationNavigation> by DefaultNavigationEventDelegate() {
 
     private val _state: MutableStateFlow<RegistrationScreenState> = MutableStateFlow(
@@ -72,9 +77,7 @@ class RegistrationViewModel(private val validator: ValidatorUseCase) : ViewModel
                 }
             }
 
-            is RegistrationFormEvents.Register -> {
-                registerUser()
-            }
+            is RegistrationFormEvents.Register -> registerUser()
 
             RegistrationFormEvents.ToLogin -> {
                 emitNavigation(RegistrationNavigation.ToLogin)
@@ -83,11 +86,13 @@ class RegistrationViewModel(private val validator: ValidatorUseCase) : ViewModel
     }
 
     private fun registerUser() {
+        Log.d("ahi3646", "registerUser: ")
         val firstNameResult = validator.validateFirstName(state.value.firstname)
-        val lastNameResult = validator.validateFirstName(state.value.firstname)
+        val lastNameResult = validator.validateLastName(state.value.lastname)
         val usernameResult = validator.validateUsername(state.value.username)
-        val passwordResult = validator.validateFirstName(state.value.firstname)
-        val repeatedPasswordResult = validator.validateFirstName(state.value.firstname)
+        val passwordResult = validator.validatePassword(state.value.password)
+        val repeatedPasswordResult =
+            validator.validateRepeatedPassword(state.value.password, state.value.repeatedPassword)
 
         val hasError = listOf(
             firstNameResult,
@@ -111,9 +116,17 @@ class RegistrationViewModel(private val validator: ValidatorUseCase) : ViewModel
             }
             return
         }
+        _state.update {
+            it.copy(
+                firstnameError = null,
+                lastnameError = null,
+                usernameError = null,
+                passwordError = null,
+                repeatedPasswordError = null,
+            )
+        }
         viewModelScope.launch {
-            Log.d("ahi3646", "registerUser: ")
-//            emitNavigation(RegistrationNavigation.Success)
+            emitNavigation(RegistrationNavigation.ToHome)
         }
     }
 }
@@ -124,10 +137,10 @@ data class RegistrationScreenState(
     val lastname: String = "",
     val lastnameError: String? = null,
     val username: String = "",
-    val usernameError: String? = "",
+    val usernameError: String? = null,
     val password: String = "",
-    val passwordError: String? = "",
+    val passwordError: String? = null,
     val repeatedPassword: String = "",
-    val repeatedPasswordError: String? = "",
+    val repeatedPasswordError: String? = null,
     val passwordVisibility: Boolean = false
 )

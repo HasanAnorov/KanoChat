@@ -90,6 +90,7 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.48.1")
     kapt("com.google.dagger:hilt-android-compiler:2.48.1")
 
+    //kotlin json serializer
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
 
     // Ktor

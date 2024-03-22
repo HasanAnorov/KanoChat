@@ -34,12 +34,10 @@ fun CommonTextFieldWithError(
             value = value,
             textStyle = MaterialTheme.typography.titleMedium,
             colors = TextFieldDefaults.colors(
-                cursorColor = MaterialTheme.colorScheme.onPrimary,
-                disabledLabelColor = Color.Red,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
-            placeholder = {
+            label = {
                 Text(
                     text = placeHolder,
                     style = MaterialTheme.typography.bodyMedium,

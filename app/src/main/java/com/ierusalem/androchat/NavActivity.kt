@@ -10,6 +10,7 @@ import androidx.core.view.ViewCompat
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.ierusalem.androchat.databinding.ActivityNavBinding
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * NavActivity
@@ -17,6 +18,7 @@ import com.ierusalem.androchat.databinding.ActivityNavBinding
  * @author A.H.I "andro" on 7/03/2024
  */
 
+@AndroidEntryPoint
 class NavActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

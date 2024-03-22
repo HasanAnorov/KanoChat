@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features.conversation.presentation
+package com.ierusalem.androchat.features.conversation.domain
 
 import android.util.Log
 import androidx.compose.runtime.State

@@ -4,6 +4,7 @@ import com.ierusalem.androchat.features.auth.register.data.remote.MessageService
 import com.ierusalem.androchat.features.auth.register.data.remote.MessageServiceImpl
 import com.ierusalem.androchat.features.conversation.data.remote.ChatSocketService
 import com.ierusalem.androchat.features.conversation.data.remote.ChatSocketServiceImpl
+import com.ierusalem.androchat.utils.FieldValidator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -43,5 +44,9 @@ object AppModule {
     fun provideChatSocketService(client: HttpClient): ChatSocketService{
         return ChatSocketServiceImpl(client = client)
     }
+
+    @Provides
+    @Singleton
+    fun provideFieldValidator(): FieldValidator = FieldValidator()
 
 }

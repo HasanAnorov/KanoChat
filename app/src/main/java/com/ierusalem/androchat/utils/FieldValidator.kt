@@ -1,8 +1,6 @@
-package com.ierusalem.androchat.features.auth.register.domain.use_case
+package com.ierusalem.androchat.utils
 
-import com.ierusalem.androchat.utils.Constants
-
-class ValidatorUseCase {
+class FieldValidator {
 
     fun validateFirstName(firstName: String): ValidationResult {
         return when {
@@ -101,3 +99,8 @@ class ValidatorUseCase {
     }
 
 }
+
+data class ValidationResult(
+    val successful: Boolean,
+    val errorMessage: String? = null
+)
