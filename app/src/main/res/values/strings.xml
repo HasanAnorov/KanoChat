@@ -44,5 +44,19 @@
     <string name="more_options">More options</string>
     <string name="touch_and_hold_to_record">Touch and hold to record</string>
     <string name="record_message">Record voice message</string>
+    <string name="log_in">Log In</string>
+    <string name="have_an_account">Have an account?</string>
+    <string name="register">Register</string>
+    <string name="password_confirmation">Password Confirmation</string>
+    <string name="password">Password</string>
+    <string name="username">Username</string>
+    <string name="lastname">Lastname</string>
+    <string name="firstname">Firstname</string>
+    <string name="register_to_continue">Register to continue</string>
+    <string name="welcome">Welcome</string>
+    <string name="don_t_have_an_account">Don\'t have an account?</string>
+    <string name="login">Login</string>
+    <string name="log_in_to_continue">Log in to continue</string>
+    <string name="welcome_back">Welcome \nBack</string>
 
 </resources>

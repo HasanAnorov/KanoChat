@@ -1,6 +1,9 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    kotlin("kapt")
+    id("com.google.dagger.hilt.android")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
@@ -20,6 +23,11 @@ android {
         }
     }
 
+    // Allow references to generated code
+    kapt {
+        correctErrorTypes = true
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -30,18 +38,18 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_19
-        targetCompatibility = JavaVersion.VERSION_19
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "19"
+        jvmTarget = "1.8"
     }
     buildFeatures {
         compose = true
         viewBinding = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.10"
+        kotlinCompilerExtensionVersion = "1.5.1"
     }
     packaging {
         resources {
@@ -77,4 +85,18 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    //hilt
+    implementation("com.google.dagger:hilt-android:2.48.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.48.1")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+
+    // Ktor
+    implementation ("io.ktor:ktor-client-core:1.6.3")
+    implementation ("io.ktor:ktor-client-cio:1.6.3")
+    implementation ("io.ktor:ktor-client-serialization:1.6.3")
+    implementation ("io.ktor:ktor-client-websockets:1.6.3")
+    implementation ("io.ktor:ktor-client-logging:1.6.3")
+    implementation ("ch.qos.logback:logback-classic:1.2.6")
 }

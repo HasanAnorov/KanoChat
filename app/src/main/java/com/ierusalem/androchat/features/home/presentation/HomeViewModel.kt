@@ -6,6 +6,7 @@ import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScree
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreenData
 import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
+import com.ierusalem.androchat.ui.navigation.emitNavigation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -38,6 +39,9 @@ class HomeViewModel : ViewModel(),
             }
             HomeScreenClickIntents.NavIconClicked -> {
                 openDrawer()
+            }
+            HomeScreenClickIntents.ListItemClicked -> {
+                emitNavigation(HomeScreenNavigation.NavigateToGroup)
             }
         }
     }

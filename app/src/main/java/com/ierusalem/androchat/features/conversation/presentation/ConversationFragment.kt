@@ -22,6 +22,18 @@ import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 class ConversationFragment : Fragment() {
 
+//    private val viewModel: ConversationViewModel = ConversationViewModel()
+
+//    override fun onAttach(context: Context) {
+//        super.onAttach(context)
+//        viewModel.connectToChat()
+//    }
+//
+//    override fun onDetach() {
+//        super.onDetach()
+//        viewModel.disconnect()
+//    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

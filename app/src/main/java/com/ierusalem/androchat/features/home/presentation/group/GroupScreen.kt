@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features.home.presentation.all
+package com.ierusalem.androchat.features.home.presentation.group
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -16,13 +16,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactItem
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreen
-import com.ierusalem.androchat.features.home.presentation.contacts.ErrorType
 import com.ierusalem.androchat.ui.components.ErrorScreen
 import com.ierusalem.androchat.ui.components.LoadingScreen
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 @Composable
-fun AllChatsScreen(
+fun GroupScreen(
     modifier: Modifier = Modifier,
     state: ContactsScreen
 ){
@@ -67,22 +66,22 @@ fun AllChatsScreen(
 
 @Preview
 @Composable
-fun AllChatsScreenPreview() {
+fun GroupScreenPreview() {
     AndroChatTheme {
-        AllChatsScreen(
+        GroupScreen(
             modifier = Modifier,
-            state = ContactsScreen.Error(ErrorType.NetworkError)
+            state = ContactsScreen.Loading
         )
     }
 }
 
 @Preview
 @Composable
-fun AllChatsScreenPreviewDark() {
+fun GroupScreenPreviewDark() {
     AndroChatTheme(isDarkTheme = true) {
-        AllChatsScreen(
+        GroupScreen(
             modifier = Modifier,
-            state = ContactsScreen.Error(ErrorType.NetworkError)
+            state = ContactsScreen.Loading
         )
     }
 }

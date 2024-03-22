@@ -33,12 +33,13 @@ import com.ierusalem.androchat.utils.Constants
 @Composable
 fun ContactItem(
     modifier: Modifier = Modifier,
-    contact: ContactsScreenData
+    contact: ContactsScreenData,
+    onClick: () -> Unit,
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clickable {  },
+            .clickable { onClick() },
     ) {
         Row(
             modifier = Modifier
@@ -121,6 +122,7 @@ fun ContactItemPreview() {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background),
+            onClick = {},
             contact = ContactsScreenData(
                 "Hasan",
                 "hey, I am preparing a big surprise for you :)",
@@ -136,6 +138,7 @@ fun ContactItemPreview() {
 fun ContactItemPreviewDark() {
     AndroChatTheme(isDarkTheme = true) {
         ContactItem(
+            onClick = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background),

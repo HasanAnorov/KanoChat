@@ -5,34 +5,31 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.ierusalem.androchat.features.auth.login.LoginScreenState
+import com.ierusalem.androchat.R
+import com.ierusalem.androchat.features.auth.register.domain.RegistrationScreenState
+import com.ierusalem.androchat.ui.components.CommonPasswordTextField
+import com.ierusalem.androchat.ui.components.CommonTextFieldWithError
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 @Composable
 fun RegistrationScreen(
-    state: LoginScreenState,
-    onUsernameChanged: (String) -> Unit,
-    onPasswordChanged: (String) -> Unit,
-    onLoginClick: () -> Unit
+    state: RegistrationScreenState,
+    intentReducer: (RegistrationFormEvents) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -42,8 +39,10 @@ fun RegistrationScreen(
         horizontalAlignment = Alignment.Start,
         content = {
             Text(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                text = "Welcome \nBack",
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth(),
+                text = stringResource(R.string.welcome),
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.displayLarge,
             )
@@ -51,67 +50,69 @@ fun RegistrationScreen(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .padding(top = 16.dp),
-                text = "Sign in to continue",
+                text = stringResource(R.string.register_to_continue),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            TextField(
+            CommonTextFieldWithError(
                 modifier = Modifier
-                    .padding(top = 24.dp)
-                    .fillMaxWidth()
+                    .padding(top = 16.dp)
                     .padding(horizontal = 16.dp),
-                value = "",
-                textStyle = MaterialTheme.typography.titleMedium,
-                colors = TextFieldDefaults.colors(
-                    cursorColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledLabelColor = Color.Red,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                placeholder = {
-                    Text(
-                        text = "Username",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                },
-                onValueChange = {},
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Next, // ** Done. Close the keyboard **
-                    keyboardType = KeyboardType.Text
-                ),
-                shape = RoundedCornerShape(size = 12.dp),
-                singleLine = true,
+                placeHolder = stringResource(R.string.firstname),
+                value = state.firstname,
+                errorMessage = state.firstnameError,
+                onTextChanged = { intentReducer(RegistrationFormEvents.FirstNameChanged(it)) }
             )
 
-            TextField(
+            CommonTextFieldWithError(
                 modifier = Modifier
-                    .padding(top = 12.dp)
-                    .fillMaxWidth()
+                    .padding(top = 16.dp)
                     .padding(horizontal = 16.dp),
-                value = "",
-                textStyle = MaterialTheme.typography.titleMedium,
-                colors = TextFieldDefaults.colors(
-                    cursorColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledLabelColor = Color.Red,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                placeholder = {
-                    Text(
-                        text = "Password",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+                placeHolder = stringResource(R.string.lastname),
+                value = state.lastname,
+                errorMessage = state.lastnameError,
+                onTextChanged = { intentReducer(RegistrationFormEvents.LastNameChanged(it)) }
+            )
+
+            CommonTextFieldWithError(
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .padding(horizontal = 16.dp),
+                placeHolder = stringResource(R.string.username),
+                value = state.username,
+                errorMessage = state.usernameError,
+                onTextChanged = {
+                    intentReducer(RegistrationFormEvents.UsernameChanged(it))
+                }
+            )
+
+            CommonPasswordTextField(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp),
+                label = stringResource(R.string.password),
+                value = state.password,
+                errorMessage = state.passwordError,
+                onPasswordVisibilityChanged = {
+                    intentReducer(RegistrationFormEvents.PasswordVisibilityChanged)
                 },
-                onValueChange = {},
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Next, // ** Done. Close the keyboard **
-                    keyboardType = KeyboardType.Text
-                ),
-                shape = RoundedCornerShape(size = 12.dp),
-                singleLine = true,
+                onPasswordTextChanged = {
+                    intentReducer(RegistrationFormEvents.PasswordChanged(it))
+                }
+            )
+
+            CommonPasswordTextField(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp),
+                label = stringResource(R.string.password_confirmation),
+                value = state.repeatedPassword,
+                errorMessage = state.repeatedPasswordError,
+                onPasswordVisibilityChanged = {
+                    intentReducer(RegistrationFormEvents.PasswordVisibilityChanged)
+                },
+                onPasswordTextChanged = {
+                    intentReducer(RegistrationFormEvents.RepeatedPasswordChanged(it))
+                },
             )
 
             Box(
@@ -124,7 +125,7 @@ fun RegistrationScreen(
                     .clickable { },
                 content = {
                     Text(
-                        text = "text",
+                        text = stringResource(R.string.register),
                         modifier = Modifier
                             .padding(
                                 horizontal = 16.dp,
@@ -137,6 +138,30 @@ fun RegistrationScreen(
                     )
                 },
             )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                content = {
+                    Text(
+                        text = stringResource(R.string.have_an_account),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        modifier = Modifier
+                            .padding(start = 4.dp)
+                            .padding(vertical = 6.dp)
+                            .clickable { },
+                        text = stringResource(R.string.log_in),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            )
         }
     )
 }
@@ -146,10 +171,8 @@ fun RegistrationScreen(
 fun LoginScreen_Preview_Light() {
     AndroChatTheme {
         RegistrationScreen(
-            state = LoginScreenState(),
-            onUsernameChanged = {},
-            onPasswordChanged = {},
-            onLoginClick = {}
+            state = RegistrationScreenState(),
+            intentReducer = {}
         )
     }
 }
@@ -159,10 +182,8 @@ fun LoginScreen_Preview_Light() {
 fun LoginScreen_Preview_Dark() {
     AndroChatTheme(isDarkTheme = true) {
         RegistrationScreen(
-            state = LoginScreenState(),
-            onUsernameChanged = {},
-            onPasswordChanged = {},
-            onLoginClick = {}
+            state = RegistrationScreenState(),
+            intentReducer = {}
         )
     }
 }

@@ -40,16 +40,16 @@ class ValidatorUseCase {
         }
     }
 
-    fun validateLogin(login: String): ValidationResult {
+    fun validateUsername(login: String): ValidationResult {
         return when {
             login.isBlank() -> ValidationResult(
                 successful = false,
-                errorMessage = "The login can't be blank"
+                errorMessage = "The username can't be blank"
             )
 
             login.length < Constants.MINIMUM_LOGIN_LENGTH -> ValidationResult(
                 successful = false,
-                errorMessage = "Login should be than 3 words!"
+                errorMessage = "Username should be than 3 words!"
             )
 
             else -> ValidationResult(
