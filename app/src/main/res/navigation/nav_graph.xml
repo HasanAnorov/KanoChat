@@ -61,6 +61,10 @@
             app:popUpTo="@id/homeFragment"
             app:destination="@id/homeFragment" />
 
+        <argument
+            android:name="username_register_to_home"
+            app:argType="string" />
+
     </fragment>
 
     <fragment

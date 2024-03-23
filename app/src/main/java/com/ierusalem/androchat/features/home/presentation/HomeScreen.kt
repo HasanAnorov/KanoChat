@@ -3,19 +3,14 @@ package com.ierusalem.androchat.features.home.presentation
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
@@ -47,7 +42,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     state: HomeScreenState,
-    modifier: Modifier = Modifier,
     intentReducer: (HomeScreenClickIntents) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -89,13 +83,7 @@ fun HomeScreen(
                     intentReducer(HomeScreenClickIntents.NavIconClicked)
                 }
             )
-        },
-        // Exclude ime and navigation bar padding so this can be added by the UserInput composable
-        contentWindowInsets = ScaffoldDefaults
-            .contentWindowInsets
-            .exclude(WindowInsets.navigationBars)
-            .exclude(WindowInsets.ime),
-        modifier = modifier
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -170,7 +158,6 @@ fun HomeScreenPreviewLight() {
     AndroChatTheme {
         HomeScreen(
             state = HomeScreenState(),
-            modifier = Modifier,
             intentReducer = {},
         )
     }
@@ -181,7 +168,6 @@ fun HomeScreenPreviewLight() {
 fun HomeScreenPreviewDark() {
     AndroChatTheme(isDarkTheme = true) {
         HomeScreen(
-            modifier = Modifier,
             state = HomeScreenState(),
             intentReducer = {},
         )

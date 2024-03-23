@@ -79,6 +79,7 @@ class LoginViewModel @Inject constructor(private val validator: FieldValidator )
             )
         }
         viewModelScope.launch {
+
             emitNavigation(LoginNavigation.ToHome)
         }
     }

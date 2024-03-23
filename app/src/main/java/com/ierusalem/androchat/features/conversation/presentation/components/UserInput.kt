@@ -155,7 +155,10 @@ fun UserInput(
     // Used to decide if the keyboard should be shown
     var textFieldFocusState by remember { mutableStateOf(false) }
 
-    Surface(tonalElevation = 2.dp, contentColor = MaterialTheme.colorScheme.secondary) {
+    Surface(
+        tonalElevation = 2.dp,
+        contentColor = MaterialTheme.colorScheme.secondary
+    ) {
         Column(modifier = modifier) {
             UserInputText(
                 textFieldValue = textState,

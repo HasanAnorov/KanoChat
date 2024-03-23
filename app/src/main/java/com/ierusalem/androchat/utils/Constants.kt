@@ -6,6 +6,8 @@ object Constants {
     const val TOKEN_KEY = "employee_management_pre_key"
     const val REFRESH_TOKEN_KEY = "employee_management_pre_refresh_key"
 
+    const val USERNAME_REGISTER_TO_HOME ="username_register_to_home"
+
     const val MINIMUM_LOGIN_LENGTH = 3
     const val MAX_BADGE_COUNT = 99
 }

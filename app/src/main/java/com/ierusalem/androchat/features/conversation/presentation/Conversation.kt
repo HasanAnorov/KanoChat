@@ -120,33 +120,35 @@ fun ConversationContent(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
         Column(
-            Modifier
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)) {
-            Messages(
-                messages = uiState.messages,
-                navigateToProfile = navigateToProfile,
-                modifier = Modifier.weight(1f),
-                scrollState = scrollState
-            )
-            UserInput(
-                onMessageSent = { content ->
-                    uiState.addMessage(
-                        Message(authorMe, content, timeNow)
-                    )
-                },
-                resetScroll = {
-                    scope.launch {
-                        scrollState.scrollToItem(0)
-                    }
-                },
-                // let this element handle the padding so that the elevation is shown behind the
-                // navigation bar
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .imePadding()
-            )
-        }
+                .padding(paddingValues),
+            content = {
+                Messages(
+                    messages = uiState.messages,
+                    navigateToProfile = navigateToProfile,
+                    modifier = Modifier.weight(1f),
+                    scrollState = scrollState
+                )
+                UserInput(
+                    // let this element handle the padding so that the elevation is shown behind the
+                    // navigation bar
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        .imePadding(),
+                    onMessageSent = { content ->
+                        uiState.addMessage(
+                            Message(authorMe, content, timeNow)
+                        )
+                    },
+                    resetScroll = {
+                        scope.launch {
+                            scrollState.scrollToItem(0)
+                        }
+                    },
+                )
+            }
+        )
     }
 }
 
@@ -219,7 +221,6 @@ fun Messages(
 ) {
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
-
         val authorMe = stringResource(id = R.string.author_me)
         LazyColumn(
             reverseLayout = true,

@@ -37,8 +37,7 @@ class ConversationViewModel @Inject constructor(
         getAllMessages()
         savedStateHandle.get<String>("username")?.let { username ->
             viewModelScope.launch {
-                val result = chatSocketService.initSession(username)
-                when (result) {
+                when (val result = chatSocketService.initSession(username)) {
                     is Resource.Loading -> {
                         Log.d("ahi3646", "loading: ")
                     }

@@ -79,7 +79,7 @@ class RegistrationViewModel @Inject constructor(
 
             is RegistrationFormEvents.Register -> registerUser()
 
-            RegistrationFormEvents.ToLogin -> {
+            is RegistrationFormEvents.ToLogin -> {
                 emitNavigation(RegistrationNavigation.ToLogin)
             }
         }
@@ -126,7 +126,7 @@ class RegistrationViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            emitNavigation(RegistrationNavigation.ToHome)
+            emitNavigation(RegistrationNavigation.ToHome(state.value.username))
         }
     }
 }

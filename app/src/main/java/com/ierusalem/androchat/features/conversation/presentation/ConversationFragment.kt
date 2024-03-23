@@ -9,10 +9,13 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.findNavController
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.data.exampleUiState
+import com.ierusalem.androchat.features.conversation.domain.ConversationViewModel
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * ConversationFragment
@@ -20,19 +23,10 @@ import com.ierusalem.androchat.ui.theme.AndroChatTheme
  * @author A.H.I "andro" on 7/03/2024
  */
 
+@AndroidEntryPoint
 class ConversationFragment : Fragment() {
 
-//    private val viewModel: ConversationViewModel = ConversationViewModel()
-
-//    override fun onAttach(context: Context) {
-//        super.onAttach(context)
-//        viewModel.connectToChat()
-//    }
-//
-//    override fun onDetach() {
-//        super.onDetach()
-//        viewModel.disconnect()
-//    }
+    private val viewModel: ConversationViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -52,10 +46,20 @@ class ConversationFragment : Fragment() {
                             bundle
                         )
                     },
-                    onNavIconPressed = {
-                    }
+                    onNavIconPressed = { findNavController().popBackStack() }
                 )
             }
         }
     }
+
+    override fun onStart() {
+        super.onStart()
+        viewModel.connectToChat()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.disconnect()
+    }
+
 }
