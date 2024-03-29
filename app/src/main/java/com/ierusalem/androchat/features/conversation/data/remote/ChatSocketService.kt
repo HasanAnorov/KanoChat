@@ -17,12 +17,10 @@ interface ChatSocketService {
     suspend fun closeSession()
 
     companion object{
-        //todo setup right by ipconfig
         const val BASE_URL = "ws://10.0.2.2:8080"
     }
 
     sealed class Endpoints(val url: String){
-        //todo check url compatibility with server url
         data object ChatSocket: Endpoints(url = "$BASE_URL/chat-socket")
     }
 }

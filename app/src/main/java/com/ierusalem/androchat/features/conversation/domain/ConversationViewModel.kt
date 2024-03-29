@@ -1,8 +1,6 @@
 package com.ierusalem.androchat.features.conversation.domain
 
 import android.util.Log
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -30,42 +28,76 @@ class ConversationViewModel @Inject constructor(
     )
     val state = _state.asStateFlow()
 
-    private val _messageText = mutableStateOf("")
-    val messageText: State<String> = _messageText
+    fun handleIntents(event: ConversationEvents) {
+        when (event) {
+            is ConversationEvents.SendMessage -> {
+                Log.d("ahi3646", "handleIntents: send message ${event.message} ")
+                sendMessage(event.message)
+            }
 
-    fun connectToChat() {
+            ConversationEvents.NavigateToProfile -> {}
+            ConversationEvents.NavIconClick -> {}
+        }
+    }
+
+    fun connectToChat(username: String) {
+        Log.d("ahi3646", "handleIntents: send message ${savedStateHandle.get<String>("username")} ")
         getAllMessages()
-        savedStateHandle.get<String>("username")?.let { username ->
-            viewModelScope.launch {
-                when (val result = chatSocketService.initSession(username)) {
-                    is Resource.Loading -> {
-                        Log.d("ahi3646", "loading: ")
-                    }
+        viewModelScope.launch {
+            when (val result = chatSocketService.initSession(username)) {
+                is Resource.Loading -> {
+                    Log.d("ahi3646", "loading: ")
+                }
 
-                    is Resource.Success -> {
-                        chatSocketService.observerMessages()
-                            .onEach { message ->
-                                val newList = state.value.messages.toMutableList().apply {
-                                    add(0, message)
-                                }
-                                _state.value = state.value.copy(
-                                    messages = newList
-                                )
-                            }.launchIn(viewModelScope)
-                    }
+                is Resource.Success -> {
+                    chatSocketService.observerMessages()
+                        .onEach { message ->
+                            val newList = state.value.messages.toMutableList().apply {
+                                add(0, message)
+                            }
+                            _state.value = state.value.copy(
+                                messages = newList
+                            )
+                        }.launchIn(viewModelScope)
+                }
 
-                    is Resource.Failure -> {
-                        //user emit navigation here
-                        Log.d("ahi3646", "error: ${result.errorMessage ?: "Unknown error"}")
-                    }
+                is Resource.Failure -> {
+                    //user emit navigation here
+                    Log.d("ahi3646", "error: ${result.errorMessage ?: "Unknown error"}")
                 }
             }
         }
     }
 
-    fun onMessageChange(message: String) {
-        _messageText.value = message
-    }
+//    fun connectToChat() {
+//        getAllMessages()
+//        savedStateHandle.get<String>("username")?.let { username ->
+//            viewModelScope.launch {
+//                when (val result = chatSocketService.initSession(username)) {
+//                    is Resource.Loading -> {
+//                        Log.d("ahi3646", "loading: ")
+//                    }
+//
+//                    is Resource.Success -> {
+//                        chatSocketService.observerMessages()
+//                            .onEach { message ->
+//                                val newList = state.value.messages.toMutableList().apply {
+//                                    add(0, message)
+//                                }
+//                                _state.value = state.value.copy(
+//                                    messages = newList
+//                                )
+//                            }.launchIn(viewModelScope)
+//                    }
+//
+//                    is Resource.Failure -> {
+//                        //user emit navigation here
+//                        Log.d("ahi3646", "error: ${result.errorMessage ?: "Unknown error"}")
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     fun disconnect() {
         viewModelScope.launch {
@@ -78,7 +110,7 @@ class ConversationViewModel @Inject constructor(
         disconnect()
     }
 
-    fun getAllMessages() {
+    private fun getAllMessages() {
         viewModelScope.launch {
             _state.value = state.value.copy(isLoading = true)
             val result = messageService.getAllMessages()
@@ -89,11 +121,9 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    fun sendMessage() {
+    private fun sendMessage(message: String) {
         viewModelScope.launch {
-            if (messageText.value.isNotBlank()) {
-                chatSocketService.sendMessage(messageText.value)
-            }
+            chatSocketService.sendMessage(message)
         }
     }
 

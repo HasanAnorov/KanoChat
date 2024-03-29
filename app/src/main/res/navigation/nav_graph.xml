@@ -61,9 +61,22 @@
             app:popUpTo="@id/homeFragment"
             app:destination="@id/homeFragment" />
 
-        <argument
-            android:name="username_register_to_home"
-            app:argType="string" />
+<!--        <argument-->
+<!--            android:name="username_register_to_home"-->
+<!--            app:argType="string" />-->
+        <action
+            android:id="@+id/action_registrationFragment_to_conversationFragment"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in"
+            app:popExitAnim="@anim/slide_out"
+            app:popUpToInclusive="true"
+            app:popUpTo="@id/registrationFragment"
+            app:destination="@id/conversationFragment" />
+
+<!--        <argument-->
+<!--            android:name="username_register_to_home"-->
+<!--            app:argType="string" />-->
 
     </fragment>
 
@@ -91,6 +104,15 @@
             app:popUpToInclusive="true"
             app:popUpTo="@id/homeFragment"
             app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_conversationFragment"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in"
+            app:popExitAnim="@anim/slide_out"
+            app:popUpToInclusive="true"
+            app:popUpTo="@id/conversationFragment"
+            app:destination="@id/conversationFragment" />
 
     </fragment>
 

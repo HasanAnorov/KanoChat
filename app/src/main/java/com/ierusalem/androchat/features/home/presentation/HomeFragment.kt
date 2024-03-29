@@ -61,17 +61,7 @@ class HomeFragment : Fragment() {
                 AndroChatTheme {
                     AndroChatDrawer(
                         drawerState = drawerState,
-                        onChatClicked = {
-//                            val bundle = bundleOf("userId" to it)
-//                            findNavController().navigate(R.id.profileFragment, bundle)
-//                            scope.launch {
-//                                drawerState.close()
-//                            }
-//                            findNavController().popBackStack(R.id.conversationFragment, false)
-//                            scope.launch {
-//                                drawerState.close()
-//                            }
-                        },
+                        onChatClicked = {  },
                         content = {
                             HomeScreen(
                                 state = state,

@@ -1,7 +1,6 @@
 package com.ierusalem.androchat.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.shape.CircleShape
@@ -30,13 +28,10 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
-import com.skydoves.landscapist.ImageOptions
-import com.skydoves.landscapist.glide.GlideImage
 
 /**
  * AndroChatDrawerContent
@@ -76,21 +71,21 @@ private fun DrawerHeader() {
             .background(color = MaterialTheme.colorScheme.background)
             .padding(all = 12.dp)
     ) {
-        GlideImage(
-            imageModel = { "your_image_url" },
-            modifier = Modifier
-                .size(64.dp)
-                .clip(CircleShape)
-                .border(
-                    width = 2.dp,
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = CircleShape
-                ),
-            imageOptions = ImageOptions(
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-            )
-        )
+//        GlideImage(
+//            imageModel = { "your_image_url" },
+//            modifier = Modifier
+//                .size(64.dp)
+//                .clip(CircleShape)
+//                .border(
+//                    width = 2.dp,
+//                    color = MaterialTheme.colorScheme.primary,
+//                    shape = CircleShape
+//                ),
+//            imageOptions = ImageOptions(
+//                contentDescription = null,
+//                contentScale = ContentScale.Crop,
+//            )
+//        )
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.Start,

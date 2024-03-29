@@ -54,7 +54,7 @@ class RegistrationFragment : Fragment() {
             is RegistrationNavigation.ToHome -> {
                 val bundle = bundleOf(Constants.USERNAME_REGISTER_TO_HOME to navigation.username)
                 findNavController().navigate(
-                    R.id.action_registrationFragment_to_homeFragment,
+                    R.id.action_registrationFragment_to_conversationFragment,
                     bundle
                 )
             }

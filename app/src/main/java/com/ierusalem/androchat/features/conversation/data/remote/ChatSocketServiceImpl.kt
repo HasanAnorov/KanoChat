@@ -1,5 +1,6 @@
 package com.ierusalem.androchat.features.conversation.data.remote
 
+import android.util.Log
 import com.ierusalem.androchat.features.auth.register.data.remote.dto.MessageDto
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.utils.Resource
@@ -45,6 +46,7 @@ class ChatSocketServiceImpl(
         try {
             socket?.send(Frame.Text(message))
         }catch (e:Exception){
+            Log.d("ahi3646_catch", "sendMessage: ${e.localizedMessage} ")
             e.printStackTrace()
         }
     }
