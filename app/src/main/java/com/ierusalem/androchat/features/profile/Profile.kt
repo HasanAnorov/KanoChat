@@ -47,8 +47,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.data.colleagueProfile
-import com.ierusalem.androchat.data.meProfile
+import com.ierusalem.androchat.core.data.colleagueProfile
+import com.ierusalem.androchat.core.data.meProfile
 import com.ierusalem.androchat.ui.components.AnimatingFabContent
 import com.ierusalem.androchat.ui.components.FunctionalityNotAvailablePopup
 import com.ierusalem.androchat.ui.components.baselineHeight

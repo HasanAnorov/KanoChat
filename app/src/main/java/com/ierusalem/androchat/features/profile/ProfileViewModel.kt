@@ -21,8 +21,8 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.ierusalem.androchat.data.colleagueProfile
-import com.ierusalem.androchat.data.meProfile
+import com.ierusalem.androchat.core.data.colleagueProfile
+import com.ierusalem.androchat.core.data.meProfile
 
 class ProfileViewModel : ViewModel() {
 

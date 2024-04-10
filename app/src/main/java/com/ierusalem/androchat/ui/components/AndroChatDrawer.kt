@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,10 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.ierusalem.androchat.R
+import com.ierusalem.androchat.features.home.presentation.HomeScreenClickIntents
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 /**
@@ -41,8 +41,7 @@ import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 @Composable
 fun AndroChatDrawerContent(
-    onChatClicked: (String) ->
-    Unit
+    onDrawerItemClick: (HomeScreenClickIntents) -> Unit
 ) {
     // Use windowInsetsTopHeight() to add a spacer which pushes the drawer content
     // below the status bar (y-axis)
@@ -55,9 +54,21 @@ fun AndroChatDrawerContent(
         DrawerHeader()
         DividerItem()
         Spacer(modifier = Modifier.height(2.dp))
-        ChatItem("Profile", Icons.Default.Person) { onChatClicked("droidcon-nyc") }
-        //ChatItem("Requests", R.drawable.user_request) { onChatClicked("droidcon-nyc") }
-        ChatItem("Settings", Icons.Default.Settings) { onChatClicked("composers") }
+        ChatItem(
+            text = "Settings",
+            image = painterResource(id = R.drawable.settings_sharp),
+            onChatClicked = { onDrawerItemClick(HomeScreenClickIntents.DrawerSettingClick) }
+        )
+        ChatItem(
+            text = "Requests",
+            image = painterResource(id = R.drawable.user_exclamation),
+            onChatClicked = { onDrawerItemClick(HomeScreenClickIntents.DrawerSettingClick) }
+        )
+        ChatItem(
+            text = "Invite Friends",
+            image = painterResource(id = R.drawable.users),
+            onChatClicked = { onDrawerItemClick(HomeScreenClickIntents.DrawerSettingClick) }
+        )
     }
 }
 
@@ -116,7 +127,7 @@ private fun DrawerHeader() {
 @Composable
 private fun ChatItem(
     text: String,
-    icon: ImageVector?,
+    image: Painter,
     onChatClicked: () -> Unit
 ) {
     Row(
@@ -128,14 +139,12 @@ private fun ChatItem(
             .clickable(onClick = onChatClicked),
         verticalAlignment = CenterVertically
     ) {
-        icon?.let {
-            Icon(
-                imageVector = icon,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
-                contentDescription = null
-            )
-        }
+        Icon(
+            painter = image,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
+            contentDescription = null
+        )
         Text(
             text = text,
             style = MaterialTheme.typography.titleMedium,

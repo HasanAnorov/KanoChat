@@ -43,7 +43,7 @@ fun AnimatedShimmer() {
         targetValue = 1000f,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = 2000,
+                durationMillis = 1000,
                 easing = FastOutSlowInEasing
             ),
             repeatMode = RepeatMode.Restart

@@ -12,17 +12,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.findNavController
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.features.home.domain.HomeViewModel
 import com.ierusalem.androchat.ui.components.AndroChatDrawer
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.utils.executeWithLifecycle
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class HomeFragment : Fragment() {
 
-    private val viewModel: HomeViewModel = HomeViewModel()
+    private val viewModel: HomeViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,6 +35,7 @@ class HomeFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
+
                 val state by viewModel.state.collectAsStateWithLifecycle()
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val drawerOpen by viewModel.drawerShouldBeOpened
@@ -61,7 +66,9 @@ class HomeFragment : Fragment() {
                 AndroChatTheme {
                     AndroChatDrawer(
                         drawerState = drawerState,
-                        onChatClicked = {  },
+                        onDrawerItemClick = {
+                            viewModel.handleClickIntents(it)
+                        },
                         content = {
                             HomeScreen(
                                 state = state,
@@ -86,7 +93,13 @@ class HomeFragment : Fragment() {
 
     private fun executeNavigation(navigation: HomeScreenNavigation) {
         when (navigation) {
-            HomeScreenNavigation.NavigateToPrivate -> {}
+            HomeScreenNavigation.NavigateToPrivate -> {
+
+            }
+            HomeScreenNavigation.NavigateToSettings -> {
+                findNavController().navigate(R.id.action_homeFragment_to_settingsFragment)
+            }
+
             HomeScreenNavigation.NavigateToGroup -> {
                 findNavController().navigate(R.id.action_homeFragment_to_conversationFragment)
             }

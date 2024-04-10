@@ -36,7 +36,6 @@ fun ErrorScreen(
     }
 }
 
-
 @Composable
 fun NetworkError(onRetryClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(

@@ -8,6 +8,8 @@ object Constants {
 
     const val USERNAME_REGISTER_TO_HOME ="username_register_to_home"
 
+    const val APP_THEME_KEY ="app_theme_key"
+
     const val MINIMUM_LOGIN_LENGTH = 3
     const val MAX_BADGE_COUNT = 99
 }

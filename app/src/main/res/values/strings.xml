@@ -58,5 +58,6 @@
     <string name="login">Login</string>
     <string name="log_in_to_continue">Log in to continue</string>
     <string name="welcome_back">Welcome \nBack</string>
+    <string name="settings">Settings</string>
 
 </resources>

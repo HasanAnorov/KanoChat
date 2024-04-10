@@ -30,6 +30,8 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import com.ierusalem.androchat.app.AppTheme
+import com.ierusalem.androchat.features.home.domain.HomeScreenState
 import com.ierusalem.androchat.features.home.presentation.all.AllChatsScreen
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreen
 import com.ierusalem.androchat.features.home.presentation.contacts.ErrorType
@@ -157,7 +159,7 @@ fun HomeScreen(
 fun HomeScreenPreviewLight() {
     AndroChatTheme {
         HomeScreen(
-            state = HomeScreenState(),
+            state = HomeScreenState(appTheme = AppTheme.Light),
             intentReducer = {},
         )
     }
@@ -168,7 +170,7 @@ fun HomeScreenPreviewLight() {
 fun HomeScreenPreviewDark() {
     AndroChatTheme(isDarkTheme = true) {
         HomeScreen(
-            state = HomeScreenState(),
+            state = HomeScreenState(appTheme = AppTheme.Dark),
             intentReducer = {},
         )
     }

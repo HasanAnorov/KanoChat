@@ -92,6 +92,21 @@ fun AndroChatTheme(
         isDarkTheme -> AndroChatDarkColorScheme
         else -> AndroChatLightColorScheme
     }
+//    val colorScheme = when (appTheme) {
+//        AppTheme.Default -> {
+//            if (isDarkTheme) {
+//                AndroChatDarkColorScheme
+//            } else {
+//                AndroChatLightColorScheme
+//            }
+//        }
+//        AppTheme.Light -> {
+//            AndroChatLightColorScheme
+//        }
+//        AppTheme.Dark -> {
+//            AndroChatDarkColorScheme
+//        }
+//    }
 
     MaterialTheme(
         colorScheme = colorScheme,

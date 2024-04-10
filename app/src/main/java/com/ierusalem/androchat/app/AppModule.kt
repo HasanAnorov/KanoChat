@@ -1,10 +1,12 @@
 package com.ierusalem.androchat.app
 
+import android.app.Application
 import com.ierusalem.androchat.features.auth.register.data.remote.MessageService
 import com.ierusalem.androchat.features.auth.register.data.remote.MessageServiceImpl
 import com.ierusalem.androchat.features.conversation.data.remote.ChatSocketService
 import com.ierusalem.androchat.features.conversation.data.remote.ChatSocketServiceImpl
 import com.ierusalem.androchat.utils.FieldValidator
+import com.ierusalem.androchat.utils.PreferenceHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -48,5 +50,11 @@ object AppModule {
     @Provides
     @Singleton
     fun provideFieldValidator(): FieldValidator = FieldValidator()
+
+    @Provides
+    @Singleton
+    fun providePreferenceHelper(application: Application): PreferenceHelper{
+        return PreferenceHelper(context = application)
+    }
 
 }

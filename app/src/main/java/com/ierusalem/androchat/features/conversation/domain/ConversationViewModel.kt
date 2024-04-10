@@ -34,7 +34,6 @@ class ConversationViewModel @Inject constructor(
                 Log.d("ahi3646", "handleIntents: send message ${event.message} ")
                 sendMessage(event.message)
             }
-
             ConversationEvents.NavigateToProfile -> {}
             ConversationEvents.NavIconClick -> {}
         }
@@ -68,36 +67,6 @@ class ConversationViewModel @Inject constructor(
             }
         }
     }
-
-//    fun connectToChat() {
-//        getAllMessages()
-//        savedStateHandle.get<String>("username")?.let { username ->
-//            viewModelScope.launch {
-//                when (val result = chatSocketService.initSession(username)) {
-//                    is Resource.Loading -> {
-//                        Log.d("ahi3646", "loading: ")
-//                    }
-//
-//                    is Resource.Success -> {
-//                        chatSocketService.observerMessages()
-//                            .onEach { message ->
-//                                val newList = state.value.messages.toMutableList().apply {
-//                                    add(0, message)
-//                                }
-//                                _state.value = state.value.copy(
-//                                    messages = newList
-//                                )
-//                            }.launchIn(viewModelScope)
-//                    }
-//
-//                    is Resource.Failure -> {
-//                        //user emit navigation here
-//                        Log.d("ahi3646", "error: ${result.errorMessage ?: "Unknown error"}")
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     fun disconnect() {
         viewModelScope.launch {

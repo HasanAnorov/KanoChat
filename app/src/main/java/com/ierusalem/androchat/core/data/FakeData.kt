@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.ierusalem.androchat.data
+package com.ierusalem.androchat.core.data
 
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.data.EMOJIS.EMOJI_FLAMINGO
-import com.ierusalem.androchat.data.EMOJIS.EMOJI_POINTS
+import com.ierusalem.androchat.core.data.EMOJIS.EMOJI_FLAMINGO
+import com.ierusalem.androchat.core.data.EMOJIS.EMOJI_POINTS
 import com.ierusalem.androchat.features.conversation.presentation.components.ConversationUiState
 import com.ierusalem.androchat.features.conversation.presentation.components.Message
 import com.ierusalem.androchat.features.profile.ProfileScreenState
