@@ -58,6 +58,7 @@ fun SettingsScreen(
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+
         topBar = {
             AndroChatAppBar(
                 modifier = modifier,
