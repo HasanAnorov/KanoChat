@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--@author A.H.I "andro" on 09/03/2024-->
+
+<resources>
+
+    <string name="functionality_not_available">Функционал недоступен!</string>
+    <string name="close">ЗАКРЫВАТЬ</string>
+    <string name="navigation_drawer_open">Открыть панель навигации</string>
+
+    <string name="jumpBottom">Перейти вниз</string>
+    <string name="send">Отправлять</string>
+    <string name="author_me">ты</string>
+    <string name="now">8:30 PM</string>
+    <string name="members">%d члены</string>
+    <string name="textfield_hint">Сообщение здесь</string>
+    <string name="swipe_to_cancel_recording">&#x25C0; Проведите, чтобы отменить</string>
+    <string name="emojis_label">Смайлики</string>
+    <string name="stickers_label">Наклейки</string>
+
+    <string name="message">Сообщение</string>
+    <string name="edit_profile">Редактировать профиль</string>
+    <string name="profile_error">Произошла ошибка при загрузке профиля</string>
+    <string name="display_name">Отображаемое имя</string>
+    <string name="status">Статус</string>
+    <string name="timezone">Часовой пояс</string>
+    <string name="twitter">Твиттер</string>
+
+    <!--Extra-->
+    <string name="today">Сегодня</string>
+
+    <!-- Accessibility descriptions -->
+
+    <string name="emoji_selector_desc">Выбор эмодзи</string>
+    <string name="emoji_selector_bt_desc">Показать выбор эмодзи</string>
+    <string name="dm_desc">Личное сообщение</string>
+    <string name="attach_photo_desc">Прикрепить фото</string>
+    <string name="map_selector_desc">Выбор местоположения</string>
+    <string name="videochat_desc">Начать видеочат</string>
+    <string name="textfield_desc">Ввод текста</string>
+    <string name="not_available">Функционал на данный момент недоступен</string>
+    <string name="attached_image">Прикрепленное изображение</string>
+    <string name="search">Поиск</string>
+    <string name="info">Информация</string>
+    <string name="more_options">Больше вариантов</string>
+    <string name="touch_and_hold_to_record">Нажмите и удерживайте, чтобы записать</string>
+    <string name="record_message">Записать голосовое сообщение</string>
+
+</resources>

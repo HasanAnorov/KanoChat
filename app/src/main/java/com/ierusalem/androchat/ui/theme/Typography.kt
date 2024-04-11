@@ -24,7 +24,13 @@ val provider = GoogleFont.Provider(
 
 val MontserratFont = GoogleFont(name = "Montserrat")
 
+val DMSans = GoogleFont(name = "DM Sans")
+
 val KarlaFont = GoogleFont(name = "Karla")
+
+val DMSansFontFamily = FontFamily(
+    Font(googleFont = DMSans, fontProvider = provider, weight = FontWeight.Bold)
+)
 
 val MontserratFontFamily = FontFamily(
     Font(googleFont = MontserratFont, fontProvider = provider),
@@ -102,7 +108,7 @@ val AndroChatTypography = Typography(
         letterSpacing = 0.15.sp
     ),
     titleSmall = TextStyle(
-        fontFamily = KarlaFontFamily,
+        fontFamily = DMSansFontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 14.sp,
         lineHeight = 20.sp,
@@ -130,15 +136,15 @@ val AndroChatTypography = Typography(
         letterSpacing = 0.4.sp
     ),
     labelLarge = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontFamily = DMSansFontFamily,
+        fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.1.sp
     ),
     labelMedium = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontFamily = DMSansFontFamily,
+        fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp

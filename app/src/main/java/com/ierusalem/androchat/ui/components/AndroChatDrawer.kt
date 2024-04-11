@@ -1,10 +1,8 @@
 package com.ierusalem.androchat.ui.components
 
-import androidx.annotation.DrawableRes
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,9 +10,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.shape.CircleShape
@@ -24,17 +20,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment.Companion.CenterStart
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.ierusalem.androchat.data.colleagueProfile
-import com.ierusalem.androchat.data.meProfile
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.features.home.presentation.HomeScreenClickIntents
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 /**
@@ -45,128 +41,113 @@ import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 @Composable
 fun AndroChatDrawerContent(
-    onProfileClicked: (String) -> Unit,
-    onChatClicked: (String) ->
-    Unit
+    onDrawerItemClick: (HomeScreenClickIntents) -> Unit
 ) {
     // Use windowInsetsTopHeight() to add a spacer which pushes the drawer content
     // below the status bar (y-axis)
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .background(MaterialTheme.colorScheme.background)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
         DrawerHeader()
         DividerItem()
-        DrawerItemHeader("Chats")
-        ChatItem("composers", true) { onChatClicked("composers") }
-        ChatItem("droidcon-nyc", false) { onChatClicked("droidcon-nyc") }
-        DividerItem(modifier = Modifier.padding(horizontal = 28.dp))
-        DrawerItemHeader("Recent Profiles")
-        ProfileItem("Ali Conors (you)", meProfile.photo) { onProfileClicked(meProfile.userId) }
-        ProfileItem("Taylor Brooks", colleagueProfile.photo) {
-            onProfileClicked(colleagueProfile.userId)
-        }
+        Spacer(modifier = Modifier.height(2.dp))
+        ChatItem(
+            text = "Settings",
+            image = painterResource(id = R.drawable.settings_sharp),
+            onChatClicked = { onDrawerItemClick(HomeScreenClickIntents.DrawerSettingClick) }
+        )
+        ChatItem(
+            text = "Requests",
+            image = painterResource(id = R.drawable.user_exclamation),
+            onChatClicked = { onDrawerItemClick(HomeScreenClickIntents.DrawerSettingClick) }
+        )
+        ChatItem(
+            text = "Invite Friends",
+            image = painterResource(id = R.drawable.users),
+            onChatClicked = { onDrawerItemClick(HomeScreenClickIntents.DrawerSettingClick) }
+        )
     }
 }
 
 @Composable
 private fun DrawerHeader() {
-    Row(modifier = Modifier.padding(16.dp), verticalAlignment = CenterVertically) {
-        AndroChatIcon(
-            contentDescription = null,
-            modifier = Modifier.size(24.dp)
-        )
-        Image(
-            painter = painterResource(id = R.drawable.jetchat_logo),
-            contentDescription = null,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-    }
-}
-@Composable
-private fun DrawerItemHeader(text: String) {
-    Box(
+    Row(
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = CenterVertically,
         modifier = Modifier
-            .heightIn(min = 52.dp)
-            .padding(horizontal = 28.dp),
-        contentAlignment = CenterStart
+            .fillMaxWidth()
+            .background(color = MaterialTheme.colorScheme.background)
+            .padding(all = 12.dp)
     ) {
-        Text(
-            text,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+//        GlideImage(
+//            imageModel = { "your_image_url" },
+//            modifier = Modifier
+//                .size(64.dp)
+//                .clip(CircleShape)
+//                .border(
+//                    width = 2.dp,
+//                    color = MaterialTheme.colorScheme.primary,
+//                    shape = CircleShape
+//                ),
+//            imageOptions = ImageOptions(
+//                contentDescription = null,
+//                contentScale = ContentScale.Crop,
+//            )
+//        )
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 12.dp)
+        ) {
+            Text(
+                text = "Hasan Anorov",
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                modifier = Modifier.padding(top = 4.dp),
+                text = "ierusalem",
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
     }
 }
 
+
 @Composable
-private fun ChatItem(text: String, selected: Boolean, onChatClicked: () -> Unit) {
-    val background = if (selected) {
-        Modifier.background(MaterialTheme.colorScheme.primaryContainer)
-    } else {
-        Modifier
-    }
+private fun ChatItem(
+    text: String,
+    image: Painter,
+    onChatClicked: () -> Unit
+) {
     Row(
         modifier = Modifier
             .height(56.dp)
             .fillMaxWidth()
             .padding(horizontal = 12.dp)
             .clip(CircleShape)
-            .then(background)
             .clickable(onClick = onChatClicked),
         verticalAlignment = CenterVertically
     ) {
-        val iconTint = if (selected) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        }
         Icon(
-            painter = painterResource(id = R.drawable.ic_jetchat),
-            tint = iconTint,
+            painter = image,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
             contentDescription = null
         )
         Text(
-            text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (selected) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            },
-            modifier = Modifier.padding(start = 12.dp)
-        )
-    }
-}
-
-@Composable
-private fun ProfileItem(text: String, @DrawableRes profilePic: Int?, onProfileClicked: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .height(56.dp)
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp)
-            .clip(CircleShape)
-            .clickable(onClick = onProfileClicked),
-        verticalAlignment = CenterVertically
-    ) {
-        val paddingSizeModifier = Modifier
-            .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
-            .size(24.dp)
-        if (profilePic != null) {
-            Image(
-                painter = painterResource(id = profilePic),
-                modifier = paddingSizeModifier.then(Modifier.clip(CircleShape)),
-                contentScale = ContentScale.Crop,
-                contentDescription = null
-            )
-        } else {
-            Spacer(modifier = paddingSizeModifier)
-        }
-        Text(
-            text,
-            style = MaterialTheme.typography.bodyMedium,
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(start = 12.dp)
         )
@@ -187,18 +168,19 @@ fun DrawerPreview() {
     AndroChatTheme {
         Surface {
             Column {
-                AndroChatDrawerContent({}, {})
+                AndroChatDrawerContent {}
             }
         }
     }
 }
+
 @Composable
 @Preview
 fun DrawerPreviewDark() {
     AndroChatTheme(isDarkTheme = true) {
         Surface {
             Column {
-                AndroChatDrawerContent({}, {})
+                AndroChatDrawerContent {}
             }
         }
     }

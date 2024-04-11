@@ -1,12 +1,8 @@
 package com.ierusalem.androchat.app
 
 import android.app.Application
+import dagger.hilt.android.HiltAndroidApp
 
-class AndroChatApp: Application() {
 
-    override fun onCreate() {
-        super.onCreate()
-
-    }
-
-}
+@HiltAndroidApp
+class AndroChatApp: Application()

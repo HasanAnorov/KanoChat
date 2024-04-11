@@ -1,0 +1,73 @@
+package com.ierusalem.androchat.features.conversation.presentation
+
+import android.content.Context
+import android.os.Bundle
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ComposeView
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ierusalem.androchat.features.conversation.domain.ConversationViewModel
+import com.ierusalem.androchat.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.utils.Constants
+import dagger.hilt.android.AndroidEntryPoint
+
+/**
+ * ConversationFragment
+ *
+ * @author A.H.I "andro" on 7/03/2024
+ */
+
+@AndroidEntryPoint
+class ConversationFragment : Fragment() {
+
+    private val viewModel: ConversationViewModel by viewModels()
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        arguments?.getString(Constants.USERNAME_REGISTER_TO_HOME)?.let {username ->
+            Log.d("ahi3646", "onAttach: $username ")
+            viewModel.connectToChat(username)
+        }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        viewModel.disconnect()
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View = ComposeView(inflater.context).apply {
+        layoutParams = LayoutParams(MATCH_PARENT, MATCH_PARENT)
+
+        setContent {
+            val state by viewModel.state.collectAsStateWithLifecycle()
+            AndroChatTheme {
+                ConversationContent(
+                    uiState = state,
+                    intentReducer = {event -> viewModel.handleIntents(event)}
+                )
+            }
+        }
+    }
+
+//    override fun onStart() {
+//        super.onStart()
+//        viewModel.connectToChat()
+//    }
+
+//    override fun onStop() {
+//        super.onStop()
+//        viewModel.disconnect()
+//    }
+
+}

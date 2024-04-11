@@ -1,40 +1,15 @@
-<!--
-  ~ Copyright 2020 The Android Open Source Project
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~      http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
+<!--@author A.H.I "andro" on 09/03/2024-->
 
 <resources>
-    <string name="app_name">AndroChat</string>
 
+    <string name="app_name" translatable="false">AndroChat</string>
     <string name="functionality_not_available">Functionality not available!</string>
     <string name="close">CLOSE</string>
-
     <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">Composer</string>
-    <string name="nav_header_subtitle">android.studio@android.com</string>
-    <string name="nav_header_desc">Navigation header</string>
-    <string name="action_settings">Settings</string>
 
-    <string name="menu_home">Home</string>
-    <string name="menu_gallery">Gallery</string>
-    <string name="menu_slideshow">Slideshow</string>
-    <string name="conversations">Conversations</string>
-    <string name="profile">Profile</string>
     <string name="jumpBottom">Jump to bottom</string>
     <string name="send">Send</string>
-    <string name="author_me">me</string>
+    <string name="author_me">you</string>
     <string name="now">8:30 PM</string>
     <string name="members">%d members</string>
     <string name="textfield_hint">Message #composers</string>
@@ -45,13 +20,13 @@
     <string name="message">Message</string>
     <string name="edit_profile">Edit Profile</string>
     <string name="profile_error">There was an error loading the profile</string>
-    <string name="bio">Bio</string>
     <string name="display_name">Display name</string>
     <string name="status">Status</string>
     <string name="timezone">Timezone</string>
     <string name="twitter">Twitter</string>
-    <string name="common_channels">Channels in common</string>
-    <string name="lorem">Lorem or Ipsum</string>
+
+    <!--Extra-->
+    <string name="today">Today</string>
 
     <!-- Accessibility descriptions -->
 
@@ -63,12 +38,26 @@
     <string name="videochat_desc">Start videochat</string>
     <string name="textfield_desc">Text input</string>
     <string name="not_available">Functionality currently not available</string>
-    <string name="not_available_subtitle">Grab a beverage and check back later!</string>
     <string name="attached_image">Attached image</string>
     <string name="search">Search</string>
     <string name="info">Information</string>
     <string name="more_options">More options</string>
     <string name="touch_and_hold_to_record">Touch and hold to record</string>
     <string name="record_message">Record voice message</string>
+    <string name="log_in">Log In</string>
+    <string name="have_an_account">Have an account?</string>
+    <string name="register">Register</string>
+    <string name="password_confirmation">Password Confirmation</string>
+    <string name="password">Password</string>
+    <string name="username">Username</string>
+    <string name="lastname">Lastname</string>
+    <string name="firstname">Firstname</string>
+    <string name="register_to_continue">Register to continue</string>
+    <string name="welcome">Welcome</string>
+    <string name="don_t_have_an_account">Don\'t have an account?</string>
+    <string name="login">Login</string>
+    <string name="log_in_to_continue">Log in to continue</string>
+    <string name="welcome_back">Welcome \nBack</string>
+    <string name="settings">Settings</string>
 
 </resources>
