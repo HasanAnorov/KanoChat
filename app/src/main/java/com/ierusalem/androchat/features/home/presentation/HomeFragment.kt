@@ -67,6 +67,9 @@ class HomeFragment : Fragment() {
                     AndroChatDrawer(
                         drawerState = drawerState,
                         onDrawerItemClick = {
+                            scope.launch {
+                                drawerState.close()
+                            }
                             viewModel.handleClickIntents(it)
                         },
                         content = {
