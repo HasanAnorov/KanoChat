@@ -4,6 +4,7 @@ plugins {
     kotlin("kapt")
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.serialization")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -93,6 +94,15 @@ dependencies {
     //kotlin json serializer
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
 
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
+
+    // TODO: Add the dependencies for Firebase products you want to use
+    // When using the BoM, don't specify versions in Firebase dependencies
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-messaging")
+
+
     // Ktor
     implementation ("io.ktor:ktor-client-core:1.6.3")
     implementation ("io.ktor:ktor-client-cio:1.6.3")
@@ -100,4 +110,10 @@ dependencies {
     implementation ("io.ktor:ktor-client-websockets:1.6.3")
     implementation ("io.ktor:ktor-client-logging:1.6.3")
     implementation ("ch.qos.logback:logback-classic:1.2.6")
+
+    //Retrofit for making HTTP reuqests
+    implementation(libs.retrofit)
+    implementation(libs.converter.moshi)
+
+
 }

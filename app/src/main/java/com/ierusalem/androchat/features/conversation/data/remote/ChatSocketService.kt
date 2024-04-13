@@ -1,8 +1,11 @@
 package com.ierusalem.androchat.features.conversation.data.remote
 
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
+import com.ierusalem.androchat.features.fcm.SendMessageDto
 import com.ierusalem.androchat.utils.Resource
 import kotlinx.coroutines.flow.Flow
+import retrofit2.http.Body
+import retrofit2.http.POST
 
 interface ChatSocketService {
 
@@ -10,7 +13,18 @@ interface ChatSocketService {
         username: String
     ): Resource<Unit>
 
+//    web socket version
     suspend fun sendMessage(message: String)
+
+    @POST("/send")
+    suspend fun sendMessage(
+        @Body body: SendMessageDto
+    )
+
+    @POST("/broadcast")
+    suspend fun broadcast(
+        @Body body: SendMessageDto
+    )
 
     fun observerMessages(): Flow<Message>
 

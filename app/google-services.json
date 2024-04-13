@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "427169470271",
+    "project_id": "androchat-735cc",
+    "storage_bucket": "androchat-735cc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:427169470271:android:ad01c99fb669a34c60258a",
+        "android_client_info": {
+          "package_name": "com.ierusalem.androchat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBiWtlzAqqHLQJRtb8YgIHG9IDc_V4ZFF0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
