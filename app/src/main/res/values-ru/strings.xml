@@ -46,4 +46,20 @@
     <string name="touch_and_hold_to_record">Нажмите и удерживайте, чтобы записать</string>
     <string name="record_message">Записать голосовое сообщение</string>
 
+    <string name="log_in">Войти</string>
+    <string name="have_an_account">Есть учетная запись?</string>
+    <string name="register">Зарегистрироваться</string>
+    <string name="password_confirmation">Подтверждение пароля</string>
+    <string name="password">Пароль</string>
+    <string name="username">Имя пользователя</string>
+    <string name="lastname">Фамилия</string>
+    <string name="firstname">Имя</string>
+    <string name="register_to_continue">Зарегистрируйтесь, чтобы продолжить</string>
+    <string name="welcome">Добро пожаловать</string>
+    <string name="don_t_have_an_account">Нет учетной записи?</string>
+    <string name="login">Войти</string>
+    <string name="log_in_to_continue">Войдите, чтобы продолжить</string>
+    <string name="welcome_back">Добро пожаловать</string>
+    <string name="settings">Настройки</string>
+
 </resources>

@@ -139,7 +139,7 @@ fun HomeScreen(
                     state = pagerState,
                 ) { pageCount ->
                     when (pageCount) {
-                        0 -> AllChatsScreen(state = ContactsScreen.Loading)
+                        0 -> AllChatsScreen(state = HomePreviewData.contactsSuccess)
 
                         1 -> ContactsScreen(
                             state = state.contacts,
@@ -159,7 +159,9 @@ fun HomeScreen(
 fun HomeScreenPreviewLight() {
     AndroChatTheme {
         HomeScreen(
-            state = HomeScreenState(appTheme = AppTheme.Light),
+            state = HomeScreenState(
+                appTheme = AppTheme.Light
+            ),
             intentReducer = {},
         )
     }
@@ -170,7 +172,9 @@ fun HomeScreenPreviewLight() {
 fun HomeScreenPreviewDark() {
     AndroChatTheme(isDarkTheme = true) {
         HomeScreen(
-            state = HomeScreenState(appTheme = AppTheme.Dark),
+            state = HomeScreenState(
+                appTheme = AppTheme.Dark
+            ),
             intentReducer = {},
         )
     }

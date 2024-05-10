@@ -29,7 +29,6 @@
     <string name="today">Today</string>
 
     <!-- Accessibility descriptions -->
-
     <string name="emoji_selector_desc">Emoji selector</string>
     <string name="emoji_selector_bt_desc">Show Emoji selector</string>
     <string name="dm_desc">Direct Message</string>

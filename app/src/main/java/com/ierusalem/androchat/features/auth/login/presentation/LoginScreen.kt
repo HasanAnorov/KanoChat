@@ -142,7 +142,7 @@ fun LoginScreen(
     )
 }
 
-@Preview
+@Preview(locale = "uz")
 @Composable
 fun LoginScreen_Preview_Light() {
     AndroChatTheme {
@@ -153,7 +153,7 @@ fun LoginScreen_Preview_Light() {
     }
 }
 
-@Preview
+@Preview(locale = "ru")
 @Composable
 fun LoginScreen_Preview_Dark() {
     AndroChatTheme(isDarkTheme = true) {

@@ -156,14 +156,14 @@ fun GeneralOptionsUI() {
             style = MaterialTheme.typography.titleMedium,
         )
         Spacer(modifier = Modifier.height(8.dp))
-        GeneralSettingItem(
+        GeneralSettingsItem(
             iconStart = R.drawable.notifications,
             iconEnd = R.drawable.ic_right_arrow,
             mainText = "Notifications",
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
             onClick = {}
         )
-        GeneralSettingItem(
+        GeneralSettingsItem(
             modifier = Modifier.padding(top = 1.dp),
             iconStart = R.drawable.language,
             iconEnd = null,
@@ -171,9 +171,9 @@ fun GeneralOptionsUI() {
             subText = "English",
             onClick = {}
         )
-        GeneralSettingItem(
+        GeneralSettingsItem(
             modifier = Modifier.padding(top = 1.dp),
-            iconStart = R.drawable.theme_light_dark,
+            iconStart = R.drawable.color_palette,
             iconEnd = null,
             mainText = "Theme",
             subText = "System",
@@ -197,14 +197,14 @@ fun SupportOptionsUI() {
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        GeneralSettingItem(
+        GeneralSettingsItem(
             iconStart = R.drawable.ask_question,
             iconEnd = null,
             mainText = "Ask a Question",
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
             onClick = {}
         )
-        GeneralSettingItem(
+        GeneralSettingsItem(
             modifier = Modifier.padding(top = 1.dp),
             iconStart = R.drawable.privacy,
             iconEnd = null,
@@ -216,7 +216,7 @@ fun SupportOptionsUI() {
 }
 
 @Composable
-fun GeneralSettingItem(
+fun GeneralSettingsItem(
     modifier: Modifier = Modifier,
     textModifier: Modifier = Modifier,
     textColor: Color = MaterialTheme.colorScheme.background,
@@ -262,7 +262,7 @@ fun GeneralSettingItem(
                             Icon(
                                 painter = painterResource(id = iconStart),
                                 contentDescription = "",
-                                tint = Color.Unspecified,
+                                tint = MaterialTheme.colorScheme.background,
                             )
                         }
                     }

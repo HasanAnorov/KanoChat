@@ -44,7 +44,6 @@ private val AndroChatDarkColorScheme = darkColorScheme(
     surfaceVariant = BlueGrey30,
     onSurfaceVariant = BlueGrey80,
     outline = BlueGrey60,
-    scrim = badgeColor
 )
 
 private val AndroChatLightColorScheme = lightColorScheme(
@@ -66,7 +65,7 @@ private val AndroChatLightColorScheme = lightColorScheme(
     errorContainer = Red90,
     onErrorContainer = Red10,
     background = Grey99,
-    onBackground = dmSansTitle,
+    onBackground = Grey10,
     surface = Grey99,
     onSurface = Grey10,
     inverseSurface = Grey20,
@@ -74,7 +73,6 @@ private val AndroChatLightColorScheme = lightColorScheme(
     surfaceVariant = BlueGrey90,
     onSurfaceVariant = BlueGrey30,
     outline = BlueGrey50,
-    scrim = badgeColor
 )
 
 @Composable
@@ -85,10 +83,11 @@ fun AndroChatTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        isDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+        //ask bro to implement or not
+//        isDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+//            val context = LocalContext.current
+//            if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+//        }
         isDarkTheme -> AndroChatDarkColorScheme
         else -> AndroChatLightColorScheme
     }

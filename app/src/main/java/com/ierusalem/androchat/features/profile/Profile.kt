@@ -2,6 +2,7 @@ package com.ierusalem.androchat.features.profile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -68,6 +69,7 @@ fun ProfileScreen(
 
     BoxWithConstraints(
         modifier = Modifier
+            .background(MaterialTheme.colorScheme.background)
             .fillMaxSize()
             .nestedScroll(nestedScrollInteropConnection)
             .systemBarsPadding()

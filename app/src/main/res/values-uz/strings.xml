@@ -45,5 +45,21 @@
     <string name="more_options">Ko`proq</string>
     <string name="touch_and_hold_to_record">Yozib olish uchun bosing va ushlab turing</string>
     <string name="record_message">Ovozli xabarni yozib olish</string>
+    <string name="log_in">Tizimga kirish</string>
+    <string name="register">Roʻyxatdan oʻtish</string>
+    <string name="password_confirmation">Parolni tasdiqlash</string>
+    <string name="password">Parol</string>
+    <string name="username">Foydalanuvchi nomi</string>
+    <string name="lastname">Familiya</string>
+    <string name="firstname">Ism</string>
+    <string name="register_to_continue">Davom etish uchun roʻyxatdan oʻting</string>
+    <string name="welcome">Xush \nKelibisiz</string>
+    <string name="don_t_have_an_account">Hisobingiz yo\'qmi?</string>
+    <string name="login">Tizimga kirish</string>
+    <string name="log_in_to_continue">Davom etish uchun tizimga kiring</string>
+    <string name="welcome_back">Xush \nKelibisiz</string>
+    <string name="settings">Sozlamalar</string>
+    <string name="have_an_account">Tizimga kirish</string>
+
 
 </resources>
