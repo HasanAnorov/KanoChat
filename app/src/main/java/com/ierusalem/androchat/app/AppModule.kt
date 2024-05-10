@@ -1,6 +1,8 @@
 package com.ierusalem.androchat.app
 
 import android.app.Application
+import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
+import com.ierusalem.androchat.core.connectivity.NetworkConnectivityObserver
 import com.ierusalem.androchat.features.auth.register.data.remote.MessageService
 import com.ierusalem.androchat.features.auth.register.data.remote.MessageServiceImpl
 import com.ierusalem.androchat.features.conversation.data.remote.ChatSocketService
@@ -22,6 +24,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    @Singleton
+    fun provideConnectivityObserver(application: Application): ConnectivityObserver {
+        return NetworkConnectivityObserver(context = application)
+    }
 
     @Provides
     @Singleton

@@ -1,8 +1,9 @@
 package com.ierusalem.androchat.features.home.presentation
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,17 +19,12 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.app.AppTheme
 import com.ierusalem.androchat.features.home.domain.HomeScreenState
@@ -51,25 +47,25 @@ fun HomeScreen(
         initialPage = state.selectedTabIndex,
         pageCount = { state.tabItems.size }
     )
-    val isUserScrollEnabled = rememberSaveable { mutableStateOf(true) }
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-
-            override fun onPreScroll(
-                available: Offset,
-                source: NestedScrollSource
-            ): Offset {
-                if (available.x <-1) {
-                    isUserScrollEnabled.value = true
-                }
-                if (available.x > 1) {
-                    isUserScrollEnabled.value = false
-                }
-                Log.d("ahi3646", "onPreScroll:  ${available.y}  ${available.x}")
-                return Offset.Zero
-            }
-        }
-    }
+//    val isUserScrollEnabled = rememberSaveable { mutableStateOf(true) }
+//    val nestedScrollConnection = remember {
+//        object : NestedScrollConnection {
+//
+//            override fun onPreScroll(
+//                available: Offset,
+//                source: NestedScrollSource
+//            ): Offset {
+//                if (available.x <-1) {
+//                    isUserScrollEnabled.value = true
+//                }
+//                if (available.x > 1) {
+//                    isUserScrollEnabled.value = false
+//                }
+//                Log.d("ahi3646", "onPreScroll:  ${available.y}  ${available.x}")
+//                return Offset.Zero
+//            }
+//        }
+//    }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
@@ -80,7 +76,21 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             AndroChatAppBar(
-                title = { },
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(start = 8.dp),
+                            text = state.connectivityStatus.asString(),
+                            color = MaterialTheme.colorScheme.onBackground,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontSize = 16.sp
+                        )
+                    }
+                },
                 onNavIconPressed = {
                     intentReducer(HomeScreenClickIntents.NavIconClicked)
                 }
@@ -115,7 +125,6 @@ fun HomeScreen(
                                 ),
                                 onClick = {
                                     scope.launch {
-                                        //intentReducer(HomeScreenClickIntents.TabItemClicked(index))
                                         pagerState.animateScrollToPage(index)
                                     }
                                 },
@@ -132,7 +141,7 @@ fun HomeScreen(
                 )
                 HorizontalPager(
                     modifier = Modifier
-                        .nestedScroll(nestedScrollConnection)
+//                        .nestedScroll(nestedScrollConnection)
                         .fillMaxWidth()
                         .weight(1f),
                     //userScrollEnabled = isUserScrollEnabled.value,
@@ -140,12 +149,10 @@ fun HomeScreen(
                 ) { pageCount ->
                     when (pageCount) {
                         0 -> AllChatsScreen(state = HomePreviewData.contactsSuccess)
-
                         1 -> ContactsScreen(
                             state = state.contacts,
                             intentReducer = intentReducer
                         )
-
                         2 -> GroupScreen(state = ContactsScreen.Error(ErrorType.NetworkError))
                     }
                 }

@@ -25,6 +25,12 @@
     <string name="timezone">Timezone</string>
     <string name="twitter">Twitter</string>
 
+    //app bar title
+    <string name="connected">AndroChat</string>
+    <string name="connectivity_loosing">Loosing Connection</string>
+    <string name="connectivity_lost">Lost Connection</string>
+    <string name="connectivity_unavailable">Unavailable</string>
+
     <!--Extra-->
     <string name="today">Today</string>
 

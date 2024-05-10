@@ -2,7 +2,10 @@ package com.ierusalem.androchat.features.home.domain
 
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.ierusalem.androchat.R
 import com.ierusalem.androchat.app.AppTheme
+import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.features.home.presentation.HomeScreenClickIntents
 import com.ierusalem.androchat.features.home.presentation.HomeScreenNavigation
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreen
@@ -11,15 +14,60 @@ import com.ierusalem.androchat.features.home.presentation.contacts.ErrorType
 import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.emitNavigation
+import com.ierusalem.androchat.utils.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(repo: HomeRepository) : ViewModel(),
+class HomeViewModel @Inject constructor(
+    repo: HomeRepository,
+    connectivityObserver: ConnectivityObserver
+) : ViewModel(),
     NavigationEventDelegate<HomeScreenNavigation> by DefaultNavigationEventDelegate() {
+
+    init {
+        connectivityObserver.observe().onEach { connectivityStatus ->
+            when (connectivityStatus) {
+                ConnectivityObserver.Status.Available -> {
+                    _state.update {
+                        it.copy(
+                            connectivityStatus = UiText.StringResource(R.string.connected)
+                        )
+                    }
+                }
+
+                ConnectivityObserver.Status.Loosing -> {
+                    _state.update {
+                        it.copy(
+                            connectivityStatus = UiText.StringResource(R.string.connectivity_loosing)
+                        )
+                    }
+                }
+
+                ConnectivityObserver.Status.Lost -> {
+                    _state.update {
+                        it.copy(
+                            connectivityStatus = UiText.StringResource(R.string.connectivity_lost)
+                        )
+                    }
+                }
+
+                ConnectivityObserver.Status.Unavailable -> {
+                    _state.update {
+                        it.copy(
+                            connectivityStatus = UiText.StringResource(R.string.connectivity_unavailable)
+                        )
+                    }
+                }
+            }
+        }.launchIn(viewModelScope)
+    }
 
     private val _state: MutableStateFlow<HomeScreenState> = MutableStateFlow(
         HomeScreenState(
@@ -44,6 +92,7 @@ class HomeViewModel @Inject constructor(repo: HomeRepository) : ViewModel(),
             HomeScreenClickIntents.DrawerSettingClick -> {
                 emitNavigation(HomeScreenNavigation.NavigateToSettings)
             }
+
             is HomeScreenClickIntents.TabItemClicked -> {
                 _state.update {
                     it.copy(
@@ -51,7 +100,11 @@ class HomeViewModel @Inject constructor(repo: HomeRepository) : ViewModel(),
                     )
                 }
             }
-            HomeScreenClickIntents.NavIconClicked -> { openDrawer() }
+
+            HomeScreenClickIntents.NavIconClicked -> {
+                openDrawer()
+            }
+
             HomeScreenClickIntents.ListItemClicked -> {
                 emitNavigation(HomeScreenNavigation.NavigateToGroup)
             }
@@ -62,9 +115,17 @@ class HomeViewModel @Inject constructor(repo: HomeRepository) : ViewModel(),
 
 @Immutable
 data class HomeScreenState(
+    //tab row
     val tabItems: List<String> = listOf("All", "Contacts", "Groups"),
     val selectedTabIndex: Int = 0,
+
+    //settings
     val appTheme: AppTheme,
+
+    //app bar
+    val connectivityStatus: UiText = UiText.StringResource(R.string.connectivity_unavailable),
+
+    //horizontal pager
 //    val contacts: ContactsScreen = ContactsScreen.Loading,
 //    val contacts: ContactsScreen = ContactsScreen.Error(ErrorType.InvalidResponse),
     val contacts: ContactsScreen = ContactsScreen.Success(
