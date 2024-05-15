@@ -20,6 +20,11 @@ class SettingsFragment : Fragment() {
 
     private val viewModel: SettingsViewModel by viewModels()
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.initLanguageAndTheme()
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -31,7 +36,7 @@ class SettingsFragment : Fragment() {
                 AndroChatTheme {
                     SettingsScreen(
                         uiState = uiState,
-                        intentReducer = {
+                        eventHandler = {
                             viewModel.handleEvents(it)
                         }
                     )

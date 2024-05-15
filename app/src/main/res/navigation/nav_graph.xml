@@ -74,15 +74,6 @@
             app:popUpTo="@id/homeFragment"
             app:popUpToInclusive="true" />
 
-        <action
-            android:id="@+id/action_registrationFragment_to_conversationFragment"
-            app:destination="@id/conversationFragment"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/fade_out"
-            app:popEnterAnim="@anim/fade_in"
-            app:popExitAnim="@anim/slide_out"
-            app:popUpTo="@id/registrationFragment"
-            app:popUpToInclusive="true" />
         <!--todo think about it later-->
         <!--        <argument-->
         <!--            android:name="username_register_to_home"-->
@@ -113,15 +104,6 @@
             app:popEnterAnim="@anim/fade_in"
             app:popExitAnim="@anim/slide_out"
             app:popUpTo="@id/homeFragment"
-            app:popUpToInclusive="true" />
-        <action
-            android:id="@+id/action_loginFragment_to_conversationFragment"
-            app:destination="@id/conversationFragment"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/fade_out"
-            app:popEnterAnim="@anim/fade_in"
-            app:popExitAnim="@anim/slide_out"
-            app:popUpTo="@id/conversationFragment"
             app:popUpToInclusive="true" />
 
     </fragment>

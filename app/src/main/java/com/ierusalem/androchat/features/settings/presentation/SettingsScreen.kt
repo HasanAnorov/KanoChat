@@ -1,7 +1,6 @@
 package com.ierusalem.androchat.features.settings.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,14 +42,17 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features.settings.domain.SettingsState
 import com.ierusalem.androchat.ui.components.AndroChatAppBar
+import com.ierusalem.androchat.ui.components.LanguageDialog
+import com.ierusalem.androchat.ui.components.ThemeSwitcher
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.utils.UiText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     uiState: SettingsState,
-    intentReducer: (SettingsScreenEvents) -> Unit,
+    eventHandler: (SettingsScreenEvents) -> Unit,
 ) {
     val topBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topBarState)
@@ -62,26 +63,14 @@ fun SettingsScreen(
             AndroChatAppBar(
                 modifier = modifier,
                 scrollBehavior = scrollBehavior,
-                onNavIconPressed = { intentReducer(SettingsScreenEvents.NavIconClick) },
+                onNavIconPressed = { eventHandler(SettingsScreenEvents.NavIconClick) },
                 title = {
                     Text(
                         text = stringResource(R.string.settings),
                         style = MaterialTheme.typography.titleMedium
                     )
                 },
-                navIcon = Icons.AutoMirrored.Filled.ArrowBack,
-                actions = {
-                    // Info icon
-                    Icon(
-                        imageVector = Icons.Outlined.MoreVert,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .clickable(onClick = { })
-                            .padding(horizontal = 12.dp, vertical = 16.dp)
-                            .height(24.dp),
-                        contentDescription = stringResource(id = R.string.info)
-                    )
-                }
+                navIcon = Icons.AutoMirrored.Filled.ArrowBack
             )
         },
         // Exclude ime and navigation bar padding so this can be added by the UserInput composable
@@ -90,13 +79,27 @@ fun SettingsScreen(
             .exclude(WindowInsets.navigationBars)
             .exclude(WindowInsets.ime)
     ) { paddingValues ->
+        if (uiState.languageDialogVisibility) {
+            LanguageDialog(
+                onDismissDialog = {
+                    eventHandler(SettingsScreenEvents.OnDismissLanguageDialog)
+                },
+                languages = uiState.languagesList,
+                onLanguageSelected = {
+                    eventHandler(SettingsScreenEvents.OnLanguageChange(it))
+                },
+                selectedLanguage = uiState.selectedLanguage
+            )
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
             content = {
-                GeneralOptionsUI()
-                SupportOptionsUI()
+                GeneralOptionsUI(
+                    eventHandler = eventHandler,
+                    uiState = uiState
+                )
                 LogoutUi()
             }
         )
@@ -114,7 +117,7 @@ fun LogoutUi() {
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary
+            containerColor = MaterialTheme.colorScheme.surfaceDim
         ),
         content = {
             Row(
@@ -130,85 +133,56 @@ fun LogoutUi() {
                 Text(
                     modifier = Modifier.padding(vertical = 8.dp),
                     color = MaterialTheme.colorScheme.error,
-                    text = "Logout",
+                    text = stringResource(R.string.logout),
                     style = MaterialTheme.typography.titleMedium
                 )
-                    Icon(
-                        painter = painterResource(id = R.drawable.log_out),
-                        contentDescription = "",
-                        tint = MaterialTheme.colorScheme.error
-                    )
+                Icon(
+                    painter = painterResource(id = R.drawable.log_out),
+                    contentDescription = "",
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     )
 }
 
 @Composable
-fun GeneralOptionsUI() {
+fun GeneralOptionsUI(eventHandler: (SettingsScreenEvents) -> Unit, uiState: SettingsState) {
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(top = 10.dp)
     ) {
         Text(
-            text = "General",
+            text = stringResource(R.string.general),
             color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.titleMedium,
         )
         Spacer(modifier = Modifier.height(8.dp))
-        GeneralSettingsItem(
-            iconStart = R.drawable.notifications,
-            iconEnd = R.drawable.ic_right_arrow,
-            mainText = "Notifications",
-            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-            onClick = {}
-        )
         GeneralSettingsItem(
             modifier = Modifier.padding(top = 1.dp),
             iconStart = R.drawable.language,
             iconEnd = null,
-            mainText = "Language",
-            subText = "English",
-            onClick = {}
+            mainText = stringResource(R.string.language),
+            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            subText = uiState.selectedLanguage.languageRes,
+            onClick = {
+                eventHandler(SettingsScreenEvents.LanguageCLick)
+            }
         )
-        GeneralSettingsItem(
+        GeneralSettingsItemX(
             modifier = Modifier.padding(top = 1.dp),
             iconStart = R.drawable.color_palette,
-            iconEnd = null,
-            mainText = "Theme",
-            subText = "System",
-            shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp),
-            onClick = {}
-        )
-    }
-}
-
-@Composable
-fun SupportOptionsUI() {
-    Column(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(top = 10.dp)
-    ) {
-        Text(
-            text = "Support",
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        GeneralSettingsItem(
-            iconStart = R.drawable.ask_question,
-            iconEnd = null,
-            mainText = "Ask a Question",
-            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-            onClick = {}
+            mainText = stringResource(R.string.app_theme),
+            onClick = {
+                eventHandler(SettingsScreenEvents.OnThemeChange)
+            },
+            isSystemInDarkMode = uiState.appTheme
         )
         GeneralSettingsItem(
             modifier = Modifier.padding(top = 1.dp),
-            iconStart = R.drawable.privacy,
-            iconEnd = null,
-            mainText = "Privacy Policy",
+            iconStart = R.drawable.add_person,
+            mainText = stringResource(R.string.invite_a_friend),
             shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp),
             onClick = {}
         )
@@ -219,12 +193,12 @@ fun SupportOptionsUI() {
 fun GeneralSettingsItem(
     modifier: Modifier = Modifier,
     textModifier: Modifier = Modifier,
-    textColor: Color = MaterialTheme.colorScheme.background,
+    textColor: Color = MaterialTheme.colorScheme.onBackground,
     shape: RoundedCornerShape = RoundedCornerShape(0.dp),
     iconStart: Int? = null,
     iconEnd: Int? = null,
     mainText: String,
-    subText: String? = null,
+    subText: UiText? = null,
     onClick: () -> Unit
 ) {
     Card(
@@ -233,7 +207,7 @@ fun GeneralSettingsItem(
         shape = shape,
         elevation = CardDefaults.cardElevation(0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         content = {
             Row(
@@ -257,17 +231,19 @@ fun GeneralSettingsItem(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(shape = ShapeDefaults.Medium)
-                                .background(color = MaterialTheme.colorScheme.primary)
+                                .background(color = MaterialTheme.colorScheme.background.copy(0.6F))
                         ) {
                             Icon(
                                 painter = painterResource(id = iconStart),
                                 contentDescription = "",
-                                tint = MaterialTheme.colorScheme.background,
+                                tint = MaterialTheme.colorScheme.onBackground,
                             )
                         }
                     }
                     Row(
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = Modifier.padding(start = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
                     ) {
                         Text(
                             modifier = textModifier.weight(1F),
@@ -277,8 +253,8 @@ fun GeneralSettingsItem(
                         )
                         subText?.let {
                             Text(
-                                text = subText,
-                                color = Color.Blue,
+                                text = subText.asString(),
+                                color = MaterialTheme.colorScheme.primary.copy(0.8F),
                                 style = MaterialTheme.typography.titleMedium,
                             )
                         }
@@ -287,9 +263,83 @@ fun GeneralSettingsItem(
                 iconEnd?.let {
                     Icon(
                         painter = painterResource(id = iconEnd),
-                        contentDescription = "",
+                        contentDescription = null,
                         modifier = Modifier.size(16.dp)
                     )
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun GeneralSettingsItemX(
+    modifier: Modifier = Modifier,
+    textModifier: Modifier = Modifier,
+    textColor: Color = MaterialTheme.colorScheme.onBackground,
+    shape: RoundedCornerShape = RoundedCornerShape(0.dp),
+    iconStart: Int? = null,
+    mainText: String,
+    isSystemInDarkMode: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick,
+        shape = shape,
+        elevation = CardDefaults.cardElevation(0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        content = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        vertical = 10.dp,
+                        horizontal = 14.dp
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.weight(1F),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    iconStart?.let {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(shape = ShapeDefaults.Medium)
+                                .background(color = MaterialTheme.colorScheme.background.copy(0.6F))
+                        ) {
+                            Icon(
+                                painter = painterResource(id = iconStart),
+                                contentDescription = "",
+                                tint = MaterialTheme.colorScheme.onBackground,
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.padding(start = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        Text(
+                            modifier = textModifier.weight(1F),
+                            color = textColor,
+                            text = mainText,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        ThemeSwitcher(
+                            darkTheme = isSystemInDarkMode,
+                            size = 32.dp,
+                            padding = 5.dp,
+                            onClick = { onClick() }
+                        )
+                    }
                 }
             }
         }
@@ -303,7 +353,7 @@ private fun SettingsScreenPreviewLight() {
         SettingsScreen(
             modifier = Modifier,
             uiState = SettingsState(),
-            intentReducer = {}
+            eventHandler = {}
         )
     }
 }
@@ -315,7 +365,7 @@ private fun SettingsScreenPreviewDark() {
         SettingsScreen(
             modifier = Modifier,
             uiState = SettingsState(),
-            intentReducer = {}
+            eventHandler = {}
         )
     }
 }

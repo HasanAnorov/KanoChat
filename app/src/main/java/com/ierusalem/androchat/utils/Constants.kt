@@ -1,15 +1,36 @@
 package com.ierusalem.androchat.utils
 
+import com.ierusalem.androchat.app.AppLanguage
+
 object Constants {
 
-    const val SHARED_PREF = "employee_management_pref"
-    const val TOKEN_KEY = "employee_management_pre_key"
-    const val REFRESH_TOKEN_KEY = "employee_management_pre_refresh_key"
+    const val DATA_STORE_NAME = "AppDataStore"
+    const val PREFERENCE_LANGUAGE = "device_language"
+    const val PREFERENCE_THEME = "device_theme"
 
-    const val USERNAME_REGISTER_TO_HOME ="username_register_to_home"
-
-    const val APP_THEME_KEY ="app_theme_key"
-
+    const val USERNAME_REGISTER_TO_HOME = "username_register_to_home"
     const val MINIMUM_LOGIN_LENGTH = 3
     const val MAX_BADGE_COUNT = 99
+
+    private const val ENGLISH_LOCALE = "en"
+    private const val RUSSIAN_LOCALE = "ru"
+
+    const val DEFAULT_THEME = false
+    const val DEFAULT_LOCALE = RUSSIAN_LOCALE
+
+    fun getLanguageCode(language: AppLanguage): String {
+        return when (language) {
+            AppLanguage.English -> ENGLISH_LOCALE
+            AppLanguage.Russian -> RUSSIAN_LOCALE
+        }
+    }
+
+    fun getLanguageFromCode(languageCode: String): AppLanguage {
+        return when (languageCode) {
+            ENGLISH_LOCALE -> AppLanguage.English
+            RUSSIAN_LOCALE -> AppLanguage.Russian
+            else -> AppLanguage.Russian
+        }
+    }
+
 }

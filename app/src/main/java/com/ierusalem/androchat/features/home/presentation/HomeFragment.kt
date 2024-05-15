@@ -63,19 +63,19 @@ class HomeFragment : Fragment() {
                     }
                 }
 
-                AndroChatTheme {
+                AndroChatTheme(isDarkTheme = true) {
                     AndroChatDrawer(
                         drawerState = drawerState,
                         onDrawerItemClick = {
                             scope.launch {
                                 drawerState.close()
+                                viewModel.handleClickIntents(it)
                             }
-                            viewModel.handleClickIntents(it)
                         },
                         content = {
                             HomeScreen(
                                 state = state,
-                                intentReducer = { intent ->
+                                eventHandler = { intent ->
                                     viewModel.handleClickIntents(intent)
                                 }
                             )

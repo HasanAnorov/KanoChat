@@ -4,10 +4,16 @@
 
 <resources>
 
+    <!-- Temp strings-->
     <string name="functionality_not_available">Функционал недоступен!</string>
     <string name="close">ЗАКРЫВАТЬ</string>
-    <string name="navigation_drawer_open">Открыть панель навигации</string>
 
+    <!-- Home strings-->
+    <string name="all">Все</string>
+    <string name="contacts">Контакты</string>
+    <string name="groups">Группы</string>
+
+    <!-- Conversation strings-->
     <string name="jumpBottom">Перейти вниз</string>
     <string name="send">Отправлять</string>
     <string name="author_me">ты</string>
@@ -18,6 +24,7 @@
     <string name="emojis_label">Смайлики</string>
     <string name="stickers_label">Наклейки</string>
 
+    <!-- Profile strings-->
     <string name="message">Сообщение</string>
     <string name="edit_profile">Редактировать профиль</string>
     <string name="profile_error">Произошла ошибка при загрузке профиля</string>
@@ -26,11 +33,13 @@
     <string name="timezone">Часовой пояс</string>
     <string name="twitter">Твиттер</string>
 
-    <!--Extra-->
-    <string name="today">Сегодня</string>
+    <!-- App Bar status strings-->
+    <string name="connected">AndroChat</string>
+    <string name="connectivity_loosing">Loosing Connection</string>
+    <string name="connectivity_lost">Lost Connection</string>
+    <string name="connectivity_unavailable">Unavailable</string>
 
     <!-- Accessibility descriptions -->
-
     <string name="emoji_selector_desc">Выбор эмодзи</string>
     <string name="emoji_selector_bt_desc">Показать выбор эмодзи</string>
     <string name="dm_desc">Личное сообщение</string>
@@ -46,20 +55,32 @@
     <string name="touch_and_hold_to_record">Нажмите и удерживайте, чтобы записать</string>
     <string name="record_message">Записать голосовое сообщение</string>
 
+    <!-- Auth strings-->
     <string name="log_in">Войти</string>
     <string name="have_an_account">Есть учетная запись?</string>
     <string name="register">Зарегистрироваться</string>
     <string name="password_confirmation">Подтверждение пароля</string>
     <string name="password">Пароль</string>
     <string name="username">Имя пользователя</string>
-    <string name="lastname">Фамилия</string>
-    <string name="firstname">Имя</string>
     <string name="register_to_continue">Зарегистрируйтесь, чтобы продолжить</string>
     <string name="welcome">Добро пожаловать</string>
     <string name="don_t_have_an_account">Нет учетной записи?</string>
     <string name="login">Войти</string>
     <string name="log_in_to_continue">Войдите, чтобы продолжить</string>
     <string name="welcome_back">Добро пожаловать</string>
+
+    <!-- Setting strings-->
     <string name="settings">Настройки</string>
+    <string name="english">Английский</string>
+    <string name="russian">Русский</string>
+    <string name="system">Система</string>
+    <string name="language">Язык</string>
+    <string name="app_theme">Тема приложения</string>
+    <string name="general">Общий</string>
+    <string name="logout">Выйти</string>
+    <string name="invite_a_friend">Пригласить друга</string>
+    <string name="select_app_language">Выберите язык приложения</string>
+    <string name="cancel">Отмена</string>
+    <string name="save">Сохранять</string>
 
 </resources>

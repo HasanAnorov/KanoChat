@@ -50,6 +50,7 @@ class RegistrationFragment : Fragment() {
     private fun executeNavigation(navigation: RegistrationNavigation) {
         when (navigation) {
             is RegistrationNavigation.ToHome -> {
+                //todo share username with safe args
 //                val bundle = bundleOf(Constants.USERNAME_REGISTER_TO_HOME to navigation.username)
 //                findNavController().navigate(
 //                    R.id.action_registrationFragment_to_conversationFragment,

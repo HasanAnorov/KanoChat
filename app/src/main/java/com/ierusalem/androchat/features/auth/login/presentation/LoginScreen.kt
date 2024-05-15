@@ -142,7 +142,7 @@ fun LoginScreen(
     )
 }
 
-@Preview(locale = "uz")
+@Preview(locale = "en")
 @Composable
 fun LoginScreen_Preview_Light() {
     AndroChatTheme {

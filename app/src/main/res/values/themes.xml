@@ -20,7 +20,6 @@
     </style>
 
     <style name="Theme.AndroChat.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
-
     <style name="Theme.AndroChat.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Light" />
 
 </resources>

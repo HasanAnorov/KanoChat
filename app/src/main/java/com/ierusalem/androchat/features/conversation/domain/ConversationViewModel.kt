@@ -7,6 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.features.auth.register.data.remote.MessageService
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features.conversation.data.remote.ChatSocketService
+import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
+import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
+import com.ierusalem.androchat.ui.navigation.emitNavigation
 import com.ierusalem.androchat.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +24,8 @@ class ConversationViewModel @Inject constructor(
     private val messageService: MessageService,
     private val chatSocketService: ChatSocketService,
     private val savedStateHandle: SavedStateHandle
-) : ViewModel() {
+) : ViewModel(),
+    NavigationEventDelegate<ConversationNavigation> by DefaultNavigationEventDelegate() {
 
     private val _state: MutableStateFlow<ConversationState> = MutableStateFlow(
         ConversationState()
@@ -35,7 +39,9 @@ class ConversationViewModel @Inject constructor(
                 sendMessage(event.message)
             }
             ConversationEvents.NavigateToProfile -> {}
-            ConversationEvents.NavIconClick -> {}
+            ConversationEvents.NavIconClick -> {
+                emitNavigation(ConversationNavigation.OnNavIconClick)
+            }
         }
     }
 
@@ -102,3 +108,7 @@ data class ConversationState(
     val messages: List<Message> = emptyList(),
     val isLoading: Boolean = false
 )
+
+sealed interface ConversationNavigation{
+    data object OnNavIconClick: ConversationNavigation
+}

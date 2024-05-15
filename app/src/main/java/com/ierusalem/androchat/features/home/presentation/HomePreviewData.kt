@@ -1,16 +1,14 @@
 package com.ierusalem.androchat.features.home.presentation
 
-import com.ierusalem.androchat.app.AppTheme
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreen
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreenData
 import com.ierusalem.androchat.features.home.presentation.contacts.ErrorType
 
+@Suppress("unused")
 object HomePreviewData {
 
 
     val tabItems = listOf("All", "Contacts", "Groups")
-    val selectedTabIndex = 0
-    val appTheme = AppTheme.Light
     val contactsLoading: ContactsScreen = ContactsScreen.Loading
     val contactsError: ContactsScreen = ContactsScreen.Error(ErrorType.InvalidResponse)
     val contactsSuccess = ContactsScreen.Success(

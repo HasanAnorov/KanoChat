@@ -9,7 +9,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -23,10 +27,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ierusalem.androchat.app.AppTheme
+import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features.home.domain.HomeScreenState
 import com.ierusalem.androchat.features.home.presentation.all.AllChatsScreen
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreen
@@ -40,7 +45,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     state: HomeScreenState,
-    intentReducer: (HomeScreenClickIntents) -> Unit,
+    eventHandler: (HomeScreenClickIntents) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(
@@ -69,32 +74,50 @@ fun HomeScreen(
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
-            intentReducer(HomeScreenClickIntents.TabItemClicked(page))
+            eventHandler(HomeScreenClickIntents.TabItemClicked(page))
         }
     }
 
     Scaffold(
         topBar = {
-            AndroChatAppBar(
-                title = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Start,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            modifier = Modifier.padding(start = 8.dp),
-                            text = state.connectivityStatus.asString(),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontSize = 16.sp
-                        )
+            Column {
+                AndroChatAppBar(
+                    title = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(start = 8.dp),
+                                text = state.connectivityStatus.asString(),
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontSize = 16.sp
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { eventHandler(HomeScreenClickIntents.OnSearchClick) }) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                        IconButton(onClick = { eventHandler(HomeScreenClickIntents.OnSearchClick) }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.local),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    },
+                    onNavIconPressed = {
+                        eventHandler(HomeScreenClickIntents.NavIconClicked)
                     }
-                },
-                onNavIconPressed = {
-                    intentReducer(HomeScreenClickIntents.NavIconClicked)
-                }
-            )
+                )
+            }
         }
     ) { paddingValues ->
         Column(
@@ -130,7 +153,7 @@ fun HomeScreen(
                                 },
                                 text = {
                                     Text(
-                                        text = currentTab,
+                                        text = currentTab.asString(),
                                         fontSize = 16.sp,
                                         style = MaterialTheme.typography.titleSmall
                                     )
@@ -151,8 +174,9 @@ fun HomeScreen(
                         0 -> AllChatsScreen(state = HomePreviewData.contactsSuccess)
                         1 -> ContactsScreen(
                             state = state.contacts,
-                            intentReducer = intentReducer
+                            intentReducer = eventHandler
                         )
+
                         2 -> GroupScreen(state = ContactsScreen.Error(ErrorType.NetworkError))
                     }
                 }
@@ -166,10 +190,8 @@ fun HomeScreen(
 fun HomeScreenPreviewLight() {
     AndroChatTheme {
         HomeScreen(
-            state = HomeScreenState(
-                appTheme = AppTheme.Light
-            ),
-            intentReducer = {},
+            state = HomeScreenState(),
+            eventHandler = {},
         )
     }
 }
@@ -179,10 +201,8 @@ fun HomeScreenPreviewLight() {
 fun HomeScreenPreviewDark() {
     AndroChatTheme(isDarkTheme = true) {
         HomeScreen(
-            state = HomeScreenState(
-                appTheme = AppTheme.Dark
-            ),
-            intentReducer = {},
+            state = HomeScreenState(),
+            eventHandler = {},
         )
     }
 }

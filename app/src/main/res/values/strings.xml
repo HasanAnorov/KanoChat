@@ -2,11 +2,19 @@
 
 <resources>
 
+    <!-- App Name-->
     <string name="app_name" translatable="false">AndroChat</string>
+
+    <!-- Temp strings-->
     <string name="functionality_not_available">Functionality not available!</string>
     <string name="close">CLOSE</string>
-    <string name="navigation_drawer_open">Open navigation drawer</string>
 
+    <!-- Home strings-->
+    <string name="all">All</string>
+    <string name="contacts">Contacts</string>
+    <string name="groups">Groups</string>
+
+    <!-- Conversation strings-->
     <string name="jumpBottom">Jump to bottom</string>
     <string name="send">Send</string>
     <string name="author_me">you</string>
@@ -17,6 +25,7 @@
     <string name="emojis_label">Emojis</string>
     <string name="stickers_label">Stickers</string>
 
+    <!-- Profile strings-->
     <string name="message">Message</string>
     <string name="edit_profile">Edit Profile</string>
     <string name="profile_error">There was an error loading the profile</string>
@@ -25,14 +34,11 @@
     <string name="timezone">Timezone</string>
     <string name="twitter">Twitter</string>
 
-    //app bar title
+    <!-- App Bar status strings-->
     <string name="connected">AndroChat</string>
-    <string name="connectivity_loosing">Loosing Connection</string>
-    <string name="connectivity_lost">Lost Connection</string>
-    <string name="connectivity_unavailable">Unavailable</string>
-
-    <!--Extra-->
-    <string name="today">Today</string>
+    <string name="connectivity_loosing">Потеря соединения</string>
+    <string name="connectivity_lost">Потерянное соединение</string>
+    <string name="connectivity_unavailable">Недоступен</string>
 
     <!-- Accessibility descriptions -->
     <string name="emoji_selector_desc">Emoji selector</string>
@@ -49,20 +55,33 @@
     <string name="more_options">More options</string>
     <string name="touch_and_hold_to_record">Touch and hold to record</string>
     <string name="record_message">Record voice message</string>
+
+    <!-- Auth strings-->
     <string name="log_in">Log In</string>
     <string name="have_an_account">Have an account?</string>
     <string name="register">Register</string>
     <string name="password_confirmation">Password Confirmation</string>
     <string name="password">Password</string>
     <string name="username">Username</string>
-    <string name="lastname">Lastname</string>
-    <string name="firstname">Firstname</string>
     <string name="register_to_continue">Register to continue</string>
     <string name="welcome">Welcome</string>
     <string name="don_t_have_an_account">Don\'t have an account?</string>
     <string name="login">Login</string>
     <string name="log_in_to_continue">Log in to continue</string>
     <string name="welcome_back">Welcome \nBack</string>
+
+    <!-- Settings strings-->
     <string name="settings">Settings</string>
+    <string name="english">English</string>
+    <string name="russian">Russian</string>
+    <string name="system">System</string>
+    <string name="language">Language</string>
+    <string name="app_theme">App Theme</string>
+    <string name="general">General</string>
+    <string name="logout">Logout</string>
+    <string name="invite_a_friend">Invite a friend</string>
+    <string name="select_app_language">Select app language</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
 
 </resources>

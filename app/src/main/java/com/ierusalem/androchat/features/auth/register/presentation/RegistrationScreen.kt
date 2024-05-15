@@ -65,26 +65,6 @@ fun RegistrationScreen(
 
             CommonTextFieldWithError(
                 modifier = Modifier
-                    .padding(top = 16.dp)
-                    .padding(horizontal = 16.dp),
-                placeHolder = stringResource(R.string.firstname),
-                value = state.firstname,
-                errorMessage = state.firstnameError,
-                onTextChanged = { intentReducer(RegistrationFormEvents.FirstNameChanged(it)) }
-            )
-
-            CommonTextFieldWithError(
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .padding(horizontal = 16.dp),
-                placeHolder = stringResource(R.string.lastname),
-                value = state.lastname,
-                errorMessage = state.lastnameError,
-                onTextChanged = { intentReducer(RegistrationFormEvents.LastNameChanged(it)) }
-            )
-
-            CommonTextFieldWithError(
-                modifier = Modifier
                     .padding(top = 8.dp)
                     .padding(horizontal = 16.dp),
                 placeHolder = stringResource(R.string.username),

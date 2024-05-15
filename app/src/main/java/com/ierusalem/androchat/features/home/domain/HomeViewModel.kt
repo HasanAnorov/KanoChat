@@ -4,13 +4,11 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.app.AppTheme
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.features.home.presentation.HomeScreenClickIntents
 import com.ierusalem.androchat.features.home.presentation.HomeScreenNavigation
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreen
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreenData
-import com.ierusalem.androchat.features.home.presentation.contacts.ErrorType
 import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.emitNavigation
@@ -18,7 +16,6 @@ import com.ierusalem.androchat.utils.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -70,9 +67,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private val _state: MutableStateFlow<HomeScreenState> = MutableStateFlow(
-        HomeScreenState(
-            appTheme = repo.getAppTheme()
-        )
+        HomeScreenState()
     )
     val state = _state.asStateFlow()
 
@@ -91,6 +86,10 @@ class HomeViewModel @Inject constructor(
         when (intent) {
             HomeScreenClickIntents.DrawerSettingClick -> {
                 emitNavigation(HomeScreenNavigation.NavigateToSettings)
+            }
+
+            HomeScreenClickIntents.OnSearchClick -> {
+
             }
 
             is HomeScreenClickIntents.TabItemClicked -> {
@@ -116,12 +115,12 @@ class HomeViewModel @Inject constructor(
 @Immutable
 data class HomeScreenState(
     //tab row
-    val tabItems: List<String> = listOf("All", "Contacts", "Groups"),
+    val tabItems: List<UiText> = listOf(
+        UiText.StringResource(R.string.all),
+        UiText.StringResource(R.string.contacts),
+        UiText.StringResource(R.string.groups)
+    ),
     val selectedTabIndex: Int = 0,
-
-    //settings
-    val appTheme: AppTheme,
-
     //app bar
     val connectivityStatus: UiText = UiText.StringResource(R.string.connectivity_unavailable),
 

@@ -1,42 +1,8 @@
 package com.ierusalem.androchat.utils
 
+
+
 class FieldValidator {
-
-    fun validateFirstName(firstName: String): ValidationResult {
-        return when {
-            firstName.isBlank() -> ValidationResult(
-                successful = false,
-                errorMessage = "The login can't be blank"
-            )
-
-            firstName.length < Constants.MINIMUM_LOGIN_LENGTH -> ValidationResult(
-                successful = false,
-                errorMessage = "Login should be than 3 words!"
-            )
-
-            else -> ValidationResult(
-                successful = true,
-            )
-        }
-    }
-
-    fun validateLastName(lastName: String): ValidationResult {
-        return when {
-            lastName.isBlank() -> ValidationResult(
-                successful = false,
-                errorMessage = "The login can't be blank"
-            )
-
-            lastName.length < Constants.MINIMUM_LOGIN_LENGTH -> ValidationResult(
-                successful = false,
-                errorMessage = "Login should be than 3 words!"
-            )
-
-            else -> ValidationResult(
-                successful = true,
-            )
-        }
-    }
 
     fun validateUsername(login: String): ValidationResult {
         return when {

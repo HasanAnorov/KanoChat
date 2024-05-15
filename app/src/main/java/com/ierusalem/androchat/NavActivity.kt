@@ -12,6 +12,7 @@ import androidx.navigation.fragment.NavHostFragment
 import com.ierusalem.androchat.databinding.ActivityNavBinding
 import dagger.hilt.android.AndroidEntryPoint
 
+
 /**
  * NavActivity
  *
@@ -25,9 +26,8 @@ class NavActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets -> insets }
-
         setContentView(
-            ComposeView(this).apply {
+            ComposeView(this@NavActivity).apply {
                 consumeWindowInsets = false
                 setContent {
                     AndroidViewBinding(ActivityNavBinding::inflate)

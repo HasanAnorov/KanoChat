@@ -17,6 +17,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -45,8 +46,8 @@ android {
         jvmTarget = "1.8"
     }
     buildFeatures {
-        compose = true
         viewBinding = true
+        compose = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -86,12 +87,21 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    //datastore used for multi language
+    implementation (libs.androidx.datastore.preferences)
+
     //hilt
     implementation("com.google.dagger:hilt-android:2.48.1")
     kapt("com.google.dagger:hilt-android-compiler:2.48.1")
 
     //kotlin json serializer
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation(libs.kotlinx.serialization.json)
+
+    //image loading - coil
+    implementation(libs.coil.compose)
+
+    //landscapist
+    implementation (libs.landscapist.glide)
 
     // Ktor
     implementation ("io.ktor:ktor-client-core:1.6.3")

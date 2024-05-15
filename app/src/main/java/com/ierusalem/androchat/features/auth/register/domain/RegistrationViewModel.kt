@@ -29,21 +29,6 @@ class RegistrationViewModel @Inject constructor(
 
     fun handleEvents(event: RegistrationFormEvents) {
         when (event) {
-            is RegistrationFormEvents.FirstNameChanged -> {
-                _state.update {
-                    it.copy(
-                        firstname = event.firstName
-                    )
-                }
-            }
-
-            is RegistrationFormEvents.LastNameChanged -> {
-                _state.update {
-                    it.copy(
-                        lastname = event.lastName
-                    )
-                }
-            }
 
             is RegistrationFormEvents.UsernameChanged -> {
                 _state.update {
@@ -87,16 +72,12 @@ class RegistrationViewModel @Inject constructor(
 
     private fun registerUser() {
         Log.d("ahi3646", "registerUser: ")
-        val firstNameResult = validator.validateFirstName(state.value.firstname)
-        val lastNameResult = validator.validateLastName(state.value.lastname)
         val usernameResult = validator.validateUsername(state.value.username)
         val passwordResult = validator.validatePassword(state.value.password)
         val repeatedPasswordResult =
             validator.validateRepeatedPassword(state.value.password, state.value.repeatedPassword)
 
         val hasError = listOf(
-            firstNameResult,
-            lastNameResult,
             usernameResult,
             passwordResult,
             repeatedPasswordResult
@@ -107,8 +88,6 @@ class RegistrationViewModel @Inject constructor(
         if (hasError) {
             _state.update {
                 it.copy(
-                    firstnameError = firstNameResult.errorMessage,
-                    lastnameError = lastNameResult.errorMessage,
                     usernameError = usernameResult.errorMessage,
                     passwordError = passwordResult.errorMessage,
                     repeatedPasswordError = repeatedPasswordResult.errorMessage,
@@ -118,8 +97,6 @@ class RegistrationViewModel @Inject constructor(
         }
         _state.update {
             it.copy(
-                firstnameError = null,
-                lastnameError = null,
                 usernameError = null,
                 passwordError = null,
                 repeatedPasswordError = null,
@@ -132,10 +109,6 @@ class RegistrationViewModel @Inject constructor(
 }
 
 data class RegistrationScreenState(
-    val firstname: String = "",
-    val firstnameError: String? = null,
-    val lastname: String = "",
-    val lastnameError: String? = null,
     val username: String = "",
     val usernameError: String? = null,
     val password: String = "",

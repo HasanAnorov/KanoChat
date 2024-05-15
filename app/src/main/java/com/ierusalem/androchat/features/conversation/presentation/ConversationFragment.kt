@@ -13,9 +13,12 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.fragment.findNavController
+import com.ierusalem.androchat.features.conversation.domain.ConversationNavigation
 import com.ierusalem.androchat.features.conversation.domain.ConversationViewModel
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.utils.Constants
+import com.ierusalem.androchat.utils.executeWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -60,14 +63,20 @@ class ConversationFragment : Fragment() {
         }
     }
 
-//    override fun onStart() {
-//        super.onStart()
-//        viewModel.connectToChat()
-//    }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel.screenNavigation.executeWithLifecycle(
+            lifecycle = viewLifecycleOwner.lifecycle,
+            action = ::executeNavigation
+        )
+    }
 
-//    override fun onStop() {
-//        super.onStop()
-//        viewModel.disconnect()
-//    }
+    private fun executeNavigation(navigation: ConversationNavigation) {
+        when (navigation) {
+            ConversationNavigation.OnNavIconClick -> {
+                findNavController().popBackStack()
+            }
+        }
+    }
 
 }

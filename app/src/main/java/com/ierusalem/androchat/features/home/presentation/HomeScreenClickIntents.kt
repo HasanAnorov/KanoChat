@@ -5,4 +5,5 @@ sealed interface HomeScreenClickIntents {
     data object NavIconClicked: HomeScreenClickIntents
     data object DrawerSettingClick: HomeScreenClickIntents
     data object ListItemClicked: HomeScreenClickIntents
+    data object OnSearchClick: HomeScreenClickIntents
 }
