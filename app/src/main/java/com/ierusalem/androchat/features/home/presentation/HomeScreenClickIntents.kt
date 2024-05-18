@@ -6,4 +6,5 @@ sealed interface HomeScreenClickIntents {
     data object DrawerSettingClick: HomeScreenClickIntents
     data object ListItemClicked: HomeScreenClickIntents
     data object OnSearchClick: HomeScreenClickIntents
+    data object OnTcpClick: HomeScreenClickIntents
 }

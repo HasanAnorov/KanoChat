@@ -83,5 +83,8 @@
     <string name="select_app_language">Select app language</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
+    <string name="local_connection">Local connection</string>
+    <string name="hostspot">Hostspot</string>
+    <string name="connections">Connections</string>
 
 </resources>

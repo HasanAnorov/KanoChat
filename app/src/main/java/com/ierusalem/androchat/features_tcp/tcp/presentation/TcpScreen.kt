@@ -1,0 +1,77 @@
+package com.ierusalem.androchat.features_tcp.tcp.presentation
+
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import com.ierusalem.androchat.R
+import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
+import com.ierusalem.androchat.features_tcp.tcp.TcpView
+import com.ierusalem.androchat.features_tcp.tcp.presentation.components.TcpAppBar
+import com.ierusalem.androchat.features_tcp.tcp.presentation.components.TcpContent
+import com.ierusalem.androchat.features_tcp.tcp.presentation.components.rememberAllTabs
+import com.ierusalem.androchat.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.utils.UiText
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun TcpScreen(
+    modifier: Modifier = Modifier,
+    eventHandler: (TcpScreenEvents) -> Unit,
+    allTabs: SnapshotStateList<TcpView>,
+    pagerState: PagerState,
+    onTabChanged: (TcpView) -> Unit
+) {
+    Scaffold(
+        modifier = modifier.fillMaxSize()
+    ) { pv ->
+        Column {
+            TcpAppBar(
+                appName = UiText.StringResource(R.string.local_connection),
+                onNavIconClick = { eventHandler(TcpScreenEvents.OnNavIconClick) },
+                onSettingsIconClick = { eventHandler(TcpScreenEvents.OnSettingIconClick) },
+                allTabs = allTabs,
+                pagerState = pagerState,
+                onTabChanged = { onTabChanged(it) }
+            )
+            TcpContent(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1F)
+                    // So this basically doesn't do anything since we handle the padding ourselves
+                    // BUT, we don't just want to consume it because we DO actually care when using
+                    // Modifier.navigationBarsPadding()
+                    .heightIn(min = pv.calculateBottomPadding()),
+                allTabs = allTabs,
+                pagerState = pagerState
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Preview
+@Composable
+private fun TcpScreenPreview() {
+    AndroChatTheme {
+        val allTabs = rememberAllTabs()
+        TcpScreen(
+            eventHandler = {},
+            allTabs = allTabs,
+            pagerState = rememberPagerState(
+                initialPage = 0,
+                initialPageOffsetFraction = 0F,
+                pageCount = { allTabs.size },
+            ),
+            onTabChanged = {}
+        )
+    }
+}

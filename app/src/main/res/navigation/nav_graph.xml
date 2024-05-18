@@ -49,6 +49,9 @@
             app:popEnterAnim="@anim/fade_in"
             app:popExitAnim="@anim/slide_out"
             app:destination="@id/settingsFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_tcpFragment"
+            app:destination="@id/tcpFragment" />
 
     </fragment>
 
@@ -111,5 +114,9 @@
         android:id="@+id/settingsFragment"
         android:name="com.ierusalem.androchat.features.settings.presentation.SettingsFragment"
         android:label="SettingsFragment" />
+    <fragment
+        android:id="@+id/tcpFragment"
+        android:name="com.ierusalem.androchat.features_tcp.tcp.presentation.TcpFragment"
+        android:label="TcpFragment" />
 
 </navigation>

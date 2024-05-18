@@ -105,7 +105,7 @@ fun HomeScreen(
                                 tint = MaterialTheme.colorScheme.onBackground
                             )
                         }
-                        IconButton(onClick = { eventHandler(HomeScreenClickIntents.OnSearchClick) }) {
+                        IconButton(onClick = { eventHandler(HomeScreenClickIntents.OnTcpClick) }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.local),
                                 contentDescription = null,

@@ -106,6 +106,9 @@ class HomeFragment : Fragment() {
             HomeScreenNavigation.NavigateToGroup -> {
                 findNavController().navigate(R.id.action_homeFragment_to_conversationFragment)
             }
+            HomeScreenNavigation.NavigateToTcp -> {
+                findNavController().navigate(R.id.action_homeFragment_to_tcpFragment)
+            }
         }
     }
 

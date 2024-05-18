@@ -22,9 +22,7 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
-    connectivityObserver: ConnectivityObserver
-) : ViewModel(),
+class HomeViewModel @Inject constructor(connectivityObserver: ConnectivityObserver) : ViewModel(),
     NavigationEventDelegate<HomeScreenNavigation> by DefaultNavigationEventDelegate() {
 
     init {
@@ -85,6 +83,10 @@ class HomeViewModel @Inject constructor(
         when (intent) {
             HomeScreenClickIntents.DrawerSettingClick -> {
                 emitNavigation(HomeScreenNavigation.NavigateToSettings)
+            }
+
+            HomeScreenClickIntents.OnTcpClick -> {
+                emitNavigation(HomeScreenNavigation.NavigateToTcp)
             }
 
             HomeScreenClickIntents.OnSearchClick -> {
