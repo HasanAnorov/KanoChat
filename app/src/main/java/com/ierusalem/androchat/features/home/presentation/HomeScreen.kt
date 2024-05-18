@@ -80,44 +80,42 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            Column {
-                AndroChatAppBar(
-                    title = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                modifier = Modifier.padding(start = 8.dp),
-                                text = state.connectivityStatus.asString(),
-                                color = MaterialTheme.colorScheme.onBackground,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontSize = 16.sp
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { eventHandler(HomeScreenClickIntents.OnSearchClick) }) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
-                        IconButton(onClick = { eventHandler(HomeScreenClickIntents.OnSearchClick) }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.local),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
-                    },
-                    onNavIconPressed = {
-                        eventHandler(HomeScreenClickIntents.NavIconClicked)
+            AndroChatAppBar(
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(start = 8.dp),
+                            text = state.connectivityStatus.asString(),
+                            color = MaterialTheme.colorScheme.onBackground,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontSize = 16.sp
+                        )
                     }
-                )
-            }
+                },
+                actions = {
+                    IconButton(onClick = { eventHandler(HomeScreenClickIntents.OnSearchClick) }) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    IconButton(onClick = { eventHandler(HomeScreenClickIntents.OnSearchClick) }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.local),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                },
+                onNavIconPressed = {
+                    eventHandler(HomeScreenClickIntents.NavIconClicked)
+                }
+            )
         }
     ) { paddingValues ->
         Column(

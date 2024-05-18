@@ -16,6 +16,14 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Jitpack
+        maven {
+            setUrl("https://jitpack.io")
+            content {
+                includeGroup("com.github.pyamsoft.pydroid")
+                includeGroup("com.github.pyamsoft")
+            }
+        }
     }
 }
 

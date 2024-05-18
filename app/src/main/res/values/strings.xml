@@ -61,7 +61,6 @@
     <string name="have_an_account">Have an account?</string>
     <string name="register">Register</string>
     <string name="password_confirmation">Password Confirmation</string>
-    <string name="password">Password</string>
     <string name="username">Username</string>
     <string name="register_to_continue">Register to continue</string>
     <string name="welcome">Welcome</string>
@@ -83,5 +82,62 @@
     <string name="select_app_language">Select app language</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
+
+    <!-- Hotspot string-->
+    <string name="hotspot">Hotspot</string>
+    <string name="help">Help</string>
+    <string name="connections">Connections</string>
+    <string name="local_connection">Local Connection</string>
+
+    <!-- Hotspot Info strings-->
+    <string name="configure_the_proxy_settings">Configure the proxy settings</string>
+    <string name="http_manual_proxy">Use MANUAL mode and configure both HTTP and HTTPS proxy options.</string>
+    <string name="toggle_wifi">Turn the Wi-Fi off and back on again.</string>
+    <string name="automatically_connect">It should automatically connect to the %1$s Hotspot</string>
+    <string name="connect_to_hotspot">Connect to the %1$s Hotspot</string>
+    <string name="open_wifi_settings">Open the Wi-Fi settings page</string>
+    <string name="label_hotspot_name">Name</string>
+    <string name="label_hotspot_hostname">URL</string>
+    <string name="label_hotspot_port">Port</string>
+    <string name="qr_code">QR Code</string>
+    <string name="qr_code_explain">Scan this QR code to connect</string>
+
+    <!-- todo remove unused string resources-->
+    <!-- Remember Password strings-->
+    <string name="password">Password</string>
+    <string name="passwd_none">NO PASSWORD</string>
+    <string name="pass_visible">Password Visible</string>
+    <string name="pass_hidden">Password Hidden</string>
+    <string name="hotspot_error">Hotspot Error</string>
+    <string name="faq_blurb">Have questions about how %1$s works? Noticing some issues connecting?\n\nView our %2$s and apps that are %3$s</string>
+    <string name="faqs">FAQs</string>
+    <string name="known_to_not_work">Known to Not Work</string>
+    <string name="view_information">View Information</string>
+    <string name="something_went_wrong">Something went wrong</string>
+    <string name="unknown_error">ERROR</string>
+    <string name="ssid_no_name">NO NAME</string>
+    <string name="server_no_host">NO HOST</string>
+    <string name="invalid_port">INVALID PORT</string>
+
+    <!-- Render App Setup Strings-->
+    <string name="turn_on_wi_fi">Turn on Wi-Fi.</string>
+    <string name="wifi_must_be_on">You do not need to connect to a Network, but Wi-Fi must be on for %1$s to work.</string>
+    <string name="connect_internet">Connect to the Internet.</string>
+    <string name="connect_internet_options">You can connect via Wi-Fi or Mobile Data</string>
+    <string name="optionally_configure_hotspot">You can optionally configure the Name, Password, Proxy Port and Broadcast Frequency Band. This is not required, and the defaults will work fine for most people.</string>
+    <string name="optionally_configure_wakelock">You can optionally choose to keep the CPU and/or WiFi awake while the Hotspot is running, which greatly improves performance while the screen is off. If the CPU is not kept awake, you may notice extreme network slowdown while the device screen is off.</string>
+    <string name="optionally_configure_power">You can optionally choose to ignore Android\'s system battery optimizations, which will allow %1$s to run at maximum performance at all times. This may use more battery but will significantly enhance your networking experience.</string>
+    <string name="start_the_hotspot">Start the %1$s Hotspot.</string>
+    <string name="check_hotspot_green">Check that the Broadcast, Proxy, and Hotspot status are all green and running.</string>
+
+    <!-- Render Connection Complete Strings-->
+    <string name="sharing_complete">Your device should now be sharing its Internet connection!</string>
+    <string name="sharing_caveat">At this point, normal Internet browsing and email should work. If it does not, disconnect from the %1$s Hotspot and double-check that you have entered the correct Network and Proxy settings.</string>
+    <string name="proxy_having_trouble">Having trouble configuring Proxy Settings? See more detailed instructions %1$s.</string>
+    <string name="proxy_having_link_text">here</string>
+
+    <!-- Render DeviceIdentifiers Strings-->
+    <string name="this_device">This Device</string>
+    <string name="other_device">Other Device</string>
 
 </resources>

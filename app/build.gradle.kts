@@ -41,6 +41,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+
+        // Flag to enable support for the new language APIs
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "1.8"
@@ -102,6 +105,13 @@ dependencies {
 
     //landscapist
     implementation (libs.landscapist.glide)
+
+    //Android Studio 4.0.0 Java 8 library desugaring in D8
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    // PYDroid
+    implementation ("com.github.pyamsoft.pydroid:arch:27.0.1")
+    implementation ("com.github.pyamsoft.pydroid:ui:27.0.1")
 
     // Ktor
     implementation ("io.ktor:ktor-client-core:1.6.3")
