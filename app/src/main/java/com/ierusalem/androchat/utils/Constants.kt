@@ -18,6 +18,8 @@ object Constants {
     const val DEFAULT_THEME = false
     const val DEFAULT_LOCALE = RUSSIAN_LOCALE
 
+    const val CHARACTERS_SET_FOR_RAND0M_PASSWORD_GENERATION  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
     fun getLanguageCode(language: AppLanguage): String {
         return when (language) {
             AppLanguage.English -> ENGLISH_LOCALE

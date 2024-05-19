@@ -96,6 +96,7 @@ class HomeFragment : Fragment() {
 
     private fun executeNavigation(navigation: HomeScreenNavigation) {
         when (navigation) {
+
             HomeScreenNavigation.NavigateToPrivate -> {
 
             }

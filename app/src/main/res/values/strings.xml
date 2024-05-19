@@ -86,5 +86,12 @@
     <string name="local_connection">Local connection</string>
     <string name="hostspot">Hostspot</string>
     <string name="connections">Connections</string>
+    <string name="start_hotspot">Start Hotspot</string>
+    <string name="connect_to_server">Connect to Server</string>
+    <string name="create_a_server">Create a server</string>
+    <string name="creating_a_server">Creating a server</string>
+    <string name="server_created_waiting_for_clients">Server created, waiting for clients ...</string>
+    <string name="connecting_to_server">Connecting to server</string>
+    <string name="connected_to_a_server">Connected to a server</string>
 
 </resources>

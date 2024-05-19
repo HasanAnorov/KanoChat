@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.TcpView
+import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.TcpAppBar
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.TcpContent
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.rememberAllTabs
@@ -28,6 +29,7 @@ fun TcpScreen(
     eventHandler: (TcpScreenEvents) -> Unit,
     allTabs: SnapshotStateList<TcpView>,
     pagerState: PagerState,
+    state: TcpScreenUiState,
     onTabChanged: (TcpView) -> Unit
 ) {
     Scaffold(
@@ -51,7 +53,9 @@ fun TcpScreen(
                     // Modifier.navigationBarsPadding()
                     .heightIn(min = pv.calculateBottomPadding()),
                 allTabs = allTabs,
-                pagerState = pagerState
+                pagerState = pagerState,
+                eventHandler = eventHandler,
+                state = state
             )
         }
     }
@@ -71,7 +75,8 @@ private fun TcpScreenPreview() {
                 initialPageOffsetFraction = 0F,
                 pageCount = { allTabs.size },
             ),
-            onTabChanged = {}
+            onTabChanged = {},
+            state = TcpScreenUiState()
         )
     }
 }

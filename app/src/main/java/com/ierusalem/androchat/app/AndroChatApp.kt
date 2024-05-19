@@ -29,7 +29,6 @@ class AndroChatApp : Application() {
         super.onCreate()
         applicationScope.launch {
             dataStorePreferenceRepository.getLanguage.collect { languageCode ->
-                Log.d("ahi3646", "onCreate: $languageCode ")
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     applicationContext.getSystemService(LocaleManager::class.java).applicationLocales =
                         LocaleList.forLanguageTags(languageCode)
