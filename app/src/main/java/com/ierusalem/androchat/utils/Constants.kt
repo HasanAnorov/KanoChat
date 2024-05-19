@@ -18,6 +18,9 @@ object Constants {
     const val DEFAULT_THEME = false
     const val DEFAULT_LOCALE = RUSSIAN_LOCALE
 
+    const val IP_ADDRESS = "127.0.0.1"
+    const val PORT = 9002
+
     const val CHARACTERS_SET_FOR_RAND0M_PASSWORD_GENERATION  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
     fun getLanguageCode(language: AppLanguage): String {
