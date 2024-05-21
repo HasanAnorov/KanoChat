@@ -83,6 +83,8 @@
     <string name="select_app_language">Select app language</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
+
+    //
     <string name="local_connection">Local connection</string>
     <string name="hostspot">Hostspot</string>
     <string name="connections">Connections</string>
@@ -93,5 +95,25 @@
     <string name="server_created_waiting_for_clients">Server created, waiting for clients ...</string>
     <string name="connecting_to_server">Connecting to server</string>
     <string name="connected_to_a_server">Connected to a server</string>
+    <string name="create_wifi_hotspot">Create Wifi Hotspot</string>
+
+    <string name="trouble_title">%1$s Hotspot failed to start.</string>
+    <string name="trouble_description">This is NOT an error with the app, this is an error %1$s.</string>
+
+    <!-- TroubleshootUnableToStart strings-->
+    <string name="trouble_err_type_both">with your device and configuration</string>
+    <string name="trouble_err_type_proxy">with your configuration</string>
+    <string name="trouble_err_type_broadcast">from your device</string>
+    <string name="trouble_double_check">Please check these issues and try again:</string>
+    <string name="trouble_broadcast_wifi_on">• Wi-Fi must be turned ON to start the Hotspot</string>
+    <string name="trouble_broadcast_wifi_not_connected">• Wi-Fi must NOT be connected to any other network</string>
+    <string name="trouble_broadcast_wifi_restart">• Wi-Fi should be restarted by turning it OFF and then back ON again</string>
+    <string name="trouble_broadcast_password_length">• The Hotspot password must be at least 8 characters long</string>
+    <string name="trouble_broadcast_ssid_name">• The Hotspot name must be unique</string>
+    <string name="trouble_proxy_already_used">• The Hotspot port number may be already used by a different app</string>
+    <string name="trouble_proxy_port">• The Hotspot port number must be between 1025 and 65000</string>
+    <string name="discover_wifi">Discover Wifi</string>
+    <string name="discovering_wifi">Discovering WiFi</string>
+    <string name="discovering_not_started">Discovering not started</string>
 
 </resources>

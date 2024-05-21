@@ -1,6 +1,6 @@
 package com.ierusalem.androchat.features_tcp.tcp.domain
 
-import android.util.Log
+import android.net.wifi.p2p.WifiP2pDevice
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
@@ -24,10 +24,30 @@ class TcpViewModel : ViewModel(),
     val state = _state.asStateFlow()
 
 
+    private fun toggleWifiClick(isWifiOn: Boolean) {
+        _state.update {
+            it.copy(
+                isWifiOn = isWifiOn
+            )
+        }
+    }
+
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
+            TcpScreenEvents.DiscoverWifiClick -> {
+                emitNavigation(TcpScreenNavigation.OnDiscoverWifiClick)
+            }
+
+            is TcpScreenEvents.OnWifiStateChanged -> {
+                toggleWifiClick(event.isWifiEnabled)
+            }
+
             TcpScreenEvents.OnNavIconClick -> {
                 emitNavigation(TcpScreenNavigation.OnNavIconClick)
+            }
+
+            TcpScreenEvents.CreateWifiClick -> {
+                emitNavigation(TcpScreenNavigation.OnCreateWiFiClick)
             }
 
             TcpScreenEvents.OnSettingIconClick -> {
@@ -95,6 +115,22 @@ class TcpViewModel : ViewModel(),
         }
     }
 
+    fun updateWifiDiscoveryStatus(status: WifiDiscoveryStatus){
+        _state.update {
+            it.copy(
+                wifiDiscoveryStatus = status
+            )
+        }
+    }
+
+    fun handleAvailableWifiListChange(peers: List<WifiP2pDevice>){
+        _state.update {
+            it.copy(
+                availableWifiNetworks = peers
+            )
+        }
+    }
+
 }
 
 @Immutable
@@ -106,9 +142,17 @@ data class TcpScreenUiState(
 
     val hotspotTitleStatus: ServerStatus = ServerStatus.Idle,
     val clientTitleStatus: ClientStatus = ClientStatus.Idle,
+    val wifiDiscoveryStatus:WifiDiscoveryStatus = WifiDiscoveryStatus.Idle,
 
+    val isWifiOn: Boolean = false,
+    val availableWifiNetworks: List<WifiP2pDevice> = emptyList(),
+)
 
-    )
+enum class WifiDiscoveryStatus(@StringRes val res: Int) {
+    Idle(R.string.discover_wifi),
+    Discovering(R.string.discovering_wifi),
+    Failure(R.string.discovering_not_started)
+}
 
 
 enum class ServerStatus(@StringRes val status: Int) {

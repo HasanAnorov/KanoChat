@@ -5,7 +5,6 @@ import android.app.LocaleManager
 import android.app.UiModeManager
 import android.os.Build
 import android.os.LocaleList
-import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.ierusalem.androchat.utils.DataStorePreferenceRepository
