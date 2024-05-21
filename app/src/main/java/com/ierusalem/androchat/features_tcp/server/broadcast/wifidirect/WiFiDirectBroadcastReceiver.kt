@@ -47,7 +47,15 @@ class WiFiDirectBroadcastReceiver(
                     WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> handleStateChangedAction(intent)
                     WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION -> {
                         Log.d("ahi3646", "connection changed action: ")
-                        handleConnectionChangedAction(intent)
+                        //handleConnectionChangedAction(intent)
+                        if(wifiP2pManager!= null){
+                            val networkInfo: NetworkInfo? = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO)
+                            if(networkInfo?.isConnected == true){
+                                wifiP2pManager.requestConnectionInfo(channel, connectionListener )
+                            }
+                        }else{
+                            Log.d("ahi3646", "onReceive: connection has lost ")
+                        }
                     }
                     WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION -> {
                         Log.d("ahi3646", "handleDiscoveryChangedAction: ")

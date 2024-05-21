@@ -34,6 +34,10 @@ class TcpViewModel : ViewModel(),
 
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
+            is TcpScreenEvents.OnConnectToWifiClick -> {
+               emitNavigation(TcpScreenNavigation.OnConnectToWifiClick(event.wifiDevice))
+            }
+
             TcpScreenEvents.DiscoverWifiClick -> {
                 emitNavigation(TcpScreenNavigation.OnDiscoverWifiClick)
             }
@@ -115,7 +119,7 @@ class TcpViewModel : ViewModel(),
         }
     }
 
-    fun updateWifiDiscoveryStatus(status: WifiDiscoveryStatus){
+    fun updateWifiDiscoveryStatus(status: WifiDiscoveryStatus) {
         _state.update {
             it.copy(
                 wifiDiscoveryStatus = status
@@ -123,7 +127,7 @@ class TcpViewModel : ViewModel(),
         }
     }
 
-    fun handleAvailableWifiListChange(peers: List<WifiP2pDevice>){
+    fun handleAvailableWifiListChange(peers: List<WifiP2pDevice>) {
         _state.update {
             it.copy(
                 availableWifiNetworks = peers
@@ -142,7 +146,7 @@ data class TcpScreenUiState(
 
     val hotspotTitleStatus: ServerStatus = ServerStatus.Idle,
     val clientTitleStatus: ClientStatus = ClientStatus.Idle,
-    val wifiDiscoveryStatus:WifiDiscoveryStatus = WifiDiscoveryStatus.Idle,
+    val wifiDiscoveryStatus: WifiDiscoveryStatus = WifiDiscoveryStatus.Idle,
 
     val isWifiOn: Boolean = false,
     val availableWifiNetworks: List<WifiP2pDevice> = emptyList(),

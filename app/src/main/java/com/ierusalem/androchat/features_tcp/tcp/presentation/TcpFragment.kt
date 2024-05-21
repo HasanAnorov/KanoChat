@@ -4,6 +4,9 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.IntentFilter
+import android.net.wifi.WpsInfo
+import android.net.wifi.p2p.WifiP2pConfig
+import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
 import android.os.Bundle
@@ -208,12 +211,34 @@ class TcpFragment : Fragment() {
         requireActivity().unregisterReceiver(receiver)
     }
 
+    @SuppressLint("MissingPermission")
+    private fun connectToWifi(wifiP2pDevice: WifiP2pDevice){
+        val config = WifiP2pConfig().apply {
+            deviceAddress = wifiP2pDevice.deviceAddress
+            wps.setup = WpsInfo.PBC
+        }
+
+        wifiP2pManager.connect(channel, config, object : WifiP2pManager.ActionListener{
+            override fun onSuccess() {
+                Log.d("ahi3646", "onSuccess: connected to wifi - ${wifiP2pDevice.deviceAddress}")
+            }
+
+            override fun onFailure(reason: Int) {
+                Log.d("ahi3646", "onFailure: failure on wifi connection ")
+            }
+        })
+
+    }
 
     @SuppressLint("MissingPermission")
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
             TcpScreenNavigation.OnCreateWiFiClick -> {
                 //todo
+            }
+
+            is TcpScreenNavigation.OnConnectToWifiClick -> {
+                connectToWifi(navigation.wifiP2pDevice)
             }
 
             TcpScreenNavigation.OnDiscoverWifiClick -> {

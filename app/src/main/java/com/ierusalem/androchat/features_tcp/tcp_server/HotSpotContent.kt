@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp_server.components.HotspotButton
+import com.ierusalem.androchat.features_tcp.tcp_server.components.WifiLazyItem
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 @Composable
@@ -55,14 +55,16 @@ fun HotSpotContent(
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceDim)
             ) {
-                items(state.availableWifiNetworks){
-                    Text(
+                items(state.availableWifiNetworks) { wifiDevice ->
+                    WifiLazyItem(
                         modifier = Modifier
-                            .padding(top = 2.dp)
-                            .padding(horizontal = 8.dp),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        text = it.deviceName,
-                        style = MaterialTheme.typography.titleMedium
+                            .padding(top = 8.dp)
+                            .padding(horizontal = 8.dp)
+                            .clip(RoundedCornerShape(10.dp)),
+                        onClick = {
+                            eventHandler(TcpScreenEvents.OnConnectToWifiClick(wifiDevice))
+                        },
+                        wifiName = wifiDevice.deviceName
                     )
                 }
             }
