@@ -18,7 +18,7 @@ import com.ierusalem.androchat.features_tcp.tcp.TcpView
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.TcpAppBar
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.TcpContent
-import com.ierusalem.androchat.features_tcp.tcp.presentation.components.rememberAllTabs
+import com.ierusalem.androchat.features_tcp.tcp.presentation.components.rememberTcpAllTabs
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.utils.UiText
 
@@ -37,7 +37,7 @@ fun TcpScreen(
     ) { pv ->
         Column {
             TcpAppBar(
-                appName = UiText.StringResource(R.string.local_connection),
+                title = UiText.StringResource(R.string.local_connection),
                 onNavIconClick = { eventHandler(TcpScreenEvents.OnNavIconClick) },
                 onSettingsIconClick = { eventHandler(TcpScreenEvents.OnSettingIconClick) },
                 allTabs = allTabs,
@@ -66,7 +66,7 @@ fun TcpScreen(
 @Composable
 private fun TcpScreenPreview() {
     AndroChatTheme {
-        val allTabs = rememberAllTabs()
+        val allTabs = rememberTcpAllTabs()
         TcpScreen(
             eventHandler = {},
             allTabs = allTabs,

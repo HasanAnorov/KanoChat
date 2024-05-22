@@ -18,20 +18,16 @@ package com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import com.ierusalem.androchat.features_tcp.tcp.domain.ConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.OwnerStatusState
 
 @Stable
 @Immutable
 sealed interface WiFiNetworkEvent {
-
-    data object WifiEnabled : WiFiNetworkEvent
-
-    data object WifiDisabled : WiFiNetworkEvent
-
-    data object PeersChanged : WiFiNetworkEvent
-
+    data class UpdateGroupOwnerAddress(val groupOwnerAddress: String): WiFiNetworkEvent
+    data class ConnectedAsWhat(val isOwner:OwnerStatusState): WiFiNetworkEvent
+    data class WifiStateChanged(val isWifiOn: Boolean) : WiFiNetworkEvent
     data object ThisDeviceChanged : WiFiNetworkEvent
-
     data object DiscoveryChanged : WiFiNetworkEvent
-
-    data class ConnectionChanged(val hostName: String) : WiFiNetworkEvent
+    data class ConnectionStatusChanged(val status: ConnectionStatus) : WiFiNetworkEvent
 }

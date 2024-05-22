@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_tcp.tcp_server.components
+package com.ierusalem.androchat.features_tcp.tcp_host.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -12,7 +12,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 

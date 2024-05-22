@@ -5,5 +5,6 @@ import com.ierusalem.androchat.utils.UiText
 
 enum class TcpView(val displayName: UiText) {
     HOTSPOT(UiText.StringResource(R.string.hostspot)),
-    CONNECTIONS(UiText.StringResource(R.string.connections))
+    CONNECTIONS(UiText.StringResource(R.string.connections)),
+    INSTRUCTIONS(UiText.StringResource(R.string.instructions))
 }

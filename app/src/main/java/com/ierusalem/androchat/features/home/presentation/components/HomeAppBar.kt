@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_tcp.tcp.presentation.components
+package com.ierusalem.androchat.features.home.presentation.components
 
 import androidx.annotation.CheckResult
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -10,8 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,11 +25,12 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.features_tcp.tcp.TcpView
+import com.ierusalem.androchat.features.home.presentation.HomeView
 import com.ierusalem.androchat.ui.components.AndroChatAppBar
 import com.ierusalem.androchat.ui.components.AndroChatTab
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
@@ -38,25 +38,26 @@ import com.ierusalem.androchat.utils.UiText
 
 @Composable
 @CheckResult
-fun rememberTcpAllTabs(): SnapshotStateList<TcpView> {
-    return remember { TcpView.entries.toMutableStateList() }
+fun rememberHomeAllTabs(): SnapshotStateList<HomeView> {
+    return remember { HomeView.entries.toMutableStateList() }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun TcpAppBar(
+fun HomeAppBar(
     modifier: Modifier = Modifier,
     title: UiText,
-    onNavIconClick: () -> Unit,
-    onSettingsIconClick: () -> Unit,
     pagerState: PagerState,
-    allTabs: SnapshotStateList<TcpView>,
-    onTabChanged: (TcpView) -> Unit
+    onTabChanged: (HomeView) -> Unit = {},
+    allTabs: SnapshotStateList<HomeView>,
+    onNavIconPressed: () -> Unit,
+    onSearchClick: () -> Unit,
+    onTcpClick: () -> Unit
 ) {
-    Column {
+    Column(
+        modifier = modifier
+    ) {
         AndroChatAppBar(
-            modifier = modifier,
             title = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -72,17 +73,23 @@ fun TcpAppBar(
                     )
                 }
             },
-            navIcon = Icons.AutoMirrored.Filled.ArrowBack,
             actions = {
-                IconButton(onClick = onSettingsIconClick) {
+                IconButton(onClick = onSearchClick) {
                     Icon(
-                        imageVector = Icons.Default.Settings,
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                IconButton(onClick = onTcpClick) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.local),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
             },
-            onNavIconPressed = onNavIconClick
+            onNavIconPressed = onNavIconPressed
         )
 
         val currentPage = pagerState.currentPage
@@ -120,24 +127,23 @@ fun TcpAppBar(
     }
 }
 
-
 @OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
-private fun PreviewAppBar() {
-    val allTabs = rememberTcpAllTabs()
+private fun HomeAppBarPreview() {
     AndroChatTheme {
-        TcpAppBar(
-            title = UiText.StringResource(R.string.local_connection),
-            onNavIconClick = {},
-            onSettingsIconClick = {},
+        val allTabs = rememberHomeAllTabs()
+        HomeAppBar(
+            title = UiText.StringResource(R.string.app_name),
             pagerState = rememberPagerState(
                 initialPage = 0,
                 initialPageOffsetFraction = 0F,
                 pageCount = { allTabs.size },
             ),
-            allTabs = rememberTcpAllTabs(),
-            onTabChanged = {}
+            allTabs = rememberHomeAllTabs(),
+            onNavIconPressed = {},
+            onSearchClick = {},
+            onTcpClick = {}
         )
     }
 }

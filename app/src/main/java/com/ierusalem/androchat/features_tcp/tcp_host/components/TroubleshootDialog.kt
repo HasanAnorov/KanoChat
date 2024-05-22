@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_tcp.tcp_server.components
+package com.ierusalem.androchat.features_tcp.tcp_host.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

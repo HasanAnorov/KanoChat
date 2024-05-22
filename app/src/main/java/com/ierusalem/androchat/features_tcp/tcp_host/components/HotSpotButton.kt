@@ -1,10 +1,13 @@
-package com.ierusalem.androchat.features_tcp.tcp_server.components
+package com.ierusalem.androchat.features_tcp.tcp_host.components
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,7 +31,7 @@ fun HotspotButton(
     @StringRes title: Int,
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(6.dp),
@@ -38,7 +41,6 @@ fun HotspotButton(
         content = {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
                     .padding(
                         vertical = 10.dp,
                         horizontal = 14.dp

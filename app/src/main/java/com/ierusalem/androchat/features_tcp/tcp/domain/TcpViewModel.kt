@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenNavigation
 import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
@@ -23,65 +24,75 @@ class TcpViewModel : ViewModel(),
     )
     val state = _state.asStateFlow()
 
+    fun handleNetworkEvents(networkEvent: WiFiNetworkEvent) {
+        when (networkEvent) {
+            is WiFiNetworkEvent.ConnectedAsWhat -> {
+                _state.update {
+                    it.copy(
+                        isOwner = networkEvent.isOwner
+                    )
+                }
+            }
 
-    private fun toggleWifiClick(isWifiOn: Boolean) {
-        _state.update {
-            it.copy(
-                isWifiOn = isWifiOn
-            )
+            WiFiNetworkEvent.DiscoveryChanged -> {
+                //unhandled event
+            }
+
+            WiFiNetworkEvent.ThisDeviceChanged -> {
+                //unhandled event
+            }
+
+            is WiFiNetworkEvent.ConnectionStatusChanged -> {
+                _state.update {
+                    it.copy(
+                        connectionStatus = networkEvent.status
+                    )
+                }
+            }
+
+            is WiFiNetworkEvent.UpdateGroupOwnerAddress -> {
+                _state.update {
+                    it.copy(
+                        groupOwnerAddress = networkEvent.groupOwnerAddress
+                    )
+                }
+            }
+
+            is WiFiNetworkEvent.WifiStateChanged -> {
+                _state.update {
+                    it.copy(
+                        isWifiOn = networkEvent.isWifiOn
+                    )
+                }
+            }
         }
     }
 
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
             is TcpScreenEvents.OnConnectToWifiClick -> {
-               emitNavigation(TcpScreenNavigation.OnConnectToWifiClick(event.wifiDevice))
+                emitNavigation(TcpScreenNavigation.OnConnectToWifiClick(event.wifiDevice))
             }
 
             TcpScreenEvents.DiscoverWifiClick -> {
                 emitNavigation(TcpScreenNavigation.OnDiscoverWifiClick)
             }
 
-            is TcpScreenEvents.OnWifiStateChanged -> {
-                toggleWifiClick(event.isWifiEnabled)
-            }
-
             TcpScreenEvents.OnNavIconClick -> {
                 emitNavigation(TcpScreenNavigation.OnNavIconClick)
-            }
-
-            TcpScreenEvents.CreateWifiClick -> {
-                emitNavigation(TcpScreenNavigation.OnCreateWiFiClick)
             }
 
             TcpScreenEvents.OnSettingIconClick -> {
                 emitNavigation(TcpScreenNavigation.OnSettingsClick)
             }
 
-            TcpScreenEvents.ConnectToServerClick -> {
-                when (state.value.clientTitleStatus) {
-                    ClientStatus.Idle -> {
-                        emitNavigation(TcpScreenNavigation.OnConnectToServerClick)
-                    }
-
-                    ClientStatus.Connecting -> {
-                        //just ignore action
-                    }
-
-                    ClientStatus.Connected -> {
-                        emitNavigation(TcpScreenNavigation.OnDisconnectServerClick)
-                    }
-                }
-            }
-
-            TcpScreenEvents.OpenHotspotClick -> {
+            TcpScreenEvents.CreateServerClick -> {
                 when (state.value.hotspotTitleStatus) {
                     ServerStatus.Idle -> {
                         if ((state.value.portNumber in 65535 downTo 1024) && state.value.hotspotPassword.length > 7) {
                             emitNavigation(
                                 TcpScreenNavigation.OnCreateServerClick(
-                                    hotspotName = state.value.hotspotName,
-                                    hotspotPassword = state.value.hotspotPassword,
+                                    serverIpAddress = state.value.groupOwnerAddress ?: "",
                                     portNumber = state.value.portNumber
                                 )
                             )
@@ -100,6 +111,14 @@ class TcpViewModel : ViewModel(),
                     }
                 }
             }
+            TcpScreenEvents.ConnectToServerClick -> {
+                emitNavigation(
+                    TcpScreenNavigation.OnConnectToServerClick(
+                        serverIpAddress = state.value.groupOwnerAddress ?: "",
+                        portNumber = state.value.portNumber
+                    )
+                )
+            }
         }
     }
 
@@ -107,14 +126,6 @@ class TcpViewModel : ViewModel(),
         _state.update {
             it.copy(
                 hotspotTitleStatus = status
-            )
-        }
-    }
-
-    fun updateClientTitleStatus(status: ClientStatus) {
-        _state.update {
-            it.copy(
-                clientTitleStatus = status
             )
         }
     }
@@ -139,18 +150,38 @@ class TcpViewModel : ViewModel(),
 
 @Immutable
 data class TcpScreenUiState(
-    //server side state
+    //tcp server side state
     val hotspotName: String = "",
     val hotspotPassword: String = generateRandomPassword(),
-    val portNumber: Int = 9002,
 
+    val portNumber: Int = 1020,
     val hotspotTitleStatus: ServerStatus = ServerStatus.Idle,
-    val clientTitleStatus: ClientStatus = ClientStatus.Idle,
+
+    //wifi p2p state
     val wifiDiscoveryStatus: WifiDiscoveryStatus = WifiDiscoveryStatus.Idle,
 
+    //status
+    val connectionStatus: ConnectionStatus = ConnectionStatus.Idle,
     val isWifiOn: Boolean = false,
+    val isOwner: OwnerStatusState = OwnerStatusState.Idle,
+    val groupOwnerAddress: String? = null,
+
+    //wifi peers list
     val availableWifiNetworks: List<WifiP2pDevice> = emptyList(),
 )
+
+enum class ConnectionStatus(@StringRes val status: Int) {
+    Idle(R.string.not_running),
+    Running(R.string.running),
+    Connected(R.string.connection_connected),
+    Disconnected(R.string.not_connected)
+}
+
+enum class OwnerStatusState(@StringRes val status: Int) {
+    Idle(R.string.waiting_for_connection),
+    Owner(R.string.owner),
+    Client(R.string.client)
+}
 
 enum class WifiDiscoveryStatus(@StringRes val res: Int) {
     Idle(R.string.discover_wifi),
@@ -163,10 +194,4 @@ enum class ServerStatus(@StringRes val status: Int) {
     Idle(R.string.create_a_server),
     Creating(R.string.creating_a_server),
     Created(R.string.server_created_waiting_for_clients)
-}
-
-enum class ClientStatus(@StringRes val status: Int) {
-    Idle(R.string.connect_to_server),
-    Connecting(R.string.connecting_to_server),
-    Connected(R.string.connected_to_a_server)
 }

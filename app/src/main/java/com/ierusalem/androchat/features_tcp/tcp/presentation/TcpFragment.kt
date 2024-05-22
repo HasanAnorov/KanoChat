@@ -29,15 +29,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiDirectBroadcastReceiver
+import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
-import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.TcpView
-import com.ierusalem.androchat.features_tcp.tcp.domain.ClientStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.ConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.ServerStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_tcp.tcp.domain.WifiDiscoveryStatus
-import com.ierusalem.androchat.features_tcp.tcp.presentation.components.rememberAllTabs
+import com.ierusalem.androchat.features_tcp.tcp.presentation.components.rememberTcpAllTabs
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.utils.executeWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
@@ -63,8 +63,8 @@ class TcpFragment : Fragment() {
     private val viewModel: TcpViewModel by viewModels()
 
     //wifi direct
-    private lateinit var channel: WifiP2pManager.Channel
     private lateinit var wifiP2pManager: WifiP2pManager
+    private lateinit var channel: WifiP2pManager.Channel
     private lateinit var receiver: WiFiDirectBroadcastReceiver
 
     //server
@@ -102,16 +102,34 @@ class TcpFragment : Fragment() {
         }
     }
 
+    private val peerListListener = WifiP2pManager.PeerListListener { peerList ->
+        Log.d("ahi3646", "peersList - $peerList")
+        val peers = viewModel.state.value.availableWifiNetworks
+        val refreshedPeers = peerList.deviceList
+        if (refreshedPeers != peers) {
+            viewModel.handleAvailableWifiListChange(refreshedPeers.toList())
+        }
+        if (peers.isEmpty()) {
+            Log.d("ahi3646", "No devices found")
+            return@PeerListListener
+        }
+    }
+
     @OptIn(ExperimentalFoundationApi::class)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         wifiP2pManager =
             requireContext().getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
-        channel = createChannel()
+        channel = wifiP2pManager
+            .initialize(
+                requireContext(),
+                Looper.getMainLooper()
+            ) {
+                Log.d("ahi3646", "WifiP2PManager Channel died! Do nothing :D")
+            }
         intentFilter.apply {
             addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
             addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)
@@ -123,7 +141,7 @@ class TcpFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 val scope = rememberCoroutineScope()
-                val allTabs = rememberAllTabs()
+                val allTabs = rememberTcpAllTabs()
                 val pagerState = rememberPagerState(
                     initialPage = 0,
                     initialPageOffsetFraction = 0F,
@@ -146,13 +164,11 @@ class TcpFragment : Fragment() {
 
                 AndroChatTheme {
                     TcpScreen(
-                        eventHandler = {
-                            viewModel.handleEvents(it)
-                        },
+                        state = state,
+                        eventHandler = { viewModel.handleEvents(it) },
                         allTabs = allTabs,
                         pagerState = pagerState,
-                        onTabChanged = { handleTabSelected(it) },
-                        state = state
+                        onTabChanged = { handleTabSelected(it) }
                     )
                 }
             }
@@ -168,74 +184,9 @@ class TcpFragment : Fragment() {
         )
     }
 
-    private fun createChannel(): WifiP2pManager.Channel {
-        Log.d("ahi3646", "creating channel ")
-        return wifiP2pManager
-            .initialize(
-                requireContext(),
-                Looper.getMainLooper()
-            ) {
-                Log.d("ahi3646", "WifiP2PManager Channel died! Do nothing :D")
-            }
-    }
-
-    private val peerListListener = WifiP2pManager.PeerListListener { peerList ->
-        Log.d("ahi3646", "peersList - $peerList")
-        val peers = viewModel.state.value.availableWifiNetworks
-        val refreshedPeers = peerList.deviceList
-        if (refreshedPeers != peers) {
-            viewModel.handleAvailableWifiListChange(refreshedPeers.toList())
-        }
-
-        if (peers.isEmpty()) {
-            Log.d("ahi3646", "No devices found")
-            return@PeerListListener
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        receiver = WiFiDirectBroadcastReceiver(
-            wifiP2pManager = wifiP2pManager,
-            channel = channel,
-            onWifiEnabled = {
-                viewModel.handleEvents(TcpScreenEvents.OnWifiStateChanged(it))
-            },
-            listener = peerListListener
-        )
-        requireActivity().registerReceiver(receiver, intentFilter)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        requireActivity().unregisterReceiver(receiver)
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun connectToWifi(wifiP2pDevice: WifiP2pDevice){
-        val config = WifiP2pConfig().apply {
-            deviceAddress = wifiP2pDevice.deviceAddress
-            wps.setup = WpsInfo.PBC
-        }
-
-        wifiP2pManager.connect(channel, config, object : WifiP2pManager.ActionListener{
-            override fun onSuccess() {
-                Log.d("ahi3646", "onSuccess: connected to wifi - ${wifiP2pDevice.deviceAddress}")
-            }
-
-            override fun onFailure(reason: Int) {
-                Log.d("ahi3646", "onFailure: failure on wifi connection ")
-            }
-        })
-
-    }
-
     @SuppressLint("MissingPermission")
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
-            TcpScreenNavigation.OnCreateWiFiClick -> {
-                //todo
-            }
 
             is TcpScreenNavigation.OnConnectToWifiClick -> {
                 connectToWifi(navigation.wifiP2pDevice)
@@ -245,11 +196,16 @@ class TcpFragment : Fragment() {
                 val permissionGuard = PermissionGuardImpl(requireContext())
                 lifecycleScope.launch {
                     if (permissionGuard.canCreateNetwork()) {
-                        Log.d("ahi3646", "permission granted: ")
                         wifiP2pManager.discoverPeers(
                             channel, object : WifiP2pManager.ActionListener {
                                 override fun onSuccess() {
                                     Log.d("ahi3646", "onSuccess: discover ")
+                                    //todo optimize this
+                                    viewModel.handleNetworkEvents(
+                                        WiFiNetworkEvent.ConnectionStatusChanged(
+                                            ConnectionStatus.Running
+                                        )
+                                    )
                                     viewModel.updateWifiDiscoveryStatus(WifiDiscoveryStatus.Discovering)
                                 }
 
@@ -282,36 +238,61 @@ class TcpFragment : Fragment() {
 
             TcpScreenNavigation.OnDisconnectServerClick -> {
                 clientSocket.close()
-                viewModel.updateClientTitleStatus(ClientStatus.Idle)
             }
 
             is TcpScreenNavigation.OnCreateServerClick -> {
                 CoroutineScope(Dispatchers.Default).launch {
-                    openHotspot(
-                        hotspotName = navigation.hotspotName,
-                        hotspotPassword = navigation.hotspotPassword,
-                        port = navigation.portNumber
+                    createServer(
+                        serverAddress = navigation.serverIpAddress,
+                        serverPort = navigation.portNumber
                     )
                 }
             }
 
             is TcpScreenNavigation.OnConnectToServerClick -> {
                 CoroutineScope(Dispatchers.Default).launch {
-                    connectToServer()
+                    connectToServer(
+                        serverIpAddress = navigation.serverIpAddress,
+                        serverPort = navigation.portNumber
+                    )
                 }
             }
         }
     }
 
+    @SuppressLint("MissingPermission")
+    private fun connectToWifi(wifiP2pDevice: WifiP2pDevice) {
+        val config = WifiP2pConfig().apply {
+            deviceAddress = wifiP2pDevice.deviceAddress
+            wps.setup = WpsInfo.PBC
+        }
+        wifiP2pManager.connect(
+            channel,
+            config,
+            object : WifiP2pManager.ActionListener {
+                override fun onSuccess() {
+                    Log.d(
+                        "ahi3646",
+                        "onSuccess: connected to wifi - ${wifiP2pDevice.deviceAddress}"
+                    )
+//                    viewModel.handleNetworkEvents(WiFiNetworkEvent.ConnectionStatusChanged(ConnectionStatus.Connected))
+                }
+                override fun onFailure(reason: Int) {
+                    Log.d("ahi3646", "onFailure: failure on wifi connection ")
+//                    viewModel.handleNetworkEvents(WiFiNetworkEvent.ConnectionStatusChanged(ConnectionStatus.Disconnected))
+                }
+            }
+        )
+    }
 
     @OptIn(InternalAPI::class)
-    private suspend fun connectToServer() {
+    private suspend fun connectToServer(serverIpAddress: String, serverPort: Int) {
         clientSelectorManager = SelectorManager(Dispatchers.IO)
-        clientSocket = aSocket(clientSelectorManager).tcp().connect("127.0.0.1", 9002)
+        clientSocket = aSocket(clientSelectorManager).tcp().connect(serverIpAddress, serverPort)
         Log.d("ahi3646", "connectToServer ip address: ${clientSocket.localAddress} ")
 
         val receiveChannel = clientSocket.openReadChannel()
-        val sendChannel = clientSocket.openWriteChannel(autoFlush = true)
+        //val sendChannel = clientSocket.openWriteChannel(autoFlush = true)
 
         withContext(Dispatchers.IO) {
             while (true) {
@@ -330,13 +311,12 @@ class TcpFragment : Fragment() {
     }
 
     @OptIn(InternalAPI::class)
-    private suspend fun openHotspot(hotspotName: String, hotspotPassword: String, port: Int) {
+    private suspend fun createServer(serverAddress: String, serverPort: Int) {
         Log.d(
             "ahi3646",
             "openHotspot: " +
-                    "\nhotspotName - $hotspotName" +
-                    "\nhotspotPassword - $hotspotPassword" +
-                    "\nport - $port"
+                    "\nhotspotPassword - $serverAddress" +
+                    "\nport - $serverPort"
         )
 
         runBlocking {
@@ -349,7 +329,7 @@ class TcpFragment : Fragment() {
                 //reuseAddress = true
                 //reusePort = true
                 //}
-                .bind("127.0.0.1", 9002)
+                .bind(serverAddress, serverPort)
 
 
             Log.d("ahi3646", "Server is listening at ${serverSocket.localAddress}")
@@ -362,12 +342,30 @@ class TcpFragment : Fragment() {
 
                 launch {
                     //Receive data
-                    val receiveChannel = socket.openReadChannel()
+                    //val receiveChannel = socket.openReadChannel()
                     val sendChannel = socket.openWriteChannel(autoFlush = true)
                     sendChannel.writeStringUtf8("Please enter your name\n")
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        receiver = WiFiDirectBroadcastReceiver(
+            wifiP2pManager = wifiP2pManager,
+            channel = channel,
+            peerListListener = peerListListener,
+            networkEventHandler = { networkEvent ->
+                viewModel.handleNetworkEvents(networkEvent)
+            }
+        )
+        requireActivity().registerReceiver(receiver, intentFilter)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        requireActivity().unregisterReceiver(receiver)
     }
 
 }

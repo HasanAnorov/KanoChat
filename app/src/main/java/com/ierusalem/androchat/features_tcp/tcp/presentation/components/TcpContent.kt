@@ -12,7 +12,8 @@ import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.TcpView
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp_client.ClientContent
-import com.ierusalem.androchat.features_tcp.tcp_server.HotSpotContent
+import com.ierusalem.androchat.features_tcp.tcp_instructions.InstructionsContent
+import com.ierusalem.androchat.features_tcp.tcp_host.HotSpotContent
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -27,8 +28,7 @@ fun TcpContent(
         modifier = modifier,
         state = pagerState,
     ) { page ->
-        val screen =
-            remember(
+        val screen = remember(
                 allTabs,
                 page,
             ) {
@@ -48,6 +48,12 @@ fun TcpContent(
                     modifier = Modifier.fillMaxSize(),
                     eventHandler = eventHandler,
                     state = state
+                )
+            }
+
+            TcpView.INSTRUCTIONS -> {
+                InstructionsContent(
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }

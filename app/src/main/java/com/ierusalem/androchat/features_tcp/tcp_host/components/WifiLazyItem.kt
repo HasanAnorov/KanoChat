@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_tcp.tcp_server.components
+package com.ierusalem.androchat.features_tcp.tcp_host.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,7 +42,7 @@ fun WifiLazyItem(
             color = MaterialTheme.colorScheme.onBackground,
             text = wifiName,
             style = MaterialTheme.typography.titleMedium,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
         Icon(

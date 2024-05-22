@@ -115,5 +115,16 @@
     <string name="discover_wifi">Discover Wifi</string>
     <string name="discovering_wifi">Discovering WiFi</string>
     <string name="discovering_not_started">Discovering not started</string>
+    <string name="instructions">Instructions</string>
+    <string name="client">Client</string>
+    <string name="owner">Owner</string>
+    <string name="waiting_for_connection">Waiting for connection ...</string>
+    <string name="not_running">Not Running</string>
+    <string name="connection_connected">Connected</string>
+    <string name="not_connected">Not Connected</string>
+    <string name="running">Running</string>
+    <string name="wifi_enabled">WiFi enabled</string>
+    <string name="wifi_disabled">WiFi disabled</string>
+    <string name="connect">Connect</string>
 
 </resources>
