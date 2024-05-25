@@ -35,7 +35,6 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiDirectBroadcastReceiver
 import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
-import com.ierusalem.androchat.features_tcp.tcp.TcpClientHandler
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.TcpView
 import com.ierusalem.androchat.features_tcp.tcp.domain.ConnectionStatus
@@ -328,9 +327,8 @@ class TcpFragment : Fragment() {
                         val dataInputStream = DataInputStream(socket.getInputStream())
                         val dataOutputStream = DataOutputStream(socket.getOutputStream())
 
-                        // Use threads for each client to communicate with them simultaneously
-                        val t: Thread = TcpClientHandler(dataInputStream, dataOutputStream)
-                        t.start()
+                        dataOutputStream.writeUTF("Hello From Server")
+                        dataOutputStream.flush()
                     } else {
                         Log.e("ahi3646", "Couldn't create ServerSocket!")
                     }
@@ -348,11 +346,16 @@ class TcpFragment : Fragment() {
 
     private fun connectToServer(serverIpAddress: String, serverPort: Int){
         val client = java.net.Socket(serverIpAddress, serverPort)
-        val writer = client.getOutputStream()
-        val reader = client.getInputStream()
-        writer.write("Hello From Client".toByteArray())
-        writer.close()
-        Log.d("ahi3646", "connectToServer: $reader ")
+        val writer = DataOutputStream(client.getOutputStream())
+        val reader = DataInputStream(client.getInputStream())
+        val inputData = reader.readUTF()
+        if (reader.available() > 0){
+            Log.d("ahi3646", "connectToServer: inputData $inputData ")
+        }else{
+            Log.d("ahi4656", "connectToServer: reader not available  - ${reader.available()} $inputData  ")
+        }
+        //writer.write("Hello From Client".toByteArray())
+        //writer.close()
     }
 
 //    private fun sendMessages(message: String) {
