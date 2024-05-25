@@ -12,6 +12,9 @@ object Constants {
     const val MINIMUM_LOGIN_LENGTH = 3
     const val MAX_BADGE_COUNT = 99
 
+    const val MAX_PORT_NUMBER = 65000
+    const val MIN_PORT_NUMBER = 1025
+
     private const val ENGLISH_LOCALE = "en"
     private const val RUSSIAN_LOCALE = "ru"
 

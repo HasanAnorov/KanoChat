@@ -15,19 +15,23 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiDirectBroadcastReceiver
 import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
@@ -35,9 +39,11 @@ import com.ierusalem.androchat.features_tcp.tcp.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.TcpView
 import com.ierusalem.androchat.features_tcp.tcp.domain.ConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.ServerStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenErrors
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_tcp.tcp.domain.WifiDiscoveryStatus
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.rememberTcpAllTabs
+import com.ierusalem.androchat.ui.navigation.emitNavigation
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.utils.executeWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
@@ -48,14 +54,16 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.util.InternalAPI
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import kotlin.system.exitProcess
 
 @AndroidEntryPoint
 class TcpFragment : Fragment() {
@@ -66,16 +74,25 @@ class TcpFragment : Fragment() {
     private lateinit var wifiP2pManager: WifiP2pManager
     private lateinit var channel: WifiP2pManager.Channel
     private lateinit var receiver: WiFiDirectBroadcastReceiver
+    private val intentFilter = IntentFilter()
 
     //server
     private lateinit var serverSelectorManager: SelectorManager
     private lateinit var serverSocket: ServerSocket
+    private lateinit var serverWriteChannel: ByteWriteChannel
+    private lateinit var serverReadChannel: ByteReadChannel
+
+    //you can't send message with serverSocket
+    private lateinit var serverConnectedSocket: Socket
 
     //client
     private lateinit var clientSelectorManager: SelectorManager
     private lateinit var clientSocket: Socket
+    private lateinit var clientWriteChannel: ByteWriteChannel
+    private lateinit var clientReadChannel: ByteReadChannel
 
-    private val intentFilter = IntentFilter()
+    //permission
+    private lateinit var permissionGuard: PermissionGuardImpl
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -103,7 +120,6 @@ class TcpFragment : Fragment() {
     }
 
     private val peerListListener = WifiP2pManager.PeerListListener { peerList ->
-        Log.d("ahi3646", "peersList - $peerList")
         val peers = viewModel.state.value.availableWifiNetworks
         val refreshedPeers = peerList.deviceList
         if (refreshedPeers != peers) {
@@ -121,8 +137,9 @@ class TcpFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        wifiP2pManager =
-            requireContext().getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
+        permissionGuard = PermissionGuardImpl(requireContext())
+        wifiP2pManager = requireContext()
+            .getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
         channel = wifiP2pManager
             .initialize(
                 requireContext(),
@@ -131,11 +148,11 @@ class TcpFragment : Fragment() {
                 Log.d("ahi3646", "WifiP2PManager Channel died! Do nothing :D")
             }
         intentFilter.apply {
+            addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
             addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
             addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)
             addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)
             addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION)
-            addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
         }
 
         return ComposeView(requireContext()).apply {
@@ -147,7 +164,7 @@ class TcpFragment : Fragment() {
                     initialPageOffsetFraction = 0F,
                     pageCount = { allTabs.size },
                 )
-
+                val focusManager = LocalFocusManager.current
                 val handleTabSelected by rememberUpdatedState { tab: TcpView ->
                     // Click fires the index to update
                     // The index updating is caught by the snapshot flow
@@ -158,6 +175,10 @@ class TcpFragment : Fragment() {
                             index
                         )
                     }
+                }
+
+                LaunchedEffect(key1 = pagerState.currentPage) {
+                    focusManager.clearFocus()
                 }
 
                 val state by viewModel.state.collectAsStateWithLifecycle()
@@ -188,56 +209,12 @@ class TcpFragment : Fragment() {
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
 
-            is TcpScreenNavigation.OnConnectToWifiClick -> {
-                connectToWifi(navigation.wifiP2pDevice)
+            TcpScreenNavigation.OnNavIconClick -> {
+                findNavController().popBackStack()
             }
-
-            TcpScreenNavigation.OnDiscoverWifiClick -> {
-                val permissionGuard = PermissionGuardImpl(requireContext())
-                lifecycleScope.launch {
-                    if (permissionGuard.canCreateNetwork()) {
-                        wifiP2pManager.discoverPeers(
-                            channel, object : WifiP2pManager.ActionListener {
-                                override fun onSuccess() {
-                                    Log.d("ahi3646", "onSuccess: discover ")
-                                    //todo optimize this
-                                    viewModel.handleNetworkEvents(
-                                        WiFiNetworkEvent.ConnectionStatusChanged(
-                                            ConnectionStatus.Running
-                                        )
-                                    )
-                                    viewModel.updateWifiDiscoveryStatus(WifiDiscoveryStatus.Discovering)
-                                }
-
-                                override fun onFailure(reason: Int) {
-                                    Log.d("ahi3646", "onFailure: discover $reason ")
-                                    viewModel.updateWifiDiscoveryStatus(WifiDiscoveryStatus.Failure)
-                                }
-
-                            }
-                        )
-                    } else {
-                        locationPermissionRequest.launch(
-                            permissionGuard.requiredPermissions.toTypedArray()
-                        )
-                        Log.d("ahi3646", "request permission: ")
-                    }
-                }
-            }
-
-            TcpScreenNavigation.OnNavIconClick -> findNavController().popBackStack()
 
             TcpScreenNavigation.OnSettingsClick -> {
-
-            }
-
-            TcpScreenNavigation.OnCloseServerClick -> {
-                serverSocket.close()
-                viewModel.updateHotspotTitleStatus(ServerStatus.Idle)
-            }
-
-            TcpScreenNavigation.OnDisconnectServerClick -> {
-                clientSocket.close()
+                findNavController().navigate(R.id.action_tcpFragment_to_tcpSettingFragment)
             }
 
             is TcpScreenNavigation.OnCreateServerClick -> {
@@ -257,11 +234,68 @@ class TcpFragment : Fragment() {
                     )
                 }
             }
+
+            TcpScreenNavigation.OnCloseServerClick -> {
+                serverSocket.close()
+                viewModel.updateHotspotTitleStatus(ServerStatus.Idle)
+            }
+
+            TcpScreenNavigation.OnDisconnectServerClick -> {
+                clientSocket.close()
+            }
+
+            is TcpScreenNavigation.OnConnectToWifiClick -> {
+                connectToWifi(navigation.wifiP2pDevice)
+            }
+
+            is TcpScreenNavigation.OnErrorsOccurred -> {
+                Toast.makeText(
+                    requireContext(),
+                    navigation.tcpScreenErrors.errorMessage,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            TcpScreenNavigation.OnDiscoverWifiClick -> {
+                lifecycleScope.launch {
+                    if (permissionGuard.canCreateNetwork()) {
+                        wifiP2pManager.discoverPeers(
+                            channel, object : WifiP2pManager.ActionListener {
+                                override fun onSuccess() {
+                                    Log.d("ahi3646", "onSuccess: discover ")
+                                    //todo optimize this
+                                    viewModel.handleNetworkEvents(
+                                        WiFiNetworkEvent.ConnectionStatusChanged(
+                                            ConnectionStatus.Running
+                                        )
+                                    )
+                                    viewModel.updateWifiDiscoveryStatus(WifiDiscoveryStatus.Discovering)
+                                }
+
+                                override fun onFailure(reason: Int) {
+                                    // Code for when the discovery initiation fails goes here.
+                                    // Alert the user that something went wrong.
+                                    Log.d("ahi3646", "onFailure: discover $reason ")
+                                    viewModel.updateWifiDiscoveryStatus(WifiDiscoveryStatus.Failure)
+                                }
+
+                            }
+                        )
+                    } else {
+                        locationPermissionRequest.launch(
+                            permissionGuard.requiredPermissions.toTypedArray()
+                        )
+                        Log.d("ahi3646", "request permission: ")
+                    }
+                }
+            }
+
         }
     }
 
     @SuppressLint("MissingPermission")
     private fun connectToWifi(wifiP2pDevice: WifiP2pDevice) {
+        Log.d("ahi3646", "connectToWifi: $wifiP2pDevice ")
         val config = WifiP2pConfig().apply {
             deviceAddress = wifiP2pDevice.deviceAddress
             wps.setup = WpsInfo.PBC
@@ -271,15 +305,13 @@ class TcpFragment : Fragment() {
             config,
             object : WifiP2pManager.ActionListener {
                 override fun onSuccess() {
-                    Log.d(
-                        "ahi3646",
-                        "onSuccess: connected to wifi - ${wifiP2pDevice.deviceAddress}"
-                    )
-//                    viewModel.handleNetworkEvents(WiFiNetworkEvent.ConnectionStatusChanged(ConnectionStatus.Connected))
+                    // WiFiDirectBroadcastReceiver notifies us. Ignore for now
+                    Log.d("ahi3646", "success: connected to wifi - ${wifiP2pDevice.deviceAddress}")
                 }
+
                 override fun onFailure(reason: Int) {
-                    Log.d("ahi3646", "onFailure: failure on wifi connection ")
-//                    viewModel.handleNetworkEvents(WiFiNetworkEvent.ConnectionStatusChanged(ConnectionStatus.Disconnected))
+                    Log.d("ahi3646", "failure: failure on wifi connection ")
+                    viewModel.emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.FailedToConnectToWifiDevice))
                 }
             }
         )
@@ -289,23 +321,26 @@ class TcpFragment : Fragment() {
     private suspend fun connectToServer(serverIpAddress: String, serverPort: Int) {
         clientSelectorManager = SelectorManager(Dispatchers.IO)
         clientSocket = aSocket(clientSelectorManager).tcp().connect(serverIpAddress, serverPort)
-        Log.d("ahi3646", "connectToServer ip address: ${clientSocket.localAddress} ")
+        Log.d(
+            "ahi3646",
+            "connectToServer ip address: $serverIpAddress $serverPort ${clientSocket.localAddress} "
+        )
 
         val receiveChannel = clientSocket.openReadChannel()
         //val sendChannel = clientSocket.openWriteChannel(autoFlush = true)
 
         withContext(Dispatchers.IO) {
-            while (true) {
-                val greeting = receiveChannel.readUTF8Line()
-                if (greeting != null) {
-                    Log.d("ahi3646", greeting)
-                } else {
-                    Log.d("ahi3646", "Server closed a connection")
-                    clientSocket.close()
-                    clientSelectorManager.close()
-                    exitProcess(0)
-                }
+//            while (true) {
+            val greeting = receiveChannel.readUTF8Line()
+            if (greeting != null) {
+                Log.d("ahi3646", greeting)
+            } else {
+                Log.d("ahi3646", "Server closed a connection")
+//                    clientSocket.close()
+//                    clientSelectorManager.close()
+//                    exitProcess(0)
             }
+//            }
         }
 
     }
@@ -335,20 +370,157 @@ class TcpFragment : Fragment() {
             Log.d("ahi3646", "Server is listening at ${serverSocket.localAddress}")
             viewModel.updateHotspotTitleStatus(ServerStatus.Created)
 
-            while (true) {
-                //Accept incoming connections
-                val socket = serverSocket.accept()
-                Log.d("ahi3646", "Socket Accepted $socket")
+//            while (true) {
+            //Accept incoming connections
+            val socket = serverSocket.accept()
+            Log.d("ahi3646", "Socket Accepted $socket")
+            //Receive data
+            //val receiveChannel = socket.openReadChannel()
+            val sendChannel = socket.openWriteChannel(autoFlush = true)
 
-                launch {
-                    //Receive data
-                    //val receiveChannel = socket.openReadChannel()
-                    val sendChannel = socket.openWriteChannel(autoFlush = true)
+            launch {
+                repeat(3) {
+                    delay(3000)
                     sendChannel.writeStringUtf8("Please enter your name\n")
+                    Log.d("ahi3646", "createServer: repeat ")
                 }
             }
+//            }
         }
     }
+
+
+//    @OptIn(InternalAPI::class)
+//    private suspend fun connectToServer(serverIpAddress: String, serverPort: Int) {
+//        clientSelectorManager = SelectorManager(Dispatchers.IO)
+//        clientSocket = aSocket(clientSelectorManager).tcp().connect(serverIpAddress, serverPort)
+//        Log.d("ahi3646", "connectToServer ip address: $serverIpAddress $serverPort ")
+//
+//        clientReadChannel = clientSocket.openReadChannel()
+//        clientWriteChannel = clientSocket.openWriteChannel(autoFlush = true)
+//
+//
+//
+//        withContext(Dispatchers.IO) {
+//            while (true) {
+//                val greeting = clientReadChannel.readUTF8Line()
+//                if (greeting != null) {
+//                    Log.d("ahi3646", greeting)
+//                } else {
+//                    Log.d("ahi3646", "Server closed a connection")
+//                    clientSocket.close()
+//                    clientSelectorManager.close()
+//                    exitProcess(0)
+//                }
+//            }
+//        }
+//
+//    }
+//
+//    @OptIn(InternalAPI::class)
+//    private suspend fun createServer(serverAddress: String, serverPort: Int) {
+//        Log.d(
+//            "ahi3646",
+//            "openHotspot: " +
+//                    "\nhotspotPassword - $serverAddress" +
+//                    "\nport - $serverPort"
+//        )
+//
+//        runBlocking {
+//            //Create a server socket
+//            serverSelectorManager = SelectorManager(Dispatchers.IO)
+//            serverSocket = aSocket(serverSelectorManager)
+//                .tcp()
+//                //.configure {
+//                //todo think about these
+//                //reuseAddress = true
+//                //reusePort = true
+//                //}
+//                .bind(serverAddress, serverPort)
+//
+//            Log.d("ahi3646", "Server is listening at ${serverSocket.localAddress}")
+//            viewModel.updateHotspotTitleStatus(ServerStatus.Created)
+//
+//            while (true) {
+//                //Accept incoming connections
+//                serverConnectedSocket = serverSocket.accept()
+//                viewModel.updateConnectionsCount()
+//                Log.d("ahi3646", "Socket Accepted $serverConnectedSocket")
+//
+//                serverWriteChannel = serverConnectedSocket.openWriteChannel(autoFlush = true)
+//                serverReadChannel = serverConnectedSocket.openReadChannel()
+//
+//                launch {
+//                    //Send data
+//                    val sendChannel = serverConnectedSocket.openWriteChannel(autoFlush = true)
+//                    sendChannel.writeStringUtf8("Please enter your name\n")
+//                }
+//            }
+//        }
+//    }
+
+//    private fun sendMessages(message: String) {
+//        if (viewModel.state.value.isOwner == OwnerStatusState.Owner) {
+//            lifecycleScope.launch(Dispatchers.IO) {
+//                try {
+//                    //todo need to clarify
+//                    while (true) {
+//                        serverWriteChannel.writeStringUtf8(message)
+//                    }
+//                } catch (e: Throwable) {
+//                    Log.d("ahi3646", "sendMessages: error $e ")
+//                    serverConnectedSocket.close()
+//                }
+//            }
+//        } else {
+//            lifecycleScope.launch(Dispatchers.IO) {
+//                try {
+//                    //todo need to clarify
+//                    while (true) {
+//                        clientWriteChannel.writeStringUtf8(message)
+//                    }
+//                } catch (e: Throwable) {
+//                    Log.d("ahi3646", "sendMessages: error $e ")
+//                    Log.d("ahi3646", "Server closed a connection")
+//                    clientSocket.close()
+//                    clientSelectorManager.close()
+//                    exitProcess(0)
+//                }
+//            }
+//        }
+//    }
+//
+//    private fun readMessages() {
+//        if (viewModel.state.value.isOwner == OwnerStatusState.Owner) {
+//            lifecycleScope.launch(Dispatchers.IO) {
+//                try {
+//                    while (true) {
+//                        val incomingMessage = serverReadChannel.readUTF8Line()
+//                        if (incomingMessage != null) {
+//                            viewModel.handleEvents(TcpScreenEvents.SendMessage(incomingMessage))
+//                        }
+//                    }
+//                } catch (e: Throwable) {
+//                    Log.d("ahi3646", "readMessages: error $e ")
+//                    serverConnectedSocket.close()
+//                }
+//            }
+//        } else {
+//            lifecycleScope.launch(Dispatchers.IO) {
+//                while (true) {
+//                    val incomingMessage = clientReadChannel.readUTF8Line()
+//                    if (incomingMessage != null) {
+//                        viewModel.handleEvents(TcpScreenEvents.SendMessage(incomingMessage))
+//                    } else {
+//                        Log.d("ahi3646", "Server closed a connection")
+//                        clientSocket.close()
+//                        clientSelectorManager.close()
+//                        exitProcess(0)
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     override fun onResume() {
         super.onResume()

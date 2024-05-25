@@ -10,12 +10,6 @@ import android.net.wifi.p2p.WifiP2pManager.Channel
 import android.util.Log
 import com.ierusalem.androchat.features_tcp.tcp.domain.ConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.OwnerStatusState
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class WiFiDirectBroadcastReceiver(
     private val wifiP2pManager: WifiP2pManager?,
@@ -24,62 +18,52 @@ class WiFiDirectBroadcastReceiver(
     private val networkEventHandler: (WiFiNetworkEvent) -> Unit,
 ) : BroadcastReceiver() {
 
-    private val receiverScope by lazy {
-        CoroutineScope(
-            context = SupervisorJob() + Dispatchers.Default + CoroutineName(this::class.java.name),
-        )
+    private fun handleConnectionChangedAction(intent: Intent) {
+        if (wifiP2pManager != null) {
+            val networkInfo: NetworkInfo? =
+                intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO)
+            Log.d("ahi3646", "handleConnectionChangedAction: networkInfo - $networkInfo ")
+            if (networkInfo?.isConnected == true) {
+                // We are connected with the other device, request connection
+                // info to find group owner IP
+                networkEventHandler(WiFiNetworkEvent.ConnectionStatusChanged(ConnectionStatus.Connected))
+                wifiP2pManager.requestConnectionInfo(channel, connectionListener)
+            } else {
+                Log.d("ahi33646", "onReceive: network info not connected ")
+            }
+        } else {
+            networkEventHandler(WiFiNetworkEvent.ConnectionStatusChanged(ConnectionStatus.Disconnected))
+        }
     }
 
     @SuppressLint("MissingPermission")
     override fun onReceive(context: Context, intent: Intent) {
-        // Go async in case scope work takes a long time
-        val pending = goAsync()
+        when (val action = intent.action) {
+            WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> handleStateChangedAction(intent)
 
-        // Use Default here instead of ProxyDispatcher
-        receiverScope.launch(context = Dispatchers.Default) {
-            try {
-                when (val action = intent.action) {
-                    WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> handleStateChangedAction(intent)
-                    WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION -> {
-                        Log.d("ahi3646", "connection changed action: ")
-                        if (wifiP2pManager != null) {
-                            val networkInfo: NetworkInfo? =
-                                intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO)
-                            if (networkInfo?.isConnected == true) {
-                                // We are connected with the other device, request connection
-                                // info to find group owner IP
-                                networkEventHandler(WiFiNetworkEvent.ConnectionStatusChanged(ConnectionStatus.Connected))
-                                wifiP2pManager.requestConnectionInfo(channel, connectionListener)
-                            }
-                        } else {
-                            networkEventHandler(WiFiNetworkEvent.ConnectionStatusChanged(ConnectionStatus.Disconnected))
-                        }
-                    }
+            WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION -> {
+                Log.d("ahi3646", "connection changed action: ")
+                handleConnectionChangedAction(intent)
+            }
 
-                    WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION -> {
-                        Log.d("ahi3646", "handleDiscoveryChangedAction: ")
-                        networkEventHandler(WiFiNetworkEvent.DiscoveryChanged)
-                    }
+            WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION -> {
+                Log.d("ahi3646", "handleDiscoveryChangedAction: ")
+                networkEventHandler(WiFiNetworkEvent.DiscoveryChanged)
+                //handleConnectionChangedAction(intent)
+            }
 
-                    WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION -> {
-                        Log.d("ahi3646", "onReceive: peers list have changed ")
-                        wifiP2pManager?.requestPeers(channel, peerListListener)
-                    }
+            WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION -> {
+                Log.d("ahi3646", "onReceive: peers list have changed ")
+                wifiP2pManager?.requestPeers(channel, peerListListener)
+            }
 
-                    WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION -> {
-                        Log.d("ahi3646", "handleThisDeviceChangedAction: ")
-                        networkEventHandler(WiFiNetworkEvent.ThisDeviceChanged)
-                    }
+            WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION -> {
+                Log.d("ahi3646", "handleThisDeviceChangedAction: ")
+                networkEventHandler(WiFiNetworkEvent.ThisDeviceChanged)
+            }
 
-                    else -> {
-                        Log.d("ahi3646", "onReceive: Unhandled intent action: $action")
-                    }
-                }
-            } finally {
-                withContext(context = Dispatchers.Main) {
-                    // Mark BR as finished
-                    pending.finish()
-                }
+            else -> {
+                Log.d("ahi3646", "onReceive: Unhandled intent action: $action")
             }
         }
     }
@@ -114,6 +98,7 @@ class WiFiDirectBroadcastReceiver(
 
         // After the group negotiation, we can determine the group owner
         // (server).
+        Log.d("ahi3646", "groupFormed : ${info.groupFormed}  isGroupOwner : ${info.isGroupOwner} ")
         if (info.groupFormed && info.isGroupOwner) {
             // Do whatever tasks are specific to the group owner.
             // One common case is creating a group owner thread and accepting

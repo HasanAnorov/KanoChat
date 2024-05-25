@@ -37,7 +37,7 @@ fun WifiLazyItem(
         Text(
             modifier = Modifier
                 .weight(1F)
-                .padding(vertical = 12.dp)
+                .padding(vertical = 16.dp)
                 .padding(start = 8.dp, end = 8.dp),
             color = MaterialTheme.colorScheme.onBackground,
             text = wifiName,

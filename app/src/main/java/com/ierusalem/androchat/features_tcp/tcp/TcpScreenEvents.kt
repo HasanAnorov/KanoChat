@@ -8,5 +8,7 @@ sealed interface TcpScreenEvents {
     data object CreateServerClick : TcpScreenEvents
     data object ConnectToServerClick : TcpScreenEvents
     data object DiscoverWifiClick : TcpScreenEvents
+    data class OnPortNumberChanged(val portNumber: String) : TcpScreenEvents
     data class OnConnectToWifiClick(val wifiDevice: WifiP2pDevice) : TcpScreenEvents
+    data class SendMessage(val message:String): TcpScreenEvents
 }

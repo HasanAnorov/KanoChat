@@ -30,25 +30,23 @@ fun StatusView(
     groupAddress: String? = null
 ) {
     Column(modifier = modifier) {
-        Column(
+        Row(
             modifier = Modifier.padding(top = 16.dp),
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp),
+                    .padding(start = 16.dp),
                 color = MaterialTheme.colorScheme.onBackground,
                 text = "WiFi Status: ",
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp),
+                    .padding(end = 16.dp),
                 color = MaterialTheme.colorScheme.onBackground,
                 text = if (isWifiEnabled) stringResource(R.string.wifi_enabled) else stringResource(
                     R.string.wifi_disabled
@@ -64,16 +62,6 @@ fun StatusView(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp),
-                color = MaterialTheme.colorScheme.onBackground,
-                text = "Connection Details: ",
-                style = MaterialTheme.typography.titleSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
             Row(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
@@ -83,8 +71,8 @@ fun StatusView(
             ) {
                 Text(
                     color = MaterialTheme.colorScheme.onBackground,
-                    text = "Status: ",
-                    style = MaterialTheme.typography.titleSmall,
+                    text = "Connection Status: ",
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -110,7 +98,7 @@ fun StatusView(
                 Text(
                     color = MaterialTheme.colorScheme.onBackground,
                     text = "Role: ",
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -136,7 +124,7 @@ fun StatusView(
                 Text(
                     color = MaterialTheme.colorScheme.onBackground,
                     text = "Group Address: ",
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

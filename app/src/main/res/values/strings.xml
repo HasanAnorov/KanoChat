@@ -114,7 +114,7 @@
     <string name="trouble_proxy_port">• The Hotspot port number must be between 1025 and 65000</string>
     <string name="discover_wifi">Discover Wifi</string>
     <string name="discovering_wifi">Discovering WiFi</string>
-    <string name="discovering_not_started">Discovering not started</string>
+    <string name="discovering_not_started">Couldn\'t discover wifi networks,\n try again!</string>
     <string name="instructions">Instructions</string>
     <string name="client">Client</string>
     <string name="owner">Owner</string>
@@ -126,5 +126,14 @@
     <string name="wifi_enabled">WiFi enabled</string>
     <string name="wifi_disabled">WiFi disabled</string>
     <string name="connect">Connect</string>
+    <string name="wifi_should_be_enabled_to_perform_this_action">Wifi should be enabled to perform this action!</string>
+    <string name="already_discovering_wifi_networks">Already Discovering Wifi Networks!</string>
+    <string name="try_to_use_another_port_number_current_port_is_already_in_use_or_invalid">Try to use another port number, current port is already in use or invalid!</string>
+    <string name="try_to_reconnect_to_the_server_again_current_address_is_invalid">Try to reconnect to the server again, current address is invalid!</string>
+    <string name="chat_room">Chat Room</string>
+
+<!--    Local conversations-->
+    <string name="local_connections">%d connections</string>
+    <string name="couldn_t_connect_to_choosen_wifi_device">Couldn\'t connect to choosen wifi device!</string>
 
 </resources>
