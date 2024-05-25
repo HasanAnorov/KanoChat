@@ -3,6 +3,7 @@ package com.ierusalem.androchat.features_tcp.tcp.presentation
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.IntentFilter
 import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.WifiP2pConfig
@@ -35,6 +36,7 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiDirectBroadcastReceiver
 import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
+import com.ierusalem.androchat.features_tcp.service.TcpServerService
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.TcpView
 import com.ierusalem.androchat.features_tcp.tcp.domain.ConnectionStatus
@@ -128,6 +130,20 @@ class TcpFragment : Fragment() {
         if (peers.isEmpty()) {
             Log.d("ahi3646", "No devices found")
             return@PeerListListener
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            requireActivity().startForegroundService(
+                Intent(
+                    requireContext(),
+                    TcpServerService::class.java
+                )
+            )
+        } else {
+            requireActivity().startService(Intent(requireContext(), TcpServerService::class.java))
         }
     }
 
@@ -318,34 +334,6 @@ class TcpFragment : Fragment() {
     }
 
     @OptIn(InternalAPI::class)
-    private suspend fun connectToServer(serverIpAddress: String, serverPort: Int) {
-        clientSelectorManager = SelectorManager(Dispatchers.IO)
-        clientSocket = aSocket(clientSelectorManager).tcp().connect(serverIpAddress, serverPort)
-        Log.d(
-            "ahi3646",
-            "connectToServer ip address: $serverIpAddress $serverPort ${clientSocket.localAddress} "
-        )
-
-        val receiveChannel = clientSocket.openReadChannel()
-        //val sendChannel = clientSocket.openWriteChannel(autoFlush = true)
-
-        withContext(Dispatchers.IO) {
-//            while (true) {
-            val greeting = receiveChannel.readUTF8Line()
-            if (greeting != null) {
-                Log.d("ahi3646", greeting)
-            } else {
-                Log.d("ahi3646", "Server closed a connection")
-//                    clientSocket.close()
-//                    clientSelectorManager.close()
-//                    exitProcess(0)
-            }
-//            }
-        }
-
-    }
-
-    @OptIn(InternalAPI::class)
     private suspend fun createServer(serverAddress: String, serverPort: Int) {
         Log.d(
             "ahi3646",
@@ -378,86 +366,43 @@ class TcpFragment : Fragment() {
             //val receiveChannel = socket.openReadChannel()
             val sendChannel = socket.openWriteChannel(autoFlush = true)
 
-            launch {
-                repeat(3) {
-                    delay(3000)
+            repeat(3) {
+                launch {
                     sendChannel.writeStringUtf8("Please enter your name\n")
-                    Log.d("ahi3646", "createServer: repeat ")
                 }
+                delay(3000)
+                Log.d("ahi3646", "createServer: repeat ")
             }
-//            }
         }
     }
 
+    @OptIn(InternalAPI::class)
+    private suspend fun connectToServer(serverIpAddress: String, serverPort: Int) {
+        clientSelectorManager = SelectorManager(Dispatchers.IO)
+        clientSocket = aSocket(clientSelectorManager).tcp().connect(serverIpAddress, serverPort)
+        Log.d(
+            "ahi3646",
+            "connectToServer ip address: $serverIpAddress $serverPort ${clientSocket.localAddress} "
+        )
 
-//    @OptIn(InternalAPI::class)
-//    private suspend fun connectToServer(serverIpAddress: String, serverPort: Int) {
-//        clientSelectorManager = SelectorManager(Dispatchers.IO)
-//        clientSocket = aSocket(clientSelectorManager).tcp().connect(serverIpAddress, serverPort)
-//        Log.d("ahi3646", "connectToServer ip address: $serverIpAddress $serverPort ")
-//
-//        clientReadChannel = clientSocket.openReadChannel()
-//        clientWriteChannel = clientSocket.openWriteChannel(autoFlush = true)
-//
-//
-//
-//        withContext(Dispatchers.IO) {
-//            while (true) {
-//                val greeting = clientReadChannel.readUTF8Line()
-//                if (greeting != null) {
-//                    Log.d("ahi3646", greeting)
-//                } else {
+        val receiveChannel = clientSocket.openReadChannel()
+        val sendChannel = clientSocket.openWriteChannel(autoFlush = true)
+
+        withContext(Dispatchers.IO) {
+            while (true) {
+                val greeting = receiveChannel.readUTF8Line()
+                if (greeting != null) {
+                    Log.d("ahi3646", greeting)
+                }
+//                else {
 //                    Log.d("ahi3646", "Server closed a connection")
 //                    clientSocket.close()
 //                    clientSelectorManager.close()
 //                    exitProcess(0)
 //                }
-//            }
-//        }
-//
-//    }
-//
-//    @OptIn(InternalAPI::class)
-//    private suspend fun createServer(serverAddress: String, serverPort: Int) {
-//        Log.d(
-//            "ahi3646",
-//            "openHotspot: " +
-//                    "\nhotspotPassword - $serverAddress" +
-//                    "\nport - $serverPort"
-//        )
-//
-//        runBlocking {
-//            //Create a server socket
-//            serverSelectorManager = SelectorManager(Dispatchers.IO)
-//            serverSocket = aSocket(serverSelectorManager)
-//                .tcp()
-//                //.configure {
-//                //todo think about these
-//                //reuseAddress = true
-//                //reusePort = true
-//                //}
-//                .bind(serverAddress, serverPort)
-//
-//            Log.d("ahi3646", "Server is listening at ${serverSocket.localAddress}")
-//            viewModel.updateHotspotTitleStatus(ServerStatus.Created)
-//
-//            while (true) {
-//                //Accept incoming connections
-//                serverConnectedSocket = serverSocket.accept()
-//                viewModel.updateConnectionsCount()
-//                Log.d("ahi3646", "Socket Accepted $serverConnectedSocket")
-//
-//                serverWriteChannel = serverConnectedSocket.openWriteChannel(autoFlush = true)
-//                serverReadChannel = serverConnectedSocket.openReadChannel()
-//
-//                launch {
-//                    //Send data
-//                    val sendChannel = serverConnectedSocket.openWriteChannel(autoFlush = true)
-//                    sendChannel.writeStringUtf8("Please enter your name\n")
-//                }
-//            }
-//        }
-//    }
+            }
+        }
+    }
 
 //    private fun sendMessages(message: String) {
 //        if (viewModel.state.value.isOwner == OwnerStatusState.Owner) {
