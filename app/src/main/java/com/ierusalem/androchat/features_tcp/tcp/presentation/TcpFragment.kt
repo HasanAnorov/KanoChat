@@ -322,6 +322,13 @@ class TcpFragment : Fragment() {
                     socket = serverSocket.accept()
                     viewModel.updateConnectionsCount(true)
                     Log.d("ahi3646", "New client : $socket ")
+                    while (!socket.isClosed) {
+                        val reader = DataInputStream(socket.getInputStream())
+                        val inputData = reader.readUTF()
+                        val message = gson.fromJson(inputData, Message::class.java)
+                        viewModel.insertMessage(message)
+                        Log.d("ahi3646", "createServer: $message ")
+                    }
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
@@ -358,19 +365,19 @@ class TcpFragment : Fragment() {
     private fun sendMessage(message: Message) {
         if (viewModel.state.value.isOwner == OwnerStatusState.Owner) {
             if (!serverSocket.isClosed) {
+                val writer = DataOutputStream(socket.getOutputStream())
                 val messageStringForms = gson.toJson(message)
                 Log.d("ahi3646", "sendMessage: $messageStringForms ")
-                val dataOutputStream = DataOutputStream(socket.getOutputStream())
 
                 try {
-                    dataOutputStream.writeUTF(messageStringForms)
-                    dataOutputStream.flush()
+                    writer.writeUTF(messageStringForms)
+                    writer.flush()
 
                 } catch (e: IOException) {
                     e.printStackTrace()
                     try {
                         Log.d("ahi3646", "sendMessage: dataOutputStream is closed io exception ")
-                        dataOutputStream.close()
+                        writer.close()
                     } catch (ex: IOException) {
                         ex.printStackTrace()
                     }
@@ -378,7 +385,7 @@ class TcpFragment : Fragment() {
                     e.printStackTrace()
                     try {
                         Log.d("ahi3646", "sendMessage: dataOutputStream is closed interrupted")
-                        dataOutputStream.close()
+                        writer.close()
                     } catch (ex: IOException) {
                         ex.printStackTrace()
                     }
@@ -387,6 +394,12 @@ class TcpFragment : Fragment() {
                 Log.d("ahi3646", "sendMessage: server socket is closed ")
             }
         } else {
+            if (!clientSocket.isClosed) {
+                val writer = DataOutputStream(clientSocket.getOutputStream())
+                val messageStringForms = gson.toJson(message)
+                Log.d("ahi3646", "sendMessage: $messageStringForms ")
+                writer.writeUTF(messageStringForms)
+            }
             Log.d("ahi3646", "sendMessage: not owner ")
         }
     }
