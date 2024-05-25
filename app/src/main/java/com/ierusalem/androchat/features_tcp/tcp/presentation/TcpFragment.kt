@@ -54,6 +54,7 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.DataInputStream
@@ -313,8 +314,8 @@ class TcpFragment : Fragment() {
         )
     }
 
-    private suspend fun createServer(serverIpAddress: String, serverPort: Int){
-        var serverSocket: java.net.ServerSocket? = null
+    private suspend fun createServer(serverIpAddress: String, serverPort: Int) {
+        var serverSocket: java.net.ServerSocket?
         withContext(Dispatchers.IO) {
             var socket: java.net.Socket? = null
             try {
@@ -327,8 +328,31 @@ class TcpFragment : Fragment() {
                         val dataInputStream = DataInputStream(socket.getInputStream())
                         val dataOutputStream = DataOutputStream(socket.getOutputStream())
 
-                        dataOutputStream.writeUTF("Hello From Server")
-                        dataOutputStream.flush()
+                        try {
+                            dataOutputStream.writeUTF("Hello From Server sdhadskahsdhadhasdkdkaDHJ")
+                            dataOutputStream.flush()
+
+                            val inputData = dataInputStream.readUTF()
+                            Log.d("ahi3646", "createServer: inputData - $inputData ")
+
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                            try {
+                                dataInputStream.close()
+                                dataOutputStream.close()
+                            } catch (ex: IOException) {
+                                ex.printStackTrace()
+                            }
+                        } catch (e: InterruptedException) {
+                            e.printStackTrace()
+                            try {
+                                dataInputStream.close()
+                                dataOutputStream.close()
+                            } catch (ex: IOException) {
+                                ex.printStackTrace()
+                            }
+                        }
+
                     } else {
                         Log.e("ahi3646", "Couldn't create ServerSocket!")
                     }
@@ -344,18 +368,14 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun connectToServer(serverIpAddress: String, serverPort: Int){
+    private fun connectToServer(serverIpAddress: String, serverPort: Int) {
         val client = java.net.Socket(serverIpAddress, serverPort)
         val writer = DataOutputStream(client.getOutputStream())
         val reader = DataInputStream(client.getInputStream())
         val inputData = reader.readUTF()
-        if (reader.available() > 0){
-            Log.d("ahi3646", "connectToServer: inputData $inputData ")
-        }else{
-            Log.d("ahi4656", "connectToServer: reader not available  - ${reader.available()} $inputData  ")
-        }
-        //writer.write("Hello From Client".toByteArray())
-        //writer.close()
+
+        Log.d("ahi3646", "connectToServer: inputData - $inputData ")
+        writer.writeUTF("Hello From Client, how you doing bitch!")
     }
 
 //    private fun sendMessages(message: String) {
