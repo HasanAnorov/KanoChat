@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_tcp.service
+package com.ierusalem.androchat.features_tcp.tcp
 
 import android.util.Log
 import java.io.DataInputStream
@@ -7,6 +7,7 @@ import java.io.IOException
 
 class TcpClientHandler(private val dataInputStream: DataInputStream, private val dataOutputStream: DataOutputStream) : Thread() {
     override fun run() {
+
         while (true) {
             try {
                 if(dataInputStream.available() > 0){
@@ -35,7 +36,7 @@ class TcpClientHandler(private val dataInputStream: DataInputStream, private val
     }
 
     companion object {
-        private val TAG = "ahi3646"
+        private val TAG = TcpClientHandler::class.java.simpleName
     }
 
 }

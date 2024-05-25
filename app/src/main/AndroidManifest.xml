@@ -34,6 +34,8 @@
     <!-- For VpnChecker -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
     <application
         android:name=".app.AndroChatApp"
         android:allowBackup="true"
