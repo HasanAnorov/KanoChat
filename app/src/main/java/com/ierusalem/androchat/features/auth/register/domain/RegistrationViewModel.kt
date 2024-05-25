@@ -9,6 +9,7 @@ import com.ierusalem.androchat.features.auth.register.presentation.RegistrationN
 import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.emitNavigation
+import com.ierusalem.androchat.utils.DataStorePreferenceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +19,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RegistrationViewModel @Inject constructor(
-    private val validator: FieldValidator
+    private val validator: FieldValidator,
+    private val dataStorePreferenceRepository: DataStorePreferenceRepository
 ) : ViewModel(),
     NavigationEventDelegate<RegistrationNavigation> by DefaultNavigationEventDelegate() {
 
@@ -102,7 +104,10 @@ class RegistrationViewModel @Inject constructor(
                 repeatedPasswordError = null,
             )
         }
+
+        //save username in data store and navigate
         viewModelScope.launch {
+            dataStorePreferenceRepository.setUsername(state.value.username)
             emitNavigation(RegistrationNavigation.ToHome(state.value.username))
         }
     }

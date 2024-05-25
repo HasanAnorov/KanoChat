@@ -16,10 +16,12 @@ class DataStorePreferenceRepository(context: Context) {
     private val dataStore: DataStore<Preferences> = context.dataStore
     private val defaultLanguage = Constants.DEFAULT_LOCALE
     private val defaultTheme = Constants.DEFAULT_THEME
+    private val defaultUsername = ""
 
     companion object {
         val PREF_LANGUAGE = stringPreferencesKey(name = Constants.PREFERENCE_LANGUAGE)
         val PREF_THEME = booleanPreferencesKey(name = Constants.PREFERENCE_THEME)
+        val PREF_USERNAME = stringPreferencesKey(name = Constants.PREFERENCE_USERNAME)
 
         private var INSTANCE: DataStorePreferenceRepository? = null
 
@@ -56,6 +58,17 @@ class DataStorePreferenceRepository(context: Context) {
     val getLanguage: Flow<String> = dataStore.data
         .map { preferences ->
             preferences[PREF_LANGUAGE] ?: defaultLanguage
+        }
+
+    suspend fun setUsername(username: String) {
+        dataStore.edit { preferences ->
+            preferences[PREF_USERNAME] = username
+        }
+    }
+
+    val getUsername: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PREF_USERNAME] ?: defaultUsername
         }
 
 }

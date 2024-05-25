@@ -75,7 +75,7 @@ private fun HotspotButtonPreview() {
     AndroChatTheme {
         HotspotButton(
             onClick = {},
-            title = R.string.start_hotspot
+            title = R.string.create_a_server
         )
     }
 }

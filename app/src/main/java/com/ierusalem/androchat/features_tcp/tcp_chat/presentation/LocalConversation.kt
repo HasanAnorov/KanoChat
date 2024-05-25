@@ -93,7 +93,8 @@ fun LocalConversationContent(
                 Messages(
                     messages = uiState.messages.reversed(),
                     modifier = Modifier.weight(1f),
-                    scrollState = scrollState
+                    scrollState = scrollState,
+                    authorMe = uiState.authorMe
                 )
                 LocalConversationUserInput(
                     // let this element handle the padding so that the elevation is shown behind the
@@ -167,12 +168,12 @@ const val ConversationTestTag = "ConversationTestTag"
 fun Messages(
     messages: List<Message>,
     scrollState: LazyListState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    authorMe: String,
 ) {
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
-        //todo use ip address instead
-        val authorMe = "Hasan"
+
         LazyColumn(
             reverseLayout = true,
             state = scrollState,

@@ -56,7 +56,7 @@ fun ConnectionsContent(
                         modifier = Modifier
                             .padding(vertical = 16.dp)
                             .fillMaxWidth(),
-                        text = "Connections Details",
+                        text = stringResource(R.string.connections_details),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.titleMedium
@@ -68,13 +68,13 @@ fun ConnectionsContent(
                 )
                 StatusProperty(
                     modifier = Modifier.padding(horizontal = 10.dp),
-                    status = "Connection Status: ",
+                    status = stringResource(R.string.connection_status),
                     state = state.connectionStatus.status
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.background, thickness = 1.dp)
                 StatusProperty(
                     modifier = Modifier.padding(horizontal = 10.dp),
-                    status = "Role: ",
+                    status = stringResource(R.string.role),
                     state = state.isOwner.status
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.background, thickness = 1.dp)
@@ -84,7 +84,7 @@ fun ConnectionsContent(
                         .padding(bottom = 16.dp)
                 ) {
                     Text(
-                        text = "Group Address",
+                        text = stringResource(R.string.server_address),
                         fontFamily = MontserratFontFamily,
                         modifier = Modifier.baselineHeight(20.dp),
                         style = MaterialTheme.typography.titleSmall,
@@ -119,7 +119,7 @@ fun ConnectionsContent(
                         modifier = Modifier
                             .padding(vertical = 16.dp)
                             .fillMaxWidth(),
-                        text = "Connected devices will display here",
+                        text = stringResource(R.string.connected_devices_will_display_here),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.titleMedium
@@ -154,7 +154,7 @@ fun ConnectionsContent(
                         modifier = Modifier
                             .padding(vertical = 16.dp)
                             .padding(horizontal = 10.dp),
-                        text = "Connections are not established yet!",
+                        text = stringResource(R.string.connections_are_not_established_yet),
                         fontFamily = MontserratFontFamily,
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.titleSmall,
@@ -167,7 +167,7 @@ fun ConnectionsContent(
     }
 }
 
-@Preview
+@Preview(locale = "ru")
 @Composable
 private fun ClientContentPreview() {
     AndroChatTheme {

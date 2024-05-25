@@ -9,6 +9,7 @@ import com.ierusalem.androchat.features.auth.login.presentation.LoginNavigation
 import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.emitNavigation
+import com.ierusalem.androchat.utils.DataStorePreferenceRepository
 import com.ierusalem.androchat.utils.FieldValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +19,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginViewModel @Inject constructor(private val validator: FieldValidator ) : ViewModel(), DefaultLifecycleObserver,
+class LoginViewModel @Inject constructor(
+    private val validator: FieldValidator,
+    private val dataStorePreferenceRepository: DataStorePreferenceRepository
+) : ViewModel(), DefaultLifecycleObserver,
     NavigationEventDelegate<LoginNavigation> by DefaultNavigationEventDelegate() {
 
     private val _state: MutableStateFlow<LoginScreenState> = MutableStateFlow(LoginScreenState())
@@ -78,7 +82,9 @@ class LoginViewModel @Inject constructor(private val validator: FieldValidator )
                 passwordError = null,
             )
         }
+
         viewModelScope.launch {
+            dataStorePreferenceRepository.setUsername(state.value.username)
             emitNavigation(LoginNavigation.ToHome)
         }
     }

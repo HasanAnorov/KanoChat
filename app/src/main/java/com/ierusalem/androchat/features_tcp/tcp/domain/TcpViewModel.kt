@@ -6,6 +6,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features_tcp.server.IP_ADDRESS_REGEX
@@ -16,18 +17,36 @@ import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.emitNavigation
 import com.ierusalem.androchat.utils.Constants
+import com.ierusalem.androchat.utils.DataStorePreferenceRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.util.Calendar
+import javax.inject.Inject
 
-class TcpViewModel : ViewModel(),
+@HiltViewModel
+class TcpViewModel @Inject constructor(
+    private val dataStorePreferenceRepository: DataStorePreferenceRepository
+) : ViewModel(),
     NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
 
     private val _state: MutableStateFlow<TcpScreenUiState> = MutableStateFlow(
         TcpScreenUiState()
     )
     val state = _state.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    authorMe = dataStorePreferenceRepository.getUsername.first()
+                )
+            }
+        }
+    }
 
     fun handleNetworkEvents(networkEvent: WiFiNetworkEvent) {
         when (networkEvent) {
@@ -106,8 +125,7 @@ class TcpViewModel : ViewModel(),
 
             is TcpScreenEvents.SendMessage -> {
                 val currentTime = Calendar.getInstance().time.toString()
-                val username =
-                    if (state.value.isOwner == OwnerStatusState.Owner) "Owner" else "Guest"
+                val username = state.value.authorMe
                 val message = Message(event.message, currentTime, username)
                 emitNavigation(TcpScreenNavigation.SendMessage(message))
                 insertMessage(message)
@@ -197,10 +215,12 @@ class TcpViewModel : ViewModel(),
                         )
                         updateClientTitleStatus(ClientStatus.Creating)
                     }
+
                     ClientStatus.Creating -> {
                         //just ignore action
                         Log.d("ahi3646", "handleEvents: creating client ")
                     }
+
                     ClientStatus.Created -> {
                         //emitNavigation(TcpScreenNavigation.OnCloseServerClick)
                         Log.d("ahi3646", "handleEvents: created client viewModel")
@@ -275,6 +295,8 @@ class TcpViewModel : ViewModel(),
 @Immutable
 data class TcpScreenUiState(
 
+    val authorMe: String = Constants.UNKNOWN_USER,
+
     val portNumber: String = "9002",
     val isValidPortNumber: Boolean = isValidPortNumber(portNumber),
     val serverTitleStatus: ServerStatus = ServerStatus.Idle,
@@ -306,7 +328,7 @@ enum class TcpScreenErrors(val errorMessage: Int) {
     AlreadyDiscoveringWifi(R.string.already_discovering_wifi_networks),
     InvalidPortNumber(R.string.try_to_use_another_port_number_current_port_is_already_in_use_or_invalid),
     InvalidHostAddress(R.string.try_to_reconnect_to_the_server_again_current_address_is_invalid),
-    FailedToConnectToWifiDevice(R.string.couldn_t_connect_to_choosen_wifi_device),
+    FailedToConnectToWifiDevice(R.string.couldn_t_connect_to_chosen_wifi_device),
 }
 
 fun isValidPortNumber(portNumber: String): Boolean {

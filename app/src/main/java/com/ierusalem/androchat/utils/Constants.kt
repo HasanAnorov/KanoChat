@@ -5,8 +5,12 @@ import com.ierusalem.androchat.app.AppLanguage
 object Constants {
 
     const val DATA_STORE_NAME = "AppDataStore"
+
     const val PREFERENCE_LANGUAGE = "device_language"
     const val PREFERENCE_THEME = "device_theme"
+    const val PREFERENCE_USERNAME = "device_user_username"
+
+    const val UNKNOWN_USER = "Unknown User"
 
     const val USERNAME_REGISTER_TO_HOME = "username_register_to_home"
     const val MINIMUM_LOGIN_LENGTH = 3

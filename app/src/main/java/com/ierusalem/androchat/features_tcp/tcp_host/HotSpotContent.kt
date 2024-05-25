@@ -138,7 +138,7 @@ fun HotSpotContent(
                         .padding(bottom = 16.dp)
                 ) {
                     Text(
-                        text = "Proxy Port",
+                        text = stringResource(R.string.proxy_port),
                         fontFamily = MontserratFontFamily,
                         modifier = Modifier.baselineHeight(20.dp),
                         style = MaterialTheme.typography.titleSmall,
@@ -158,7 +158,7 @@ fun HotSpotContent(
                             unfocusedIndicatorColor = Color.Transparent
                         ),
                         placeholder = {
-                            Text(text = "1024< ... < 65000")
+                            Text(text = stringResource(R.string._1024_65000))
                         },
 
                         onValueChange = {
@@ -213,7 +213,7 @@ fun HotSpotContent(
                     modifier = Modifier
                         .padding(horizontal = 10.dp)
                         .padding(top = 8.dp),
-                    status = "Wifi Status: ",
+                    status = stringResource(R.string.wifi_status),
                     state = if (state.isWifiOn) R.string.wifi_enabled else R.string.wifi_disabled,
                     stateColor = if (state.isWifiOn) Color(0xFF35C47C) else Color.Red
                 )
@@ -239,7 +239,7 @@ fun HotSpotContent(
                         modifier = Modifier
                             .padding(vertical = 16.dp)
                             .fillMaxWidth(),
-                        text = "Available Wifi Networks",
+                        text = stringResource(R.string.available_wifi_networks),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.titleMedium
@@ -280,7 +280,7 @@ fun HotSpotContent(
                             modifier = Modifier
                                 .padding(vertical = 16.dp)
                                 .padding(horizontal = 10.dp),
-                            text = "Click Discover Button to search for available wifi networks!",
+                            text = stringResource(R.string.click_discover_button_to_search_for_available_wifi_networks),
                             fontFamily = MontserratFontFamily,
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.titleSmall,
@@ -302,7 +302,7 @@ fun HotSpotContent(
                             modifier = Modifier
                                 .padding(horizontal = 10.dp)
                                 .padding(vertical = 16.dp),
-                            text = "Something went wrong while discovering wifi networks!",
+                            text = stringResource(R.string.something_went_wrong_while_discovering_wifi_networks),
                             fontFamily = MontserratFontFamily,
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.titleSmall,
@@ -329,7 +329,7 @@ private fun HotspotContentPreview() {
     }
 }
 
-@Preview
+@Preview(locale = "ru")
 @Composable
 private fun HotspotContentPreviewDark() {
     AndroChatTheme(isDarkTheme = true) {

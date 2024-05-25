@@ -3,7 +3,6 @@ package com.ierusalem.androchat.core.connectivity
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
-import android.net.wifi.p2p.WifiP2pManager
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -11,7 +10,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 class NetworkConnectivityObserver(
-    private val context: Context
+    context: Context
 ): ConnectivityObserver {
 
     private val networkConnectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager

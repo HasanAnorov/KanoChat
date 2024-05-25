@@ -2,6 +2,9 @@
 
 <resources>
 
+    <!-- Extras-->
+    <string name="_1024_65000" translatable="false"><![CDATA[1024< ... < 65000]]></string>
+
     <!-- App Name-->
     <string name="app_name" translatable="false">AndroChat</string>
 
@@ -18,7 +21,6 @@
     <string name="jumpBottom">Jump to bottom</string>
     <string name="send">Send</string>
     <string name="author_me">you</string>
-    <string name="now">8:30 PM</string>
     <string name="members">%d members</string>
     <string name="textfield_hint">Message #composers</string>
     <string name="swipe_to_cancel_recording">&#x25C0; Swipe to cancel</string>
@@ -49,7 +51,6 @@
     <string name="videochat_desc">Start videochat</string>
     <string name="textfield_desc">Text input</string>
     <string name="not_available">Functionality currently not available</string>
-    <string name="attached_image">Attached image</string>
     <string name="search">Search</string>
     <string name="info">Information</string>
     <string name="more_options">More options</string>
@@ -74,7 +75,6 @@
     <string name="settings">Settings</string>
     <string name="english">English</string>
     <string name="russian">Russian</string>
-    <string name="system">System</string>
     <string name="language">Language</string>
     <string name="app_theme">App Theme</string>
     <string name="general">General</string>
@@ -82,58 +82,56 @@
     <string name="invite_a_friend">Invite a friend</string>
     <string name="select_app_language">Select app language</string>
     <string name="cancel">Cancel</string>
-    <string name="save">Save</string>
 
-    //
+    <!-- Local connection strings-->
     <string name="local_connection">Local connection</string>
-    <string name="hostspot">Hostspot</string>
+
+    <!-- Nearby Connection strings-->
+    <string name="nearby_connection">Nearby Connection</string>
     <string name="connections">Connections</string>
-    <string name="start_hotspot">Start Hotspot</string>
-    <string name="connect_to_server">Connect to Server</string>
     <string name="create_a_server">Create a server</string>
     <string name="creating_a_server">Creating a server</string>
-    <string name="server_created_waiting_for_clients">Server created, waiting for clients ...</string>
+    <string name="server_created_waiting_for_clients">Server created, waiting for clients …</string>
     <string name="connecting_to_server">Connecting to server</string>
     <string name="connected_to_a_server">Connected to a server</string>
-    <string name="create_wifi_hotspot">Create Wifi Hotspot</string>
-
-    <string name="trouble_title">%1$s Hotspot failed to start.</string>
-    <string name="trouble_description">This is NOT an error with the app, this is an error %1$s.</string>
-
-    <!-- TroubleshootUnableToStart strings-->
-    <string name="trouble_err_type_both">with your device and configuration</string>
-    <string name="trouble_err_type_proxy">with your configuration</string>
-    <string name="trouble_err_type_broadcast">from your device</string>
-    <string name="trouble_double_check">Please check these issues and try again:</string>
-    <string name="trouble_broadcast_wifi_on">• Wi-Fi must be turned ON to start the Hotspot</string>
-    <string name="trouble_broadcast_wifi_not_connected">• Wi-Fi must NOT be connected to any other network</string>
-    <string name="trouble_broadcast_wifi_restart">• Wi-Fi should be restarted by turning it OFF and then back ON again</string>
-    <string name="trouble_broadcast_password_length">• The Hotspot password must be at least 8 characters long</string>
-    <string name="trouble_broadcast_ssid_name">• The Hotspot name must be unique</string>
-    <string name="trouble_proxy_already_used">• The Hotspot port number may be already used by a different app</string>
-    <string name="trouble_proxy_port">• The Hotspot port number must be between 1025 and 65000</string>
     <string name="discover_wifi">Discover Wifi</string>
     <string name="discovering_wifi">Discovering WiFi</string>
     <string name="discovering_not_started">Couldn\'t discover wifi networks,\n try again!</string>
+    <string name="available_wifi_networks">Available Wifi Networks</string>
+    <string name="click_discover_button_to_search_for_available_wifi_networks">Click Discover Button to search for available wifi networks!</string>
+    <string name="something_went_wrong_while_discovering_wifi_networks">Something went wrong while discovering wifi networks!</string>
+    <string name="wifi_status">"Wifi Status: "</string>
+    <string name="proxy_port">Proxy Port</string>
+
+    <!-- Instructions strings-->
     <string name="instructions">Instructions</string>
+
+    <!-- Connections strings-->
     <string name="client">Client</string>
     <string name="owner">Owner</string>
-    <string name="waiting_for_connection">Waiting for connection ...</string>
+    <string name="waiting_for_connection">Waiting for connection …</string>
     <string name="not_running">Not Running</string>
     <string name="connection_connected">Connected</string>
     <string name="not_connected">Not Connected</string>
-    <string name="running">Running</string>
     <string name="wifi_enabled">WiFi enabled</string>
     <string name="wifi_disabled">WiFi disabled</string>
     <string name="connect">Connect</string>
+    <string name="connections_details">Connections Details</string>
+    <string name="connection_status">"Connection Status: "</string>
+    <string name="role">"Role: "</string>
+    <string name="server_address">Server Address</string>
+    <string name="connected_devices_will_display_here">Connected devices will display here</string>
+    <string name="connections_are_not_established_yet">Connections are not established yet!</string>
+
+    <!-- Local conversations strings-->
+    <string name="local_connections">%d connections</string>
+    <string name="chat_room">Chat Room</string>
+
+    <!-- TcpScreen Errors strings-->
+    <string name="couldn_t_connect_to_chosen_wifi_device">Couldn\'t connect to chosen wifi device!</string>
     <string name="wifi_should_be_enabled_to_perform_this_action">Wifi should be enabled to perform this action!</string>
     <string name="already_discovering_wifi_networks">Already Discovering Wifi Networks!</string>
     <string name="try_to_use_another_port_number_current_port_is_already_in_use_or_invalid">Try to use another port number, current port is already in use or invalid!</string>
     <string name="try_to_reconnect_to_the_server_again_current_address_is_invalid">Try to reconnect to the server again, current address is invalid!</string>
-    <string name="chat_room">Chat Room</string>
-
-<!--    Local conversations-->
-    <string name="local_connections">%d connections</string>
-    <string name="couldn_t_connect_to_choosen_wifi_device">Couldn\'t connect to choosen wifi device!</string>
 
 </resources>
