@@ -89,7 +89,7 @@ fun HotSpotContent(
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    text = stringResource(id = state.hotspotTitleStatus.status),
+                                    text = stringResource(id = state.serverTitleStatus.status),
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium
                                 )
@@ -117,7 +117,7 @@ fun HotSpotContent(
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    text = stringResource(id = R.string.connect),
+                                    text = stringResource(id = state.clientTitleStatus.status),
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium
                                 )

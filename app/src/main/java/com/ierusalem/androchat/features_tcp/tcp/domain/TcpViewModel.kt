@@ -31,20 +31,29 @@ class TcpViewModel : ViewModel(),
 
     fun handleNetworkEvents(networkEvent: WiFiNetworkEvent) {
         when (networkEvent) {
+            WiFiNetworkEvent.DiscoveryChanged -> {
+                /***
+                 * Broadcast intent action indicating that peer discovery
+                 * has either started or stopped. One extra EXTRA_DISCOVERY_STATE indicates
+                 * whether discovery has started or stopped.
+                 * */
+                //unhandled event
+            }
+
+            WiFiNetworkEvent.ThisDeviceChanged -> {
+                /**
+                 * Broadcast intent action indicating that this device details have changed.
+                 * An extra EXTRA_WIFI_P2P_DEVICE provides this device details
+                 * */
+                //unhandled event
+            }
+
             is WiFiNetworkEvent.ConnectedAsWhat -> {
                 _state.update {
                     it.copy(
                         isOwner = networkEvent.isOwner
                     )
                 }
-            }
-
-            WiFiNetworkEvent.DiscoveryChanged -> {
-                //unhandled event
-            }
-
-            WiFiNetworkEvent.ThisDeviceChanged -> {
-                //unhandled event
             }
 
             is WiFiNetworkEvent.ConnectionStatusChanged -> {
@@ -77,6 +86,22 @@ class TcpViewModel : ViewModel(),
         when (event) {
             is TcpScreenEvents.OnConnectToWifiClick -> {
                 emitNavigation(TcpScreenNavigation.OnConnectToWifiClick(event.wifiDevice))
+            }
+
+            TcpScreenEvents.OnNavIconClick -> {
+                emitNavigation(TcpScreenNavigation.OnNavIconClick)
+            }
+
+            TcpScreenEvents.OnSettingIconClick -> {
+                emitNavigation(TcpScreenNavigation.OnSettingsClick)
+            }
+
+            is TcpScreenEvents.UpdateClientStatus -> {
+                updateClientTitleStatus(event.status)
+            }
+
+            is TcpScreenEvents.UpdateServerStatus -> {
+                updateServerTitleStatus(event.status)
             }
 
             is TcpScreenEvents.SendMessage -> {
@@ -125,32 +150,25 @@ class TcpViewModel : ViewModel(),
                 }
             }
 
-            TcpScreenEvents.OnNavIconClick -> {
-                emitNavigation(TcpScreenNavigation.OnNavIconClick)
-            }
-
-            TcpScreenEvents.OnSettingIconClick -> {
-                emitNavigation(TcpScreenNavigation.OnSettingsClick)
-            }
-
             TcpScreenEvents.CreateServerClick -> {
                 if (!state.value.isValidPortNumber) {
+                    Log.d("ahi3646", "handleEvents: invalid port number ")
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidPortNumber))
                     return
                 }
                 if (state.value.groupOwnerAddress == null || !IP_ADDRESS_REGEX.matches(state.value.groupOwnerAddress!!)) {
+                    Log.d("ahi3646", "handleEvents: invalid ip address ")
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidHostAddress))
                     return
                 }
-                when (state.value.hotspotTitleStatus) {
+                when (state.value.serverTitleStatus) {
                     ServerStatus.Idle -> {
                         emitNavigation(
                             TcpScreenNavigation.OnCreateServerClick(
-                                serverIpAddress = state.value.groupOwnerAddress!!,
                                 portNumber = state.value.portNumber.toInt()
                             )
                         )
-                        updateHotspotTitleStatus(ServerStatus.Creating)
+                        updateServerTitleStatus(ServerStatus.Creating)
                     }
 
                     ServerStatus.Creating -> {
@@ -159,8 +177,8 @@ class TcpViewModel : ViewModel(),
                     }
 
                     ServerStatus.Created -> {
-                        emitNavigation(TcpScreenNavigation.OnCloseServerClick)
-                        Log.d("ahi3646", "handleEvents: created server ")
+                        //emitNavigation(TcpScreenNavigation.OnCloseServerClick)
+                        Log.d("ahi3646", "handleEvents: created server viewModel")
                     }
                 }
             }
@@ -174,29 +192,58 @@ class TcpViewModel : ViewModel(),
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidHostAddress))
                     return
                 }
-                emitNavigation(
-                    TcpScreenNavigation.OnConnectToServerClick(
-                        serverIpAddress = state.value.groupOwnerAddress!!,
-                        portNumber = state.value.portNumber.toInt()
-                    )
-                )
+                when (state.value.clientTitleStatus) {
+                    ClientStatus.Idle -> {
+                        emitNavigation(
+                            TcpScreenNavigation.OnConnectToServerClick(
+                                serverIpAddress = state.value.groupOwnerAddress!!,
+                                portNumber = state.value.portNumber.toInt()
+                            )
+                        )
+                        updateClientTitleStatus(ClientStatus.Creating)
+                    }
+                    ClientStatus.Creating -> {
+                        //just ignore action
+                        Log.d("ahi3646", "handleEvents: creating client ")
+                    }
+                    ClientStatus.Created -> {
+                        //emitNavigation(TcpScreenNavigation.OnCloseServerClick)
+                        Log.d("ahi3646", "handleEvents: created client viewModel")
+                    }
+                }
             }
         }
     }
 
-    fun updateHotspotTitleStatus(status: ServerStatus) {
+    private fun updateServerTitleStatus(status: ServerStatus) {
         _state.update {
             it.copy(
-                hotspotTitleStatus = status
+                serverTitleStatus = status
             )
         }
     }
 
-    fun updateConnectionsCount(){
+    private fun updateClientTitleStatus(status: ClientStatus) {
         _state.update {
             it.copy(
-                connectionsCount = state.value.connectionsCount +1
+                clientTitleStatus = status
             )
+        }
+    }
+
+    fun updateConnectionsCount(shouldIncrease: Boolean) {
+        if (shouldIncrease) {
+            _state.update {
+                it.copy(
+                    connectionsCount = state.value.connectionsCount + 1
+                )
+            }
+        } else {
+            _state.update {
+                it.copy(
+                    connectionsCount = state.value.connectionsCount - 1
+                )
+            }
         }
     }
 
@@ -223,7 +270,8 @@ data class TcpScreenUiState(
 
     val portNumber: String = "9002",
     val isValidPortNumber: Boolean = isValidPortNumber(portNumber),
-    val hotspotTitleStatus: ServerStatus = ServerStatus.Idle,
+    val serverTitleStatus: ServerStatus = ServerStatus.Idle,
+    val clientTitleStatus: ClientStatus = ClientStatus.Idle,
 
     //wifi p2p state
     val wifiDiscoveryStatus: WifiDiscoveryStatus = WifiDiscoveryStatus.Idle,
@@ -282,4 +330,10 @@ enum class ServerStatus(@StringRes val status: Int) {
     Idle(R.string.create_a_server),
     Creating(R.string.creating_a_server),
     Created(R.string.server_created_waiting_for_clients)
+}
+
+enum class ClientStatus(@StringRes val status: Int) {
+    Idle(R.string.connect),
+    Creating(R.string.connecting_to_server),
+    Created(R.string.connected_to_a_server)
 }

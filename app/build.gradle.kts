@@ -103,9 +103,6 @@ dependencies {
     //landscapist
     implementation (libs.landscapist.glide)
 
-    //ktor socket programming
-    implementation("io.ktor:ktor-network:1.6.3")
-
     // Ktor
     implementation ("io.ktor:ktor-client-core:1.6.3")
     implementation ("io.ktor:ktor-client-cio:1.6.3")

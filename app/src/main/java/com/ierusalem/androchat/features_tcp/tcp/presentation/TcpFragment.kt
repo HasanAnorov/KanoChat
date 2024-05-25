@@ -35,8 +35,10 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiDirectBroadcastReceiver
 import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
+import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.TcpView
+import com.ierusalem.androchat.features_tcp.tcp.domain.ClientStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.ConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.ServerStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenErrors
@@ -47,14 +49,8 @@ import com.ierusalem.androchat.ui.navigation.emitNavigation
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.utils.executeWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
-import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.ServerSocket
-import io.ktor.network.sockets.Socket
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.ByteWriteChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.DataInputStream
@@ -71,21 +67,6 @@ class TcpFragment : Fragment() {
     private lateinit var channel: WifiP2pManager.Channel
     private lateinit var receiver: WiFiDirectBroadcastReceiver
     private val intentFilter = IntentFilter()
-
-    //server
-    private lateinit var serverSelectorManager: SelectorManager
-    private lateinit var serverSocket: ServerSocket
-    private lateinit var serverWriteChannel: ByteWriteChannel
-    private lateinit var serverReadChannel: ByteReadChannel
-
-    //you can't send message with serverSocket
-    private lateinit var serverConnectedSocket: Socket
-
-    //client
-    private lateinit var clientSelectorManager: SelectorManager
-    private lateinit var clientSocket: Socket
-    private lateinit var clientWriteChannel: ByteWriteChannel
-    private lateinit var clientReadChannel: ByteReadChannel
 
     //permission
     private lateinit var permissionGuard: PermissionGuardImpl
@@ -215,10 +196,7 @@ class TcpFragment : Fragment() {
 
             is TcpScreenNavigation.OnCreateServerClick -> {
                 CoroutineScope(Dispatchers.Default).launch {
-                    createServer(
-                        serverIpAddress = navigation.serverIpAddress,
-                        serverPort = navigation.portNumber
-                    )
+                    createServer(serverPort = navigation.portNumber)
                 }
             }
 
@@ -229,15 +207,6 @@ class TcpFragment : Fragment() {
                         serverPort = navigation.portNumber
                     )
                 }
-            }
-
-            TcpScreenNavigation.OnCloseServerClick -> {
-                serverSocket.close()
-                viewModel.updateHotspotTitleStatus(ServerStatus.Idle)
-            }
-
-            TcpScreenNavigation.OnDisconnectServerClick -> {
-                clientSocket.close()
             }
 
             is TcpScreenNavigation.OnConnectToWifiClick -> {
@@ -314,27 +283,31 @@ class TcpFragment : Fragment() {
         )
     }
 
-    private suspend fun createServer(serverIpAddress: String, serverPort: Int) {
+    private suspend fun createServer(serverPort: Int) {
         var serverSocket: java.net.ServerSocket?
         withContext(Dispatchers.IO) {
             var socket: java.net.Socket? = null
             try {
                 serverSocket = java.net.ServerSocket(serverPort)
-                while (true) {
+                Log.d("ahi3646", "createServer: $serverSocket ${serverSocket!!.localSocketAddress} ")
+                if(serverSocket!!.isBound) {
+                    viewModel.handleEvents(TcpScreenEvents.UpdateServerStatus(ServerStatus.Created))
+                }
+                while (!serverSocket!!.isClosed) {
                     if (serverSocket != null) {
                         socket = serverSocket!!.accept()
                         Log.d("ahi3646", "New client : $socket ")
+                        viewModel.updateConnectionsCount(true)
 
                         val dataInputStream = DataInputStream(socket.getInputStream())
                         val dataOutputStream = DataOutputStream(socket.getOutputStream())
 
                         try {
-                            dataOutputStream.writeUTF("Hello From Server sdhadskahsdhadhasdkdkaDHJ")
+                            dataOutputStream.writeUTF("Hello From Server")
                             dataOutputStream.flush()
 
                             val inputData = dataInputStream.readUTF()
                             Log.d("ahi3646", "createServer: inputData - $inputData ")
-
                         } catch (e: IOException) {
                             e.printStackTrace()
                             try {
@@ -361,6 +334,7 @@ class TcpFragment : Fragment() {
                 e.printStackTrace()
                 try {
                     socket?.close()
+                    viewModel.updateConnectionsCount(false)
                 } catch (ex: IOException) {
                     ex.printStackTrace()
                 }
@@ -370,6 +344,9 @@ class TcpFragment : Fragment() {
 
     private fun connectToServer(serverIpAddress: String, serverPort: Int) {
         val client = java.net.Socket(serverIpAddress, serverPort)
+        if(!client.isClosed) {
+            viewModel.handleEvents(TcpScreenEvents.UpdateClientStatus(ClientStatus.Created))
+        }
         val writer = DataOutputStream(client.getOutputStream())
         val reader = DataInputStream(client.getInputStream())
         val inputData = reader.readUTF()
@@ -377,69 +354,6 @@ class TcpFragment : Fragment() {
         Log.d("ahi3646", "connectToServer: inputData - $inputData ")
         writer.writeUTF("Hello From Client, how you doing bitch!")
     }
-
-//    private fun sendMessages(message: String) {
-//        if (viewModel.state.value.isOwner == OwnerStatusState.Owner) {
-//            lifecycleScope.launch(Dispatchers.IO) {
-//                try {
-//                    //todo need to clarify
-//                    while (true) {
-//                        serverWriteChannel.writeStringUtf8(message)
-//                    }
-//                } catch (e: Throwable) {
-//                    Log.d("ahi3646", "sendMessages: error $e ")
-//                    serverConnectedSocket.close()
-//                }
-//            }
-//        } else {
-//            lifecycleScope.launch(Dispatchers.IO) {
-//                try {
-//                    //todo need to clarify
-//                    while (true) {
-//                        clientWriteChannel.writeStringUtf8(message)
-//                    }
-//                } catch (e: Throwable) {
-//                    Log.d("ahi3646", "sendMessages: error $e ")
-//                    Log.d("ahi3646", "Server closed a connection")
-//                    clientSocket.close()
-//                    clientSelectorManager.close()
-//                    exitProcess(0)
-//                }
-//            }
-//        }
-//    }
-//
-//    private fun readMessages() {
-//        if (viewModel.state.value.isOwner == OwnerStatusState.Owner) {
-//            lifecycleScope.launch(Dispatchers.IO) {
-//                try {
-//                    while (true) {
-//                        val incomingMessage = serverReadChannel.readUTF8Line()
-//                        if (incomingMessage != null) {
-//                            viewModel.handleEvents(TcpScreenEvents.SendMessage(incomingMessage))
-//                        }
-//                    }
-//                } catch (e: Throwable) {
-//                    Log.d("ahi3646", "readMessages: error $e ")
-//                    serverConnectedSocket.close()
-//                }
-//            }
-//        } else {
-//            lifecycleScope.launch(Dispatchers.IO) {
-//                while (true) {
-//                    val incomingMessage = clientReadChannel.readUTF8Line()
-//                    if (incomingMessage != null) {
-//                        viewModel.handleEvents(TcpScreenEvents.SendMessage(incomingMessage))
-//                    } else {
-//                        Log.d("ahi3646", "Server closed a connection")
-//                        clientSocket.close()
-//                        clientSelectorManager.close()
-//                        exitProcess(0)
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     override fun onResume() {
         super.onResume()
