@@ -97,6 +97,9 @@ dependencies {
     //kotlin json serializer
     implementation(libs.kotlinx.serialization.json)
 
+    //gson
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+
     //image loading - coil
     implementation(libs.coil.compose)
 

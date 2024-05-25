@@ -31,7 +31,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.google.gson.Gson
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiDirectBroadcastReceiver
 import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
@@ -40,6 +42,7 @@ import com.ierusalem.androchat.features_tcp.tcp.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.TcpView
 import com.ierusalem.androchat.features_tcp.tcp.domain.ClientStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.ConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.OwnerStatusState
 import com.ierusalem.androchat.features_tcp.tcp.domain.ServerStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenErrors
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpViewModel
@@ -56,6 +59,8 @@ import kotlinx.coroutines.withContext
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.IOException
+import java.net.ServerSocket
+import java.net.Socket
 
 @AndroidEntryPoint
 class TcpFragment : Fragment() {
@@ -70,6 +75,17 @@ class TcpFragment : Fragment() {
 
     //permission
     private lateinit var permissionGuard: PermissionGuardImpl
+
+    //gson to convert message object to string
+    private lateinit var gson: Gson
+
+    //chatting server side
+    private lateinit var serverSocket: ServerSocket
+    private lateinit var socket: Socket
+
+    //chatting client side
+    private lateinit var clientSocket: Socket
+
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -106,6 +122,11 @@ class TcpFragment : Fragment() {
             Log.d("ahi3646", "No devices found")
             return@PeerListListener
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        gson = Gson()
     }
 
     @OptIn(ExperimentalFoundationApi::class)
@@ -221,6 +242,12 @@ class TcpFragment : Fragment() {
                 ).show()
             }
 
+            is TcpScreenNavigation.SendMessage -> {
+                CoroutineScope(Dispatchers.IO).launch {
+                    sendMessage(navigation.message)
+                }
+            }
+
             TcpScreenNavigation.OnDiscoverWifiClick -> {
                 lifecycleScope.launch {
                     if (permissionGuard.canCreateNetwork()) {
@@ -284,56 +311,22 @@ class TcpFragment : Fragment() {
     }
 
     private suspend fun createServer(serverPort: Int) {
-        var serverSocket: java.net.ServerSocket?
         withContext(Dispatchers.IO) {
-            var socket: java.net.Socket? = null
             try {
-                serverSocket = java.net.ServerSocket(serverPort)
-                Log.d("ahi3646", "createServer: $serverSocket ${serverSocket!!.localSocketAddress} ")
-                if(serverSocket!!.isBound) {
+                serverSocket = ServerSocket(serverPort)
+                Log.d("ahi3646", "createServer: $serverSocket ${serverSocket.localSocketAddress} ")
+                if (serverSocket.isBound) {
                     viewModel.handleEvents(TcpScreenEvents.UpdateServerStatus(ServerStatus.Created))
                 }
-                while (!serverSocket!!.isClosed) {
-                    if (serverSocket != null) {
-                        socket = serverSocket!!.accept()
-                        Log.d("ahi3646", "New client : $socket ")
-                        viewModel.updateConnectionsCount(true)
-
-                        val dataInputStream = DataInputStream(socket.getInputStream())
-                        val dataOutputStream = DataOutputStream(socket.getOutputStream())
-
-                        try {
-                            dataOutputStream.writeUTF("Hello From Server")
-                            dataOutputStream.flush()
-
-                            val inputData = dataInputStream.readUTF()
-                            Log.d("ahi3646", "createServer: inputData - $inputData ")
-                        } catch (e: IOException) {
-                            e.printStackTrace()
-                            try {
-                                dataInputStream.close()
-                                dataOutputStream.close()
-                            } catch (ex: IOException) {
-                                ex.printStackTrace()
-                            }
-                        } catch (e: InterruptedException) {
-                            e.printStackTrace()
-                            try {
-                                dataInputStream.close()
-                                dataOutputStream.close()
-                            } catch (ex: IOException) {
-                                ex.printStackTrace()
-                            }
-                        }
-
-                    } else {
-                        Log.e("ahi3646", "Couldn't create ServerSocket!")
-                    }
+                while (!serverSocket.isClosed) {
+                    socket = serverSocket.accept()
+                    viewModel.updateConnectionsCount(true)
+                    Log.d("ahi3646", "New client : $socket ")
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
                 try {
-                    socket?.close()
+                    socket.close()
                     viewModel.updateConnectionsCount(false)
                 } catch (ex: IOException) {
                     ex.printStackTrace()
@@ -343,16 +336,59 @@ class TcpFragment : Fragment() {
     }
 
     private fun connectToServer(serverIpAddress: String, serverPort: Int) {
-        val client = java.net.Socket(serverIpAddress, serverPort)
-        if(!client.isClosed) {
-            viewModel.handleEvents(TcpScreenEvents.UpdateClientStatus(ClientStatus.Created))
-        }
-        val writer = DataOutputStream(client.getOutputStream())
-        val reader = DataInputStream(client.getInputStream())
-        val inputData = reader.readUTF()
+        //create client
+        clientSocket = Socket(serverIpAddress, serverPort)
 
-        Log.d("ahi3646", "connectToServer: inputData - $inputData ")
-        writer.writeUTF("Hello From Client, how you doing bitch!")
+        //update client title status
+        if (!clientSocket.isClosed) {
+            viewModel.handleEvents(TcpScreenEvents.UpdateClientStatus(ClientStatus.Created))
+            viewModel.updateConnectionsCount(true)
+        }
+
+        //received outcome messages here
+        while (!clientSocket.isClosed) {
+            val reader = DataInputStream(clientSocket.getInputStream())
+            val inputData = reader.readUTF()
+            val message = gson.fromJson(inputData, Message::class.java)
+            viewModel.insertMessage(message)
+            Log.d("ahi3646", "connectToServer: inputData - $inputData ")
+        }
+    }
+
+    private fun sendMessage(message: Message) {
+        if (viewModel.state.value.isOwner == OwnerStatusState.Owner) {
+            if (!serverSocket.isClosed) {
+                val messageStringForms = gson.toJson(message)
+                Log.d("ahi3646", "sendMessage: $messageStringForms ")
+                val dataOutputStream = DataOutputStream(socket.getOutputStream())
+
+                try {
+                    dataOutputStream.writeUTF(messageStringForms)
+                    dataOutputStream.flush()
+
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    try {
+                        Log.d("ahi3646", "sendMessage: dataOutputStream is closed io exception ")
+                        dataOutputStream.close()
+                    } catch (ex: IOException) {
+                        ex.printStackTrace()
+                    }
+                } catch (e: InterruptedException) {
+                    e.printStackTrace()
+                    try {
+                        Log.d("ahi3646", "sendMessage: dataOutputStream is closed interrupted")
+                        dataOutputStream.close()
+                    } catch (ex: IOException) {
+                        ex.printStackTrace()
+                    }
+                }
+            } else {
+                Log.d("ahi3646", "sendMessage: server socket is closed ")
+            }
+        } else {
+            Log.d("ahi3646", "sendMessage: not owner ")
+        }
     }
 
     override fun onResume() {

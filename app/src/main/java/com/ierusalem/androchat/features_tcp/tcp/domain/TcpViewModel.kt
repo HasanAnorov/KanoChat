@@ -105,17 +105,12 @@ class TcpViewModel : ViewModel(),
             }
 
             is TcpScreenEvents.SendMessage -> {
-                _state.update {
-                    val currentTime = Calendar.getInstance().time.toString()
-                    val username =
-                        if (state.value.isOwner == OwnerStatusState.Owner) "Owner" else "Guest"
-                    val newMessages = state.value.messages.toMutableList().apply {
-                        add(Message(event.message, currentTime, username))
-                    }
-                    it.copy(
-                        messages = newMessages
-                    )
-                }
+                val currentTime = Calendar.getInstance().time.toString()
+                val username =
+                    if (state.value.isOwner == OwnerStatusState.Owner) "Owner" else "Guest"
+                val message = Message(event.message, currentTime, username)
+                emitNavigation(TcpScreenNavigation.SendMessage(message))
+                insertMessage(message)
             }
 
             is TcpScreenEvents.OnPortNumberChanged -> {
@@ -212,6 +207,18 @@ class TcpViewModel : ViewModel(),
                     }
                 }
             }
+        }
+    }
+
+    fun insertMessage(message: Message) {
+        val newMessages = state.value.messages.toMutableList().apply {
+            add(message)
+        }
+
+        _state.update {
+            it.copy(
+                messages = newMessages
+            )
         }
     }
 

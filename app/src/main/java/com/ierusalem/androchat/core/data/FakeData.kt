@@ -22,7 +22,7 @@ val colleagueProfile = ProfileScreenState(
  * Example "you" profile.
  */
 val meProfile = ProfileScreenState(
-    userId = "you",
+    userId = "Owner",
     photo = R.drawable.mclaren,
     name = "Andro Chat",
     status = "Online",
