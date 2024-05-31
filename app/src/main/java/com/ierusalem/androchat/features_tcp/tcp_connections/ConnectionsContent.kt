@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenUiState
-import com.ierusalem.androchat.features_tcp.tcp_host.components.StatusProperty
-import com.ierusalem.androchat.features_tcp.tcp_host.components.WifiLazyItem
+import com.ierusalem.androchat.features_tcp.tcp_nearby.components.StatusProperty
+import com.ierusalem.androchat.features_tcp.tcp_nearby.components.WifiLazyItem
 import com.ierusalem.androchat.ui.components.baselineHeight
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.ui.theme.MontserratFontFamily

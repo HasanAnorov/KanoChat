@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import androidx.navigation.findNavController
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 class TcpSettingFragment : Fragment() {
@@ -18,7 +19,11 @@ class TcpSettingFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 AndroChatTheme {
-                    TcpSettingsScreen()
+                    TcpSettingsScreen(
+                        onNavIconClick = {
+                            findNavController().popBackStack()
+                        }
+                    )
                 }
             }
         }

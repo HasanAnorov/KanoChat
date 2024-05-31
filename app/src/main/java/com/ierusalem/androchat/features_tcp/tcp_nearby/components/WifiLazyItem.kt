@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_tcp.tcp_host.components
+package com.ierusalem.androchat.features_tcp.tcp_nearby.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

@@ -58,7 +58,6 @@ class WiFiDirectBroadcastReceiver(
             }
 
             WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION -> {
-                Log.d("ahi3646", "handleThisDeviceChangedAction: ")
                 networkEventHandler(WiFiNetworkEvent.ThisDeviceChanged)
             }
 
@@ -78,10 +77,6 @@ class WiFiDirectBroadcastReceiver(
             WifiP2pManager.WIFI_P2P_STATE_DISABLED -> {
                 Log.d("ahi3646", "handleStateChangedAction: WiFi Direct: Disabled")
                 networkEventHandler(WiFiNetworkEvent.WifiStateChanged(isWifiOn = false))
-                //todo think about this later
-                // Fire the shutdown event to the service
-                // The service shutdown will properly clean up things like this WDN, as well as wakelocks
-                // and notifications
             }
 
             else -> {

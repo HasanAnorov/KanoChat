@@ -14,7 +14,7 @@ import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.LocalConversationContent
 import com.ierusalem.androchat.features_tcp.tcp_connections.ConnectionsContent
 import com.ierusalem.androchat.features_tcp.tcp_instructions.InstructionsContent
-import com.ierusalem.androchat.features_tcp.tcp_host.HotSpotContent
+import com.ierusalem.androchat.features_tcp.tcp_nearby.HotSpotContent
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

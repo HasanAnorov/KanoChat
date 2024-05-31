@@ -2,7 +2,7 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav_graph.xml"
-    app:startDestination="@id/registrationFragment">
+    app:startDestination="@id/tcpFragment">
 
     <fragment
         android:id="@+id/conversationFragment"
@@ -110,10 +110,12 @@
             app:popUpToInclusive="true" />
 
     </fragment>
+
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.ierusalem.androchat.features.settings.presentation.SettingsFragment"
         android:label="SettingsFragment" />
+
     <fragment
         android:id="@+id/tcpFragment"
         android:name="com.ierusalem.androchat.features_tcp.tcp.presentation.TcpFragment"
@@ -122,6 +124,7 @@
             android:id="@+id/action_tcpFragment_to_tcpSettingFragment"
             app:destination="@id/tcpSettingFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/tcpSettingFragment"
         android:name="com.ierusalem.androchat.features_tcp.tcp_settings.TcpSettingFragment"

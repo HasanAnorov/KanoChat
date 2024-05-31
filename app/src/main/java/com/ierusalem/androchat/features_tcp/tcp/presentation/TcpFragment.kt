@@ -16,6 +16,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -40,10 +41,11 @@ import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImp
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.TcpView
-import com.ierusalem.androchat.features_tcp.tcp.domain.ClientStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.ClientConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.ConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.OwnerStatusState
-import com.ierusalem.androchat.features_tcp.tcp.domain.ServerStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.HostConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenDialogErrors
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenErrors
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_tcp.tcp.domain.WifiDiscoveryStatus
@@ -58,9 +60,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.DataInputStream
 import java.io.DataOutputStream
+import java.io.EOFException
 import java.io.IOException
+import java.io.UTFDataFormatException
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.UnknownHostException
 
 @AndroidEntryPoint
 class TcpFragment : Fragment() {
@@ -81,11 +86,10 @@ class TcpFragment : Fragment() {
 
     //chatting server side
     private lateinit var serverSocket: ServerSocket
-    private lateinit var socket: Socket
+    private lateinit var serverAcceptedSocket: Socket
 
     //chatting client side
     private lateinit var clientSocket: Socket
-
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -181,6 +185,12 @@ class TcpFragment : Fragment() {
 
                 val state by viewModel.state.collectAsStateWithLifecycle()
 
+                BackHandler {
+                    if(state.messages.isNotEmpty()){
+                        //show close dialog here
+                    }
+                }
+
                 AndroChatTheme {
                     TcpScreen(
                         state = state,
@@ -203,12 +213,32 @@ class TcpFragment : Fragment() {
         )
     }
 
+    private fun handleWifiDisabledCase(status: OwnerStatusState) {
+        when (status) {
+            OwnerStatusState.Idle -> {
+                //do nothing
+            }
+
+            OwnerStatusState.Client -> {
+                clientSocket.close()
+            }
+
+            OwnerStatusState.Owner -> {
+                serverAcceptedSocket.close()
+            }
+        }
+    }
+
     @SuppressLint("MissingPermission")
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
 
             TcpScreenNavigation.OnNavIconClick -> {
-                findNavController().popBackStack()
+                //findNavController().popBackStack()
+            }
+
+            is TcpScreenNavigation.WifiDisabledCase -> {
+                handleWifiDisabledCase(navigation.status)
             }
 
             TcpScreenNavigation.OnSettingsClick -> {
@@ -242,9 +272,15 @@ class TcpFragment : Fragment() {
                 ).show()
             }
 
-            is TcpScreenNavigation.SendMessage -> {
+            is TcpScreenNavigation.SendHostMessage -> {
                 CoroutineScope(Dispatchers.IO).launch {
-                    sendMessage(navigation.message)
+                    sendHostMessage(navigation.message)
+                }
+            }
+
+            is TcpScreenNavigation.SendClientMessage -> {
+                CoroutineScope(Dispatchers.IO).launch {
+                    sendClientMessage(navigation.message)
                 }
             }
 
@@ -310,99 +346,277 @@ class TcpFragment : Fragment() {
         )
     }
 
+    //all exceptions handled
     private suspend fun createServer(serverPort: Int) {
         withContext(Dispatchers.IO) {
             try {
                 serverSocket = ServerSocket(serverPort)
                 Log.d("ahi3646", "createServer: $serverSocket ${serverSocket.localSocketAddress} ")
                 if (serverSocket.isBound) {
-                    viewModel.handleEvents(TcpScreenEvents.UpdateServerStatus(ServerStatus.Created))
+                    viewModel.handleEvents(TcpScreenEvents.UpdateServerStatus(HostConnectionStatus.Created))
                 }
                 while (!serverSocket.isClosed) {
-                    socket = serverSocket.accept()
+                    serverAcceptedSocket = serverSocket.accept()
                     viewModel.updateConnectionsCount(true)
-                    Log.d("ahi3646", "New client : $socket ")
-                    while (!socket.isClosed) {
-                        val reader = DataInputStream(socket.getInputStream())
-                        val inputData = reader.readUTF()
-                        val message = gson.fromJson(inputData, Message::class.java)
-                        viewModel.insertMessage(message)
-                        Log.d("ahi3646", "createServer: $message ")
+                    Log.d("ahi3646", "New client : $serverAcceptedSocket ")
+                    while (!serverAcceptedSocket.isClosed) {
+                        val reader = DataInputStream(serverAcceptedSocket.getInputStream())
+                        try {
+                            val inputData = reader.readUTF()
+                            val message = gson.fromJson(inputData, Message::class.java)
+                            viewModel.insertMessage(message)
+                            Log.d("ahi3646", "createServer: $message ")
+                        } catch (e: EOFException) {
+                            //if the IP address of the host could not be determined.
+                            Log.d("ahi3646", "createServer: EOFException ")
+                            viewModel.handleEvents(
+                                TcpScreenEvents.OnDialogErrorOccurred(
+                                    TcpScreenDialogErrors.EOException
+                                )
+                            )
+
+                            try {
+                                reader.close()
+                            } catch (e: IOException) {
+                                e.printStackTrace()
+                            }
+                        } catch (e: IOException) {
+                            //the stream has been closed and the contained
+                            // input stream does not support reading after close,
+                            // or another I/O error occurs
+                            Log.d("ahi3646", "createServer: io exception ")
+                            viewModel.handleEvents(
+                                TcpScreenEvents.OnDialogErrorOccurred(
+                                    TcpScreenDialogErrors.IOException
+                                )
+                            )
+
+                            try {
+                                reader.close()
+                            } catch (e: IOException) {
+                                e.printStackTrace()
+                            }
+                        } catch (e: UTFDataFormatException) {
+                            //if the bytes do not represent a valid modified UTF-8 encoding of a string.
+                            Log.d("ahi3646", "createServer: io exception ")
+                            viewModel.handleEvents(
+                                TcpScreenEvents.OnDialogErrorOccurred(
+                                    TcpScreenDialogErrors.UTFDataFormatException
+                                )
+                            )
+
+                            try {
+                                reader.close()
+                            } catch (e: IOException) {
+                                e.printStackTrace()
+                            }
+                        }
                     }
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
                 try {
-                    socket.close()
+                    serverAcceptedSocket.close()
                     viewModel.updateConnectionsCount(false)
                 } catch (ex: IOException) {
                     ex.printStackTrace()
                 }
+            } catch (e: SecurityException) {
+                try {
+                    serverAcceptedSocket.close()
+                    viewModel.updateConnectionsCount(false)
+                } catch (ex: IOException) {
+                    ex.printStackTrace()
+                }
+                //if a security manager exists and its checkConnect method doesn't allow the operation.
+                Log.d("ahi3646", "createServer: SecurityException ")
+            } catch (e: IllegalArgumentException) {
+                try {
+                    serverAcceptedSocket.close()
+                    viewModel.updateConnectionsCount(false)
+                } catch (ex: IOException) {
+                    ex.printStackTrace()
+                }
+                //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
+                Log.d("ahi3646", "createServer: IllegalArgumentException ")
             }
         }
     }
 
+    //all exceptions handled
     private fun connectToServer(serverIpAddress: String, serverPort: Int) {
-        //create client
-        clientSocket = Socket(serverIpAddress, serverPort)
+        try {
+            //create client
+            clientSocket = Socket(serverIpAddress, serverPort)
+            //update client title status
+            if (!clientSocket.isClosed) {
+                viewModel.handleEvents(TcpScreenEvents.UpdateClientStatus(ClientConnectionStatus.Created))
+                viewModel.updateConnectionsCount(true)
+            }
 
-        //update client title status
-        if (!clientSocket.isClosed) {
-            viewModel.handleEvents(TcpScreenEvents.UpdateClientStatus(ClientStatus.Created))
-            viewModel.updateConnectionsCount(true)
-        }
-
-        //received outcome messages here
-        while (!clientSocket.isClosed) {
-            val reader = DataInputStream(clientSocket.getInputStream())
-            val inputData = reader.readUTF()
-            val message = gson.fromJson(inputData, Message::class.java)
-            viewModel.insertMessage(message)
-            Log.d("ahi3646", "connectToServer: inputData - $inputData ")
-        }
-    }
-
-    private fun sendMessage(message: Message) {
-        if (viewModel.state.value.isOwner == OwnerStatusState.Owner) {
-            if (!serverSocket.isClosed) {
-                val writer = DataOutputStream(socket.getOutputStream())
-                val messageStringForms = gson.toJson(message)
-                Log.d("ahi3646", "sendMessage: $messageStringForms ")
-
+            //received outcome messages here
+            while (!clientSocket.isClosed) {
+                val reader = DataInputStream(clientSocket.getInputStream())
                 try {
-                    writer.writeUTF(messageStringForms)
-                    writer.flush()
+                    val inputData = reader.readUTF()
+                    val message = gson.fromJson(inputData, Message::class.java)
+                    viewModel.insertMessage(message)
+                    Log.d("ahi3646", "connectToServer: inputData - $inputData ")
+                } catch (e: EOFException) {
+                    //if the IP address of the host could not be determined.
+                    Log.d("ahi3646", "connectToServer: EOFException ")
+                    viewModel.handleEvents(
+                        TcpScreenEvents.OnDialogErrorOccurred(
+                            TcpScreenDialogErrors.EOException
+                        )
+                    )
 
-                } catch (e: IOException) {
-                    e.printStackTrace()
                     try {
-                        Log.d("ahi3646", "sendMessage: dataOutputStream is closed io exception ")
-                        writer.close()
-                    } catch (ex: IOException) {
-                        ex.printStackTrace()
+                        reader.close()
+                    } catch (e: IOException) {
+                        e.printStackTrace()
                     }
-                } catch (e: InterruptedException) {
-                    e.printStackTrace()
+                } catch (e: IOException) {
+                    //the stream has been closed and the contained
+                    // input stream does not support reading after close,
+                    // or another I/O error occurs
+                    Log.d("ahi3646", "connectToServer: io exception ")
+                    viewModel.handleEvents(
+                        TcpScreenEvents.OnDialogErrorOccurred(
+                            TcpScreenDialogErrors.IOException
+                        )
+                    )
+
                     try {
-                        Log.d("ahi3646", "sendMessage: dataOutputStream is closed interrupted")
-                        writer.close()
-                    } catch (ex: IOException) {
-                        ex.printStackTrace()
+                        reader.close()
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+                } catch (e: UTFDataFormatException) {
+                    //if the bytes do not represent a valid modified UTF-8 encoding of a string.
+                    Log.d("ahi3646", "connectToServer: io exception ")
+                    viewModel.handleEvents(
+                        TcpScreenEvents.OnDialogErrorOccurred(
+                            TcpScreenDialogErrors.UTFDataFormatException
+                        )
+                    )
+                    try {
+                        reader.close()
+                    } catch (e: IOException) {
+                        e.printStackTrace()
                     }
                 }
-            } else {
-                Log.d("ahi3646", "sendMessage: server socket is closed ")
+            }
+        } catch (exception: UnknownHostException) {
+            try {
+                clientSocket.close()
+                //todo change connection status here
+                viewModel.updateConnectionsCount(false)
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+            }
+            Log.d("ahi3646", "connectToServer: UnknownHostException ")
+            viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.UnknownHostException))
+        } catch (exception: IOException) {
+            try {
+                clientSocket.close()
+                viewModel.updateConnectionsCount(false)
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+            }
+            Log.d("ahi3646", "connectToServer: IOException ")
+            viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.IOException))
+        } catch (e: SecurityException) {
+            try {
+                clientSocket.close()
+                //todo change connection status here
+                viewModel.updateConnectionsCount(false)
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+            }
+            //if a security manager exists and its checkConnect method doesn't allow the operation.
+            Log.d("ahi3646", "connectToServer: SecurityException ")
+        } catch (e: IllegalArgumentException) {
+            try {
+                clientSocket.close()
+                //todo change connection status here
+                viewModel.updateConnectionsCount(false)
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+            }
+            //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
+            Log.d("ahi3646", "connectToServer: IllegalArgumentException ")
+        }
+
+    }
+
+    private fun sendClientMessage(message: Message){
+        if (!clientSocket.isClosed) {
+            val writer = DataOutputStream(clientSocket.getOutputStream())
+
+            val messageStringForms = gson.toJson(message)
+            Log.d("ahi3646", "sendMessage: $messageStringForms ")
+
+            try {
+                writer.writeUTF(messageStringForms)
+                writer.flush()
+                viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
+            } catch (exception: IOException) {
+                Log.d("ahi3646", "sendMessage: io exception ")
+                viewModel.handleEvents(
+                    TcpScreenEvents.OnDialogErrorOccurred(
+                        TcpScreenDialogErrors.IOException
+                    )
+                )
+                try {
+                    Log.d(
+                        "ahi3646",
+                        "sendMessage client: dataOutputStream is closed io exception "
+                    )
+                    writer.close()
+                } catch (ex: IOException) {
+                    ex.printStackTrace()
+                }
             }
         } else {
-            if (!clientSocket.isClosed) {
-                val writer = DataOutputStream(clientSocket.getOutputStream())
-                val messageStringForms = gson.toJson(message)
-                Log.d("ahi3646", "sendMessage: $messageStringForms ")
-                writer.writeUTF(messageStringForms)
-            }
-            Log.d("ahi3646", "sendMessage: not owner ")
+            Log.d("ahi3646", "sendMessage: client socket is closed ")
+            viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
         }
     }
+
+    private fun sendHostMessage(message: Message){
+        if (!serverAcceptedSocket.isClosed) {
+            val writer = DataOutputStream(serverAcceptedSocket.getOutputStream())
+
+            val messageStringForms = gson.toJson(message)
+            Log.d("ahi3646", "sendMessage: $messageStringForms ")
+
+            try {
+                writer.writeUTF(messageStringForms)
+                writer.flush()
+                viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
+            } catch (e: IOException) {
+                viewModel.handleEvents(
+                    TcpScreenEvents.OnDialogErrorOccurred(
+                        TcpScreenDialogErrors.IOException
+                    )
+                )
+                try {
+                    Log.d(
+                        "ahi3646",
+                        "sendMessage server: dataOutputStream is closed io exception "
+                    )
+                    writer.close()
+                } catch (ex: IOException) {
+                    ex.printStackTrace()
+                }
+            }
+        } else {
+            Log.d("ahi3646", "sendMessage: client socket is closed ")
+            viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
+        }
+    }
+
 
     override fun onResume() {
         super.onResume()

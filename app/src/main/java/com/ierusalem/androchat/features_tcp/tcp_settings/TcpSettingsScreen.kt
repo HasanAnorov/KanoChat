@@ -1,27 +1,27 @@
 package com.ierusalem.androchat.features_tcp.tcp_settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 @Composable
-fun TcpSettingsScreen() {
-    Scaffold {
-        LazyColumn(
-            modifier = Modifier
-                .padding(it)
-                .fillMaxSize()
-        ) {
-            item {
-                TcpSettingsAppBar(
-                    onNavIconClick = {  },
-                )
-            }
+fun TcpSettingsScreen(
+    onNavIconClick: () -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        item {
+            TcpSettingsAppBar(
+                onNavIconClick = onNavIconClick,
+            )
         }
     }
 }
@@ -30,6 +30,8 @@ fun TcpSettingsScreen() {
 @Composable
 private fun TcpSettingsPreview() {
     AndroChatTheme {
-        TcpSettingsScreen()
+        TcpSettingsScreen(
+            onNavIconClick = {}
+        )
     }
 }

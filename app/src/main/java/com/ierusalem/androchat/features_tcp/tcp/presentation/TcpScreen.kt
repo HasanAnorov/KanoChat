@@ -11,11 +11,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.TcpView
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenUiState
+import com.ierusalem.androchat.features_tcp.tcp.presentation.components.NetworkErrorDialog
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.TcpAppBar
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.TcpContent
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.rememberTcpAllTabs
@@ -35,6 +37,17 @@ fun TcpScreen(
     Scaffold(
         modifier = modifier.fillMaxSize()
     ) { pv ->
+
+        if (state.hasErrorOccurredDialog != null) {
+            NetworkErrorDialog(
+                onDismissRequest = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },
+                onConfirmation = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },
+                dialogTitle = state.hasErrorOccurredDialog.title,
+                dialogText = state.hasErrorOccurredDialog.message,
+                icon = painterResource(id = state.hasErrorOccurredDialog.icon)
+            )
+        }
+
         Column {
             TcpAppBar(
                 title = UiText.StringResource(R.string.local_connection),

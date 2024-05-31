@@ -20,6 +20,7 @@ import com.ierusalem.androchat.utils.Constants
 import com.ierusalem.androchat.utils.DataStorePreferenceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
@@ -33,10 +34,8 @@ class TcpViewModel @Inject constructor(
 ) : ViewModel(),
     NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
 
-    private val _state: MutableStateFlow<TcpScreenUiState> = MutableStateFlow(
-        TcpScreenUiState()
-    )
-    val state = _state.asStateFlow()
+    private val _state: MutableStateFlow<TcpScreenUiState> = MutableStateFlow(TcpScreenUiState())
+    val state: StateFlow<TcpScreenUiState> = _state.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -97,8 +96,24 @@ class TcpViewModel @Inject constructor(
                         isWifiOn = networkEvent.isWifiOn
                     )
                 }
+                if (!networkEvent.isWifiOn) {
+                    handleWifiDisableCase()
+                }
             }
         }
+    }
+
+    private fun handleWifiDisableCase() {
+        //emit event for closing sockets
+        emitNavigation(TcpScreenNavigation.WifiDisabledCase(state.value.isOwner))
+
+        updateServerTitleStatus(HostConnectionStatus.Idle)
+        updateClientTitleStatus(ClientConnectionStatus.Idle)
+        updateWifiDiscoveryStatus(WifiDiscoveryStatus.Idle)
+
+        //decrease connections count
+        updateConnectionsCount(false)
+
     }
 
     fun handleEvents(event: TcpScreenEvents) {
@@ -123,12 +138,61 @@ class TcpViewModel @Inject constructor(
                 updateServerTitleStatus(event.status)
             }
 
-            is TcpScreenEvents.SendMessage -> {
+            is TcpScreenEvents.OnDialogErrorOccurred -> {
+                updateHasErrorOccurredDialog(event.error)
+            }
+
+            is TcpScreenEvents.InsertMessage -> {
+                insertMessage(event.message)
+            }
+
+            is TcpScreenEvents.SendMessageRequest -> {
                 val currentTime = Calendar.getInstance().time.toString()
                 val username = state.value.authorMe
                 val message = Message(event.message, currentTime, username)
-                emitNavigation(TcpScreenNavigation.SendMessage(message))
-                insertMessage(message)
+                when (state.value.isOwner) {
+                    OwnerStatusState.Idle -> {
+                        //ignore sending message
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
+                    }
+
+                    OwnerStatusState.Client -> {
+                        when (state.value.clientConnectionStatus) {
+                            ClientConnectionStatus.Idle -> {
+                                //Has not connected to a server
+                                //ignore sending message
+                            }
+
+                            ClientConnectionStatus.Creating -> {
+                                //connecting to a server
+                                //currently it's not possible to send messages to a server
+                            }
+
+                            ClientConnectionStatus.Created -> {
+                                emitNavigation(TcpScreenNavigation.SendClientMessage(message))
+                            }
+                        }
+                    }
+
+                    OwnerStatusState.Owner -> {
+                        when (state.value.hostConnectionStatus) {
+                            HostConnectionStatus.Idle -> {
+                                //Has not created a server
+                                //ignore sending message
+                            }
+
+                            HostConnectionStatus.Creating -> {
+                                //creating a server
+                                //currently it's not possible to send messages
+                            }
+
+                            HostConnectionStatus.Created -> {
+                                emitNavigation(TcpScreenNavigation.SendHostMessage(message))
+                            }
+                        }
+                    }
+
+                }
             }
 
             is TcpScreenEvents.OnPortNumberChanged -> {
@@ -140,7 +204,6 @@ class TcpViewModel @Inject constructor(
                 }
             }
 
-            //todo handle wi fi events globally, like shutdown server and other stuffs
             TcpScreenEvents.DiscoverWifiClick -> {
                 if (!state.value.isWifiOn) {
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
@@ -164,6 +227,10 @@ class TcpViewModel @Inject constructor(
             }
 
             TcpScreenEvents.CreateServerClick -> {
+                if (!state.value.isWifiOn) {
+                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
+                    return
+                }
                 if (!state.value.isValidPortNumber) {
                     Log.d("ahi3646", "handleEvents: invalid port number ")
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidPortNumber))
@@ -174,29 +241,49 @@ class TcpViewModel @Inject constructor(
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidHostAddress))
                     return
                 }
-                when (state.value.serverTitleStatus) {
-                    ServerStatus.Idle -> {
-                        emitNavigation(
-                            TcpScreenNavigation.OnCreateServerClick(
-                                portNumber = state.value.portNumber.toInt()
-                            )
-                        )
-                        updateServerTitleStatus(ServerStatus.Creating)
+
+                //this when loop determines the state of wi fi connection
+                when (state.value.isOwner) {
+                    OwnerStatusState.Idle -> {
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.ServerCreationOrConnectionWithoutWifiConnection)
                     }
 
-                    ServerStatus.Creating -> {
-                        //just ignore action
-                        Log.d("ahi3646", "handleEvents: creating server ")
+                    OwnerStatusState.Client -> {
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.YouAreNotOwner)
                     }
 
-                    ServerStatus.Created -> {
-                        //emitNavigation(TcpScreenNavigation.OnCloseServerClick)
-                        Log.d("ahi3646", "handleEvents: created server viewModel")
+                    OwnerStatusState.Owner -> {
+                        //this when loop determines the state of tcp connection
+                        when (state.value.hostConnectionStatus) {
+                            HostConnectionStatus.Idle -> {
+                                emitNavigation(
+                                    TcpScreenNavigation.OnCreateServerClick(
+                                        portNumber = state.value.portNumber.toInt()
+                                    )
+                                )
+                                updateServerTitleStatus(HostConnectionStatus.Creating)
+                            }
+
+                            HostConnectionStatus.Creating -> {
+                                //just ignore action
+                                Log.d("ahi3646", "handleEvents: creating server ")
+                            }
+
+                            HostConnectionStatus.Created -> {
+                                //todo request server close here
+                                //emitNavigation(TcpScreenNavigation.OnCloseServerClick)
+                                Log.d("ahi3646", "handleEvents: created server viewModel")
+                            }
+                        }
                     }
                 }
             }
 
             TcpScreenEvents.ConnectToServerClick -> {
+                if (!state.value.isWifiOn) {
+                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
+                    return
+                }
                 if (!state.value.isValidPortNumber) {
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidPortNumber))
                     return
@@ -205,28 +292,51 @@ class TcpViewModel @Inject constructor(
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidHostAddress))
                     return
                 }
-                when (state.value.clientTitleStatus) {
-                    ClientStatus.Idle -> {
-                        emitNavigation(
-                            TcpScreenNavigation.OnConnectToServerClick(
-                                serverIpAddress = state.value.groupOwnerAddress!!,
-                                portNumber = state.value.portNumber.toInt()
-                            )
-                        )
-                        updateClientTitleStatus(ClientStatus.Creating)
+
+                //this when loop determines the state of wi fi connection
+                when (state.value.isOwner) {
+                    OwnerStatusState.Idle -> {
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.ServerCreationOrConnectionWithoutWifiConnection)
                     }
 
-                    ClientStatus.Creating -> {
-                        //just ignore action
-                        Log.d("ahi3646", "handleEvents: creating client ")
+                    OwnerStatusState.Owner -> {
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.YouAreNotClient)
                     }
 
-                    ClientStatus.Created -> {
-                        //emitNavigation(TcpScreenNavigation.OnCloseServerClick)
-                        Log.d("ahi3646", "handleEvents: created client viewModel")
+                    OwnerStatusState.Client -> {
+                        //this when loop determines the state of tcp connection
+                        when (state.value.clientConnectionStatus) {
+                            ClientConnectionStatus.Idle -> {
+                                emitNavigation(
+                                    TcpScreenNavigation.OnConnectToServerClick(
+                                        serverIpAddress = state.value.groupOwnerAddress!!,
+                                        portNumber = state.value.portNumber.toInt()
+                                    )
+                                )
+                                updateClientTitleStatus(ClientConnectionStatus.Creating)
+                            }
+
+                            ClientConnectionStatus.Creating -> {
+                                //just ignore action
+                                Log.d("ahi3646", "handleEvents: creating client ")
+                            }
+
+                            ClientConnectionStatus.Created -> {
+                                //todo request clientSocket close here
+                                Log.d("ahi3646", "handleEvents: created client viewModel")
+                            }
+                        }
                     }
                 }
             }
+        }
+    }
+
+    private fun updateHasErrorOccurredDialog(dialog: TcpScreenDialogErrors?) {
+        _state.update {
+            it.copy(
+                hasErrorOccurredDialog = dialog
+            )
         }
     }
 
@@ -234,7 +344,6 @@ class TcpViewModel @Inject constructor(
         val newMessages = state.value.messages.toMutableList().apply {
             add(message)
         }
-
         _state.update {
             it.copy(
                 messages = newMessages
@@ -242,18 +351,18 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun updateServerTitleStatus(status: ServerStatus) {
+    private fun updateServerTitleStatus(status: HostConnectionStatus) {
         _state.update {
             it.copy(
-                serverTitleStatus = status
+                hostConnectionStatus = status
             )
         }
     }
 
-    private fun updateClientTitleStatus(status: ClientStatus) {
+    private fun updateClientTitleStatus(status: ClientConnectionStatus) {
         _state.update {
             it.copy(
-                clientTitleStatus = status
+                clientConnectionStatus = status
             )
         }
     }
@@ -299,8 +408,8 @@ data class TcpScreenUiState(
 
     val portNumber: String = "9002",
     val isValidPortNumber: Boolean = isValidPortNumber(portNumber),
-    val serverTitleStatus: ServerStatus = ServerStatus.Idle,
-    val clientTitleStatus: ClientStatus = ClientStatus.Idle,
+    val hostConnectionStatus: HostConnectionStatus = HostConnectionStatus.Idle,
+    val clientConnectionStatus: ClientConnectionStatus = ClientConnectionStatus.Idle,
 
     //wifi p2p state
     val wifiDiscoveryStatus: WifiDiscoveryStatus = WifiDiscoveryStatus.Idle,
@@ -309,7 +418,7 @@ data class TcpScreenUiState(
     val connectionStatus: ConnectionStatus = ConnectionStatus.Idle,
     val isWifiOn: Boolean = false,
     val isOwner: OwnerStatusState = OwnerStatusState.Idle,
-    val groupOwnerAddress: String? = "127.0.0.1",
+    val groupOwnerAddress: String? = "No connection",
 
     //wifi peers list
     val availableWifiNetworks: List<WifiP2pDevice> = emptyList(),
@@ -320,15 +429,79 @@ data class TcpScreenUiState(
     //chat room
     val messages: List<Message> = emptyList(),
     val isLoading: Boolean = false,
-    val connectionsCount: Int = 1
+    val connectionsCount: Int = 1,
+
+    //error handling
+    val hasErrorOccurredDialog: TcpScreenDialogErrors? = null
 )
 
-enum class TcpScreenErrors(val errorMessage: Int) {
+enum class TcpCloseDialogReason(@StringRes val reason: Int, @StringRes val description: Int) {
+
+    //This error case will be removed when "saving existing messages" feature will be implemented
+    ExistingMessages(
+        R.string.message_are_not_saved,
+        R.string.you_have_existing_messages_with_your_partner_and_if_you_close_the_this_window_messages_will_not_be_saved
+    ),
+
+    ExistingConnection(
+        R.string.the_connection_will_not_be_saved,
+        R.string.you_have_established_connection_with_your_partner_if_you_close_this_window_the_connection_will_not_be_saved
+    )
+}
+
+enum class TcpScreenErrors(@StringRes val errorMessage: Int) {
     WifiNotEnabled(R.string.wifi_should_be_enabled_to_perform_this_action),
     AlreadyDiscoveringWifi(R.string.already_discovering_wifi_networks),
     InvalidPortNumber(R.string.try_to_use_another_port_number_current_port_is_already_in_use_or_invalid),
     InvalidHostAddress(R.string.try_to_reconnect_to_the_server_again_current_address_is_invalid),
     FailedToConnectToWifiDevice(R.string.couldn_t_connect_to_chosen_wifi_device),
+}
+
+enum class TcpScreenDialogErrors(
+    @StringRes val title: Int,
+    @StringRes val message: Int,
+    @DrawableRes val icon: Int
+) {
+    EOException(
+        R.string.network_error_occurred,
+        R.string.your_network_connection_was_interrupted_check_your_connection_and_try_again,
+        R.drawable.wifi_off
+    ),
+    IOException(
+        R.string.network_error_occurred,
+        R.string.your_network_connection_was_interrupted_check_your_connection_and_try_again,
+        R.drawable.wifi_off
+    ),
+    UTFDataFormatException(
+        R.string.network_error_occurred,
+        R.string.incoming_messages_are_not_in_utf_8_format_the_data_do_not_represent_a_valid_modified_utf_8_encoding_of_a_string,
+        R.drawable.error_prompt
+    ),
+    UnknownHostException(
+        R.string.invalid_host_ip_address,
+        R.string.the_ip_address_of_the_host_could_not_be_determined,
+        R.drawable.info
+    ),
+    YouAreNotOwner(
+        R.string.you_are_not_the_owner,
+        R.string.you_connected_as_client_thus_you_can_t_create_a_server,
+        R.drawable.info
+    ),
+    YouAreNotClient(
+        R.string.you_are_not_the_client,
+        R.string.you_connected_as_a_host_for_this_server_thus_you_can_t_be_a_client,
+        R.drawable.info
+    ),
+    ServerCreationOrConnectionWithoutWifiConnection(
+        R.string.no_wifi_connection,
+        R.string.you_need_to_connect_to_a_wifi_network_to_create_or_connect_to_a_server,
+        R.drawable.info
+    ),
+    EstablishConnectionToSendMessage(
+        R.string.no_one_to_chat,
+        R.string.could_not_establish_connection_with_your_partner_please_try_to_reconnect_and_try_again,
+        R.drawable.info
+    )
 }
 
 fun isValidPortNumber(portNumber: String): Boolean {
@@ -355,13 +528,13 @@ enum class WifiDiscoveryStatus(@StringRes val res: Int, @DrawableRes val icon: I
 }
 
 
-enum class ServerStatus(@StringRes val status: Int) {
+enum class HostConnectionStatus(@StringRes val status: Int) {
     Idle(R.string.create_a_server),
     Creating(R.string.creating_a_server),
     Created(R.string.server_created_waiting_for_clients)
 }
 
-enum class ClientStatus(@StringRes val status: Int) {
+enum class ClientConnectionStatus(@StringRes val status: Int) {
     Idle(R.string.connect),
     Creating(R.string.connecting_to_server),
     Created(R.string.connected_to_a_server)

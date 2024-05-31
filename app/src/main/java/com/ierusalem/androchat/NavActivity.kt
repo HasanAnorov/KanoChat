@@ -12,7 +12,6 @@ import androidx.navigation.fragment.NavHostFragment
 import com.ierusalem.androchat.databinding.ActivityNavBinding
 import dagger.hilt.android.AndroidEntryPoint
 
-
 /**
  * NavActivity
  *

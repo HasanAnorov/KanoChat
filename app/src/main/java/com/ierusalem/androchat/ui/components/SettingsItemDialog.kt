@@ -130,7 +130,7 @@ fun LanguageDialog(
                             },
                         content = {
                             Text(
-                                text = "Save",
+                                text = stringResource(R.string.save),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(

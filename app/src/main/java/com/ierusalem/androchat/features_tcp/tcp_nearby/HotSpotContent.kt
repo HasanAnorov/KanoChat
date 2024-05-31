@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_tcp.tcp_host
+package com.ierusalem.androchat.features_tcp.tcp_nearby
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,10 +41,10 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.domain.WifiDiscoveryStatus
-import com.ierusalem.androchat.features_tcp.tcp_host.components.HotspotButton
-import com.ierusalem.androchat.features_tcp.tcp_host.components.LoadingAnimation
-import com.ierusalem.androchat.features_tcp.tcp_host.components.StatusProperty
-import com.ierusalem.androchat.features_tcp.tcp_host.components.WifiLazyItem
+import com.ierusalem.androchat.features_tcp.tcp_nearby.components.HotspotButton
+import com.ierusalem.androchat.features_tcp.tcp_nearby.components.LoadingAnimation
+import com.ierusalem.androchat.features_tcp.tcp_nearby.components.StatusProperty
+import com.ierusalem.androchat.features_tcp.tcp_nearby.components.WifiLazyItem
 import com.ierusalem.androchat.ui.components.baselineHeight
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.ui.theme.MontserratFontFamily
@@ -89,7 +89,7 @@ fun HotSpotContent(
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    text = stringResource(id = state.serverTitleStatus.status),
+                                    text = stringResource(id = state.hostConnectionStatus.status),
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium
                                 )
@@ -117,7 +117,7 @@ fun HotSpotContent(
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    text = stringResource(id = state.clientTitleStatus.status),
+                                    text = stringResource(id = state.clientConnectionStatus.status),
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium
                                 )

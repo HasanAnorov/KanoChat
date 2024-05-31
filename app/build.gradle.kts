@@ -55,6 +55,7 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/INDEX.LIST"
         }
     }
 }
@@ -98,7 +99,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     //gson
-    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation (libs.converter.gson)
 
     //image loading - coil
     implementation(libs.coil.compose)
@@ -112,5 +113,5 @@ dependencies {
     implementation ("io.ktor:ktor-client-serialization:1.6.3")
     implementation ("io.ktor:ktor-client-websockets:1.6.3")
     implementation ("io.ktor:ktor-client-logging:1.6.3")
-    implementation ("ch.qos.logback:logback-classic:1.2.6")
+    implementation ("ch.qos.logback:logback-classic:1.4.14")
 }
