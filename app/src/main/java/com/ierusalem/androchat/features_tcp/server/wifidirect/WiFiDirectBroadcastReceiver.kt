@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect
+package com.ierusalem.androchat.features_tcp.server.wifidirect
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver

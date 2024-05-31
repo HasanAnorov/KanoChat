@@ -10,6 +10,7 @@ sealed interface TcpScreenNavigation {
     data class WifiDisabledCase(val status : OwnerStatusState ) : TcpScreenNavigation
     data object OnSettingsClick : TcpScreenNavigation
     data object OnDiscoverWifiClick : TcpScreenNavigation
+    data object OnDiscoverHotspotClick : TcpScreenNavigation
     data class OnCreateServerClick(val portNumber: Int) : TcpScreenNavigation
     data class SendClientMessage(val message: Message): TcpScreenNavigation
     data class SendHostMessage(val message: Message): TcpScreenNavigation

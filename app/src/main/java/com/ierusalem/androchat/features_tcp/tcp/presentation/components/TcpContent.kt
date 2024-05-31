@@ -13,8 +13,9 @@ import com.ierusalem.androchat.features_tcp.tcp.TcpView
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.LocalConversationContent
 import com.ierusalem.androchat.features_tcp.tcp_connections.ConnectionsContent
+import com.ierusalem.androchat.features_tcp.tcp_hotspot.HotSpotConnectionContent
 import com.ierusalem.androchat.features_tcp.tcp_instructions.InstructionsContent
-import com.ierusalem.androchat.features_tcp.tcp_nearby.HotSpotContent
+import com.ierusalem.androchat.features_tcp.tcp_nearby.P2PConnectionContent
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -36,8 +37,17 @@ fun TcpContent(
                 allTabs[page]
             }
         when (screen) {
-            TcpView.HOTSPOT -> {
-                HotSpotContent(
+
+            TcpView.GROUP_CONNECTION -> {
+                HotSpotConnectionContent(
+                    modifier = Modifier.fillMaxSize(),
+                    eventHandler = eventHandler,
+                    state = state
+                )
+            }
+
+            TcpView.P2P_CONNECTION -> {
+                P2PConnectionContent(
                     modifier = Modifier.fillMaxSize(),
                     eventHandler = eventHandler,
                     state = state

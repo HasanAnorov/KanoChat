@@ -50,7 +50,7 @@ import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.ui.theme.MontserratFontFamily
 
 @Composable
-fun HotSpotContent(
+fun P2PConnectionContent(
     modifier: Modifier = Modifier,
     eventHandler: (TcpScreenEvents) -> Unit,
     state: TcpScreenUiState,
@@ -319,7 +319,7 @@ fun HotSpotContent(
 @Composable
 private fun HotspotContentPreview() {
     AndroChatTheme {
-        HotSpotContent(
+        P2PConnectionContent(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
@@ -333,7 +333,7 @@ private fun HotspotContentPreview() {
 @Composable
 private fun HotspotContentPreviewDark() {
     AndroChatTheme(isDarkTheme = true) {
-        HotSpotContent(
+        P2PConnectionContent(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),

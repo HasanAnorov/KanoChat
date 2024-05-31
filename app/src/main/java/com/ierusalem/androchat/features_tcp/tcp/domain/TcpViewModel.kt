@@ -10,7 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features_tcp.server.IP_ADDRESS_REGEX
-import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiNetworkEvent
+import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenNavigation
 import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
@@ -18,6 +18,7 @@ import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.ui.navigation.emitNavigation
 import com.ierusalem.androchat.utils.Constants
 import com.ierusalem.androchat.utils.DataStorePreferenceRepository
+import com.ierusalem.androchat.utils.isValidPortNumber
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -144,6 +145,14 @@ class TcpViewModel @Inject constructor(
 
             is TcpScreenEvents.InsertMessage -> {
                 insertMessage(event.message)
+            }
+
+            TcpScreenEvents.DiscoverHotSpotClick -> {
+                if (!state.value.isWifiOn) {
+                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
+                    return
+                }
+                emitNavigation(TcpScreenNavigation.OnDiscoverHotspotClick)
             }
 
             is TcpScreenEvents.SendMessageRequest -> {
@@ -502,10 +511,6 @@ enum class TcpScreenDialogErrors(
         R.string.could_not_establish_connection_with_your_partner_please_try_to_reconnect_and_try_again,
         R.drawable.info
     )
-}
-
-fun isValidPortNumber(portNumber: String): Boolean {
-    return portNumber.isNotEmpty() && portNumber.toInt() in Constants.MAX_PORT_NUMBER downTo Constants.MIN_PORT_NUMBER
 }
 
 enum class ConnectionStatus(@StringRes val status: Int) {

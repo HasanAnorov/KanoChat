@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect
+package com.ierusalem.androchat.features_tcp.server.wifidirect
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable

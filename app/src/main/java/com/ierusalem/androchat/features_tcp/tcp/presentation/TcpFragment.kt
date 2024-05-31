@@ -35,16 +35,18 @@ import androidx.navigation.fragment.findNavController
 import com.google.gson.Gson
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
-import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiDirectBroadcastReceiver
-import com.ierusalem.androchat.features_tcp.server.broadcast.wifidirect.WiFiNetworkEvent
+import com.ierusalem.androchat.features_tcp.server.ServerDefaults
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
+import com.ierusalem.androchat.features_tcp.server.wifidirect.Reason
+import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiDirectBroadcastReceiver
+import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.TcpView
 import com.ierusalem.androchat.features_tcp.tcp.domain.ClientConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.ConnectionStatus
-import com.ierusalem.androchat.features_tcp.tcp.domain.OwnerStatusState
 import com.ierusalem.androchat.features_tcp.tcp.domain.HostConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.OwnerStatusState
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenDialogErrors
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenErrors
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpViewModel
@@ -53,6 +55,7 @@ import com.ierusalem.androchat.features_tcp.tcp.presentation.components.remember
 import com.ierusalem.androchat.ui.navigation.emitNavigation
 import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.utils.executeWithLifecycle
+import com.ierusalem.androchat.utils.log
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -186,7 +189,7 @@ class TcpFragment : Fragment() {
                 val state by viewModel.state.collectAsStateWithLifecycle()
 
                 BackHandler {
-                    if(state.messages.isNotEmpty()){
+                    if (state.messages.isNotEmpty()) {
                         //show close dialog here
                     }
                 }
@@ -229,12 +232,72 @@ class TcpFragment : Fragment() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
+    @Suppress("MissingPermission")
+    private fun createGroup() {
+        val config = getConfiguration()
+        val listener =
+            object : WifiP2pManager.ActionListener {
+                override fun onSuccess() {
+                    log("New network created")
+                }
+
+                override fun onFailure(reason: Int) {
+                    val r = Reason.parseReason(reason)
+                    log("Unable to create Wifi Direct Group - ${r.displayReason}")
+                }
+            }
+        if (config != null) {
+            log("Creating group")
+            wifiP2pManager.createGroup(
+                channel,
+                getConfiguration(),
+                listener
+            )
+        } else {
+            log("Creating group1")
+            wifiP2pManager.createGroup(
+                channel,
+                listener
+            )
+        }
+    }
+
+    private fun getConfiguration(): WifiP2pConfig? {
+        if (!ServerDefaults.canUseCustomConfig()) {
+            return null
+        }
+
+        val ssid = ServerDefaults.asSsid(
+            //here you have to return preferred ssid from data store or preference helper
+            //getPreferredSsid()
+            "andro"
+        )
+        //i will use manual password here
+        //val passwd = generateRandomPassword(8)
+        val passwd = "12345678"
+
+        //here you have to return preferred wifi band like 2,4hz or 5hz
+        //val band = getPreferredBand()
+        val band = WifiP2pConfig.GROUP_OWNER_BAND_2GHZ
+        return WifiP2pConfig.Builder()
+            .setNetworkName(ssid)
+            .setPassphrase(passwd)
+            .setGroupOperatingBand(band)
+            .build()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
     @SuppressLint("MissingPermission")
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
 
             TcpScreenNavigation.OnNavIconClick -> {
                 //findNavController().popBackStack()
+            }
+
+            TcpScreenNavigation.OnDiscoverHotspotClick -> {
+                createGroup()
             }
 
             is TcpScreenNavigation.WifiDisabledCase -> {
@@ -363,7 +426,10 @@ class TcpFragment : Fragment() {
                         val reader = DataInputStream(serverAcceptedSocket.getInputStream())
                         try {
                             val inputData = reader.readUTF()
-                            val message = gson.fromJson(inputData, Message::class.java)
+                            val message = gson.fromJson(
+                                inputData,
+                                Message::class.java
+                            ) //todo use inputData.toMessage(gson)
                             viewModel.insertMessage(message)
                             Log.d("ahi3646", "createServer: $message ")
                         } catch (e: EOFException) {
@@ -550,7 +616,7 @@ class TcpFragment : Fragment() {
 
     }
 
-    private fun sendClientMessage(message: Message){
+    private fun sendClientMessage(message: Message) {
         if (!clientSocket.isClosed) {
             val writer = DataOutputStream(clientSocket.getOutputStream())
 
@@ -584,7 +650,7 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun sendHostMessage(message: Message){
+    private fun sendHostMessage(message: Message) {
         if (!serverAcceptedSocket.isClosed) {
             val writer = DataOutputStream(serverAcceptedSocket.getOutputStream())
 

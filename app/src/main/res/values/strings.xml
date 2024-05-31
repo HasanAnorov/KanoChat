@@ -156,5 +156,6 @@
     <string name="don_t_ask_me_again">Don\'t ask me again</string>
     <string name="save">Save</string>
     <string name="confirm">Confirm</string>
+    <string name="group_connection">Group Connection</string>
 
 </resources>

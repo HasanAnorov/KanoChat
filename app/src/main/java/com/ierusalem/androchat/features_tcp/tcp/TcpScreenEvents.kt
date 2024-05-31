@@ -12,6 +12,7 @@ sealed interface TcpScreenEvents {
     data object CreateServerClick : TcpScreenEvents
     data object ConnectToServerClick : TcpScreenEvents
     data object DiscoverWifiClick : TcpScreenEvents
+    data object DiscoverHotSpotClick : TcpScreenEvents
     data class UpdateClientStatus(val status: ClientConnectionStatus):TcpScreenEvents
     data class UpdateServerStatus(val status: HostConnectionStatus):TcpScreenEvents
     data class OnPortNumberChanged(val portNumber: String) : TcpScreenEvents
