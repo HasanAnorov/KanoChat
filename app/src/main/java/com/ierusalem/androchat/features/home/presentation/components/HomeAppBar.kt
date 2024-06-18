@@ -30,11 +30,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
+import com.ierusalem.androchat.core.ui.components.AndroChatTab
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.UiText
 import com.ierusalem.androchat.features.home.presentation.HomeView
-import com.ierusalem.androchat.ui.components.AndroChatAppBar
-import com.ierusalem.androchat.ui.components.AndroChatTab
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.utils.UiText
 
 @Composable
 @CheckResult

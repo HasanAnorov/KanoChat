@@ -40,12 +40,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
+import com.ierusalem.androchat.core.ui.components.LanguageDialog
+import com.ierusalem.androchat.core.ui.components.ThemeSwitcher
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.UiText
 import com.ierusalem.androchat.features.settings.domain.SettingsState
-import com.ierusalem.androchat.ui.components.AndroChatAppBar
-import com.ierusalem.androchat.ui.components.LanguageDialog
-import com.ierusalem.androchat.ui.components.ThemeSwitcher
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.utils.UiText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

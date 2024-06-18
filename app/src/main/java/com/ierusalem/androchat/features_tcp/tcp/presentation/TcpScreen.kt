@@ -14,15 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
-import com.ierusalem.androchat.features_tcp.tcp.TcpView
-import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenUiState
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.UiText
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.NetworkErrorDialog
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.TcpAppBar
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.TcpContent
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.rememberTcpAllTabs
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.utils.UiText
+import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
+import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpView
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -38,13 +38,13 @@ fun TcpScreen(
         modifier = modifier.fillMaxSize()
     ) { pv ->
 
-        if (state.hasErrorOccurredDialog != null) {
+        if (state.hasDialogErrorOccurred != null) {
             NetworkErrorDialog(
                 onDismissRequest = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },
                 onConfirmation = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },
-                dialogTitle = state.hasErrorOccurredDialog.title,
-                dialogText = state.hasErrorOccurredDialog.message,
-                icon = painterResource(id = state.hasErrorOccurredDialog.icon)
+                dialogTitle = state.hasDialogErrorOccurred.title,
+                dialogText = state.hasDialogErrorOccurred.message,
+                icon = painterResource(id = state.hasDialogErrorOccurred.icon)
             )
         }
 

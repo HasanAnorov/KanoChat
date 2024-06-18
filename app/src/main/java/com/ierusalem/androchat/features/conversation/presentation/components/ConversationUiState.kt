@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.toMutableStateList
 import com.ierusalem.androchat.R
 
+//todo implement this logic to local conversation
 class ConversationUiState(
     val channelName: String,
     val channelMembers: Int,

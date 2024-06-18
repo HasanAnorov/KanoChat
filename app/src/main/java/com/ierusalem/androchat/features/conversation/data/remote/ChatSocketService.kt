@@ -1,7 +1,7 @@
 package com.ierusalem.androchat.features.conversation.data.remote
 
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
-import com.ierusalem.androchat.utils.Resource
+import com.ierusalem.androchat.core.utils.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface ChatSocketService {

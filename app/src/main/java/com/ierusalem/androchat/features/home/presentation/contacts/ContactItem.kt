@@ -27,8 +27,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.utils.Constants
+import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 
 @Composable
 fun ContactItem(
@@ -100,7 +100,7 @@ fun ContactItem(
                         .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
                 ) {
-                    val count = if(contact.unreadMessageCount>Constants.MAX_BADGE_COUNT) "99+" else contact.unreadMessageCount.toString()
+                    val count = if(contact.unreadMessageCount> Constants.MAX_BADGE_COUNT) "99+" else contact.unreadMessageCount.toString()
                     Text(
                         modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
                         text = count,

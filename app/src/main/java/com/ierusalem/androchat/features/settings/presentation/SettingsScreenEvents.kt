@@ -1,6 +1,6 @@
 package com.ierusalem.androchat.features.settings.presentation
 
-import com.ierusalem.androchat.app.AppLanguage
+import com.ierusalem.androchat.core.app.AppLanguage
 
 sealed interface SettingsScreenEvents {
     data object NavIconClick : SettingsScreenEvents

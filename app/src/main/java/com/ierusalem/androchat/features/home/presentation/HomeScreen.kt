@@ -13,10 +13,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features.home.domain.HomeScreenState
 import com.ierusalem.androchat.features.home.presentation.components.HomeAppBar
 import com.ierusalem.androchat.features.home.presentation.components.rememberHomeAllTabs
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 
 @OptIn(ExperimentalFoundationApi::class)

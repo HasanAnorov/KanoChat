@@ -1,7 +1,7 @@
 package com.ierusalem.androchat.features.home.presentation
 
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.utils.UiText
+import com.ierusalem.androchat.core.utils.UiText
 
 enum class HomeView(val displayName: UiText) {
     All(UiText.StringResource(R.string.all)),

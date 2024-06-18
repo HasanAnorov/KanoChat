@@ -30,18 +30,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.features_tcp.tcp.TcpView
-import com.ierusalem.androchat.ui.components.AndroChatAppBar
-import com.ierusalem.androchat.ui.components.AndroChatTab
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.utils.UiText
+import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
+import com.ierusalem.androchat.core.ui.components.AndroChatTab
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.UiText
+import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpView
 
 @Composable
 @CheckResult
 fun rememberTcpAllTabs(): SnapshotStateList<TcpView> {
     return remember { TcpView.entries.toMutableStateList() }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable

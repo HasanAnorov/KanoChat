@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.ierusalem.androchat.core.data.colleagueProfile
 import com.ierusalem.androchat.core.data.meProfile
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 
 @Preview(widthDp = 340, name = "340 width - Me")
 @Composable

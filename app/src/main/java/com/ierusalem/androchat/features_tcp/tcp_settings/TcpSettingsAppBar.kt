@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ierusalem.androchat.ui.components.AndroChatAppBar
+import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

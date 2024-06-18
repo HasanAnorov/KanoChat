@@ -12,6 +12,7 @@
     <uses-permission
         android:required="true"
         android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
 
     <!-- For Wifi Direct -->
     <!-- On SDK < 33, we require LOCATION permissions -->
@@ -37,7 +38,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application
-        android:name=".app.AndroChatApp"
+        android:name=".core.app.AndroChatApp"
         android:allowBackup="true"
         android:localeConfig="@xml/locale_config"
         android:icon="@mipmap/ic_launcher"
@@ -47,7 +48,7 @@
         android:theme="@style/Theme.AndroChat.NoActionBar"
         tools:targetApi="tiramisu">
         <activity
-            android:name=".NavActivity"
+            android:name=".core.NavActivity"
             android:configChanges="uiMode|locale|layoutDirection|screenSize|screenLayout|orientation"
             android:windowSoftInputMode="adjustResize"
             android:exported="true">

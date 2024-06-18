@@ -41,12 +41,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features.conversation.presentation.components.JumpToBottom
-import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
-import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenUiState
-import com.ierusalem.androchat.ui.components.FunctionalityNotAvailablePopup
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
+import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
 import kotlinx.coroutines.launch
 
 @Composable
@@ -76,7 +76,7 @@ fun LocalConversationContent(
                 contentAlignment = Alignment.Center
             ) {
                 ChannelNameBar(
-                    channelName = uiState.groupOwnerAddress ?: "Not connected",
+                    channelName = uiState.groupOwnerAddress,
                     channelMembers = uiState.connectionsCount,
                 )
             }

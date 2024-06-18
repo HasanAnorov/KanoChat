@@ -4,13 +4,13 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
+import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
+import com.ierusalem.androchat.core.ui.navigation.emitNavigation
+import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.features.auth.register.data.remote.MessageService
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features.conversation.data.remote.ChatSocketService
-import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
-import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
-import com.ierusalem.androchat.ui.navigation.emitNavigation
-import com.ierusalem.androchat.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

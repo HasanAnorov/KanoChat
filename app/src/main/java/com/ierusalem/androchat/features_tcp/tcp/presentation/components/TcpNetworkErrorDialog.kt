@@ -11,7 +11,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 
 @Composable
 fun NetworkErrorDialog(

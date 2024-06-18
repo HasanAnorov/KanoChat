@@ -29,8 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.features_tcp.tcp.domain.TcpCloseDialogReason
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpCloseDialogReason
 
 
 @Composable

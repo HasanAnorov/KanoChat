@@ -107,11 +107,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.ui.components.FunctionalityNotAvailablePopup
+import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
+import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.delay
 
 enum class InputSelector {
     NONE,

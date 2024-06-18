@@ -16,7 +16,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -34,28 +33,27 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.gson.Gson
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.ui.navigation.emitNavigation
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.executeWithLifecycle
+import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features_tcp.server.ServerDefaults
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
 import com.ierusalem.androchat.features_tcp.server.wifidirect.Reason
 import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiDirectBroadcastReceiver
-import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiNetworkEvent
-import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
-import com.ierusalem.androchat.features_tcp.tcp.TcpScreenNavigation
-import com.ierusalem.androchat.features_tcp.tcp.TcpView
-import com.ierusalem.androchat.features_tcp.tcp.domain.ClientConnectionStatus
-import com.ierusalem.androchat.features_tcp.tcp.domain.ConnectionStatus
-import com.ierusalem.androchat.features_tcp.tcp.domain.HostConnectionStatus
-import com.ierusalem.androchat.features_tcp.tcp.domain.OwnerStatusState
-import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenDialogErrors
-import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenErrors
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpViewModel
-import com.ierusalem.androchat.features_tcp.tcp.domain.WifiDiscoveryStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.ClientConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.HostConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.HotspotNetworkingStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.P2PNetworkingStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenDialogErrors
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenErrors
 import com.ierusalem.androchat.features_tcp.tcp.presentation.components.rememberTcpAllTabs
-import com.ierusalem.androchat.ui.navigation.emitNavigation
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.utils.executeWithLifecycle
-import com.ierusalem.androchat.utils.log
+import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
+import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavigation
+import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,13 +68,14 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.UnknownHostException
 
+
 @AndroidEntryPoint
 class TcpFragment : Fragment() {
 
     private val viewModel: TcpViewModel by viewModels()
 
     //wifi direct
-    private lateinit var wifiP2pManager: WifiP2pManager
+    private lateinit var wifiP2PManager: WifiP2pManager
     private lateinit var channel: WifiP2pManager.Channel
     private lateinit var receiver: WiFiDirectBroadcastReceiver
     private val intentFilter = IntentFilter()
@@ -89,7 +88,7 @@ class TcpFragment : Fragment() {
 
     //chatting server side
     private lateinit var serverSocket: ServerSocket
-    private lateinit var serverAcceptedSocket: Socket
+    private lateinit var connectedClientSocketOnServer: Socket
 
     //chatting client side
     private lateinit var clientSocket: Socket
@@ -119,6 +118,7 @@ class TcpFragment : Fragment() {
         }
     }
 
+    //todo - here handle connected devices
     private val peerListListener = WifiP2pManager.PeerListListener { peerList ->
         val peers = viewModel.state.value.availableWifiNetworks
         val refreshedPeers = peerList.deviceList
@@ -143,9 +143,10 @@ class TcpFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         permissionGuard = PermissionGuardImpl(requireContext())
-        wifiP2pManager = requireContext()
-            .getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
-        channel = wifiP2pManager
+        wifiP2PManager =
+            requireContext().getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
+
+        channel = wifiP2PManager
             .initialize(
                 requireContext(),
                 Looper.getMainLooper()
@@ -188,11 +189,12 @@ class TcpFragment : Fragment() {
 
                 val state by viewModel.state.collectAsStateWithLifecycle()
 
-                BackHandler {
-                    if (state.messages.isNotEmpty()) {
-                        //show close dialog here
-                    }
-                }
+                //todo
+//                BackHandler {
+//                    if (state.messages.isNotEmpty()) {
+//                        //show close dialog here
+//                    }
+//                }
 
                 AndroChatTheme {
                     TcpScreen(
@@ -216,47 +218,65 @@ class TcpFragment : Fragment() {
         )
     }
 
-    private fun handleWifiDisabledCase(status: OwnerStatusState) {
-        when (status) {
-            OwnerStatusState.Idle -> {
+    // todo - use this method to close servers
+    // network clean up should be carried out in viewmodel
+    private fun handleWifiDisabledCase() {
+        when (viewModel.state.value.generalConnectionStatus) {
+            GeneralConnectionStatus.Idle -> {
                 //do nothing
             }
 
-            OwnerStatusState.Client -> {
-                clientSocket.close()
+            GeneralConnectionStatus.ConnectedAsClient -> {
+                closeClientSocket()
             }
 
-            OwnerStatusState.Owner -> {
-                serverAcceptedSocket.close()
+            GeneralConnectionStatus.ConnectedAsHost -> {
+                closerServeSocket()
             }
+        }
+    }
+
+    private fun closerServeSocket() {
+        if (::serverSocket.isInitialized) {
+            serverSocket.close()
+        }
+    }
+
+    private fun closeClientSocket() {
+        if (::clientSocket.isInitialized) {
+            clientSocket.close()
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
     @Suppress("MissingPermission")
     private fun createGroup() {
+        viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.LaunchingHotspot)
         val config = getConfiguration()
         val listener =
             object : WifiP2pManager.ActionListener {
                 override fun onSuccess() {
                     log("New network created")
+                    viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.HotspotRunning)
                 }
 
                 override fun onFailure(reason: Int) {
                     val r = Reason.parseReason(reason)
                     log("Unable to create Wifi Direct Group - ${r.displayReason}")
+                    //todo - show dialog error message with corresponding reason
+                    viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Failure)
                 }
             }
         if (config != null) {
             log("Creating group")
-            wifiP2pManager.createGroup(
+            wifiP2PManager.createGroup(
                 channel,
                 getConfiguration(),
                 listener
             )
         } else {
             log("Creating group1")
-            wifiP2pManager.createGroup(
+            wifiP2PManager.createGroup(
                 channel,
                 listener
             )
@@ -270,10 +290,9 @@ class TcpFragment : Fragment() {
 
         val ssid = ServerDefaults.asSsid(
             //here you have to return preferred ssid from data store or preference helper
-            //getPreferredSsid()
-            "andro"
+            viewModel.state.value.hotspotName
         )
-        //i will use manual password here
+        //todo i will use manual password here
         //val passwd = generateRandomPassword(8)
         val passwd = "12345678"
 
@@ -287,21 +306,69 @@ class TcpFragment : Fragment() {
             .build()
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun stopHotspotNetworking() {
+        //close socket only when serverSocket is initialized
+        if (::serverSocket.isInitialized) {
+            serverSocket.close()
+        }
+        if(::connectedClientSocketOnServer.isInitialized){
+            connectedClientSocketOnServer.close()
+        }
+
+        wifiP2PManager.removeGroup(
+            channel,
+            object : WifiP2pManager.ActionListener {
+                override fun onSuccess() {
+                    log("Wifi P2P Channel is removed")
+                    viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Idle)
+                }
+
+                override fun onFailure(reason: Int) {
+                    val r = Reason.parseReason(reason)
+                    log("Failed to stop network: ${r.displayReason}")
+                }
+            }
+        )
+    }
+
+    private fun stopPeerDiscovery() {
+        val listener =
+            object : WifiP2pManager.ActionListener {
+                override fun onSuccess() {
+                    log("Wifi P2P Discovery is stopped")
+                    viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Idle)
+                    viewModel.clearPeersList()
+                }
+
+                override fun onFailure(reason: Int) {
+                    val r = Reason.parseReason(reason)
+                    log("Failed to stop p2p discovery: ${r.displayReason}")
+                }
+            }
+        wifiP2PManager.stopPeerDiscovery(
+            channel,
+            listener
+        )
+    }
+
     @SuppressLint("MissingPermission")
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
 
             TcpScreenNavigation.OnNavIconClick -> {
-                //findNavController().popBackStack()
+                findNavController().popBackStack()
             }
 
-            TcpScreenNavigation.OnDiscoverHotspotClick -> {
-                createGroup()
+            TcpScreenNavigation.OnStopHotspotNetworking -> {
+                stopHotspotNetworking()
             }
 
-            is TcpScreenNavigation.WifiDisabledCase -> {
-                handleWifiDisabledCase(navigation.status)
+            TcpScreenNavigation.OnStopP2PDiscovery -> {
+                stopPeerDiscovery()
+            }
+
+            TcpScreenNavigation.WifiDisabledCase -> {
+                handleWifiDisabledCase()
             }
 
             TcpScreenNavigation.OnSettingsClick -> {
@@ -311,6 +378,23 @@ class TcpFragment : Fragment() {
             is TcpScreenNavigation.OnCreateServerClick -> {
                 CoroutineScope(Dispatchers.Default).launch {
                     createServer(serverPort = navigation.portNumber)
+                }
+            }
+
+            TcpScreenNavigation.OnStartHotspotNetworking -> {
+                lifecycleScope.launch {
+                    if (permissionGuard.canCreateNetwork()) {
+                        if (ServerDefaults.canUseCustomConfig()) {
+                            createGroup()
+                        } else {
+                            viewModel.updateHasErrorOccurredDialog(TcpScreenDialogErrors.AndroidVersion10RequiredForGroupNetworking)
+                        }
+                    } else {
+                        log("Permissions not granted!")
+                        locationPermissionRequest.launch(
+                            permissionGuard.requiredPermissions.toTypedArray()
+                        )
+                    }
                 }
             }
 
@@ -347,43 +431,37 @@ class TcpFragment : Fragment() {
                 }
             }
 
-            TcpScreenNavigation.OnDiscoverWifiClick -> {
+            TcpScreenNavigation.OnDiscoverP2PClick -> {
                 lifecycleScope.launch {
                     if (permissionGuard.canCreateNetwork()) {
-                        wifiP2pManager.discoverPeers(
+
+                        wifiP2PManager.discoverPeers(
                             channel, object : WifiP2pManager.ActionListener {
                                 override fun onSuccess() {
                                     Log.d("ahi3646", "onSuccess: discover ")
-                                    //todo optimize this
-                                    viewModel.handleNetworkEvents(
-                                        WiFiNetworkEvent.ConnectionStatusChanged(
-                                            ConnectionStatus.Running
-                                        )
-                                    )
-                                    viewModel.updateWifiDiscoveryStatus(WifiDiscoveryStatus.Discovering)
+                                    viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
                                 }
 
                                 override fun onFailure(reason: Int) {
                                     // Code for when the discovery initiation fails goes here.
                                     // Alert the user that something went wrong.
                                     Log.d("ahi3646", "onFailure: discover $reason ")
-                                    viewModel.updateWifiDiscoveryStatus(WifiDiscoveryStatus.Failure)
+                                    viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Failure)
                                 }
 
                             }
                         )
                     } else {
+                        log("Permissions not granted!")
                         locationPermissionRequest.launch(
                             permissionGuard.requiredPermissions.toTypedArray()
                         )
-                        Log.d("ahi3646", "request permission: ")
                     }
                 }
             }
 
         }
     }
-
 
     @SuppressLint("MissingPermission")
     private fun connectToWifi(wifiP2pDevice: WifiP2pDevice) {
@@ -392,7 +470,7 @@ class TcpFragment : Fragment() {
             deviceAddress = wifiP2pDevice.deviceAddress
             wps.setup = WpsInfo.PBC
         }
-        wifiP2pManager.connect(
+        wifiP2PManager.connect(
             channel,
             config,
             object : WifiP2pManager.ActionListener {
@@ -409,21 +487,24 @@ class TcpFragment : Fragment() {
         )
     }
 
-    //all exceptions handled
     private suspend fun createServer(serverPort: Int) {
+        log("creating server")
+        viewModel.updateHostConnectionStatus(HostConnectionStatus.Creating)
+
         withContext(Dispatchers.IO) {
             try {
                 serverSocket = ServerSocket(serverPort)
-                Log.d("ahi3646", "createServer: $serverSocket ${serverSocket.localSocketAddress} ")
+                log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
                 if (serverSocket.isBound) {
-                    viewModel.handleEvents(TcpScreenEvents.UpdateServerStatus(HostConnectionStatus.Created))
+                    viewModel.updateHostConnectionStatus(HostConnectionStatus.Created)
+                    viewModel.updateConnectionsCount(true)
                 }
                 while (!serverSocket.isClosed) {
-                    serverAcceptedSocket = serverSocket.accept()
+                    connectedClientSocketOnServer = serverSocket.accept()
+                    Log.d("ahi3646", "New client : $connectedClientSocketOnServer ")
                     viewModel.updateConnectionsCount(true)
-                    Log.d("ahi3646", "New client : $serverAcceptedSocket ")
-                    while (!serverAcceptedSocket.isClosed) {
-                        val reader = DataInputStream(serverAcceptedSocket.getInputStream())
+                    while (!connectedClientSocketOnServer.isClosed) {
+                        val reader = DataInputStream(connectedClientSocketOnServer.getInputStream())
                         try {
                             val inputData = reader.readUTF()
                             val message = gson.fromJson(
@@ -434,13 +515,17 @@ class TcpFragment : Fragment() {
                             Log.d("ahi3646", "createServer: $message ")
                         } catch (e: EOFException) {
                             //if the IP address of the host could not be determined.
-                            Log.d("ahi3646", "createServer: EOFException ")
+                            Log.d("ahi3646", "createServer: EOFException")
+                            connectedClientSocketOnServer.close()
+                            viewModel.updateConnectionsCount(false)
+                            log("in while - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
                             viewModel.handleEvents(
                                 TcpScreenEvents.OnDialogErrorOccurred(
                                     TcpScreenDialogErrors.EOException
                                 )
                             )
 
+                            //HERE IS THE POINT !!!
                             try {
                                 reader.close()
                             } catch (e: IOException) {
@@ -456,11 +541,14 @@ class TcpFragment : Fragment() {
                                     TcpScreenDialogErrors.IOException
                                 )
                             )
-
+                            viewModel.updateConnectionsCount(false)
+                            connectedClientSocketOnServer.close()
+                            //serverSocket.close()
                             try {
                                 reader.close()
                             } catch (e: IOException) {
                                 e.printStackTrace()
+                                log("reader close exception - $e ")
                             }
                         } catch (e: UTFDataFormatException) {
                             //if the bytes do not represent a valid modified UTF-8 encoding of a string.
@@ -470,7 +558,9 @@ class TcpFragment : Fragment() {
                                     TcpScreenDialogErrors.UTFDataFormatException
                                 )
                             )
-
+                            viewModel.updateConnectionsCount(false)
+                            connectedClientSocketOnServer.close()
+                            //serverSocket.close()
                             try {
                                 reader.close()
                             } catch (e: IOException) {
@@ -482,48 +572,59 @@ class TcpFragment : Fragment() {
             } catch (e: IOException) {
                 e.printStackTrace()
                 try {
-                    serverAcceptedSocket.close()
                     viewModel.updateConnectionsCount(false)
                 } catch (ex: IOException) {
                     ex.printStackTrace()
                 }
+                serverSocket.close()
+                //change server title status
+                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+
             } catch (e: SecurityException) {
                 try {
-                    serverAcceptedSocket.close()
                     viewModel.updateConnectionsCount(false)
                 } catch (ex: IOException) {
                     ex.printStackTrace()
                 }
+                serverSocket.close()
+                //change server title status
+                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+
                 //if a security manager exists and its checkConnect method doesn't allow the operation.
                 Log.d("ahi3646", "createServer: SecurityException ")
             } catch (e: IllegalArgumentException) {
                 try {
-                    serverAcceptedSocket.close()
                     viewModel.updateConnectionsCount(false)
                 } catch (ex: IOException) {
                     ex.printStackTrace()
                 }
+                serverSocket.close()
+                //change server title status
+                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+
                 //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
                 Log.d("ahi3646", "createServer: IllegalArgumentException ")
             }
         }
     }
 
-    //all exceptions handled
     private fun connectToServer(serverIpAddress: String, serverPort: Int) {
+        log("connecting to server - $serverIpAddress:$serverPort")
         try {
             //create client
+            log("CLIENT CREATION TRY")
             clientSocket = Socket(serverIpAddress, serverPort)
-            //update client title status
-            if (!clientSocket.isClosed) {
-                viewModel.handleEvents(TcpScreenEvents.UpdateClientStatus(ClientConnectionStatus.Created))
-                viewModel.updateConnectionsCount(true)
-            }
+
+            viewModel.updateClientConnectionStatus(ClientConnectionStatus.Connected)
+            viewModel.updateConnectionsCount(true)
+            log("client socket - $clientSocket")
 
             //received outcome messages here
             while (!clientSocket.isClosed) {
+                log("while client socket is running")
                 val reader = DataInputStream(clientSocket.getInputStream())
                 try {
+                    log("client while input reading try")
                     val inputData = reader.readUTF()
                     val message = gson.fromJson(inputData, Message::class.java)
                     viewModel.insertMessage(message)
@@ -575,7 +676,6 @@ class TcpFragment : Fragment() {
             }
         } catch (exception: UnknownHostException) {
             try {
-                clientSocket.close()
                 //todo change connection status here
                 viewModel.updateConnectionsCount(false)
             } catch (ex: IOException) {
@@ -585,16 +685,15 @@ class TcpFragment : Fragment() {
             viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.UnknownHostException))
         } catch (exception: IOException) {
             try {
-                clientSocket.close()
                 viewModel.updateConnectionsCount(false)
             } catch (ex: IOException) {
                 ex.printStackTrace()
             }
+            //could not connect to a server
             Log.d("ahi3646", "connectToServer: IOException ")
             viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.IOException))
         } catch (e: SecurityException) {
             try {
-                clientSocket.close()
                 //todo change connection status here
                 viewModel.updateConnectionsCount(false)
             } catch (ex: IOException) {
@@ -604,7 +703,6 @@ class TcpFragment : Fragment() {
             Log.d("ahi3646", "connectToServer: SecurityException ")
         } catch (e: IllegalArgumentException) {
             try {
-                clientSocket.close()
                 //todo change connection status here
                 viewModel.updateConnectionsCount(false)
             } catch (ex: IOException) {
@@ -617,6 +715,7 @@ class TcpFragment : Fragment() {
     }
 
     private fun sendClientMessage(message: Message) {
+        log("sendClientMessage - $message")
         if (!clientSocket.isClosed) {
             val writer = DataOutputStream(clientSocket.getOutputStream())
 
@@ -651,8 +750,9 @@ class TcpFragment : Fragment() {
     }
 
     private fun sendHostMessage(message: Message) {
-        if (!serverAcceptedSocket.isClosed) {
-            val writer = DataOutputStream(serverAcceptedSocket.getOutputStream())
+        log("in send message - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
+        if (!connectedClientSocketOnServer.isClosed) {
+            val writer = DataOutputStream(connectedClientSocketOnServer.getOutputStream())
 
             val messageStringForms = gson.toJson(message)
             Log.d("ahi3646", "sendMessage: $messageStringForms ")
@@ -683,11 +783,10 @@ class TcpFragment : Fragment() {
         }
     }
 
-
     override fun onResume() {
         super.onResume()
         receiver = WiFiDirectBroadcastReceiver(
-            wifiP2pManager = wifiP2pManager,
+            wifiP2pManager = wifiP2PManager,
             channel = channel,
             peerListListener = peerListListener,
             networkEventHandler = { networkEvent ->
@@ -695,6 +794,19 @@ class TcpFragment : Fragment() {
             }
         )
         requireActivity().registerReceiver(receiver, intentFilter)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        if(::connectedClientSocketOnServer.isInitialized){
+            connectedClientSocketOnServer.close()
+        }
+        if (::serverSocket.isInitialized) {
+            serverSocket.close()
+        }
+        if (::clientSocket.isInitialized) {
+            clientSocket.close()
+        }
     }
 
     override fun onPause() {

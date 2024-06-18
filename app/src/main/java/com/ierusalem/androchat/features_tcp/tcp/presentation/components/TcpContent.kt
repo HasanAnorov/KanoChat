@@ -8,14 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
-import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
-import com.ierusalem.androchat.features_tcp.tcp.TcpView
-import com.ierusalem.androchat.features_tcp.tcp.domain.TcpScreenUiState
+import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
+import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpView
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.LocalConversationContent
 import com.ierusalem.androchat.features_tcp.tcp_connections.ConnectionsContent
-import com.ierusalem.androchat.features_tcp.tcp_hotspot.HotSpotConnectionContent
 import com.ierusalem.androchat.features_tcp.tcp_instructions.InstructionsContent
-import com.ierusalem.androchat.features_tcp.tcp_nearby.P2PConnectionContent
+import com.ierusalem.androchat.features_tcp.tcp_networking.NetworkingContent
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -31,23 +30,15 @@ fun TcpContent(
         state = pagerState,
     ) { page ->
         val screen = remember(
-                allTabs,
-                page,
-            ) {
-                allTabs[page]
-            }
+            allTabs,
+            page,
+        ) {
+            allTabs[page]
+        }
         when (screen) {
 
-            TcpView.GROUP_CONNECTION -> {
-                HotSpotConnectionContent(
-                    modifier = Modifier.fillMaxSize(),
-                    eventHandler = eventHandler,
-                    state = state
-                )
-            }
-
-            TcpView.P2P_CONNECTION -> {
-                P2PConnectionContent(
+            TcpView.NETWORKING -> {
+                NetworkingContent(
                     modifier = Modifier.fillMaxSize(),
                     eventHandler = eventHandler,
                     state = state

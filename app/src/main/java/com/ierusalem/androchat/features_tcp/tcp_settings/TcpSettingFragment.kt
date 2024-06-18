@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 
 class TcpSettingFragment : Fragment() {
 

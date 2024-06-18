@@ -14,11 +14,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.findNavController
+import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.features.conversation.domain.ConversationNavigation
 import com.ierusalem.androchat.features.conversation.domain.ConversationViewModel
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.utils.Constants
-import com.ierusalem.androchat.utils.executeWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -34,7 +34,7 @@ class ConversationFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        arguments?.getString(Constants.USERNAME_REGISTER_TO_HOME)?.let {username ->
+        arguments?.getString(Constants.USERNAME_REGISTER_TO_HOME)?.let { username ->
             Log.d("ahi3646", "onAttach: $username ")
             viewModel.connectToChat(username)
         }

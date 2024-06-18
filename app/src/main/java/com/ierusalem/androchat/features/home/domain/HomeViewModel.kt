@@ -5,14 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
+import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
+import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
+import com.ierusalem.androchat.core.ui.navigation.emitNavigation
+import com.ierusalem.androchat.core.utils.UiText
 import com.ierusalem.androchat.features.home.presentation.HomeScreenClickIntents
 import com.ierusalem.androchat.features.home.presentation.HomeScreenNavigation
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreen
 import com.ierusalem.androchat.features.home.presentation.contacts.ContactsScreenData
-import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
-import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
-import com.ierusalem.androchat.ui.navigation.emitNavigation
-import com.ierusalem.androchat.utils.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +22,9 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(connectivityObserver: ConnectivityObserver) : ViewModel(),
+class HomeViewModel @Inject constructor(
+    connectivityObserver: ConnectivityObserver
+) : ViewModel(),
     NavigationEventDelegate<HomeScreenNavigation> by DefaultNavigationEventDelegate() {
 
     init {

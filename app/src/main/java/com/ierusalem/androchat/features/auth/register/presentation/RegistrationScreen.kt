@@ -26,10 +26,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.ui.components.CommonPasswordTextField
+import com.ierusalem.androchat.core.ui.components.CommonTextFieldWithError
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features.auth.register.domain.RegistrationScreenState
-import com.ierusalem.androchat.ui.components.CommonPasswordTextField
-import com.ierusalem.androchat.ui.components.CommonTextFieldWithError
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 @Composable
 fun RegistrationScreen(

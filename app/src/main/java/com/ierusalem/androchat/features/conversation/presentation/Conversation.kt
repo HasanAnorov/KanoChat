@@ -54,6 +54,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
+import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features.conversation.domain.ConversationEvents
 import com.ierusalem.androchat.features.conversation.domain.ConversationState
@@ -63,9 +66,6 @@ import com.ierusalem.androchat.features.conversation.presentation.components.Mes
 import com.ierusalem.androchat.features.conversation.presentation.components.SymbolAnnotationType
 import com.ierusalem.androchat.features.conversation.presentation.components.UserInput
 import com.ierusalem.androchat.features.conversation.presentation.components.messageFormatter
-import com.ierusalem.androchat.ui.components.AndroChatAppBar
-import com.ierusalem.androchat.ui.components.FunctionalityNotAvailablePopup
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import kotlinx.coroutines.launch
 
 /**

@@ -45,9 +45,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.findNavController
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.ui.components.AndroChatAppBar
-import com.ierusalem.androchat.ui.components.FunctionalityNotAvailablePopup
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
+import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 
 class ProfileFragment : Fragment() {
 

@@ -2,28 +2,37 @@ package com.ierusalem.androchat.features_tcp.tcp.domain
 
 import android.net.wifi.p2p.WifiP2pDevice
 import android.util.Log
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
-import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
+import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
+import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
+import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
+import com.ierusalem.androchat.core.ui.navigation.emitNavigation
+import com.ierusalem.androchat.core.utils.isValidHotspotName
+import com.ierusalem.androchat.core.utils.isValidIpAddress
+import com.ierusalem.androchat.core.utils.isValidPortNumber
+import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
-import com.ierusalem.androchat.features_tcp.server.IP_ADDRESS_REGEX
 import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiNetworkEvent
-import com.ierusalem.androchat.features_tcp.tcp.TcpScreenEvents
-import com.ierusalem.androchat.features_tcp.tcp.TcpScreenNavigation
-import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
-import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
-import com.ierusalem.androchat.ui.navigation.emitNavigation
-import com.ierusalem.androchat.utils.Constants
-import com.ierusalem.androchat.utils.DataStorePreferenceRepository
-import com.ierusalem.androchat.utils.isValidPortNumber
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.ClientConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralNetworkingStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.HostConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.HotspotNetworkingStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.P2PNetworkingStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenDialogErrors
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenErrors
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
+import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
+import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -31,7 +40,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TcpViewModel @Inject constructor(
-    private val dataStorePreferenceRepository: DataStorePreferenceRepository
+    private val dataStorePreferenceRepository: DataStorePreferenceRepository,
+    private val connectivityObserver: ConnectivityObserver
 ) : ViewModel(),
     NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
 
@@ -39,12 +49,64 @@ class TcpViewModel @Inject constructor(
     val state: StateFlow<TcpScreenUiState> = _state.asStateFlow()
 
     init {
+        initializeAuthorMe()
+        initializeHotspotName()
+        listenWifiConnections()
+    }
+
+    private fun initializeAuthorMe() {
         viewModelScope.launch {
             _state.update {
                 it.copy(
                     authorMe = dataStorePreferenceRepository.getUsername.first()
                 )
             }
+        }
+    }
+    private fun initializeHotspotName(){
+        viewModelScope.launch {
+            val saveHotspotName =  dataStorePreferenceRepository.getHotspotName.first()
+            _state.update {
+                it.copy(
+                    isValidHotSpotName = isValidHotspotName(saveHotspotName),
+                    hotspotName = saveHotspotName
+                )
+            }
+        }
+    }
+
+    private fun listenWifiConnections(){
+        connectivityObserver.observeWifiState().onEach { connectivityStatus ->
+            when (connectivityStatus) {
+                ConnectivityObserver.Status.Available -> {
+                    log("wifi is connected")
+                    updateConnectedWifiAddress(connectivityObserver.getWifiServerIpAddress())
+                }
+
+                ConnectivityObserver.Status.Loosing -> {
+                    log("wifi is loosing")
+                    updateConnectedWifiAddress("Not Connected")
+                }
+
+                ConnectivityObserver.Status.Lost -> {
+                    log("wifi is disconnected")
+                    updateConnectedWifiAddress("Not Connected")
+                }
+
+                ConnectivityObserver.Status.Unavailable -> {
+                    log("wifi is unavailable")
+                    updateConnectedWifiAddress("Not Connected")
+                }
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    private fun updateConnectedWifiAddress(address: String) {
+        _state.update {
+            it.copy(
+                isValidConnectedWifiAddress = isValidIpAddress(address),
+                connectedWifiAddress = address
+            )
         }
     }
 
@@ -67,18 +129,10 @@ class TcpViewModel @Inject constructor(
                 //unhandled event
             }
 
-            is WiFiNetworkEvent.ConnectedAsWhat -> {
-                _state.update {
-                    it.copy(
-                        isOwner = networkEvent.isOwner
-                    )
-                }
-            }
-
             is WiFiNetworkEvent.ConnectionStatusChanged -> {
                 _state.update {
                     it.copy(
-                        connectionStatus = networkEvent.status
+                        generalConnectionStatus = networkEvent.status
                     )
                 }
             }
@@ -86,7 +140,8 @@ class TcpViewModel @Inject constructor(
             is WiFiNetworkEvent.UpdateGroupOwnerAddress -> {
                 _state.update {
                     it.copy(
-                        groupOwnerAddress = networkEvent.groupOwnerAddress
+                        groupOwnerAddress = networkEvent.groupOwnerAddress,
+                        isValidGroupOwnerAddress = isValidIpAddress(networkEvent.groupOwnerAddress)
                     )
                 }
             }
@@ -105,16 +160,21 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun handleWifiDisableCase() {
-        //emit event for closing sockets
-        emitNavigation(TcpScreenNavigation.WifiDisabledCase(state.value.isOwner))
+        when (state.value.generalNetworkingStatus) {
+            GeneralNetworkingStatus.Idle -> {
+                //ignore case, nothing has done
+            }
 
-        updateServerTitleStatus(HostConnectionStatus.Idle)
-        updateClientTitleStatus(ClientConnectionStatus.Idle)
-        updateWifiDiscoveryStatus(WifiDiscoveryStatus.Idle)
+            GeneralNetworkingStatus.P2PDiscovery -> {
+                emitNavigation(TcpScreenNavigation.WifiDisabledCase)
+                updateP2PDiscoveryStatus(P2PNetworkingStatus.Idle)
+            }
 
-        //decrease connections count
-        updateConnectionsCount(false)
-
+            GeneralNetworkingStatus.HotspotDiscovery -> {
+                emitNavigation(TcpScreenNavigation.WifiDisabledCase)
+                updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Idle)
+            }
+        }
     }
 
     fun handleEvents(event: TcpScreenEvents) {
@@ -131,14 +191,6 @@ class TcpViewModel @Inject constructor(
                 emitNavigation(TcpScreenNavigation.OnSettingsClick)
             }
 
-            is TcpScreenEvents.UpdateClientStatus -> {
-                updateClientTitleStatus(event.status)
-            }
-
-            is TcpScreenEvents.UpdateServerStatus -> {
-                updateServerTitleStatus(event.status)
-            }
-
             is TcpScreenEvents.OnDialogErrorOccurred -> {
                 updateHasErrorOccurredDialog(event.error)
             }
@@ -148,59 +200,57 @@ class TcpViewModel @Inject constructor(
             }
 
             TcpScreenEvents.DiscoverHotSpotClick -> {
-                if (!state.value.isWifiOn) {
-                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
-                    return
+                showWifiErrorIfNotEnabled()
+
+                when (state.value.hotspotNetworkingStatus) {
+                    HotspotNetworkingStatus.Idle -> {
+                        if (showErrorIfOtherNetworkingIsRunning(GeneralNetworkingStatus.HotspotDiscovery)) {
+                            return
+                        }
+                        emitNavigation(TcpScreenNavigation.OnStartHotspotNetworking)
+                    }
+
+                    HotspotNetworkingStatus.LaunchingHotspot -> {
+                        //just ignore action or implement relaunching feature
+                    }
+
+                    HotspotNetworkingStatus.HotspotRunning -> {
+                        emitNavigation(TcpScreenNavigation.OnStopHotspotNetworking)
+                    }
+
+                    HotspotNetworkingStatus.Failure -> {
+                        if (showErrorIfOtherNetworkingIsRunning(GeneralNetworkingStatus.HotspotDiscovery)) {
+                            return
+                        }
+                        emitNavigation(TcpScreenNavigation.OnStartHotspotNetworking)
+                    }
                 }
-                emitNavigation(TcpScreenNavigation.OnDiscoverHotspotClick)
             }
 
             is TcpScreenEvents.SendMessageRequest -> {
                 val currentTime = Calendar.getInstance().time.toString()
                 val username = state.value.authorMe
                 val message = Message(event.message, currentTime, username)
-                when (state.value.isOwner) {
-                    OwnerStatusState.Idle -> {
-                        //ignore sending message
+
+//                checkForConnectionWithErrorDialog()
+                if (state.value.connectionsCount < 1) {
+                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.PeerNotConnected)
+                    return
+                }
+
+                when (state.value.generalConnectionStatus) {
+                    GeneralConnectionStatus.Idle -> {
+                        //Establish connection to send message
                         updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
                     }
 
-                    OwnerStatusState.Client -> {
-                        when (state.value.clientConnectionStatus) {
-                            ClientConnectionStatus.Idle -> {
-                                //Has not connected to a server
-                                //ignore sending message
-                            }
-
-                            ClientConnectionStatus.Creating -> {
-                                //connecting to a server
-                                //currently it's not possible to send messages to a server
-                            }
-
-                            ClientConnectionStatus.Created -> {
-                                emitNavigation(TcpScreenNavigation.SendClientMessage(message))
-                            }
-                        }
+                    GeneralConnectionStatus.ConnectedAsClient -> {
+                        emitNavigation(TcpScreenNavigation.SendClientMessage(message))
                     }
 
-                    OwnerStatusState.Owner -> {
-                        when (state.value.hostConnectionStatus) {
-                            HostConnectionStatus.Idle -> {
-                                //Has not created a server
-                                //ignore sending message
-                            }
-
-                            HostConnectionStatus.Creating -> {
-                                //creating a server
-                                //currently it's not possible to send messages
-                            }
-
-                            HostConnectionStatus.Created -> {
-                                emitNavigation(TcpScreenNavigation.SendHostMessage(message))
-                            }
-                        }
+                    GeneralConnectionStatus.ConnectedAsHost -> {
+                        emitNavigation(TcpScreenNavigation.SendHostMessage(message))
                     }
-
                 }
             }
 
@@ -213,138 +263,301 @@ class TcpViewModel @Inject constructor(
                 }
             }
 
-            TcpScreenEvents.DiscoverWifiClick -> {
-                if (!state.value.isWifiOn) {
-                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
-                    return
-                }
-                when (state.value.wifiDiscoveryStatus) {
-                    WifiDiscoveryStatus.Idle -> {
-                        emitNavigation(TcpScreenNavigation.OnDiscoverWifiClick)
-                        updateWifiDiscoveryStatus(WifiDiscoveryStatus.Discovering)
+            TcpScreenEvents.DiscoverP2PClick -> {
+                showWifiErrorIfNotEnabled()
+
+                when (state.value.p2pNetworkingStatus) {
+                    P2PNetworkingStatus.Idle -> {
+                        if (showErrorIfOtherNetworkingIsRunning(GeneralNetworkingStatus.P2PDiscovery)) {
+                            return
+                        }
+                        emitNavigation(TcpScreenNavigation.OnDiscoverP2PClick)
                     }
 
-                    WifiDiscoveryStatus.Discovering -> {
-                        emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.AlreadyDiscoveringWifi))
+                    P2PNetworkingStatus.Discovering -> {
+                        emitNavigation(TcpScreenNavigation.OnStopP2PDiscovery)
                     }
 
-                    WifiDiscoveryStatus.Failure -> {
-                        emitNavigation(TcpScreenNavigation.OnDiscoverWifiClick)
-                        updateWifiDiscoveryStatus(WifiDiscoveryStatus.Discovering)
+                    P2PNetworkingStatus.Failure -> {
+                        emitNavigation(TcpScreenNavigation.OnDiscoverP2PClick)
+                        updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
                     }
                 }
             }
 
             TcpScreenEvents.CreateServerClick -> {
-                if (!state.value.isWifiOn) {
-                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
-                    return
-                }
+                showWifiErrorIfNotEnabled()
+
                 if (!state.value.isValidPortNumber) {
                     Log.d("ahi3646", "handleEvents: invalid port number ")
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidPortNumber))
                     return
                 }
-                if (state.value.groupOwnerAddress == null || !IP_ADDRESS_REGEX.matches(state.value.groupOwnerAddress!!)) {
+                if (!state.value.isValidGroupOwnerAddress) {
                     Log.d("ahi3646", "handleEvents: invalid ip address ")
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidHostAddress))
                     return
                 }
 
                 //this when loop determines the state of wi fi connection
-                when (state.value.isOwner) {
-                    OwnerStatusState.Idle -> {
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.ServerCreationOrConnectionWithoutWifiConnection)
+                when (state.value.hostConnectionStatus) {
+                    HostConnectionStatus.Idle -> {
+                        emitNavigation(
+                            TcpScreenNavigation.OnCreateServerClick(
+                                portNumber = state.value.portNumber.toInt()
+                            )
+                        )
                     }
-
-                    OwnerStatusState.Client -> {
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.YouAreNotOwner)
+                    HostConnectionStatus.Creating -> {
+                        //creating server ignore for now
                     }
-
-                    OwnerStatusState.Owner -> {
-                        //this when loop determines the state of tcp connection
-                        when (state.value.hostConnectionStatus) {
-                            HostConnectionStatus.Idle -> {
-                                emitNavigation(
-                                    TcpScreenNavigation.OnCreateServerClick(
-                                        portNumber = state.value.portNumber.toInt()
-                                    )
-                                )
-                                updateServerTitleStatus(HostConnectionStatus.Creating)
-                            }
-
-                            HostConnectionStatus.Creating -> {
-                                //just ignore action
-                                Log.d("ahi3646", "handleEvents: creating server ")
-                            }
-
-                            HostConnectionStatus.Created -> {
-                                //todo request server close here
-                                //emitNavigation(TcpScreenNavigation.OnCloseServerClick)
-                                Log.d("ahi3646", "handleEvents: created server viewModel")
-                            }
-                        }
+                    HostConnectionStatus.Created -> {
+                        //request for stop
+                    }
+                    HostConnectionStatus.Failure -> {
+                        emitNavigation(
+                            TcpScreenNavigation.OnCreateServerClick(
+                                portNumber = state.value.portNumber.toInt()
+                            )
+                        )
                     }
                 }
             }
 
             TcpScreenEvents.ConnectToServerClick -> {
-                if (!state.value.isWifiOn) {
-                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
-                    return
-                }
+                showWifiErrorIfNotEnabled()
+
                 if (!state.value.isValidPortNumber) {
+                    Log.d("ahi3646", "handleEvents: invalid port number ")
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidPortNumber))
                     return
                 }
-                if (state.value.groupOwnerAddress == null || !IP_ADDRESS_REGEX.matches(state.value.groupOwnerAddress!!)) {
-                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidHostAddress))
+                if (!state.value.isValidConnectedWifiAddress) {
+                    Log.d("ahi3646", "handleEvents: invalid ip address - ${state.value.connectedWifiAddress} ")
+                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidWiFiServerIpAddress))
                     return
                 }
 
-                //this when loop determines the state of wi fi connection
-                when (state.value.isOwner) {
-                    OwnerStatusState.Idle -> {
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.ServerCreationOrConnectionWithoutWifiConnection)
+                when (state.value.clientConnectionStatus) {
+                    ClientConnectionStatus.Idle -> {
+                        emitNavigation(
+                            TcpScreenNavigation.OnConnectToServerClick(
+                                serverIpAddress = state.value.connectedWifiAddress,
+                                portNumber = state.value.portNumber.toInt()
+                            )
+                        )
                     }
 
-                    OwnerStatusState.Owner -> {
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.YouAreNotClient)
+                    ClientConnectionStatus.Connecting -> {
+                        log("client is connecting")
+                    }
+                    ClientConnectionStatus.Connected -> {
+                        log("client is connected")
+                    }
+                    ClientConnectionStatus.Failure -> {
+                        log("client is failure")
+                    }
+                }
+            }
+
+            is TcpScreenEvents.OnHotspotNameChanged -> {
+                viewModelScope.launch {
+                    dataStorePreferenceRepository.setHotSpotName(event.hotspotName)
+                }
+                _state.update {
+                    it.copy(
+                        isValidHotSpotName = isValidHotspotName(event.hotspotName),
+                        hotspotName = event.hotspotName.trim()
+                    )
+                }
+            }
+        }
+    }
+
+    fun updateClientConnectionStatus(status: ClientConnectionStatus) {
+        when (status) {
+            ClientConnectionStatus.Idle -> {
+                _state.update {
+                    it.copy(
+                        clientConnectionStatus = status,
+                        generalConnectionStatus = GeneralConnectionStatus.Idle
+                    )
+                }
+            }
+            ClientConnectionStatus.Connecting,
+            ClientConnectionStatus.Connected-> {
+                _state.update {
+                    it.copy(
+                        clientConnectionStatus = status,
+                        generalConnectionStatus = GeneralConnectionStatus.ConnectedAsClient
+                    )
+                }
+            }
+            ClientConnectionStatus.Failure -> {
+                _state.update {
+                    it.copy(
+                        clientConnectionStatus = status,
+                        generalConnectionStatus = GeneralConnectionStatus.Idle
+                    )
+                }
+            }
+        }
+    }
+
+    fun updateHostConnectionStatus(status: HostConnectionStatus) {
+        when(status){
+            HostConnectionStatus.Idle -> {
+                _state.update {
+                    it.copy(
+                        hostConnectionStatus = status,
+                        generalConnectionStatus = GeneralConnectionStatus.Idle
+                    )
+                }
+            }
+            HostConnectionStatus.Creating ,
+            HostConnectionStatus.Created -> {
+                _state.update {
+                    it.copy(
+                        hostConnectionStatus = status,
+                        generalConnectionStatus = GeneralConnectionStatus.ConnectedAsHost
+                    )
+                }
+            }
+            HostConnectionStatus.Failure -> {
+                _state.update {
+                    it.copy(
+                        hostConnectionStatus = status,
+                        generalConnectionStatus = GeneralConnectionStatus.Idle
+                    )
+                }
+            }
+        }
+    }
+
+    fun updateP2PDiscoveryStatus(status: P2PNetworkingStatus) {
+        when (status) {
+            P2PNetworkingStatus.Idle -> {
+                _state.update {
+                    it.copy(
+                        p2pNetworkingStatus = status,
+                        generalNetworkingStatus = GeneralNetworkingStatus.Idle
+                    )
+                }
+            }
+
+            P2PNetworkingStatus.Discovering -> {
+                _state.update {
+                    it.copy(
+                        p2pNetworkingStatus = status,
+                        generalNetworkingStatus = GeneralNetworkingStatus.P2PDiscovery
+                    )
+                }
+            }
+
+            P2PNetworkingStatus.Failure -> {
+                _state.update {
+                    it.copy(
+                        p2pNetworkingStatus = status,
+                        generalNetworkingStatus = GeneralNetworkingStatus.Idle
+                    )
+                }
+            }
+        }
+    }
+
+    fun clearPeersList(){
+        _state.update {
+            it.copy(
+                availableWifiNetworks = emptyList()
+            )
+        }
+    }
+
+    fun updateHotspotDiscoveryStatus(status: HotspotNetworkingStatus) {
+        when (status) {
+            HotspotNetworkingStatus.Idle -> {
+                _state.update {
+                    it.copy(
+                        hotspotNetworkingStatus = status,
+                        generalNetworkingStatus = GeneralNetworkingStatus.Idle
+                    )
+                }
+            }
+
+            HotspotNetworkingStatus.LaunchingHotspot,
+            HotspotNetworkingStatus.HotspotRunning -> {
+                _state.update {
+                    it.copy(
+                        hotspotNetworkingStatus = status,
+                        generalNetworkingStatus = GeneralNetworkingStatus.HotspotDiscovery,
+                    )
+                }
+            }
+
+            HotspotNetworkingStatus.Failure -> {
+                _state.update {
+                    it.copy(
+                        hotspotNetworkingStatus = status,
+                        generalNetworkingStatus = GeneralNetworkingStatus.Idle
+                    )
+                }
+            }
+        }
+    }
+
+    private fun showWifiErrorIfNotEnabled() {
+        if (!state.value.isWifiOn) {
+            emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
+            return
+        }
+    }
+
+    private fun showErrorIfOtherNetworkingIsRunning(launchingNetworkStatus: GeneralNetworkingStatus): Boolean {
+        return when (launchingNetworkStatus) {
+            GeneralNetworkingStatus.Idle -> {
+                //ready to launch any networking, just ignore
+                false
+            }
+
+            GeneralNetworkingStatus.P2PDiscovery -> {
+                when (state.value.hotspotNetworkingStatus) {
+                    HotspotNetworkingStatus.Idle,
+                    HotspotNetworkingStatus.Failure -> {
+                        //ignore case
+                        false
                     }
 
-                    OwnerStatusState.Client -> {
-                        //this when loop determines the state of tcp connection
-                        when (state.value.clientConnectionStatus) {
-                            ClientConnectionStatus.Idle -> {
-                                emitNavigation(
-                                    TcpScreenNavigation.OnConnectToServerClick(
-                                        serverIpAddress = state.value.groupOwnerAddress!!,
-                                        portNumber = state.value.portNumber.toInt()
-                                    )
-                                )
-                                updateClientTitleStatus(ClientConnectionStatus.Creating)
-                            }
+                    HotspotNetworkingStatus.HotspotRunning,
+                    HotspotNetworkingStatus.LaunchingHotspot -> {
+                        //show error here
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.AlreadyHotspotNetworkingRunning)
+                        return true
+                    }
+                }
+            }
 
-                            ClientConnectionStatus.Creating -> {
-                                //just ignore action
-                                Log.d("ahi3646", "handleEvents: creating client ")
-                            }
+            GeneralNetworkingStatus.HotspotDiscovery -> {
+                when (state.value.p2pNetworkingStatus) {
+                    P2PNetworkingStatus.Idle,
+                    P2PNetworkingStatus.Failure -> {
+                        //ignore case
+                        false
+                    }
 
-                            ClientConnectionStatus.Created -> {
-                                //todo request clientSocket close here
-                                Log.d("ahi3646", "handleEvents: created client viewModel")
-                            }
-                        }
+                    P2PNetworkingStatus.Discovering -> {
+                        //show error here
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.AlreadyP2PNetworkingRunning)
+                        return true
                     }
                 }
             }
         }
     }
 
-    private fun updateHasErrorOccurredDialog(dialog: TcpScreenDialogErrors?) {
+    fun updateHasErrorOccurredDialog(dialog: TcpScreenDialogErrors?) {
         _state.update {
             it.copy(
-                hasErrorOccurredDialog = dialog
+                hasDialogErrorOccurred = dialog
             )
         }
     }
@@ -356,22 +569,6 @@ class TcpViewModel @Inject constructor(
         _state.update {
             it.copy(
                 messages = newMessages
-            )
-        }
-    }
-
-    private fun updateServerTitleStatus(status: HostConnectionStatus) {
-        _state.update {
-            it.copy(
-                hostConnectionStatus = status
-            )
-        }
-    }
-
-    private fun updateClientTitleStatus(status: ClientConnectionStatus) {
-        _state.update {
-            it.copy(
-                clientConnectionStatus = status
             )
         }
     }
@@ -392,14 +589,6 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updateWifiDiscoveryStatus(status: WifiDiscoveryStatus) {
-        _state.update {
-            it.copy(
-                wifiDiscoveryStatus = status
-            )
-        }
-    }
-
     fun handleAvailableWifiListChange(peers: List<WifiP2pDevice>) {
         _state.update {
             it.copy(
@@ -408,139 +597,4 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-}
-
-@Immutable
-data class TcpScreenUiState(
-
-    val authorMe: String = Constants.UNKNOWN_USER,
-
-    val portNumber: String = "9002",
-    val isValidPortNumber: Boolean = isValidPortNumber(portNumber),
-    val hostConnectionStatus: HostConnectionStatus = HostConnectionStatus.Idle,
-    val clientConnectionStatus: ClientConnectionStatus = ClientConnectionStatus.Idle,
-
-    //wifi p2p state
-    val wifiDiscoveryStatus: WifiDiscoveryStatus = WifiDiscoveryStatus.Idle,
-
-    //status
-    val connectionStatus: ConnectionStatus = ConnectionStatus.Idle,
-    val isWifiOn: Boolean = false,
-    val isOwner: OwnerStatusState = OwnerStatusState.Idle,
-    val groupOwnerAddress: String? = "No connection",
-
-    //wifi peers list
-    val availableWifiNetworks: List<WifiP2pDevice> = emptyList(),
-
-    //connections
-    val connectedWifiNetworks: List<WifiP2pDevice> = emptyList(),
-
-    //chat room
-    val messages: List<Message> = emptyList(),
-    val isLoading: Boolean = false,
-    val connectionsCount: Int = 1,
-
-    //error handling
-    val hasErrorOccurredDialog: TcpScreenDialogErrors? = null
-)
-
-enum class TcpCloseDialogReason(@StringRes val reason: Int, @StringRes val description: Int) {
-
-    //This error case will be removed when "saving existing messages" feature will be implemented
-    ExistingMessages(
-        R.string.message_are_not_saved,
-        R.string.you_have_existing_messages_with_your_partner_and_if_you_close_the_this_window_messages_will_not_be_saved
-    ),
-
-    ExistingConnection(
-        R.string.the_connection_will_not_be_saved,
-        R.string.you_have_established_connection_with_your_partner_if_you_close_this_window_the_connection_will_not_be_saved
-    )
-}
-
-enum class TcpScreenErrors(@StringRes val errorMessage: Int) {
-    WifiNotEnabled(R.string.wifi_should_be_enabled_to_perform_this_action),
-    AlreadyDiscoveringWifi(R.string.already_discovering_wifi_networks),
-    InvalidPortNumber(R.string.try_to_use_another_port_number_current_port_is_already_in_use_or_invalid),
-    InvalidHostAddress(R.string.try_to_reconnect_to_the_server_again_current_address_is_invalid),
-    FailedToConnectToWifiDevice(R.string.couldn_t_connect_to_chosen_wifi_device),
-}
-
-enum class TcpScreenDialogErrors(
-    @StringRes val title: Int,
-    @StringRes val message: Int,
-    @DrawableRes val icon: Int
-) {
-    EOException(
-        R.string.network_error_occurred,
-        R.string.your_network_connection_was_interrupted_check_your_connection_and_try_again,
-        R.drawable.wifi_off
-    ),
-    IOException(
-        R.string.network_error_occurred,
-        R.string.your_network_connection_was_interrupted_check_your_connection_and_try_again,
-        R.drawable.wifi_off
-    ),
-    UTFDataFormatException(
-        R.string.network_error_occurred,
-        R.string.incoming_messages_are_not_in_utf_8_format_the_data_do_not_represent_a_valid_modified_utf_8_encoding_of_a_string,
-        R.drawable.error_prompt
-    ),
-    UnknownHostException(
-        R.string.invalid_host_ip_address,
-        R.string.the_ip_address_of_the_host_could_not_be_determined,
-        R.drawable.info
-    ),
-    YouAreNotOwner(
-        R.string.you_are_not_the_owner,
-        R.string.you_connected_as_client_thus_you_can_t_create_a_server,
-        R.drawable.info
-    ),
-    YouAreNotClient(
-        R.string.you_are_not_the_client,
-        R.string.you_connected_as_a_host_for_this_server_thus_you_can_t_be_a_client,
-        R.drawable.info
-    ),
-    ServerCreationOrConnectionWithoutWifiConnection(
-        R.string.no_wifi_connection,
-        R.string.you_need_to_connect_to_a_wifi_network_to_create_or_connect_to_a_server,
-        R.drawable.info
-    ),
-    EstablishConnectionToSendMessage(
-        R.string.no_one_to_chat,
-        R.string.could_not_establish_connection_with_your_partner_please_try_to_reconnect_and_try_again,
-        R.drawable.info
-    )
-}
-
-enum class ConnectionStatus(@StringRes val status: Int) {
-    Idle(R.string.not_running),
-    Running(R.string.waiting_for_connection),
-    Connected(R.string.connection_connected),
-    Disconnected(R.string.not_connected)
-}
-
-enum class OwnerStatusState(@StringRes val status: Int) {
-    Idle(R.string.waiting_for_connection),
-    Owner(R.string.owner),
-    Client(R.string.client)
-}
-
-enum class WifiDiscoveryStatus(@StringRes val res: Int, @DrawableRes val icon: Int) {
-    Idle(R.string.discover_wifi, R.drawable.wifi),
-    Discovering(R.string.discovering_wifi, R.drawable.wifi),
-    Failure(R.string.discovering_not_started, R.drawable.error_prompt)
-}
-
-
-enum class HostConnectionStatus(@StringRes val status: Int) {
-    Idle(R.string.create_a_server),
-    Creating(R.string.creating_a_server),
-    Created(R.string.server_created_waiting_for_clients)
-}
-
-enum class ClientConnectionStatus(@StringRes val status: Int) {
-    Idle(R.string.connect),
-    Creating(R.string.connecting_to_server),
-    Created(R.string.connected_to_a_server)
 }
