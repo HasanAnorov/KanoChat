@@ -23,8 +23,6 @@ uiViewbinding = "1.6.4"
 
 datastorePreferences = "1.1.0"
 
-
-
 [libraries]
 #data store
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }

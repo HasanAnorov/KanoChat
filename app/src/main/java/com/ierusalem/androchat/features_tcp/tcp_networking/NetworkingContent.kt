@@ -58,7 +58,6 @@ fun NetworkingContent(
     LazyColumn(
         modifier = modifier.navigationBarsPadding()
     ) {
-
         item {
             Column(
                 modifier = Modifier
@@ -77,6 +76,34 @@ fun NetworkingContent(
                     ),
                     content = {
                         Column {
+                            Row(
+                                modifier = Modifier
+                                    .clickable { eventHandler(TcpScreenEvents.DiscoverLocalOnlyHotSpotClick) }
+                                    .fillMaxWidth()
+                                    .padding(
+                                        vertical = 10.dp,
+                                    ),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    text = stringResource(id = state.localOnlyHotspotStatus.res),
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Icon(
+                                    modifier = Modifier.padding(start = 8.dp),
+                                    painter = painterResource(id = state.localOnlyHotspotStatus.icon),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                            HorizontalDivider(
+                                thickness = 1.dp,
+                                color = MaterialTheme.colorScheme.background
+                            )
                             Row(
                                 modifier = Modifier
                                     .clickable { eventHandler(TcpScreenEvents.DiscoverHotSpotClick) }

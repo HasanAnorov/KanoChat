@@ -102,9 +102,10 @@ fun LocalConversationContent(
                     modifier = Modifier
                         .navigationBarsPadding()
                         .imePadding(),
-                    onMessageSent = { content ->
-                        eventHandler(TcpScreenEvents.SendMessageRequest(content))
-                    },
+//                    onMessageSent = { content ->
+//                        eventHandler(TcpScreenEvents.SendMessageRequest(content))
+//                    },
+                    eventHandler = eventHandler,
                     resetScroll = {
                         scope.launch {
                             scrollState.scrollToItem(0)

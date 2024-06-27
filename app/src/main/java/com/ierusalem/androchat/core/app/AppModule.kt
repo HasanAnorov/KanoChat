@@ -1,6 +1,8 @@
 package com.ierusalem.androchat.core.app
 
 import android.app.Application
+import android.content.Context
+import android.net.wifi.WifiManager
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.core.connectivity.NetworkConnectivityObserver
 import com.ierusalem.androchat.features.auth.register.data.remote.MessageService
@@ -17,7 +19,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
-import io.ktor.client.features.logging.Logging
 import io.ktor.client.features.websocket.WebSockets
 import javax.inject.Singleton
 
@@ -35,7 +36,7 @@ object AppModule {
     @Singleton
     fun provideHttpClient(): HttpClient{
         return HttpClient(CIO){
-            install(Logging)
+            //install(Logging)
             install(WebSockets)
             install(JsonFeature){
                 serializer = KotlinxSerializer()
@@ -47,6 +48,12 @@ object AppModule {
     @Singleton
     fun provideDataStore(application: Application): DataStorePreferenceRepository {
         return DataStorePreferenceRepository(application)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWifiManager(application: Application): WifiManager {
+        return application.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
     }
 
     @Provides

@@ -88,7 +88,6 @@
         android:id="@+id/loginFragment"
         android:name="com.ierusalem.androchat.features.auth.login.presentation.LoginFragment"
         android:label="LoginFragment">
-
         <action
             android:id="@+id/action_loginFragment_to_registrationFragment"
             app:destination="@id/registrationFragment"
@@ -121,13 +120,14 @@
         android:name="com.ierusalem.androchat.features_tcp.tcp.presentation.TcpFragment"
         android:label="TcpFragment" >
         <action
-            android:id="@+id/action_tcpFragment_to_tcpSettingFragment"
-            app:destination="@id/tcpSettingFragment" />
+            android:id="@+id/action_tcpFragment_to_settingsFragment"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in"
+            app:popExitAnim="@anim/slide_out"
+            app:popUpTo="@id/homeFragment"
+            app:destination="@id/settingsFragment" />
     </fragment>
 
-    <fragment
-        android:id="@+id/tcpSettingFragment"
-        android:name="com.ierusalem.androchat.features_tcp.tcp_settings.TcpSettingFragment"
-        android:label="TcpSettingFragment" />
 
 </navigation>

@@ -37,7 +37,6 @@ class WiFiDirectBroadcastReceiver(
 
     @SuppressLint("MissingPermission")
     override fun onReceive(context: Context, intent: Intent) {
-        //log("wifi action - ${intent.action == WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION} ${intent.action} ")
         when (val action = intent.action) {
 
             WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> {

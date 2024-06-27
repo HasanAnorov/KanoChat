@@ -1,6 +1,11 @@
 package com.ierusalem.androchat.features_tcp.tcp.domain
 
+import android.annotation.SuppressLint
+import android.net.wifi.WifiConfiguration
+import android.net.wifi.WifiManager
+import android.net.wifi.WifiManager.LocalOnlyHotspotCallback
 import android.net.wifi.p2p.WifiP2pDevice
+import android.os.Build
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,6 +25,7 @@ import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralConnectionSt
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralNetworkingStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.HostConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.HotspotNetworkingStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.LocalOnlyHotspotStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.P2PNetworkingStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenDialogErrors
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenErrors
@@ -41,12 +47,15 @@ import javax.inject.Inject
 @HiltViewModel
 class TcpViewModel @Inject constructor(
     private val dataStorePreferenceRepository: DataStorePreferenceRepository,
-    private val connectivityObserver: ConnectivityObserver
+    private val connectivityObserver: ConnectivityObserver,
+    private val wifiManager: WifiManager
 ) : ViewModel(),
     NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
 
     private val _state: MutableStateFlow<TcpScreenUiState> = MutableStateFlow(TcpScreenUiState())
     val state: StateFlow<TcpScreenUiState> = _state.asStateFlow()
+
+    private var hotspotReservation: WifiManager.LocalOnlyHotspotReservation? = null
 
     init {
         initializeAuthorMe()
@@ -63,9 +72,10 @@ class TcpViewModel @Inject constructor(
             }
         }
     }
-    private fun initializeHotspotName(){
+
+    private fun initializeHotspotName() {
         viewModelScope.launch {
-            val saveHotspotName =  dataStorePreferenceRepository.getHotspotName.first()
+            val saveHotspotName = dataStorePreferenceRepository.getHotspotName.first()
             _state.update {
                 it.copy(
                     isValidHotSpotName = isValidHotspotName(saveHotspotName),
@@ -75,7 +85,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun listenWifiConnections(){
+    private fun listenWifiConnections() {
         connectivityObserver.observeWifiState().onEach { connectivityStatus ->
             when (connectivityStatus) {
                 ConnectivityObserver.Status.Available -> {
@@ -177,10 +187,17 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    @SuppressLint("MissingPermission")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
             is TcpScreenEvents.OnConnectToWifiClick -> {
                 emitNavigation(TcpScreenNavigation.OnConnectToWifiClick(event.wifiDevice))
+            }
+
+            is TcpScreenEvents.HandlePickingMultipleMedia -> {
+                event.medias.forEach{
+                    log(it.toString())
+                }
             }
 
             TcpScreenEvents.OnNavIconClick -> {
@@ -197,6 +214,60 @@ class TcpViewModel @Inject constructor(
 
             is TcpScreenEvents.InsertMessage -> {
                 insertMessage(event.message)
+            }
+
+            TcpScreenEvents.DiscoverLocalOnlyHotSpotClick -> {
+                _state.update {
+                    it.copy(
+                        localOnlyHotspotStatus = LocalOnlyHotspotStatus.LaunchingHotspot
+                    )
+                }
+                //todo add else case later
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    wifiManager.startLocalOnlyHotspot(
+                        object : LocalOnlyHotspotCallback() {
+                            override fun onStarted(reservation: WifiManager.LocalOnlyHotspotReservation?) {
+                                super.onStarted(reservation)
+                                hotspotReservation = reservation
+                                val config: WifiConfiguration? = reservation?.wifiConfiguration
+
+                                log("SSID: ${config?.SSID}, Password: ${config?.preSharedKey}")
+                                log("HttpProxy: ${config?.httpProxy}  HiddenSSID: ${config?.hiddenSSID}")
+                                log("Local Only Hotspot Started".uppercase())
+                                val ip = connectivityObserver.getWifiServerIpAddress()
+                                log("wifi ip local-only is : $ip")
+
+                                handleNetworkEvents(WiFiNetworkEvent.UpdateGroupOwnerAddress(ip))
+                                _state.update {
+                                    it.copy(
+                                        localOnlyHotspotStatus = LocalOnlyHotspotStatus.HotspotRunning
+                                    )
+                                }
+                            }
+
+                            override fun onStopped() {
+                                super.onStopped()
+                                log("Local Only Hotspot Stopped".uppercase())
+                                _state.update {
+                                    it.copy(
+                                        localOnlyHotspotStatus = LocalOnlyHotspotStatus.Idle
+                                    )
+                                }
+                            }
+
+                            override fun onFailed(reason: Int) {
+                                super.onFailed(reason)
+                                log("Local Only Hotspot Failed".uppercase())
+                                _state.update {
+                                    it.copy(
+                                        localOnlyHotspotStatus = LocalOnlyHotspotStatus.Failure
+                                    )
+                                }
+                            }
+                        },
+                        null
+                    )
+                }
             }
 
             TcpScreenEvents.DiscoverHotSpotClick -> {
@@ -294,7 +365,10 @@ class TcpViewModel @Inject constructor(
                     return
                 }
                 if (!state.value.isValidGroupOwnerAddress) {
-                    Log.d("ahi3646", "handleEvents: invalid ip address ")
+                    Log.d(
+                        "ahi3646",
+                        "handleEvents: invalid ip address - ${state.value.groupOwnerAddress} "
+                    )
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidHostAddress))
                     return
                 }
@@ -308,12 +382,15 @@ class TcpViewModel @Inject constructor(
                             )
                         )
                     }
+
                     HostConnectionStatus.Creating -> {
                         //creating server ignore for now
                     }
+
                     HostConnectionStatus.Created -> {
                         //request for stop
                     }
+
                     HostConnectionStatus.Failure -> {
                         emitNavigation(
                             TcpScreenNavigation.OnCreateServerClick(
@@ -333,7 +410,10 @@ class TcpViewModel @Inject constructor(
                     return
                 }
                 if (!state.value.isValidConnectedWifiAddress) {
-                    Log.d("ahi3646", "handleEvents: invalid ip address - ${state.value.connectedWifiAddress} ")
+                    Log.d(
+                        "ahi3646",
+                        "handleEvents: invalid ip address - ${state.value.connectedWifiAddress} "
+                    )
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidWiFiServerIpAddress))
                     return
                 }
@@ -351,9 +431,11 @@ class TcpViewModel @Inject constructor(
                     ClientConnectionStatus.Connecting -> {
                         log("client is connecting")
                     }
+
                     ClientConnectionStatus.Connected -> {
                         log("client is connected")
                     }
+
                     ClientConnectionStatus.Failure -> {
                         log("client is failure")
                     }
@@ -384,8 +466,9 @@ class TcpViewModel @Inject constructor(
                     )
                 }
             }
+
             ClientConnectionStatus.Connecting,
-            ClientConnectionStatus.Connected-> {
+            ClientConnectionStatus.Connected -> {
                 _state.update {
                     it.copy(
                         clientConnectionStatus = status,
@@ -393,6 +476,7 @@ class TcpViewModel @Inject constructor(
                     )
                 }
             }
+
             ClientConnectionStatus.Failure -> {
                 _state.update {
                     it.copy(
@@ -405,7 +489,7 @@ class TcpViewModel @Inject constructor(
     }
 
     fun updateHostConnectionStatus(status: HostConnectionStatus) {
-        when(status){
+        when (status) {
             HostConnectionStatus.Idle -> {
                 _state.update {
                     it.copy(
@@ -414,7 +498,8 @@ class TcpViewModel @Inject constructor(
                     )
                 }
             }
-            HostConnectionStatus.Creating ,
+
+            HostConnectionStatus.Creating,
             HostConnectionStatus.Created -> {
                 _state.update {
                     it.copy(
@@ -423,6 +508,7 @@ class TcpViewModel @Inject constructor(
                     )
                 }
             }
+
             HostConnectionStatus.Failure -> {
                 _state.update {
                     it.copy(
@@ -465,7 +551,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun clearPeersList(){
+    fun clearPeersList() {
         _state.update {
             it.copy(
                 availableWifiNetworks = emptyList()

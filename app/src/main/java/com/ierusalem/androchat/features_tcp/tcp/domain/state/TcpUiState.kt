@@ -1,7 +1,10 @@
 package com.ierusalem.androchat.features_tcp.tcp.domain.state
 
 import android.net.wifi.p2p.WifiP2pDevice
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
+import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
@@ -21,6 +24,8 @@ data class TcpScreenUiState(
     val isValidPortNumber: Boolean = isValidPortNumber(portNumber),
     val groupOwnerAddress: String = "Not created",
     val isValidGroupOwnerAddress: Boolean = isValidIpAddress(groupOwnerAddress),
+
+    val localOnlyHotspotStatus:LocalOnlyHotspotStatus = LocalOnlyHotspotStatus.Idle,
 
     //general networking state
     val generalNetworkingStatus: GeneralNetworkingStatus = GeneralNetworkingStatus.Idle,
@@ -49,4 +54,11 @@ data class TcpScreenUiState(
     //error handling
     val hasDialogErrorOccurred: TcpScreenDialogErrors? = null
 )
+
+enum class LocalOnlyHotspotStatus(@StringRes val res: Int, @DrawableRes val icon: Int){
+    Idle(R.string.start_local_only_hotspot, R.drawable.wifi),
+    LaunchingHotspot(R.string.launching_hotspot, R.drawable.wifi),
+    HotspotRunning(R.string.stop_local_only_hotspot, R.drawable.wifi),
+    Failure(R.string.couldn_t_launch_hotspot, R.drawable.error_prompt)
+}
 

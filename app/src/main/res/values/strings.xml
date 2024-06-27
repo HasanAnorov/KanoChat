@@ -184,5 +184,7 @@
     <string name="current_connected_wifi_server_ip_address_is_not_a_valid">Current connected wifi server ip address is not a valid</string>
     <string name="hotspot_name">Hotspot Name</string>
     <string name="enter_hotspot_name">Enter hotspot name</string>
+    <string name="start_local_only_hotspot">Start Local Only Hotspot</string>
+    <string name="stop_local_only_hotspot">Stop Local-Only Hotspot</string>
 
 </resources>

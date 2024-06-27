@@ -372,7 +372,7 @@ class TcpFragment : Fragment() {
             }
 
             TcpScreenNavigation.OnSettingsClick -> {
-                findNavController().navigate(R.id.action_tcpFragment_to_tcpSettingFragment)
+                findNavController().navigate(R.id.action_tcpFragment_to_settingsFragment)
             }
 
             is TcpScreenNavigation.OnCreateServerClick -> {
@@ -715,7 +715,6 @@ class TcpFragment : Fragment() {
     }
 
     private fun sendClientMessage(message: Message) {
-        log("sendClientMessage - $message")
         if (!clientSocket.isClosed) {
             val writer = DataOutputStream(clientSocket.getOutputStream())
 
