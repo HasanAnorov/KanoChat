@@ -9,8 +9,6 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-
-//todo try to inject context using di
 class PermissionGuardImpl(
     private val context: Context,
 ) : PermissionGuard {
@@ -21,11 +19,22 @@ class PermissionGuardImpl(
                 PackageManager.PERMISSION_GRANTED
     }
 
+    override val requiredPermissionsForContacts: List<String> by lazy(LazyThreadSafetyMode.NONE) {
+        CONTACTS_READ_PERMISSIONS
+    }
+
     override val requiredPermissions: List<String> by
     lazy(LazyThreadSafetyMode.NONE) {
         // Always require these WiFi permissions
         ALWAYS_PERMISSIONS + WIFI_NEARBY_PERMISSIONS
     }
+
+    override suspend fun canAccessContacts(): Boolean  =
+        withContext(context = Dispatchers.Main){
+            return@withContext requiredPermissionsForContacts.all {
+                hasPermission(it)
+            }
+        }
 
     override suspend fun canCreateNetwork(): Boolean =
         withContext(context = Dispatchers.Main) {
@@ -43,6 +52,10 @@ class PermissionGuardImpl(
                 Manifest.permission.ACCESS_WIFI_STATE,
                 Manifest.permission.CHANGE_WIFI_STATE,
             )
+
+        private val CONTACTS_READ_PERMISSIONS = listOf(
+            Manifest.permission.READ_CONTACTS
+        )
 
         private val WIFI_NEARBY_PERMISSIONS =
             // On API < 33, we require location permission

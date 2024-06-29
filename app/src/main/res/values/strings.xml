@@ -186,5 +186,12 @@
     <string name="enter_hotspot_name">Enter hotspot name</string>
     <string name="start_local_only_hotspot">Start Local Only Hotspot</string>
     <string name="stop_local_only_hotspot">Stop Local-Only Hotspot</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="ok">Ok</string>
+    <string name="permission_required">Permission Required</string>
+    <string name="contacts_denied">It seems you permanently declined read-contacts permission. \\nYou can go to the app settings to grant it.</string>
+    <string name="contacts_permission_request">This app needs access to your contacts to share! Please grant it!</string>
+    <string name="no_data_found">No data found!</string>
+    <string name="please_install_a_file_manager">PLease install a file manager!</string>
 
 </resources>

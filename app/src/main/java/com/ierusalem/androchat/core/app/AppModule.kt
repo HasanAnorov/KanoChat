@@ -1,6 +1,7 @@
 package com.ierusalem.androchat.core.app
 
 import android.app.Application
+import android.content.ContentResolver
 import android.content.Context
 import android.net.wifi.WifiManager
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
@@ -11,6 +12,8 @@ import com.ierusalem.androchat.features.conversation.data.remote.ChatSocketServi
 import com.ierusalem.androchat.features.conversation.data.remote.ChatSocketServiceImpl
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.utils.FieldValidator
+import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuard
+import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,6 +33,18 @@ object AppModule {
     @Singleton
     fun provideConnectivityObserver(application: Application): ConnectivityObserver {
         return NetworkConnectivityObserver(context = application)
+    }
+
+    @Provides
+    @Singleton
+    fun providePermissionGuard(application: Application): PermissionGuard {
+        return PermissionGuardImpl(application)
+    }
+
+    @Provides
+    @Singleton
+    fun provideContentResolver(application: Application):ContentResolver{
+        return application.contentResolver
     }
 
     @Provides

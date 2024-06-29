@@ -2,7 +2,9 @@ package com.ierusalem.androchat.features_tcp.tcp.presentation
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.IntentFilter
 import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.WifiP2pConfig
@@ -10,22 +12,37 @@ import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Looper
+import android.provider.OpenableColumns
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,10 +50,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.gson.Gson
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.ui.components.PermissionDialog
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.core.utils.log
+import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features_tcp.server.ServerDefaults
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
@@ -54,6 +73,7 @@ import com.ierusalem.androchat.features_tcp.tcp.presentation.components.remember
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpView
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactListContent
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,6 +82,8 @@ import kotlinx.coroutines.withContext
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.EOFException
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.io.UTFDataFormatException
 import java.net.ServerSocket
@@ -80,7 +102,7 @@ class TcpFragment : Fragment() {
     private lateinit var receiver: WiFiDirectBroadcastReceiver
     private val intentFilter = IntentFilter()
 
-    //permission
+    //todo delegate this to viewmodel
     private lateinit var permissionGuard: PermissionGuardImpl
 
     //gson to convert message object to string
@@ -136,12 +158,72 @@ class TcpFragment : Fragment() {
         gson = Gson()
     }
 
-    @OptIn(ExperimentalFoundationApi::class)
+    private val readContactsPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            viewModel.handleEvents(TcpScreenEvents.ReadContactPermissionChanged(isGranted))
+        }
+
+    private val getFilesLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val contentResolver = activity?.contentResolver
+            val data: Intent = result.data!!
+
+            var fileName = "file"
+            var fileSize: Long? = null
+
+            data.data?.let { returnUri ->
+                contentResolver?.query(returnUri, null, null, null, null)
+            }?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                cursor.moveToFirst()
+                fileName = cursor.getString(nameIndex)
+                fileSize = cursor.getLong(sizeIndex)
+            }
+
+            if (fileSize != null) {
+                val inputStream = requireContext().contentResolver.openInputStream(data.data!!)
+                val filePathToSave = context?.cacheDir
+
+                val file = File(filePathToSave, fileName)
+                val fileOutputStream = FileOutputStream(file)
+                inputStream?.copyTo(fileOutputStream)
+                fileOutputStream.close()
+
+            }
+        }
+        if (result.resultCode == Activity.RESULT_CANCELED) {
+            Log.d("ahi3646", "onActivityResult: RESULT CANCELED ")
+        }
+    }
+
+    private fun showFileChooser() {
+        val intent = Intent()
+            .setType("*/*")
+            .setAction(Intent.ACTION_GET_CONTENT)
+        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.flags =
+            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        try {
+            getFilesLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.please_install_a_file_manager), Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
         permissionGuard = PermissionGuardImpl(requireContext())
         wifiP2PManager =
             requireContext().getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
@@ -166,7 +248,8 @@ class TcpFragment : Fragment() {
                 val scope = rememberCoroutineScope()
                 val allTabs = rememberTcpAllTabs()
                 val pagerState = rememberPagerState(
-                    initialPage = 0,
+                    //fixme change tab here
+                    initialPage = 2,
                     initialPageOffsetFraction = 0F,
                     pageCount = { allTabs.size },
                 )
@@ -189,6 +272,10 @@ class TcpFragment : Fragment() {
 
                 val state by viewModel.state.collectAsStateWithLifecycle()
 
+                val sheetState = rememberModalBottomSheetState(
+                    skipPartiallyExpanded = false
+                )
+
                 //todo
 //                BackHandler {
 //                    if (state.messages.isNotEmpty()) {
@@ -197,9 +284,60 @@ class TcpFragment : Fragment() {
 //                }
 
                 AndroChatTheme {
+                    if (state.showBottomSheet) {
+                        ModalBottomSheet(
+                            sheetState = sheetState,
+                            onDismissRequest = {
+                                viewModel.handleEvents(TcpScreenEvents.UpdateBottomSheetState(false))
+                            },
+                            windowInsets = WindowInsets(0, 0, 0, 0)
+                        ) {
+                            if (state.isReadContactsGranted) {
+                                viewModel.handleEvents(TcpScreenEvents.ReadContacts)
+                                ContactListContent(
+                                    contacts = state.contacts,
+                                    shareSelectedContacts = {}
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .height(300.dp)
+                                        .fillMaxWidth(),
+                                    contentAlignment = Alignment.Center,
+                                    content = {
+                                        Button(
+                                            onClick = {
+                                                readContactsPermissionLauncher.launch(
+                                                    Manifest.permission.READ_CONTACTS
+                                                )
+                                            }
+                                        ) {
+                                            Text(text = "Give Permission")
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    if (state.shouldShowPermissionDialog) {
+                        PermissionDialog(
+                            isPermanentlyDeclined = !shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS),
+                            onDismiss = { viewModel.updateShowPermissionRequestState(false) },
+                            onOkClick = {
+                                readContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+                                viewModel.updateShowPermissionRequestState(false)
+                            },
+                            onGoToAppSettingsClick = {
+                                openAppSettings()
+                                viewModel.updateShowPermissionRequestState(false)
+                            }
+                        )
+                    }
+
                     TcpScreen(
                         state = state,
-                        eventHandler = { viewModel.handleEvents(it) },
+                        //try to use pass lambda like this, this will help to avoid extra recomposition
+                        eventHandler = viewModel::handleEvents,
                         allTabs = allTabs,
                         pagerState = pagerState,
                         onTabChanged = { handleTabSelected(it) }
@@ -311,7 +449,7 @@ class TcpFragment : Fragment() {
         if (::serverSocket.isInitialized) {
             serverSocket.close()
         }
-        if(::connectedClientSocketOnServer.isInitialized){
+        if (::connectedClientSocketOnServer.isInitialized) {
             connectedClientSocketOnServer.close()
         }
 
@@ -355,6 +493,10 @@ class TcpFragment : Fragment() {
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
 
+            TcpScreenNavigation.OnReadContactsRequest -> {
+                readContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+            }
+
             TcpScreenNavigation.OnNavIconClick -> {
                 findNavController().popBackStack()
             }
@@ -373,6 +515,10 @@ class TcpFragment : Fragment() {
 
             TcpScreenNavigation.OnSettingsClick -> {
                 findNavController().navigate(R.id.action_tcpFragment_to_settingsFragment)
+            }
+
+            TcpScreenNavigation.ShowFileChooserClick ->{
+                showFileChooser()
             }
 
             is TcpScreenNavigation.OnCreateServerClick -> {
@@ -748,6 +894,11 @@ class TcpFragment : Fragment() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.checkReadContactsPermission()
+    }
+
     private fun sendHostMessage(message: Message) {
         log("in send message - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
         if (!connectedClientSocketOnServer.isClosed) {
@@ -797,7 +948,7 @@ class TcpFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        if(::connectedClientSocketOnServer.isInitialized){
+        if (::connectedClientSocketOnServer.isInitialized) {
             connectedClientSocketOnServer.close()
         }
         if (::serverSocket.isInitialized) {

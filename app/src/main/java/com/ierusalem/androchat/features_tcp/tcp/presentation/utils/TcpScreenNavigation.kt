@@ -19,4 +19,7 @@ sealed interface TcpScreenNavigation {
     data class OnErrorsOccurred(val tcpScreenErrors: TcpScreenErrors) : TcpScreenNavigation
     data class OnConnectToServerClick(val serverIpAddress: String, val portNumber: Int) :
         TcpScreenNavigation
+
+    data object OnReadContactsRequest: TcpScreenNavigation
+    data object ShowFileChooserClick: TcpScreenNavigation
 }

@@ -1,11 +1,15 @@
 package com.ierusalem.androchat.features_tcp.tcp.domain
 
 import android.annotation.SuppressLint
+import android.content.ContentResolver
+import android.database.Cursor
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.net.wifi.WifiManager.LocalOnlyHotspotCallback
 import android.net.wifi.p2p.WifiP2pDevice
 import android.os.Build
+import android.provider.ContactsContract
+import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,13 +18,16 @@ import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
+import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
+import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuard
 import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.ClientConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.ContactItem
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralNetworkingStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.HostConnectionStatus
@@ -33,6 +40,7 @@ import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,9 +54,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TcpViewModel @Inject constructor(
+    private val permissionGuardImpl: PermissionGuard,
     private val dataStorePreferenceRepository: DataStorePreferenceRepository,
     private val connectivityObserver: ConnectivityObserver,
-    private val wifiManager: WifiManager
+    private val wifiManager: WifiManager,
+    private val contentResolver: ContentResolver
 ) : ViewModel(),
     NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
 
@@ -61,6 +71,24 @@ class TcpViewModel @Inject constructor(
         initializeAuthorMe()
         initializeHotspotName()
         listenWifiConnections()
+    }
+
+    fun checkReadContactsPermission() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isReadContactsGranted = permissionGuardImpl.canAccessContacts()
+                )
+            }
+        }
+    }
+
+    fun updateShowPermissionRequestState(shouldBeShown: Boolean) {
+        _state.update {
+            it.copy(
+                shouldShowPermissionDialog = shouldBeShown
+            )
+        }
     }
 
     private fun initializeAuthorMe() {
@@ -109,6 +137,48 @@ class TcpViewModel @Inject constructor(
                 }
             }
         }.launchIn(viewModelScope)
+    }
+
+    @SuppressLint("Range")
+    private fun readContacts() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val contacts = mutableListOf<ContactItem>()
+            val cursor: Cursor = contentResolver.query(
+                Phone.CONTENT_URI,
+                arrayOf(
+                    ContactsContract.Contacts._ID,
+                    ContactsContract.Contacts.DISPLAY_NAME,
+                    Phone.NUMBER,
+                    ContactsContract.RawContacts.ACCOUNT_TYPE
+                ),
+                ContactsContract.RawContacts.ACCOUNT_TYPE + " <> 'google' ",
+                null, null
+            )!!
+            while (cursor.moveToNext()) {
+                if (cursor.getColumnIndex(Phone.DISPLAY_NAME) != -1 && cursor.getColumnIndex(
+                        Phone.NUMBER
+                    ) != -1
+                ) {
+                    val name = cursor.getString(cursor.getColumnIndex(Phone.DISPLAY_NAME))
+                    val phoneNumber = cursor.getString(cursor.getColumnIndex(Phone.NUMBER))
+                    contacts.add(
+                        ContactItem(
+                            contactName = name, phoneNumber = phoneNumber, isSelected = false
+                        )
+                    )
+                }
+            }
+            cursor.close()
+            loadContacts(contacts)
+        }
+    }
+
+    private fun loadContacts(contacts: List<ContactItem>) {
+        _state.update {
+            it.copy(
+                contacts = Resource.Success(contacts)
+            )
+        }
     }
 
     private fun updateConnectedWifiAddress(address: String) {
@@ -194,8 +264,24 @@ class TcpViewModel @Inject constructor(
                 emitNavigation(TcpScreenNavigation.OnConnectToWifiClick(event.wifiDevice))
             }
 
+            TcpScreenEvents.ShowFileChooserClick ->{
+                emitNavigation(TcpScreenNavigation.ShowFileChooserClick)
+            }
+
+            is TcpScreenEvents.UpdateBottomSheetState -> {
+                _state.update {
+                    it.copy(
+                        showBottomSheet = event.shouldBeShown
+                    )
+                }
+            }
+
+            TcpScreenEvents.ReadContacts -> {
+                readContacts()
+            }
+
             is TcpScreenEvents.HandlePickingMultipleMedia -> {
-                event.medias.forEach{
+                event.medias.forEach {
                     log(it.toString())
                 }
             }
@@ -214,6 +300,21 @@ class TcpViewModel @Inject constructor(
 
             is TcpScreenEvents.InsertMessage -> {
                 insertMessage(event.message)
+            }
+
+            TcpScreenEvents.ReadContactsRequest -> {
+                emitNavigation(TcpScreenNavigation.OnReadContactsRequest)
+            }
+
+            is TcpScreenEvents.ReadContactPermissionChanged -> {
+                if (!event.isGranted) {
+                    updateShowPermissionRequestState(true)
+                }
+                _state.update {
+                    it.copy(
+                        isReadContactsGranted = event.isGranted
+                    )
+                }
             }
 
             TcpScreenEvents.DiscoverLocalOnlyHotSpotClick -> {

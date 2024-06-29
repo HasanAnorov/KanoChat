@@ -4,15 +4,22 @@ import android.net.wifi.p2p.WifiP2pDevice
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.core.utils.isValidPortNumber
+import java.util.UUID
 
-@Immutable
 data class TcpScreenUiState(
+
+    val contacts:Resource<List<ContactItem>> = Resource.Loading(),
+    val isReadContactsGranted: Boolean = false,
+    val shouldShowPermissionDialog: Boolean = false,
+    val showBottomSheet: Boolean = false,
 
     //general state
     val isWifiOn: Boolean = false,
@@ -61,4 +68,14 @@ enum class LocalOnlyHotspotStatus(@StringRes val res: Int, @DrawableRes val icon
     HotspotRunning(R.string.stop_local_only_hotspot, R.drawable.wifi),
     Failure(R.string.couldn_t_launch_hotspot, R.drawable.error_prompt)
 }
+
+@Immutable
+data class ContactItem(
+    val contactName:String,
+    val phoneNumber:String,
+    val isSelected: Boolean,
+    val id: String = UUID.randomUUID().toString(),
+)
+
+
 

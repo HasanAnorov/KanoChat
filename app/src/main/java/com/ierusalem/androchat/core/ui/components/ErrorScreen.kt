@@ -128,7 +128,7 @@ fun InvalidResponseError(modifier: Modifier = Modifier) {
 fun ErrorScreenPreview() {
     AndroChatTheme {
         ErrorScreen(
-            error = ErrorType.NetworkError,
+            error = ErrorType.InvalidResponse,
             onRetryClick = {}
         )
     }

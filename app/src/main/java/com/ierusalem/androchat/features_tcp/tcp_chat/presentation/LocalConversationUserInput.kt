@@ -1,23 +1,16 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.presentation
 
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -29,6 +22,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,20 +38,23 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.InsertPhoto
 import androidx.compose.material.icons.outlined.Mood
-import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -80,6 +77,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
@@ -94,10 +92,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features.conversation.presentation.components.RecordButton
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactListContent
 import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 import kotlin.time.Duration
@@ -105,27 +104,23 @@ import kotlin.time.Duration.Companion.seconds
 
 enum class LocalInputSelector {
     NONE,
-    MAP,
     EMOJI,
     PHONE,
-    PICTURE
-}
-
-enum class LocalEmojiStickerSelector {
-    EMOJI,
-    STICKER
+    PICTURE,
+    FILE
 }
 
 @Preview
 @Composable
 fun UserInputPreview() {
-    LocalConversationUserInput(eventHandler = {})
+    LocalConversationUserInput(
+        eventHandler = {},
+    )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun LocalConversationUserInput(
-//    onMessageSent: (String) -> Unit,
     eventHandler: (TcpScreenEvents) -> Unit,
     modifier: Modifier = Modifier,
     resetScroll: () -> Unit = {},
@@ -168,7 +163,6 @@ fun LocalConversationUserInput(
             UserInputSelector(
                 onSelectorChange = {
                     currentInputSelector = it
-                    Log.d("ahi3646", "LocalConversationUserInput: ")
                 },
                 sendMessageEnabled = textState.text.isNotBlank(),
                 onMessageSent = {
@@ -187,6 +181,13 @@ fun LocalConversationUserInput(
                 currentSelector = currentInputSelector,
                 onMultipleMediasPicked = { medias ->
                     eventHandler(TcpScreenEvents.HandlePickingMultipleMedia(medias))
+                },
+                onContactsClicked = {
+                    dismissKeyboard()
+                    eventHandler(TcpScreenEvents.UpdateBottomSheetState(true))
+                },
+                onFilesClicked = {
+                    eventHandler(TcpScreenEvents.ShowFileChooserClick)
                 }
             )
         }
@@ -213,6 +214,8 @@ private fun SelectorExpanded(
     onCloseRequested: () -> Unit,
     onTextAdded: (String) -> Unit,
     onMultipleMediasPicked: (List<Uri>) -> Unit,
+    onContactsClicked: () -> Unit,
+    onFilesClicked: () -> Unit,
 ) {
     if (currentSelector == LocalInputSelector.NONE) return
 
@@ -243,8 +246,14 @@ private fun SelectorExpanded(
                     )
                 }
             }
-            LocalInputSelector.MAP -> FunctionalityNotAvailablePanel()
-            LocalInputSelector.PHONE -> FunctionalityNotAvailablePanel()
+
+            LocalInputSelector.PHONE -> {
+                onContactsClicked()
+            }
+            LocalInputSelector.FILE -> {
+                onFilesClicked()
+            }
+
             else -> {
                 throw NotImplementedError()
             }
@@ -260,31 +269,10 @@ private fun PreviewSelectorExpended() {
             onCloseRequested = { },
             onTextAdded = { },
             currentSelector = LocalInputSelector.PICTURE,
-            onMultipleMediasPicked = {}
+            onMultipleMediasPicked = {},
+            onContactsClicked = {},
+            onFilesClicked = {}
         )
-    }
-}
-
-@Composable
-fun FunctionalityNotAvailablePanel() {
-    AnimatedVisibility(
-        visibleState = remember { MutableTransitionState(false).apply { targetState = true } },
-        enter = expandHorizontally() + fadeIn(),
-        exit = shrinkHorizontally() + fadeOut()
-    ) {
-        Column(
-            modifier = Modifier
-                .height(320.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(id = R.string.not_available),
-                style = MaterialTheme.typography.titleMedium
-            )
-
-        }
     }
 }
 
@@ -312,19 +300,19 @@ private fun UserInputSelector(
         InputSelectorButton(
             onClick = { onSelectorChange(LocalInputSelector.PICTURE) },
             icon = Icons.Outlined.InsertPhoto,
-            selected = currentInputSelector == LocalInputSelector.PICTURE,
+            selected = false,
             description = stringResource(id = R.string.attach_photo_desc)
-        )
-        InputSelectorButton(
-            onClick = { onSelectorChange(LocalInputSelector.MAP) },
-            icon = Icons.Outlined.Place,
-            selected = currentInputSelector == LocalInputSelector.MAP,
-            description = stringResource(id = R.string.map_selector_desc)
         )
         InputSelectorButton(
             onClick = { onSelectorChange(LocalInputSelector.PHONE) },
             icon = Icons.Outlined.Call,
-            selected = currentInputSelector == LocalInputSelector.PHONE,
+            selected = false,
+            description = stringResource(id = R.string.videochat_desc)
+        )
+        InputSelectorButton(
+            onClick = { onSelectorChange(LocalInputSelector.FILE) },
+            icon = Icons.Outlined.AttachFile,
+            selected = false,
             description = stringResource(id = R.string.videochat_desc)
         )
 
@@ -370,7 +358,6 @@ private fun InputSelectorButton(
     selected: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Log.d("ahi3646", "InputSelectorButton: inputselect -> $description ")
     val backgroundModifier = if (selected) {
         Modifier.background(
             color = LocalContentColor.current,
@@ -405,11 +392,6 @@ private fun PreviewInputSelectorButton() {
     AndroChatTheme {
 
     }
-}
-
-@Composable
-private fun NotAvailablePopup(onDismissed: () -> Unit) {
-    FunctionalityNotAvailablePopup(onDismissed)
 }
 
 val KeyboardShownKey = SemanticsPropertyKey<Boolean>("KeyboardShownKey")
@@ -593,7 +575,6 @@ fun EmojiSelector(
     onTextAdded: (String) -> Unit,
     focusRequester: FocusRequester
 ) {
-    var selected by remember { mutableStateOf(LocalEmojiStickerSelector.EMOJI) }
 
     val a11yLabel = stringResource(id = R.string.emoji_selector_desc)
     Column(
@@ -603,61 +584,11 @@ fun EmojiSelector(
             .focusTarget()
             .semantics { contentDescription = a11yLabel }
     ) {
-//        Row(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(horizontal = 8.dp)
-//        ) {
-//            ExtendedSelectorInnerButton(
-//                text = stringResource(id = R.string.emojis_label),
-//                onClick = { selected = LocalEmojiStickerSelector.EMOJI },
-//                selected = true,
-//                modifier = Modifier.weight(1f)
-//            )
-//            ExtendedSelectorInnerButton(
-//                text = stringResource(id = R.string.stickers_label),
-//                onClick = { selected = LocalEmojiStickerSelector.STICKER },
-//                selected = false,
-//                modifier = Modifier.weight(1f)
-//            )
-//        }
         Row(modifier = Modifier.verticalScroll(rememberScrollState())) {
             EmojiTable(onTextAdded, modifier = Modifier.padding(8.dp))
         }
     }
-    if (selected == LocalEmojiStickerSelector.STICKER) {
-        NotAvailablePopup(onDismissed = { selected = LocalEmojiStickerSelector.EMOJI })
-    }
 }
-
-//@Composable
-//fun ExtendedSelectorInnerButton(
-//    text: String,
-//    onClick: () -> Unit,
-//    selected: Boolean,
-//    modifier: Modifier = Modifier
-//) {
-//    val colors = ButtonDefaults.buttonColors(
-//        containerColor = if (selected) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-//        else Color.Transparent,
-//        disabledContainerColor = Color.Transparent,
-//        contentColor = MaterialTheme.colorScheme.onSurface,
-//        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.74f)
-//    )
-//    TextButton(
-//        onClick = onClick,
-//        modifier = modifier
-//            .padding(8.dp)
-//            .height(36.dp),
-//        colors = colors,
-//        contentPadding = PaddingValues(0.dp)
-//    ) {
-//        Text(
-//            text = text,
-//            style = MaterialTheme.typography.titleSmall
-//        )
-//    }
-//}
 
 @Composable
 fun EmojiTable(
