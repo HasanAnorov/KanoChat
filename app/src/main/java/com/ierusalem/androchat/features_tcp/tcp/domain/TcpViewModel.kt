@@ -201,6 +201,14 @@ class TcpViewModel @Inject constructor(
                 //unhandled event
             }
 
+            is WiFiNetworkEvent.UpdateClientAddress -> {
+                _state.update {
+                    it.copy(
+                        connectedWifiAddress = networkEvent.clientAddress
+                    )
+                }
+            }
+
             WiFiNetworkEvent.ThisDeviceChanged -> {
                 /**
                  * Broadcast intent action indicating that this device details have changed.
@@ -264,7 +272,7 @@ class TcpViewModel @Inject constructor(
                 emitNavigation(TcpScreenNavigation.OnConnectToWifiClick(event.wifiDevice))
             }
 
-            TcpScreenEvents.ShowFileChooserClick ->{
+            TcpScreenEvents.ShowFileChooserClick -> {
                 emitNavigation(TcpScreenNavigation.ShowFileChooserClick)
             }
 
@@ -402,14 +410,17 @@ class TcpViewModel @Inject constructor(
             is TcpScreenEvents.SendMessageRequest -> {
                 val currentTime = Calendar.getInstance().time.toString()
                 val username = state.value.authorMe
-                val message = Message(event.message, currentTime, username)
+                val message = Message.TextMessage(
+                    username = username,
+                    message = event.message,
+                    formattedTime = currentTime
+                )
 
-//                checkForConnectionWithErrorDialog()
+                //todo - think about this later
                 if (state.value.connectionsCount < 1) {
                     updateHasErrorOccurredDialog(TcpScreenDialogErrors.PeerNotConnected)
                     return
                 }
-
                 when (state.value.generalConnectionStatus) {
                     GeneralConnectionStatus.Idle -> {
                         //Establish connection to send message
@@ -503,6 +514,8 @@ class TcpViewModel @Inject constructor(
             }
 
             TcpScreenEvents.ConnectToServerClick -> {
+
+
                 showWifiErrorIfNotEnabled()
 
                 if (!state.value.isValidPortNumber) {

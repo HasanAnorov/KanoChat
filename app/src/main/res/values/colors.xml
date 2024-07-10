@@ -28,4 +28,8 @@
     <!-- Status bar -->
     <color name="black30">#4D000000</color>
 
+    <color name="colorPrimary">@color/blue500</color>
+    <color name="colorPrimaryDark">@color/blue800</color>
+    <color name="colorAccent">@color/yellow700</color>
+
 </resources>

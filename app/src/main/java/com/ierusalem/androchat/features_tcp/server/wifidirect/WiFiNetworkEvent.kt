@@ -8,6 +8,7 @@ import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralConnectionSt
 @Immutable
 sealed interface WiFiNetworkEvent {
     data class UpdateGroupOwnerAddress(val groupOwnerAddress: String): WiFiNetworkEvent
+    data class UpdateClientAddress(val clientAddress: String): WiFiNetworkEvent
     data class WifiStateChanged(val isWifiOn: Boolean) : WiFiNetworkEvent
     data object ThisDeviceChanged : WiFiNetworkEvent
     data object DiscoveryChanged : WiFiNetworkEvent

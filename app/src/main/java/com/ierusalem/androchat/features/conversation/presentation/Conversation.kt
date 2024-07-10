@@ -217,17 +217,22 @@ fun Messages(
                 Spacer(modifier = Modifier.height(32.dp))
             }
             itemsIndexed(messages) { index, message ->
-                val prevAuthor = messages.getOrNull(index - 1)?.username
-                val nextAuthor = messages.getOrNull(index + 1)?.username
-                val isFirstMessageByAuthor = prevAuthor != message.username
-                val isLastMessageByAuthor = nextAuthor != message.username
-                MessageItem(
-                    onAuthorClick = { userId -> navigateToProfile(userId) },
-                    msg = message,
-                    isUserMe = message.username == authorMe,
-                    isFirstMessageByAuthor = isFirstMessageByAuthor,
-                    isLastMessageByAuthor = isLastMessageByAuthor
-                )
+                when(message){
+                    is Message.TextMessage -> {
+                        val prevAuthor = messages.getOrNull(index - 1)?.username
+                        val nextAuthor = messages.getOrNull(index + 1)?.username
+                        val isFirstMessageByAuthor = prevAuthor != message.username
+                        val isLastMessageByAuthor = nextAuthor != message.username
+                        MessageItem(
+                            onAuthorClick = { userId -> navigateToProfile(userId) },
+                            message = message,
+                            isUserMe = message.username == authorMe,
+                            isFirstMessageByAuthor = isFirstMessageByAuthor,
+                            isLastMessageByAuthor = isLastMessageByAuthor
+                        )
+                    }
+                    is Message.FileMessage -> {}
+                }
             }
         }
         // Jump to bottom button shows up when user scrolls past a threshold.
@@ -290,7 +295,7 @@ private val ChatBubbleShape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
 
 @Composable
 fun ChatItemBubble(
-    message: Message,
+    message: Message.TextMessage,
     isUserMe: Boolean,
     authorClicked: (String) -> Unit
 ) {
@@ -332,14 +337,14 @@ fun ChatItemBubble(
 
 @Composable
 fun ClickableMessage(
-    message: Message,
+    message: Message.TextMessage,
     isUserMe: Boolean,
     authorClicked: (String) -> Unit
 ) {
     val uriHandler = LocalUriHandler.current
 
     val styledMessage = messageFormatter(
-        text = message.text,
+        text =message.message,
         primary = isUserMe
     )
 

@@ -6,6 +6,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.Uri
 import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
@@ -50,6 +51,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.gson.Gson
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.components.PermissionDialog
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
@@ -79,16 +81,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.BufferedInputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.EOFException
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.UTFDataFormatException
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.UnknownHostException
+import java.nio.charset.StandardCharsets
+import kotlin.math.min
 
 
 @AndroidEntryPoint
@@ -114,6 +120,26 @@ class TcpFragment : Fragment() {
 
     //chatting client side
     private lateinit var clientSocket: Socket
+
+    //audio recording
+//    private var audioRecord: AudioRecorder? = null
+//    private var audioPlayer: AudioPlayer? = null
+//
+//    private val file: File by lazy {
+//        val f = File("${Environment.DIRECTORY_DOWNLOADS}${File.separator}audio.pcm")
+//        if (!f.exists()) {
+//            f.createNewFile()
+//        }
+//        f
+//    }
+//
+//    private val tmpFile: File by lazy {
+//        val f = File("${Environment.DIRECTORY_DOWNLOADS}${File.separator}tmp.pcm")
+//        if (!f.exists()) {
+//            f.createNewFile()
+//        }
+//        f
+//    }
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -153,6 +179,7 @@ class TcpFragment : Fragment() {
         }
     }
 
+    //1-fragment lifecycle callback
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         gson = Gson()
@@ -166,43 +193,53 @@ class TcpFragment : Fragment() {
     private val getFilesLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val contentResolver = activity?.contentResolver
-            val data: Intent = result.data!!
-
-            var fileName = "file"
-            var fileSize: Long? = null
-
-            data.data?.let { returnUri ->
-                contentResolver?.query(returnUri, null, null, null, null)
-            }?.use { cursor ->
-                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-                cursor.moveToFirst()
-                fileName = cursor.getString(nameIndex)
-                fileSize = cursor.getLong(sizeIndex)
+        when (result.resultCode) {
+            Activity.RESULT_CANCELED -> {
+                Log.d("ahi3646", "onActivityResult: RESULT CANCELED ")
             }
 
-            if (fileSize != null) {
-                val inputStream = requireContext().contentResolver.openInputStream(data.data!!)
-                val filePathToSave = context?.cacheDir
+            Activity.RESULT_OK -> {
+                val contentResolver = activity?.contentResolver
+                val data: Intent = result.data!!
 
-                val file = File(filePathToSave, fileName)
-                val fileOutputStream = FileOutputStream(file)
-                inputStream?.copyTo(fileOutputStream)
-                fileOutputStream.close()
+                var fileName = "file"
 
+                data.data?.let { returnUri ->
+                    contentResolver?.query(returnUri, null, null, null, null)
+                }?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    cursor.moveToFirst()
+                    fileName = cursor.getString(nameIndex)
+                }
+
+                log("filename - $fileName, filepath - ${data.data!!}")
+                when (viewModel.state.value.generalConnectionStatus) {
+                    GeneralConnectionStatus.Idle -> {
+                        //do nothing
+                    }
+
+                    GeneralConnectionStatus.ConnectedAsClient -> {
+                        sendClientMessage(
+                            Message.FileMessage(
+                                formattedTime = "",
+                                username = "",
+                                filePath = data.data!!,
+                                filename = fileName,
+                            )
+                        )
+                    }
+
+                    GeneralConnectionStatus.ConnectedAsHost -> {
+
+                    }
+                }
             }
-        }
-        if (result.resultCode == Activity.RESULT_CANCELED) {
-            Log.d("ahi3646", "onActivityResult: RESULT CANCELED ")
         }
     }
 
+
     private fun showFileChooser() {
-        val intent = Intent()
-            .setType("*/*")
-            .setAction(Intent.ACTION_GET_CONTENT)
+        val intent = Intent().setType("*/*").setAction(Intent.ACTION_GET_CONTENT)
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
         intent.flags =
@@ -212,29 +249,27 @@ class TcpFragment : Fragment() {
         } catch (e: Exception) {
             Toast.makeText(
                 requireContext(),
-                getString(R.string.please_install_a_file_manager), Toast.LENGTH_SHORT
+                getString(R.string.please_install_a_file_manager),
+                Toast.LENGTH_SHORT
             ).show()
         }
     }
 
+    //2-fragment lifecycle callback
     @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
 
         permissionGuard = PermissionGuardImpl(requireContext())
         wifiP2PManager =
             requireContext().getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
 
-        channel = wifiP2PManager
-            .initialize(
-                requireContext(),
-                Looper.getMainLooper()
-            ) {
-                Log.d("ahi3646", "WifiP2PManager Channel died! Do nothing :D")
-            }
+        channel = wifiP2PManager.initialize(
+            requireContext(), Looper.getMainLooper()
+        ) {
+            Log.d("ahi3646", "WifiP2PManager Channel died! Do nothing :D")
+        }
         intentFilter.apply {
             addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
             addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
@@ -249,7 +284,7 @@ class TcpFragment : Fragment() {
                 val allTabs = rememberTcpAllTabs()
                 val pagerState = rememberPagerState(
                     //fixme change tab here
-                    initialPage = 2,
+                    initialPage = 0,
                     initialPageOffsetFraction = 0F,
                     pageCount = { allTabs.size },
                 )
@@ -286,42 +321,35 @@ class TcpFragment : Fragment() {
                 AndroChatTheme {
                     if (state.showBottomSheet) {
                         ModalBottomSheet(
-                            sheetState = sheetState,
-                            onDismissRequest = {
+                            sheetState = sheetState, onDismissRequest = {
                                 viewModel.handleEvents(TcpScreenEvents.UpdateBottomSheetState(false))
-                            },
-                            windowInsets = WindowInsets(0, 0, 0, 0)
+                            }, windowInsets = WindowInsets(0, 0, 0, 0)
                         ) {
                             if (state.isReadContactsGranted) {
                                 viewModel.handleEvents(TcpScreenEvents.ReadContacts)
-                                ContactListContent(
-                                    contacts = state.contacts,
-                                    shareSelectedContacts = {}
-                                )
+                                ContactListContent(contacts = state.contacts,
+                                    shareSelectedContacts = {})
                             } else {
-                                Box(
-                                    modifier = Modifier
-                                        .height(300.dp)
-                                        .fillMaxWidth(),
+                                Box(modifier = Modifier
+                                    .height(300.dp)
+                                    .fillMaxWidth(),
                                     contentAlignment = Alignment.Center,
                                     content = {
-                                        Button(
-                                            onClick = {
-                                                readContactsPermissionLauncher.launch(
-                                                    Manifest.permission.READ_CONTACTS
-                                                )
-                                            }
-                                        ) {
+                                        Button(onClick = {
+                                            readContactsPermissionLauncher.launch(
+                                                Manifest.permission.READ_CONTACTS
+                                            )
+                                        }) {
                                             Text(text = "Give Permission")
                                         }
-                                    }
-                                )
+                                    })
                             }
                         }
                     }
                     if (state.shouldShowPermissionDialog) {
-                        PermissionDialog(
-                            isPermanentlyDeclined = !shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS),
+                        PermissionDialog(isPermanentlyDeclined = !shouldShowRequestPermissionRationale(
+                            Manifest.permission.READ_CONTACTS
+                        ),
                             onDismiss = { viewModel.updateShowPermissionRequestState(false) },
                             onOkClick = {
                                 readContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
@@ -330,29 +358,26 @@ class TcpFragment : Fragment() {
                             onGoToAppSettingsClick = {
                                 openAppSettings()
                                 viewModel.updateShowPermissionRequestState(false)
-                            }
-                        )
+                            })
                     }
 
-                    TcpScreen(
-                        state = state,
+                    TcpScreen(state = state,
                         //try to use pass lambda like this, this will help to avoid extra recomposition
                         eventHandler = viewModel::handleEvents,
                         allTabs = allTabs,
                         pagerState = pagerState,
-                        onTabChanged = { handleTabSelected(it) }
-                    )
+                        onTabChanged = { handleTabSelected(it) })
                 }
             }
         }
     }
 
+    //3-fragment lifecycle callback
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.screenNavigation.executeWithLifecycle(
-            lifecycle = viewLifecycleOwner.lifecycle,
-            action = ::executeNavigation
+            lifecycle = viewLifecycleOwner.lifecycle, action = ::executeNavigation
         )
     }
 
@@ -391,32 +416,28 @@ class TcpFragment : Fragment() {
     private fun createGroup() {
         viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.LaunchingHotspot)
         val config = getConfiguration()
-        val listener =
-            object : WifiP2pManager.ActionListener {
-                override fun onSuccess() {
-                    log("New network created")
-                    viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.HotspotRunning)
-                }
-
-                override fun onFailure(reason: Int) {
-                    val r = Reason.parseReason(reason)
-                    log("Unable to create Wifi Direct Group - ${r.displayReason}")
-                    //todo - show dialog error message with corresponding reason
-                    viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Failure)
-                }
+        val listener = object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                log("New network created")
+                viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.HotspotRunning)
             }
+
+            override fun onFailure(reason: Int) {
+                val r = Reason.parseReason(reason)
+                log("Unable to create Wifi Direct Group - ${r.displayReason}")
+                //todo - show dialog error message with corresponding reason
+                viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Failure)
+            }
+        }
         if (config != null) {
             log("Creating group")
             wifiP2PManager.createGroup(
-                channel,
-                getConfiguration(),
-                listener
+                channel, getConfiguration(), listener
             )
         } else {
             log("Creating group1")
             wifiP2PManager.createGroup(
-                channel,
-                listener
+                channel, listener
             )
         }
     }
@@ -437,11 +458,8 @@ class TcpFragment : Fragment() {
         //here you have to return preferred wifi band like 2,4hz or 5hz
         //val band = getPreferredBand()
         val band = WifiP2pConfig.GROUP_OWNER_BAND_2GHZ
-        return WifiP2pConfig.Builder()
-            .setNetworkName(ssid)
-            .setPassphrase(passwd)
-            .setGroupOperatingBand(band)
-            .build()
+        return WifiP2pConfig.Builder().setNetworkName(ssid).setPassphrase(passwd)
+            .setGroupOperatingBand(band).build()
     }
 
     private fun stopHotspotNetworking() {
@@ -453,39 +471,34 @@ class TcpFragment : Fragment() {
             connectedClientSocketOnServer.close()
         }
 
-        wifiP2PManager.removeGroup(
-            channel,
-            object : WifiP2pManager.ActionListener {
-                override fun onSuccess() {
-                    log("Wifi P2P Channel is removed")
-                    viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Idle)
-                }
-
-                override fun onFailure(reason: Int) {
-                    val r = Reason.parseReason(reason)
-                    log("Failed to stop network: ${r.displayReason}")
-                }
+        wifiP2PManager.removeGroup(channel, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                log("Wifi P2P Channel is removed")
+                viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Idle)
             }
-        )
+
+            override fun onFailure(reason: Int) {
+                val r = Reason.parseReason(reason)
+                log("Failed to stop network: ${r.displayReason}")
+            }
+        })
     }
 
     private fun stopPeerDiscovery() {
-        val listener =
-            object : WifiP2pManager.ActionListener {
-                override fun onSuccess() {
-                    log("Wifi P2P Discovery is stopped")
-                    viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Idle)
-                    viewModel.clearPeersList()
-                }
-
-                override fun onFailure(reason: Int) {
-                    val r = Reason.parseReason(reason)
-                    log("Failed to stop p2p discovery: ${r.displayReason}")
-                }
+        val listener = object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                log("Wifi P2P Discovery is stopped")
+                viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Idle)
+                viewModel.clearPeersList()
             }
+
+            override fun onFailure(reason: Int) {
+                val r = Reason.parseReason(reason)
+                log("Failed to stop p2p discovery: ${r.displayReason}")
+            }
+        }
         wifiP2PManager.stopPeerDiscovery(
-            channel,
-            listener
+            channel, listener
         )
     }
 
@@ -517,11 +530,12 @@ class TcpFragment : Fragment() {
                 findNavController().navigate(R.id.action_tcpFragment_to_settingsFragment)
             }
 
-            TcpScreenNavigation.ShowFileChooserClick ->{
+            TcpScreenNavigation.ShowFileChooserClick -> {
                 showFileChooser()
             }
 
             is TcpScreenNavigation.OnCreateServerClick -> {
+                log("create Server - " + viewModel.state.value.groupOwnerAddress)
                 CoroutineScope(Dispatchers.Default).launch {
                     createServer(serverPort = navigation.portNumber)
                 }
@@ -559,9 +573,7 @@ class TcpFragment : Fragment() {
 
             is TcpScreenNavigation.OnErrorsOccurred -> {
                 Toast.makeText(
-                    requireContext(),
-                    navigation.tcpScreenErrors.errorMessage,
-                    Toast.LENGTH_SHORT
+                    requireContext(), navigation.tcpScreenErrors.errorMessage, Toast.LENGTH_SHORT
                 ).show()
             }
 
@@ -581,8 +593,8 @@ class TcpFragment : Fragment() {
                 lifecycleScope.launch {
                     if (permissionGuard.canCreateNetwork()) {
 
-                        wifiP2PManager.discoverPeers(
-                            channel, object : WifiP2pManager.ActionListener {
+                        wifiP2PManager.discoverPeers(channel,
+                            object : WifiP2pManager.ActionListener {
                                 override fun onSuccess() {
                                     Log.d("ahi3646", "onSuccess: discover ")
                                     viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
@@ -595,8 +607,7 @@ class TcpFragment : Fragment() {
                                     viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Failure)
                                 }
 
-                            }
-                        )
+                            })
                     } else {
                         log("Permissions not granted!")
                         locationPermissionRequest.launch(
@@ -605,7 +616,6 @@ class TcpFragment : Fragment() {
                     }
                 }
             }
-
         }
     }
 
@@ -616,141 +626,510 @@ class TcpFragment : Fragment() {
             deviceAddress = wifiP2pDevice.deviceAddress
             wps.setup = WpsInfo.PBC
         }
-        wifiP2PManager.connect(
-            channel,
-            config,
-            object : WifiP2pManager.ActionListener {
-                override fun onSuccess() {
-                    // WiFiDirectBroadcastReceiver notifies us. Ignore for now
-                    Log.d("ahi3646", "success: connected to wifi - ${wifiP2pDevice.deviceAddress}")
-                }
-
-                override fun onFailure(reason: Int) {
-                    Log.d("ahi3646", "failure: failure on wifi connection ")
-                    viewModel.emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.FailedToConnectToWifiDevice))
-                }
+        wifiP2PManager.connect(channel, config, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                // WiFiDirectBroadcastReceiver notifies us. Ignore for now
+                Log.d("ahi3646", "success: connected to wifi - ${wifiP2pDevice.deviceAddress}")
             }
-        )
+
+            override fun onFailure(reason: Int) {
+                Log.d("ahi3646", "failure: failure on wifi connection ")
+                viewModel.emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.FailedToConnectToWifiDevice))
+            }
+        })
+    }
+
+
+    private fun receiveFile(fileName: String, dataInputStream: DataInputStream) {
+        log("receiving file ...")
+        val downloadsDirectory =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        //val fileName = "example.txt"
+        val file = File(downloadsDirectory, fileName)
+        val fileOutputStream = FileOutputStream(file)
+
+
+//        val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
+//        val fileOutputStream = FileOutputStream(file)
+
+        var size: Long = dataInputStream.readLong() // read file size
+        log("file length - $size")
+
+//        val content = "Hello, World!"
+//        fileOutputStream.write(content.toByteArray())
+//        fileOutputStream.close()
+
+        var bytesRead = 0
+        val buffer = ByteArray(4 * 1024)
+        while (size > 0 && (dataInputStream.read(
+                buffer,
+                0,
+                min(buffer.size.toDouble(), size.toDouble()).toInt()
+            ).also { bytesRead = it }) != -1
+        ) {
+            fileOutputStream.write(buffer, 0, bytesRead)
+            size -= bytesRead.toLong() // read upto file size
+        }
+        fileOutputStream.close()
+        log("file received successfully")
+    }
+
+    // sendFile function define here
+    private fun sendFile(path: Uri, writer: DataOutputStream, fileName: String) {
+        log("sending file ...")
+        log("filename - $fileName, filepath - $path")
+
+        val type = AppMessageType.FILE.identifier
+
+        // Here we send the File to Server
+        writer.writeChar(type.code)
+
+        val inputStream = requireContext().contentResolver.openInputStream(path)
+        val filePathToSave =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val file = File(filePathToSave, fileName)
+        val fileOutputStream = FileOutputStream(file)
+        inputStream?.copyTo(fileOutputStream)
+        fileOutputStream.close()
+
+
+        //write length
+        writer.writeLong(file.length())
+        log("sending file length - ${file.length()}")
+
+        var bytes: Int
+        // Open the File where he located in your pc
+        val fileInputStream = FileInputStream(file)
+
+        // Here we send the file length to Server
+        writer.writeLong(file.length())
+        // Here we  break file into chunks
+        val buffer = ByteArray(4 * 1024)
+        while ((fileInputStream.read(buffer).also { bytes = it })
+            != -1
+        ) {
+            // Send the file to Server Socket
+            writer.write(buffer, 0, bytes)
+            writer.flush()
+        }
+        // close the file here
+        fileInputStream.close()
+
+        log("file sent successfully")
     }
 
     private suspend fun createServer(serverPort: Int) {
-        log("creating server")
+        log("creating server".uppercase())
         viewModel.updateHostConnectionStatus(HostConnectionStatus.Creating)
 
         withContext(Dispatchers.IO) {
-            try {
-                serverSocket = ServerSocket(serverPort)
-                log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
-                if (serverSocket.isBound) {
-                    viewModel.updateHostConnectionStatus(HostConnectionStatus.Created)
-                    viewModel.updateConnectionsCount(true)
-                }
-                while (!serverSocket.isClosed) {
-                    connectedClientSocketOnServer = serverSocket.accept()
-                    Log.d("ahi3646", "New client : $connectedClientSocketOnServer ")
-                    viewModel.updateConnectionsCount(true)
-                    while (!connectedClientSocketOnServer.isClosed) {
-                        val reader = DataInputStream(connectedClientSocketOnServer.getInputStream())
-                        try {
-                            val inputData = reader.readUTF()
-                            val message = gson.fromJson(
-                                inputData,
-                                Message::class.java
-                            ) //todo use inputData.toMessage(gson)
-                            viewModel.insertMessage(message)
-                            Log.d("ahi3646", "createServer: $message ")
-                        } catch (e: EOFException) {
-                            //if the IP address of the host could not be determined.
-                            Log.d("ahi3646", "createServer: EOFException")
-                            connectedClientSocketOnServer.close()
-                            viewModel.updateConnectionsCount(false)
-                            log("in while - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
-                            viewModel.handleEvents(
-                                TcpScreenEvents.OnDialogErrorOccurred(
-                                    TcpScreenDialogErrors.EOException
-                                )
-                            )
-
-                            //HERE IS THE POINT !!!
-                            try {
-                                reader.close()
-                            } catch (e: IOException) {
-                                e.printStackTrace()
-                            }
-                        } catch (e: IOException) {
-                            //the stream has been closed and the contained
-                            // input stream does not support reading after close,
-                            // or another I/O error occurs
-                            Log.d("ahi3646", "createServer: io exception ")
-                            viewModel.handleEvents(
-                                TcpScreenEvents.OnDialogErrorOccurred(
-                                    TcpScreenDialogErrors.IOException
-                                )
-                            )
-                            viewModel.updateConnectionsCount(false)
-                            connectedClientSocketOnServer.close()
-                            //serverSocket.close()
-                            try {
-                                reader.close()
-                            } catch (e: IOException) {
-                                e.printStackTrace()
-                                log("reader close exception - $e ")
-                            }
-                        } catch (e: UTFDataFormatException) {
-                            //if the bytes do not represent a valid modified UTF-8 encoding of a string.
-                            Log.d("ahi3646", "createServer: io exception ")
-                            viewModel.handleEvents(
-                                TcpScreenEvents.OnDialogErrorOccurred(
-                                    TcpScreenDialogErrors.UTFDataFormatException
-                                )
-                            )
-                            viewModel.updateConnectionsCount(false)
-                            connectedClientSocketOnServer.close()
-                            //serverSocket.close()
-                            try {
-                                reader.close()
-                            } catch (e: IOException) {
-                                e.printStackTrace()
-                            }
-                        }
-                    }
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-                try {
-                    viewModel.updateConnectionsCount(false)
-                } catch (ex: IOException) {
-                    ex.printStackTrace()
-                }
-                serverSocket.close()
-                //change server title status
-                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-
-            } catch (e: SecurityException) {
-                try {
-                    viewModel.updateConnectionsCount(false)
-                } catch (ex: IOException) {
-                    ex.printStackTrace()
-                }
-                serverSocket.close()
-                //change server title status
-                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-
-                //if a security manager exists and its checkConnect method doesn't allow the operation.
-                Log.d("ahi3646", "createServer: SecurityException ")
-            } catch (e: IllegalArgumentException) {
-                try {
-                    viewModel.updateConnectionsCount(false)
-                } catch (ex: IOException) {
-                    ex.printStackTrace()
-                }
-                serverSocket.close()
-                //change server title status
-                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-
-                //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
-                Log.d("ahi3646", "createServer: IllegalArgumentException ")
+            serverSocket = ServerSocket(serverPort)
+            log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
+            if (serverSocket.isBound) {
+                viewModel.updateHostConnectionStatus(HostConnectionStatus.Created)
+                viewModel.updateConnectionsCount(true)
             }
+            while (!serverSocket.isClosed) {
+
+                connectedClientSocketOnServer = serverSocket.accept()
+                Log.d("ahi3646", "New client : $connectedClientSocketOnServer ")
+                viewModel.updateConnectionsCount(true)
+
+                while (!connectedClientSocketOnServer.isClosed) {
+                    //reading incoming messages ...
+                    val reader =
+                        DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
+
+                    val dataType = AppMessageType.fromChar(reader.readChar())
+                    log("incoming message type - $dataType")
+
+                    when (dataType) {
+                        AppMessageType.INITIAL -> {
+
+                        }
+
+                        AppMessageType.TEXT -> {
+                            val length = reader.readInt()
+                            val messageByte = ByteArray(length)
+                            var end = false
+                            val dataString = java.lang.StringBuilder(length)
+                            var totalBytesRead = 0
+                            while (!end) {
+                                val currentBytesRead: Int = reader.read(messageByte)
+                                totalBytesRead += currentBytesRead
+                                if (totalBytesRead <= length) {
+                                    dataString.append(
+                                        String(
+                                            messageByte,
+                                            0,
+                                            currentBytesRead,
+                                            StandardCharsets.UTF_8
+                                        )
+                                    )
+                                } else {
+                                    dataString.append(
+                                        String(
+                                            messageByte,
+                                            0,
+                                            length - totalBytesRead + currentBytesRead,
+                                            StandardCharsets.UTF_8
+                                        )
+                                    )
+                                }
+                                if (dataString.length >= length) {
+                                    end = true
+                                    log("host incoming message - $dataString")
+                                }
+                            }
+                            //                            val inputData = reader.readUTF()
+//                            val message = gson.fromJson(
+//                                inputData,
+//                                Message::class.java
+//                            )
+//                            viewModel.insertMessage(message)
+                        }
+
+                        AppMessageType.FILE -> {
+                            receiveFile(dataInputStream = reader, fileName = "test123.pdf")
+                        }
+
+                        AppMessageType.UNKNOWN -> {}
+                    }
+
+//                        try {
+//                            val dataType = AppMessageType.fromChar(reader.readChar())
+//                            log("incoming message type - $dataType")
+//
+//                            when (dataType) {
+//                                AppMessageType.INITIAL -> {
+//
+//                                }
+//
+//                                AppMessageType.TEXT -> {
+//                                    val length = reader.readInt()
+//                                    val messageByte = ByteArray(length)
+//                                    var end = false
+//                                    val dataString = java.lang.StringBuilder(length)
+//                                    var totalBytesRead = 0
+//                                    while (!end) {
+//                                        val currentBytesRead: Int = reader.read(messageByte)
+//                                        totalBytesRead += currentBytesRead
+//                                        if (totalBytesRead <= length) {
+//                                            dataString.append(
+//                                                    String(
+//                                                        messageByte,
+//                                                        0,
+//                                                        currentBytesRead,
+//                                                        StandardCharsets.UTF_8
+//                                                    )
+//                                                )
+//                                        } else {
+//                                            dataString.append(
+//                                                    String(
+//                                                        messageByte,
+//                                                        0,
+//                                                        length - totalBytesRead + currentBytesRead,
+//                                                        StandardCharsets.UTF_8
+//                                                    )
+//                                                )
+//                                        }
+//                                        if (dataString.length >= length) {
+//                                            end = true
+//                                            log("host incoming message - $dataString")
+//                                        }
+//                                    }
+//                                    //                            val inputData = reader.readUTF()
+////                            val message = gson.fromJson(
+////                                inputData,
+////                                Message::class.java
+////                            )
+////                            viewModel.insertMessage(message)
+//                                }
+//
+//                                AppMessageType.FILE -> {
+//                                    receiveFile(dataInputStream = reader, fileName = "4228.pdf")
+//                                }
+//
+//                                AppMessageType.UNKNOWN -> {}
+//                            }
+//                        } catch (e: EOFException) {
+//                            //if the IP address of the host could not be determined.
+//                            Log.d("ahi3646", "createServer: EOFException")
+//                            connectedClientSocketOnServer.close()
+//                            viewModel.updateConnectionsCount(false)
+//                            log("in while - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
+//                            viewModel.handleEvents(
+//                                TcpScreenEvents.OnDialogErrorOccurred(
+//                                    TcpScreenDialogErrors.EOException
+//                                )
+//                            )
+//                            //HERE IS THE POINT !!!
+//                            try {
+//                                reader.close()
+//                            } catch (e: IOException) {
+//                                e.printStackTrace()
+//                            }
+//                        } catch (e: IOException) {
+//                            //the stream has been closed and the contained
+//                            // input stream does not support reading after close,
+//                            // or another I/O error occurs
+//                            Log.d("ahi3646", "createServer: io exception ")
+//                            viewModel.handleEvents(
+//                                TcpScreenEvents.OnDialogErrorOccurred(
+//                                    TcpScreenDialogErrors.IOException
+//                                )
+//                            )
+//                            viewModel.updateConnectionsCount(false)
+//                            connectedClientSocketOnServer.close()
+//                            //serverSocket.close()
+//                            try {
+//                                reader.close()
+//                            } catch (e: IOException) {
+//                                e.printStackTrace()
+//                                log("reader close exception - $e ")
+//                            }
+//                        } catch (e: UTFDataFormatException) {
+//                            /** here is firing***/
+//                            //if the bytes do not represent a valid modified UTF-8 encoding of a string.
+//                            Log.d("ahi3646", "createServer: io exception ")
+//                            viewModel.handleEvents(
+//                                TcpScreenEvents.OnDialogErrorOccurred(
+//                                    TcpScreenDialogErrors.UTFDataFormatException
+//                                )
+//                            )
+//                            viewModel.updateConnectionsCount(false)
+//                            connectedClientSocketOnServer.close()
+//                            //serverSocket.close()
+//                            try {
+//                                reader.close()
+//                            } catch (e: IOException) {
+//                                e.printStackTrace()
+//                            }
+//                        }
+                }
+            }
+//            try {
+//                serverSocket = ServerSocket(serverPort)
+//                log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
+//                if (serverSocket.isBound) {
+//                    viewModel.updateHostConnectionStatus(HostConnectionStatus.Created)
+//                    viewModel.updateConnectionsCount(true)
+//                }
+//                while (!serverSocket.isClosed) {
+//
+//                    connectedClientSocketOnServer = serverSocket.accept()
+//                    Log.d("ahi3646", "New client : $connectedClientSocketOnServer ")
+//                    viewModel.updateConnectionsCount(true)
+//
+//                    while (!connectedClientSocketOnServer.isClosed) {
+//                        //reading incoming messages ...
+//                        val reader =
+//                            DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
+//
+//                        val dataType = AppMessageType.fromChar(reader.readChar())
+//                        log("incoming message type - $dataType")
+//
+//                        when (dataType) {
+//                            AppMessageType.INITIAL -> {
+//
+//                            }
+//
+//                            AppMessageType.TEXT -> {
+//                                val length = reader.readInt()
+//                                val messageByte = ByteArray(length)
+//                                var end = false
+//                                val dataString = java.lang.StringBuilder(length)
+//                                var totalBytesRead = 0
+//                                while (!end) {
+//                                    val currentBytesRead: Int = reader.read(messageByte)
+//                                    totalBytesRead += currentBytesRead
+//                                    if (totalBytesRead <= length) {
+//                                        dataString.append(
+//                                            String(
+//                                                messageByte,
+//                                                0,
+//                                                currentBytesRead,
+//                                                StandardCharsets.UTF_8
+//                                            )
+//                                        )
+//                                    } else {
+//                                        dataString.append(
+//                                            String(
+//                                                messageByte,
+//                                                0,
+//                                                length - totalBytesRead + currentBytesRead,
+//                                                StandardCharsets.UTF_8
+//                                            )
+//                                        )
+//                                    }
+//                                    if (dataString.length >= length) {
+//                                        end = true
+//                                        log("host incoming message - $dataString")
+//                                    }
+//                                }
+//                                //                            val inputData = reader.readUTF()
+////                            val message = gson.fromJson(
+////                                inputData,
+////                                Message::class.java
+////                            )
+////                            viewModel.insertMessage(message)
+//                            }
+//
+//                            AppMessageType.FILE -> {
+//                                receiveFile(dataInputStream = reader, fileName = "4228.pdf")
+//                            }
+//
+//                            AppMessageType.UNKNOWN -> {}
+//                        }
+//
+////                        try {
+////                            val dataType = AppMessageType.fromChar(reader.readChar())
+////                            log("incoming message type - $dataType")
+////
+////                            when (dataType) {
+////                                AppMessageType.INITIAL -> {
+////
+////                                }
+////
+////                                AppMessageType.TEXT -> {
+////                                    val length = reader.readInt()
+////                                    val messageByte = ByteArray(length)
+////                                    var end = false
+////                                    val dataString = java.lang.StringBuilder(length)
+////                                    var totalBytesRead = 0
+////                                    while (!end) {
+////                                        val currentBytesRead: Int = reader.read(messageByte)
+////                                        totalBytesRead += currentBytesRead
+////                                        if (totalBytesRead <= length) {
+////                                            dataString.append(
+////                                                    String(
+////                                                        messageByte,
+////                                                        0,
+////                                                        currentBytesRead,
+////                                                        StandardCharsets.UTF_8
+////                                                    )
+////                                                )
+////                                        } else {
+////                                            dataString.append(
+////                                                    String(
+////                                                        messageByte,
+////                                                        0,
+////                                                        length - totalBytesRead + currentBytesRead,
+////                                                        StandardCharsets.UTF_8
+////                                                    )
+////                                                )
+////                                        }
+////                                        if (dataString.length >= length) {
+////                                            end = true
+////                                            log("host incoming message - $dataString")
+////                                        }
+////                                    }
+////                                    //                            val inputData = reader.readUTF()
+//////                            val message = gson.fromJson(
+//////                                inputData,
+//////                                Message::class.java
+//////                            )
+//////                            viewModel.insertMessage(message)
+////                                }
+////
+////                                AppMessageType.FILE -> {
+////                                    receiveFile(dataInputStream = reader, fileName = "4228.pdf")
+////                                }
+////
+////                                AppMessageType.UNKNOWN -> {}
+////                            }
+////                        } catch (e: EOFException) {
+////                            //if the IP address of the host could not be determined.
+////                            Log.d("ahi3646", "createServer: EOFException")
+////                            connectedClientSocketOnServer.close()
+////                            viewModel.updateConnectionsCount(false)
+////                            log("in while - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
+////                            viewModel.handleEvents(
+////                                TcpScreenEvents.OnDialogErrorOccurred(
+////                                    TcpScreenDialogErrors.EOException
+////                                )
+////                            )
+////                            //HERE IS THE POINT !!!
+////                            try {
+////                                reader.close()
+////                            } catch (e: IOException) {
+////                                e.printStackTrace()
+////                            }
+////                        } catch (e: IOException) {
+////                            //the stream has been closed and the contained
+////                            // input stream does not support reading after close,
+////                            // or another I/O error occurs
+////                            Log.d("ahi3646", "createServer: io exception ")
+////                            viewModel.handleEvents(
+////                                TcpScreenEvents.OnDialogErrorOccurred(
+////                                    TcpScreenDialogErrors.IOException
+////                                )
+////                            )
+////                            viewModel.updateConnectionsCount(false)
+////                            connectedClientSocketOnServer.close()
+////                            //serverSocket.close()
+////                            try {
+////                                reader.close()
+////                            } catch (e: IOException) {
+////                                e.printStackTrace()
+////                                log("reader close exception - $e ")
+////                            }
+////                        } catch (e: UTFDataFormatException) {
+////                            /** here is firing***/
+////                            //if the bytes do not represent a valid modified UTF-8 encoding of a string.
+////                            Log.d("ahi3646", "createServer: io exception ")
+////                            viewModel.handleEvents(
+////                                TcpScreenEvents.OnDialogErrorOccurred(
+////                                    TcpScreenDialogErrors.UTFDataFormatException
+////                                )
+////                            )
+////                            viewModel.updateConnectionsCount(false)
+////                            connectedClientSocketOnServer.close()
+////                            //serverSocket.close()
+////                            try {
+////                                reader.close()
+////                            } catch (e: IOException) {
+////                                e.printStackTrace()
+////                            }
+////                        }
+//                    }
+//                }
+//            } catch (e: IOException) {
+//                e.printStackTrace()
+//                try {
+//                    viewModel.updateConnectionsCount(false)
+//                } catch (ex: IOException) {
+//                    ex.printStackTrace()
+//                }
+//                serverSocket.close()
+//                //change server title status
+//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+//
+//            } catch (e: SecurityException) {
+//                try {
+//                    viewModel.updateConnectionsCount(false)
+//                } catch (ex: IOException) {
+//                    ex.printStackTrace()
+//                }
+//                serverSocket.close()
+//                //change server title status
+//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+//
+//                //if a security manager exists and its checkConnect method doesn't allow the operation.
+//                Log.d("ahi3646", "createServer: SecurityException ")
+//            } catch (e: IllegalArgumentException) {
+//                try {
+//                    viewModel.updateConnectionsCount(false)
+//                } catch (ex: IOException) {
+//                    ex.printStackTrace()
+//                }
+//                serverSocket.close()
+//                //change server title status
+//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+//
+//                //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
+//                Log.d("ahi3646", "createServer: IllegalArgumentException ")
+//            }
         }
     }
 
@@ -768,13 +1147,57 @@ class TcpFragment : Fragment() {
             //received outcome messages here
             while (!clientSocket.isClosed) {
                 log("while client socket is running")
-                val reader = DataInputStream(clientSocket.getInputStream())
+                val reader = DataInputStream(BufferedInputStream(clientSocket.getInputStream()))
+
                 try {
-                    log("client while input reading try")
-                    val inputData = reader.readUTF()
-                    val message = gson.fromJson(inputData, Message::class.java)
-                    viewModel.insertMessage(message)
-                    Log.d("ahi3646", "connectToServer: inputData - $inputData ")
+                    log("reading data client in try")
+                    val dataType = AppMessageType.fromChar(reader.readChar())
+                    log("incoming message type - $dataType")
+                    val length = reader.readInt()
+
+                    when (dataType) {
+                        AppMessageType.INITIAL -> {}
+                        AppMessageType.TEXT -> {
+                            val messageByte = ByteArray(length)
+                            var end = false
+                            val dataString = java.lang.StringBuilder(length)
+                            var totalBytesRead = 0
+                            while (!end) {
+                                val currentBytesRead: Int = reader.read(messageByte)
+                                totalBytesRead += currentBytesRead
+                                if (totalBytesRead <= length) {
+                                    dataString.append(
+                                        String(
+                                            messageByte,
+                                            0,
+                                            currentBytesRead,
+                                            StandardCharsets.UTF_8
+                                        )
+                                    )
+                                } else {
+                                    dataString.append(
+                                        String(
+                                            messageByte,
+                                            0,
+                                            length - totalBytesRead + currentBytesRead,
+                                            StandardCharsets.UTF_8
+                                        )
+                                    )
+                                }
+                                if (dataString.length >= length) {
+                                    end = true
+                                    log("client incoming message - $dataString")
+                                }
+                            }
+                            //                    val inputData = reader.readUTF()
+//                    val message = gson.fromJson(inputData, Message::class.java)
+//                    viewModel.insertMessage(message)
+//                    Log.d("ahi3646", "connectToServer: inputData - $inputData ")
+                        }
+
+                        AppMessageType.FILE -> {}
+                        AppMessageType.UNKNOWN -> {}
+                    }
                 } catch (e: EOFException) {
                     //if the IP address of the host could not be determined.
                     Log.d("ahi3646", "connectToServer: EOFException ")
@@ -821,13 +1244,13 @@ class TcpFragment : Fragment() {
                 }
             }
         } catch (exception: UnknownHostException) {
+            log("unknown host exception".uppercase())
             try {
                 //todo change connection status here
                 viewModel.updateConnectionsCount(false)
             } catch (ex: IOException) {
                 ex.printStackTrace()
             }
-            Log.d("ahi3646", "connectToServer: UnknownHostException ")
             viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.UnknownHostException))
         } catch (exception: IOException) {
             try {
@@ -836,7 +1259,7 @@ class TcpFragment : Fragment() {
                 ex.printStackTrace()
             }
             //could not connect to a server
-            Log.d("ahi3646", "connectToServer: IOException ")
+            log("connectToServer: IOException ".uppercase())
             viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.IOException))
         } catch (e: SecurityException) {
             try {
@@ -846,7 +1269,7 @@ class TcpFragment : Fragment() {
                 ex.printStackTrace()
             }
             //if a security manager exists and its checkConnect method doesn't allow the operation.
-            Log.d("ahi3646", "connectToServer: SecurityException ")
+            log("connectToServer: SecurityException".uppercase())
         } catch (e: IllegalArgumentException) {
             try {
                 //todo change connection status here
@@ -855,97 +1278,186 @@ class TcpFragment : Fragment() {
                 ex.printStackTrace()
             }
             //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
-            Log.d("ahi3646", "connectToServer: IllegalArgumentException ")
+            log("connectToServer: IllegalArgumentException".uppercase())
         }
 
     }
 
     private fun sendClientMessage(message: Message) {
+        log("*** sending messages from client *** - message - $message".uppercase())
+
         if (!clientSocket.isClosed) {
             val writer = DataOutputStream(clientSocket.getOutputStream())
 
-            val messageStringForms = gson.toJson(message)
-            Log.d("ahi3646", "sendMessage: $messageStringForms ")
+            when (message) {
+                is Message.TextMessage -> {
+                    log("sending text message from client - $message")
 
-            try {
-                writer.writeUTF(messageStringForms)
-                writer.flush()
-                viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
-            } catch (exception: IOException) {
-                Log.d("ahi3646", "sendMessage: io exception ")
-                viewModel.handleEvents(
-                    TcpScreenEvents.OnDialogErrorOccurred(
-                        TcpScreenDialogErrors.IOException
-                    )
-                )
-                try {
-                    Log.d(
-                        "ahi3646",
-                        "sendMessage client: dataOutputStream is closed io exception "
-                    )
-                    writer.close()
-                } catch (ex: IOException) {
-                    ex.printStackTrace()
+                    val type = AppMessageType.TEXT.identifier
+                    val data = message.message
+                    val dataInBytes = data.toByteArray(StandardCharsets.UTF_8)
+
+                    try {
+                        writer.writeChar(type.code)
+                        writer.writeInt(dataInBytes.size)
+                        writer.write(dataInBytes)
+                    } catch (e: IOException) {
+                        Log.d(
+                            "ahi3646",
+                            "sendMessage server: dataOutputStream is closed io exception "
+                        )
+                        viewModel.handleEvents(
+                            TcpScreenEvents.OnDialogErrorOccurred(
+                                TcpScreenDialogErrors.IOException
+                            )
+                        )
+                        try {
+                            writer.close()
+                        } catch (ex: IOException) {
+                            ex.printStackTrace()
+                        }
+                    }
+
+//                    val messageStringForms = gson.toJson(message)
+//                    Log.d("ahi3646", "sending text message : $messageStringForms ")
+//
+//                    try {
+//                        writer.writeUTF(messageStringForms)
+//                        writer.flush()
+//                        viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
+//                    } catch (exception: IOException) {
+//                        Log.d("ahi3646", "sending text message: io exception ")
+//                        viewModel.handleEvents(
+//                            TcpScreenEvents.OnDialogErrorOccurred(
+//                                TcpScreenDialogErrors.IOException
+//                            )
+//                        )
+//                        try {
+//                            writer.close()
+//                        } catch (ex: IOException) {
+//                            ex.printStackTrace()
+//                        }
+//                    }
+                }
+
+                is Message.FileMessage -> {
+                    log("sending file message - $message")
+                    lifecycleScope.launch(Dispatchers.IO) {
+//                        sendFile(
+//                            writer = writer,
+//                            fileName = message.filename,
+//                            filePath = message.filePath
+//                        )
+                        sendFile(
+                            writer = writer,
+                            path = message.filePath,
+                            fileName = message.filename
+                        )
+                    }
                 }
             }
         } else {
-            Log.d("ahi3646", "sendMessage: client socket is closed ")
+            Log.d("ahi3646", "send client message: client socket is closed ")
             viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
         }
     }
 
+    private fun sendHostMessage(message: Message) {
+        log("*** sending messages from owner *** - message - $message".uppercase())
+
+        if (!connectedClientSocketOnServer.isClosed) {
+            val writer = DataOutputStream(connectedClientSocketOnServer.getOutputStream())
+
+            when (message) {
+                is Message.TextMessage -> {
+                    log("sending text message from host - $message")
+
+                    val type = AppMessageType.TEXT.identifier
+                    val data = message.message
+                    val dataInBytes = data.toByteArray(StandardCharsets.UTF_8)
+
+                    try {
+                        writer.writeChar(type.code)
+                        writer.writeInt(dataInBytes.size)
+                        writer.write(dataInBytes)
+                    } catch (e: IOException) {
+                        Log.d(
+                            "ahi3646",
+                            "sendMessage server: dataOutputStream is closed io exception "
+                        )
+                        viewModel.handleEvents(
+                            TcpScreenEvents.OnDialogErrorOccurred(
+                                TcpScreenDialogErrors.IOException
+                            )
+                        )
+                        try {
+                            writer.close()
+                        } catch (ex: IOException) {
+                            ex.printStackTrace()
+                        }
+                    }
+
+//                    val messageStringForms = gson.toJson(message)
+//                    Log.d("ahi3646", "sending text message: $messageStringForms ")
+//
+//                    try {
+//                        writer.writeUTF(messageStringForms)
+//                        writer.flush()
+//                        viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
+//                    } catch (e: IOException) {
+//                        Log.d(
+//                            "ahi3646",
+//                            "sendMessage server: dataOutputStream is closed io exception "
+//                        )
+//                        viewModel.handleEvents(
+//                            TcpScreenEvents.OnDialogErrorOccurred(
+//                                TcpScreenDialogErrors.IOException
+//                            )
+//                        )
+//                        try {
+//                            writer.close()
+//                        } catch (ex: IOException) {
+//                            ex.printStackTrace()
+//                        }
+//                    }
+                }
+
+                is Message.FileMessage -> {
+                    log("sending file message - $message")
+                }
+            }
+        } else {
+            Log.d("ahi3646", "send host message: client socket is closed ")
+            viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
+        }
+    }
+
+    //5-fragment lifecycle callback
     override fun onStart() {
         super.onStart()
         viewModel.checkReadContactsPermission()
     }
 
-    private fun sendHostMessage(message: Message) {
-        log("in send message - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
-        if (!connectedClientSocketOnServer.isClosed) {
-            val writer = DataOutputStream(connectedClientSocketOnServer.getOutputStream())
-
-            val messageStringForms = gson.toJson(message)
-            Log.d("ahi3646", "sendMessage: $messageStringForms ")
-
-            try {
-                writer.writeUTF(messageStringForms)
-                writer.flush()
-                viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
-            } catch (e: IOException) {
-                viewModel.handleEvents(
-                    TcpScreenEvents.OnDialogErrorOccurred(
-                        TcpScreenDialogErrors.IOException
-                    )
-                )
-                try {
-                    Log.d(
-                        "ahi3646",
-                        "sendMessage server: dataOutputStream is closed io exception "
-                    )
-                    writer.close()
-                } catch (ex: IOException) {
-                    ex.printStackTrace()
-                }
-            }
-        } else {
-            Log.d("ahi3646", "sendMessage: client socket is closed ")
-            viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
-        }
-    }
-
+    //6-fragment lifecycle callback
     override fun onResume() {
         super.onResume()
-        receiver = WiFiDirectBroadcastReceiver(
-            wifiP2pManager = wifiP2PManager,
+        receiver = WiFiDirectBroadcastReceiver(wifiP2pManager = wifiP2PManager,
             channel = channel,
             peerListListener = peerListListener,
             networkEventHandler = { networkEvent ->
                 viewModel.handleNetworkEvents(networkEvent)
-            }
-        )
+            })
         requireActivity().registerReceiver(receiver, intentFilter)
     }
 
+    //7-fragment lifecycle callback
+    override fun onPause() {
+        super.onPause()
+        requireActivity().unregisterReceiver(receiver)
+    }
+
+
+    //8-fragment lifecycle callback
     override fun onDestroyView() {
         super.onDestroyView()
         if (::connectedClientSocketOnServer.isInitialized) {
@@ -957,11 +1469,6 @@ class TcpFragment : Fragment() {
         if (::clientSocket.isInitialized) {
             clientSocket.close()
         }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        requireActivity().unregisterReceiver(receiver)
     }
 
 }

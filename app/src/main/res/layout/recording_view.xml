@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<com.tougee.recorderview.AudioRecordView
+    android:id="@+id/record_view"
+    android:layout_width="64dp"
+    android:layout_height="wrap_content"
+    app:cancel_text="Cancel"
+    app:mic_active_icon="@drawable/mic_fill"
+    app:mic_hint_enable="true"
+    app:mic_hint_text="mic hint text"
+    app:mic_icon="@drawable/mic_fill"
+    app:slide_cancel_text="Slide To Cancel"
+    app:vibration_enable="true"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto" />

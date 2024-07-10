@@ -87,11 +87,6 @@ class WiFiDirectBroadcastReceiver(
     }
 
     private val connectionListener = WifiP2pManager.ConnectionInfoListener { info ->
-        // String from WifiP2pInfo struct
-        val groupOwnerAddress: String = info.groupOwnerAddress.hostAddress.orEmpty()
-       log( "groupOwnerAddress: $groupOwnerAddress ")
-        networkEventHandler(WiFiNetworkEvent.UpdateGroupOwnerAddress(groupOwnerAddress))
-
         // After the group negotiation, we can determine the group owner
         log("groupFormed : ${info.groupFormed}  isGroupOwner : ${info.isGroupOwner} ")
         if (info.groupFormed && info.isGroupOwner) {
@@ -99,14 +94,23 @@ class WiFiDirectBroadcastReceiver(
             // One common case is creating a group owner thread and accepting
             // incoming connections.
             log("connected as a host")
-            //todo
             networkEventHandler(WiFiNetworkEvent.ConnectionStatusChanged(GeneralConnectionStatus.ConnectedAsHost))
+
+            // String from WifiP2pInfo struct
+            val groupOwnerAddress: String = info.groupOwnerAddress.hostAddress.orEmpty()
+            log( "groupOwnerAddress: $groupOwnerAddress ")
+            networkEventHandler(WiFiNetworkEvent.UpdateGroupOwnerAddress(groupOwnerAddress))
         } else if (info.groupFormed) {
             // The other device acts as the peer (client). In this case,
             // you'll want to create a peer thread that connects
             // to the group owner.
             log("connected as a client")
             networkEventHandler(WiFiNetworkEvent.ConnectionStatusChanged(GeneralConnectionStatus.ConnectedAsClient))
+
+            // String from WifiP2pInfo struct
+            val groupOwnerAddress: String = info.groupOwnerAddress.hostAddress.orEmpty()
+            log( "groupOwnerAddress: $groupOwnerAddress ")
+            networkEventHandler(WiFiNetworkEvent.UpdateClientAddress(groupOwnerAddress))
         }
     }
 

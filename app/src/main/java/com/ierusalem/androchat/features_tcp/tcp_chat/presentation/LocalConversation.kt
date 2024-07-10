@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features.conversation.presentation.components.JumpToBottom
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
@@ -183,16 +184,23 @@ fun Messages(
                 Spacer(modifier = Modifier.height(32.dp))
             }
             itemsIndexed(messages) { index, message ->
-                val prevAuthor = messages.getOrNull(index - 1)?.username
-                val nextAuthor = messages.getOrNull(index + 1)?.username
-                val isFirstMessageByAuthor = prevAuthor != message.username
-                val isLastMessageByAuthor = nextAuthor != message.username
-                LocalMessageItem(
-                    msg = message,
-                    isUserMe = message.username == authorMe,
-                    isFirstMessageByAuthor = isFirstMessageByAuthor,
-                    isLastMessageByAuthor = isLastMessageByAuthor
-                )
+                when(message){
+                    is Message.TextMessage -> {
+                        val prevAuthor = messages.getOrNull(index - 1)?.username
+                        val nextAuthor = messages.getOrNull(index + 1)?.username
+                        val isFirstMessageByAuthor = prevAuthor != message.username
+                        val isLastMessageByAuthor = nextAuthor != message.username
+                        LocalMessageItem(
+                            msg = message,
+                            isUserMe = message.username == authorMe,
+                            isFirstMessageByAuthor = isFirstMessageByAuthor,
+                            isLastMessageByAuthor = isLastMessageByAuthor
+                        )
+                    }
+                    is Message.FileMessage -> {
+                        log("File message - ${message.filePath}".uppercase())
+                    }
+                }
             }
         }
         // Jump to bottom button shows up when user scrolls past a threshold.
@@ -227,7 +235,7 @@ private val ChatBubbleShape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
 
 @Composable
 fun LocalChatItemBubble(
-    message: Message,
+    message: Message.TextMessage,
     isUserMe: Boolean,
 ) {
 

@@ -34,7 +34,7 @@ import com.ierusalem.androchat.features.conversation.presentation.components.mes
 
 @Composable
 fun LocalMessageItem(
-    msg: Message,
+    msg: Message.TextMessage,
     isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean
@@ -53,7 +53,7 @@ fun LocalMessageItem(
                 modifier = Modifier
                     .clickable(
                         onClick = {
-//                            onAuthorClick(msg.author)
+                            //onAuthorClick(msg.author)
                         }
                     )
                     .padding(horizontal = 16.dp)
@@ -62,7 +62,7 @@ fun LocalMessageItem(
                     .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape)
                     .clip(CircleShape)
                     .align(Alignment.Top),
-//                painter = painterResource(id = msg.authorImage),
+                //painter = painterResource(id = msg.authorImage),
                 painter = painterResource(id = R.drawable.be_doer),
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
@@ -85,7 +85,7 @@ fun LocalMessageItem(
 
 @Composable
 fun AuthorAndTextMessage(
-    msg: Message,
+    msg: Message.TextMessage,
     isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
@@ -108,12 +108,12 @@ fun AuthorAndTextMessage(
 
 @Composable
 fun LocalClickableMessage(
-    message: Message,
+    message: Message.TextMessage,
     isUserMe: Boolean,
 ) {
 
     val styledMessage = messageFormatter(
-        text = message.text,
+        text = message.message,
         primary = isUserMe
     )
 
@@ -129,13 +129,13 @@ fun LocalClickableMessage(
 
 @Composable
 private fun AuthorNameTimestamp(
-    msg: Message,
+    message: Message.TextMessage,
     isUserMe: Boolean
 ) {
     // Combine author and timestamp for a11y.
     Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
-            text = if(isUserMe) stringResource(id = R.string.author_me) else msg.username,
+            text = if (isUserMe) stringResource(id = R.string.author_me) else message.username,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .alignBy(LastBaseline)
@@ -143,7 +143,7 @@ private fun AuthorNameTimestamp(
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = msg.formattedTime,
+            text = message.formattedTime,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.alignBy(LastBaseline),
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -156,8 +156,8 @@ private fun AuthorNameTimestamp(
 private fun PreviewMessage() {
     AndroChatTheme {
         LocalMessageItem(
-            msg = Message(
-                text = "Hello it is a text",
+            msg = Message.TextMessage(
+                message = ("Hello it is a text"),
                 formattedTime = "12:32",
                 username = "Owner"
             ),

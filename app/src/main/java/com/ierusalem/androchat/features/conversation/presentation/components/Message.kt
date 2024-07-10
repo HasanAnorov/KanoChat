@@ -32,7 +32,7 @@ import com.ierusalem.androchat.features.conversation.presentation.ChatItemBubble
 @Composable
 fun MessageItem(
     onAuthorClick: (String) -> Unit,
-    msg: Message,
+    message: Message.TextMessage,
     isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean
@@ -51,7 +51,7 @@ fun MessageItem(
                 modifier = Modifier
                     .clickable(
                         onClick = {
-//                            onAuthorClick(msg.author)
+                            //onAuthorClick(msg.author)
                         }
                     )
                     .padding(horizontal = 16.dp)
@@ -60,7 +60,7 @@ fun MessageItem(
                     .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape)
                     .clip(CircleShape)
                     .align(Alignment.Top),
-//                painter = painterResource(id = msg.authorImage),
+                //painter = painterResource(id = msg.authorImage),
                 painter = painterResource(id = R.drawable.be_doer),
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
@@ -70,7 +70,7 @@ fun MessageItem(
             Spacer(modifier = Modifier.width(74.dp))
         }
         AuthorAndTextMessage(
-            msg = msg,
+            message = message,
             isUserMe = isUserMe,
             isFirstMessageByAuthor = isFirstMessageByAuthor,
             isLastMessageByAuthor = isLastMessageByAuthor,
@@ -84,7 +84,7 @@ fun MessageItem(
 
 @Composable
 fun AuthorAndTextMessage(
-    msg: Message,
+    message: Message.TextMessage,
     isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
@@ -93,9 +93,14 @@ fun AuthorAndTextMessage(
 ) {
     Column(modifier = modifier) {
         if (isLastMessageByAuthor) {
-            AuthorNameTimestamp(msg)
+            AuthorNameTimestamp(message)
         }
-        ChatItemBubble(msg, isUserMe, authorClicked = authorClicked)
+
+        ChatItemBubble(
+            message,
+            isUserMe,
+            authorClicked = authorClicked
+        )
         if (isFirstMessageByAuthor) {
             // Last bubble before next author
             Spacer(modifier = Modifier.height(8.dp))
@@ -108,14 +113,12 @@ fun AuthorAndTextMessage(
 
 @Composable
 private fun AuthorNameTimestamp(
-//    msg: Message
-    msg: Message
+    message: Message.TextMessage
 ) {
     // Combine author and timestamp for a11y.
     Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
-//            text = msg.author,
-            text = msg.username,
+            text = message.username,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .alignBy(LastBaseline)
@@ -123,8 +126,7 @@ private fun AuthorNameTimestamp(
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-//            text = msg.timestamp,
-            text = msg.formattedTime,
+            text = message.formattedTime,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.alignBy(LastBaseline),
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -138,8 +140,8 @@ private fun PreviewMessage() {
     AndroChatTheme {
         MessageItem(
             onAuthorClick = {},
-            msg = Message(
-                text = "Hello it is a text",
+            message = Message.TextMessage(
+                message =("Hello it is a text"),
                 formattedTime = "12:32",
                 username = "Hasan"
             ),

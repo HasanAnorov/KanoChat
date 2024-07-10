@@ -5,12 +5,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -22,9 +16,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -32,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -44,40 +34,30 @@ import androidx.compose.material.icons.outlined.InsertPhoto
 import androidx.compose.material.icons.outlined.Mood
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
@@ -93,14 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features.conversation.presentation.components.RecordButton
-import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
-import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactListContent
-import kotlinx.coroutines.delay
-import kotlin.math.absoluteValue
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 enum class LocalInputSelector {
     NONE,
@@ -118,7 +91,7 @@ fun UserInputPreview() {
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LocalConversationUserInput(
     eventHandler: (TcpScreenEvents) -> Unit,
@@ -140,26 +113,72 @@ fun LocalConversationUserInput(
     // Used to decide if the keyboard should be shown
     var textFieldFocusState by remember { mutableStateOf(false) }
 
+    val isRecording by rememberSaveable {
+        mutableStateOf(false)
+    }
+
     Surface(
         tonalElevation = 2.dp,
         contentColor = MaterialTheme.colorScheme.secondary
     ) {
         Column(modifier = modifier) {
-            UserInputText(
-                textFieldValue = textState,
-                onTextChanged = { textState = it },
-                // Only show the keyboard if there's no input selector and text field has focus
-                keyboardShown = currentInputSelector == LocalInputSelector.NONE && textFieldFocusState,
-                // Close extended selector if text field receives focus
-                onTextFieldFocused = { focused ->
-                    if (focused) {
-                        currentInputSelector = LocalInputSelector.NONE
-                        resetScroll()
-                    }
-                    textFieldFocusState = focused
-                },
-                focusState = textFieldFocusState
-            )
+            Box(contentAlignment = Alignment.BottomStart) {
+//                AndroidView(
+//                    modifier = Modifier
+//                        .align(Alignment.CenterEnd)
+//                        .fillMaxWidth()
+//                        .background(MaterialTheme.colorScheme.surface),
+//                    factory = { context ->
+//                        val mContext = if (context is ViewComponentManager.FragmentContextWrapper)
+//                            context.baseContext
+//                        else
+//                            context
+//                        val parent = FrameLayout(context)
+//                        LayoutInflater.from(context).inflate(R.layout.recording_view, parent, false)
+//                            .apply {
+//                                val recordingView = findViewById<AudioRecordView>(R.id.record_view)
+//                                recordingView.apply {
+//                                    activity = (mContext as FragmentActivity)
+//                                    callback = object : AudioRecordView.Callback {
+//                                        override fun isReady(): Boolean = true
+//
+//                                        override fun onRecordCancel() {
+//                                            isRecording = false
+//                                        }
+//
+//                                        override fun onRecordEnd() {
+//                                            isRecording = false
+//                                        }
+//
+//                                        override fun onRecordStart() {
+//                                            isRecording = true
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                    },
+//                    update = {
+//
+//                    }
+//                )
+                if (!isRecording) {
+                    UserInputText(
+                        textFieldValue = textState,
+                        onTextChanged = { textState = it },
+                        // Only show the keyboard if there's no input selector and text field has focus
+                        keyboardShown = currentInputSelector == LocalInputSelector.NONE && textFieldFocusState,
+                        // Close extended selector if text field receives focus
+                        onTextFieldFocused = { focused ->
+                            if (focused) {
+                                currentInputSelector = LocalInputSelector.NONE
+                                resetScroll()
+                            }
+                            textFieldFocusState = focused
+                        },
+                        focusState = textFieldFocusState
+                    )
+                }
+            }
             UserInputSelector(
                 onSelectorChange = {
                     currentInputSelector = it
@@ -250,6 +269,7 @@ private fun SelectorExpanded(
             LocalInputSelector.PHONE -> {
                 onContactsClicked()
             }
+
             LocalInputSelector.FILE -> {
                 onFilesClicked()
             }
@@ -407,57 +427,23 @@ private fun UserInputText(
     onTextFieldFocused: (Boolean) -> Unit,
     focusState: Boolean
 ) {
-    val swipeOffset = remember { mutableFloatStateOf(0f) }
-    var isRecordingMessage by remember { mutableStateOf(false) }
     val a11ylabel = stringResource(id = R.string.textfield_desc)
-    Row(
-        modifier = Modifier
+    Box(
+        Modifier
             .fillMaxWidth()
-            .height(64.dp),
-        horizontalArrangement = Arrangement.End
+            .height(64.dp)
+            .padding(end = 64.dp)
     ) {
-        AnimatedContent(
-            targetState = isRecordingMessage,
-            label = "text-field",
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-        ) { recording ->
-            Box(Modifier.fillMaxSize()) {
-                if (recording) {
-                    RecordingIndicator { swipeOffset.floatValue }
-                } else {
-                    UserInputTextField(
-                        textFieldValue,
-                        onTextChanged,
-                        onTextFieldFocused,
-                        keyboardType,
-                        focusState,
-                        Modifier.semantics {
-                            contentDescription = a11ylabel
-                            keyboardShownProperty = keyboardShown
-                        }
-                    )
-                }
+        UserInputTextField(
+            textFieldValue,
+            onTextChanged,
+            onTextFieldFocused,
+            keyboardType,
+            focusState,
+            Modifier.semantics {
+                contentDescription = a11ylabel
+                keyboardShownProperty = keyboardShown
             }
-        }
-        RecordButton(
-            recording = isRecordingMessage,
-            swipeOffset = { swipeOffset.floatValue },
-            onSwipeOffsetChange = { offset -> swipeOffset.floatValue = offset },
-            onStartRecording = {
-                val consumed = !isRecordingMessage
-                isRecordingMessage = true
-                consumed
-            },
-            onFinishRecording = {
-                // handle end of recording
-                isRecordingMessage = false
-            },
-            onCancelRecording = {
-                isRecordingMessage = false
-            },
-            modifier = Modifier.fillMaxHeight()
         )
     }
 }
@@ -476,7 +462,8 @@ private fun BoxScope.UserInputTextField(
         value = textFieldValue,
         onValueChange = { onTextChanged(it) },
         modifier = modifier
-            .padding(start = 32.dp)
+            .fillMaxWidth()
+            .padding(start = 32.dp, end = 16.dp)
             .align(Alignment.CenterStart)
             .onFocusChanged { state ->
                 if (lastFocusState != state.isFocused) {
@@ -488,7 +475,7 @@ private fun BoxScope.UserInputTextField(
             keyboardType = keyboardType,
             imeAction = ImeAction.Send
         ),
-        maxLines = 1,
+        maxLines = 2,
         cursorBrush = SolidColor(LocalContentColor.current),
         textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current)
     )
@@ -506,69 +493,6 @@ private fun BoxScope.UserInputTextField(
     }
 }
 
-@Composable
-private fun RecordingIndicator(swipeOffset: () -> Float) {
-    var duration by remember { mutableStateOf(Duration.ZERO) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000)
-            duration += 1.seconds
-        }
-    }
-    Row(
-        Modifier.fillMaxSize(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-
-        val animatedPulse = infiniteTransition.animateFloat(
-            initialValue = 1f,
-            targetValue = 0.2f,
-            animationSpec = infiniteRepeatable(
-                tween(2000),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "pulse",
-        )
-        Box(
-            Modifier
-                .size(56.dp)
-                .padding(24.dp)
-                .graphicsLayer {
-                    scaleX = animatedPulse.value; scaleY = animatedPulse.value
-                }
-                .clip(CircleShape)
-                .background(Color.Red)
-        )
-        Text(
-            duration.toComponents { minutes, seconds, _ ->
-                val min = minutes.toString().padStart(2, '0')
-                val sec = seconds.toString().padStart(2, '0')
-                "$min:$sec"
-            },
-            Modifier.alignByBaseline()
-        )
-        Box(
-            Modifier
-                .fillMaxSize()
-                .alignByBaseline()
-                .clipToBounds()
-        ) {
-            val swipeThreshold = with(LocalDensity.current) { 200.dp.toPx() }
-            Text(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .graphicsLayer {
-                        translationX = swipeOffset() / 2
-                        alpha = 1 - (swipeOffset().absoluteValue / swipeThreshold)
-                    },
-                textAlign = TextAlign.Center,
-                text = stringResource(R.string.swipe_to_cancel_recording),
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
-    }
-}
 
 @Composable
 fun EmojiSelector(

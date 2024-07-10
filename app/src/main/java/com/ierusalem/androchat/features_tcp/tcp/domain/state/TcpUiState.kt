@@ -4,14 +4,13 @@ import android.net.wifi.p2p.WifiP2pDevice
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.core.utils.isValidPortNumber
+import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import java.util.UUID
 
 data class TcpScreenUiState(

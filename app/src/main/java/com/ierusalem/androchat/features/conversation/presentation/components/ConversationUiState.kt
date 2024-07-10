@@ -8,18 +8,18 @@ import com.ierusalem.androchat.R
 class ConversationUiState(
     val channelName: String,
     val channelMembers: Int,
-    initialMessages: List<Message>
+    initialMessages: List<OnlineMessageMessageModel>
 ) {
-    private val _messages: MutableList<Message> = initialMessages.toMutableStateList()
-    val messages: List<Message> = _messages
+    private val _messages: MutableList<OnlineMessageMessageModel> = initialMessages.toMutableStateList()
+    val messages: List<OnlineMessageMessageModel> = _messages
 
-    fun addMessage(msg: Message) {
+    fun addMessage(msg: OnlineMessageMessageModel) {
         _messages.add(0, msg) // Add to the beginning of the list
     }
 }
 
 @Immutable
-data class Message(
+data class OnlineMessageMessageModel(
     val author: String,
     val content: String,
     val timestamp: String,

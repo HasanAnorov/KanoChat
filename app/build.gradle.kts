@@ -17,7 +17,6 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -88,7 +87,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    //datastore used for multi language
+    //datastore used for preferences
     implementation (libs.androidx.datastore.preferences)
 
     //hilt
@@ -98,20 +97,13 @@ dependencies {
     //kotlin json serializer
     implementation(libs.kotlinx.serialization.json)
 
+    //recording view
+    implementation(libs.audiorecorderview)
+
     //gson
     implementation (libs.converter.gson)
 
     //image loading - coil
     implementation(libs.coil.compose)
 
-    //landscapist
-    implementation (libs.landscapist.glide)
-
-    // Ktor
-    implementation ("io.ktor:ktor-client-core:1.6.3")
-    implementation ("io.ktor:ktor-client-cio:1.6.3")
-    implementation ("io.ktor:ktor-client-serialization:1.6.3")
-    implementation ("io.ktor:ktor-client-websockets:1.6.3")
-    implementation ("io.ktor:ktor-client-logging:1.6.3")
-    implementation ("ch.qos.logback:logback-classic:1.4.14")
 }

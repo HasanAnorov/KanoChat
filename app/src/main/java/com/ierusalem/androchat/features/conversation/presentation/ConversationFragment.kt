@@ -40,11 +40,6 @@ class ConversationFragment : Fragment() {
         }
     }
 
-    override fun onDetach() {
-        super.onDetach()
-        viewModel.disconnect()
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
