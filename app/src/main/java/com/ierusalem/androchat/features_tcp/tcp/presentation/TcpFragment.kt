@@ -53,6 +53,7 @@ import com.google.gson.Gson
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.constants.Constants.SOCKET_DEFAULT_BUFFER_SIZE
 import com.ierusalem.androchat.core.constants.Constants.generateUniqueFileName
 import com.ierusalem.androchat.core.ui.components.PermissionDialog
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
@@ -97,7 +98,7 @@ import java.io.UTFDataFormatException
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.UnknownHostException
-import java.nio.charset.StandardCharsets
+import java.util.Calendar
 import kotlin.math.min
 
 
@@ -653,8 +654,9 @@ class TcpFragment : Fragment() {
     private fun receiveFile(reader: DataInputStream) {
         log("receiving file ...")
 
-        val downloadsDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.SOURCE_FOLDER_NAME_FOR_RESOURCES}")
-        if(!downloadsDirectory.exists()){
+        val downloadsDirectory =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.SOURCE_FOLDER_NAME_FOR_RESOURCES}")
+        if (!downloadsDirectory.exists()) {
             downloadsDirectory.mkdirs()
             log("Created directory: ${downloadsDirectory.absolutePath}")
         }
@@ -669,46 +671,29 @@ class TcpFragment : Fragment() {
             log("same file found in folder, generating unique name ...")
             val fileName = filename.getFileNameWithoutExtension()
             val fileExtension = filename.getExtensionFromFilename()
-            val uniqueFileName = generateUniqueFileName(downloadsDirectory.toString(), fileName, fileExtension)
+            val uniqueFileName =
+                generateUniqueFileName(downloadsDirectory.toString(), fileName, fileExtension)
             log("unique file name - $uniqueFileName")
             file = File(uniqueFileName)
         }
 
-        // Read the expected file size
-//        val fileSize = reader.readLong()
-//        var size: Long = fileSize
-//        log("Expected file size: $fileSize bytes")
-
-
-
-        // Create FileOutputStream to write the received file
-//        val fileOutputStream = FileOutputStream(file)
-//        val buffer = ByteArray(4 * 1024)
-//        var readBytesSum = 0L
-//        var bytesRead = 0
-//        while (size > 0 && reader.read(buffer, 0, min(buffer.size.toDouble(), size.toDouble()).toInt()).also { bytesRead = it } != -1) {
-//            readBytesSum += bytesRead
-//            val percentage = calculateDownloadPercentage(readBytesSum, fileSize)
-//            log("downloading - ${percentage.toInt()}% \n read bytes - $readBytesSum \n each read byte - $bytesRead")
-//            fileOutputStream.write(buffer, 0, bytesRead)
-//            size -= bytesRead.toLong() // read upto file size
-//        }
-
         var bytes = 0
+        // Create FileOutputStream to write the received file
         val fileOutputStream = FileOutputStream(file)
 
-        var size: Long = reader.readLong() // read file size
-        val buffer = ByteArray(4 * 1024)
-        while (size > 0
+        // Read the expected file size
+        var fileSize: Long = reader.readLong() // read file size
+        val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+        while (fileSize > 0
             && (reader.read(
                 buffer, 0,
-                min(buffer.size.toDouble(), size.toDouble()).toInt()
+                min(buffer.size.toDouble(), fileSize.toDouble()).toInt()
             ).also { bytes = it })
             != -1
         ) {
             // Here we write the file using write method
             fileOutputStream.write(buffer, 0, bytes)
-            size -= bytes.toLong() // read upto file size
+            fileSize -= bytes.toLong()
         }
 
         fileOutputStream.close()
@@ -743,7 +728,7 @@ class TcpFragment : Fragment() {
         val fileInputStream = FileInputStream(file)
 
         // Here we  break file into chunks
-        val buffer = ByteArray(4 * 1024)
+        val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
         while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
             // Send the file to Server Socket
             writer.write(buffer, 0, bytes)
@@ -760,24 +745,19 @@ class TcpFragment : Fragment() {
 
         withContext(Dispatchers.IO) {
             serverSocket = ServerSocket(serverPort)
-            log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
             if (serverSocket.isBound) {
                 viewModel.updateHostConnectionStatus(HostConnectionStatus.Created)
                 viewModel.updateConnectionsCount(true)
             }
             while (!serverSocket.isClosed) {
-
                 connectedClientSocketOnServer = serverSocket.accept()
                 Log.d("ahi3646", "New client : $connectedClientSocketOnServer ")
                 viewModel.updateConnectionsCount(true)
 
                 while (!connectedClientSocketOnServer.isClosed) {
-                    //reading incoming messages ...
                     val reader =
                         DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
-
                     val dataType = AppMessageType.fromChar(reader.readChar())
-                    log("incoming message type - $dataType")
 
                     when (dataType) {
                         AppMessageType.INITIAL -> {
@@ -785,44 +765,82 @@ class TcpFragment : Fragment() {
                         }
 
                         AppMessageType.TEXT -> {
-                            val length = reader.readInt()
-                            val messageByte = ByteArray(length)
-                            var end = false
-                            val dataString = java.lang.StringBuilder(length)
-                            var totalBytesRead = 0
-                            while (!end) {
-                                val currentBytesRead: Int = reader.read(messageByte)
-                                totalBytesRead += currentBytesRead
-                                if (totalBytesRead <= length) {
-                                    dataString.append(
-                                        String(
-                                            messageByte,
-                                            0,
-                                            currentBytesRead,
-                                            StandardCharsets.UTF_8
-                                        )
-                                    )
-                                } else {
-                                    dataString.append(
-                                        String(
-                                            messageByte,
-                                            0,
-                                            length - totalBytesRead + currentBytesRead,
-                                            StandardCharsets.UTF_8
-                                        )
-                                    )
-                                }
-                                if (dataString.length >= length) {
-                                    end = true
-                                    log("host incoming message - $dataString")
-                                }
-                            }
-                            //                            val inputData = reader.readUTF()
-//                            val message = gson.fromJson(
-//                                inputData,
-//                                Message::class.java
-//                            )
-//                            viewModel.insertMessage(message)
+//                            val length = reader.readInt()
+//                            val messageByte = ByteArray(length)
+//                            var end = false
+//                            val dataString = java.lang.StringBuilder(length)
+//                            var totalBytesRead = 0
+//                            while (!end) {
+//                                val currentBytesRead: Int = reader.read(messageByte)
+//                                totalBytesRead += currentBytesRead
+//                                if (totalBytesRead <= length) {
+//                                    dataString.append(
+//                                        String(
+//                                            messageByte,
+//                                            0,
+//                                            currentBytesRead,
+//                                            StandardCharsets.UTF_8
+//                                        )
+//                                    )
+//                                } else {
+//                                    dataString.append(
+//                                        String(
+//                                            messageByte,
+//                                            0,
+//                                            length - totalBytesRead + currentBytesRead,
+//                                            StandardCharsets.UTF_8
+//                                        )
+//                                    )
+//                                }
+//                                if (dataString.length >= length) {
+//                                    end = true
+//                                    log("host incoming message - $dataString")
+//                                }
+//                            }
+//                            val length: Int = reader.readInt()
+//                            val messageByte = ByteArray(length)
+//                            var end = false
+//                            val dataString: java.lang.StringBuilder =
+//                                java.lang.StringBuilder(length)
+//                            var totalBytesRead = 0
+//                            while (!end) {
+//                                val currentBytesRead: Int = reader.read(messageByte)
+//                                totalBytesRead += currentBytesRead
+//                                if (totalBytesRead <= length) {
+//                                    dataString
+//                                        .append(
+//                                            String(
+//                                                messageByte,
+//                                                0,
+//                                                currentBytesRead,
+//                                                StandardCharsets.UTF_8
+//                                            )
+//                                        )
+//                                } else {
+//                                    dataString
+//                                        .append(
+//                                            String(
+//                                                messageByte,
+//                                                0,
+//                                                length - totalBytesRead + currentBytesRead,
+//                                                StandardCharsets.UTF_8
+//                                            )
+//                                        )
+//                                }
+//                                if (dataString.length >= length) {
+//                                    end = true
+//                                }
+//                            }
+                            val receivedMessage = reader.readUTF()
+                            log("host incoming message - $receivedMessage")
+
+                            val currentTime = Calendar.getInstance().time
+                            val message = Message.TextMessage(
+                                username = "from client",
+                                formattedTime = currentTime.toString(),
+                                message = receivedMessage.toString()
+                            )
+                            viewModel.insertMessage(message)
                         }
 
                         AppMessageType.FILE -> {
@@ -1173,7 +1191,6 @@ class TcpFragment : Fragment() {
         log("connecting to server - $serverIpAddress:$serverPort")
         try {
             //create client
-            log("CLIENT CREATION TRY")
             clientSocket = Socket(serverIpAddress, serverPort)
 
             viewModel.updateClientConnectionStatus(ClientConnectionStatus.Connected)
@@ -1182,53 +1199,25 @@ class TcpFragment : Fragment() {
 
             //received outcome messages here
             while (!clientSocket.isClosed) {
-                log("while client socket is running")
                 val reader = DataInputStream(BufferedInputStream(clientSocket.getInputStream()))
 
                 try {
-                    log("reading data client in try")
                     val dataType = AppMessageType.fromChar(reader.readChar())
                     log("incoming message type - $dataType")
-                    val length = reader.readInt()
 
                     when (dataType) {
                         AppMessageType.INITIAL -> {}
                         AppMessageType.TEXT -> {
-                            val messageByte = ByteArray(length)
-                            var end = false
-                            val dataString = java.lang.StringBuilder(length)
-                            var totalBytesRead = 0
-                            while (!end) {
-                                val currentBytesRead: Int = reader.read(messageByte)
-                                totalBytesRead += currentBytesRead
-                                if (totalBytesRead <= length) {
-                                    dataString.append(
-                                        String(
-                                            messageByte,
-                                            0,
-                                            currentBytesRead,
-                                            StandardCharsets.UTF_8
-                                        )
-                                    )
-                                } else {
-                                    dataString.append(
-                                        String(
-                                            messageByte,
-                                            0,
-                                            length - totalBytesRead + currentBytesRead,
-                                            StandardCharsets.UTF_8
-                                        )
-                                    )
-                                }
-                                if (dataString.length >= length) {
-                                    end = true
-                                    log("client incoming message - $dataString")
-                                }
-                            }
-                            //                    val inputData = reader.readUTF()
-//                    val message = gson.fromJson(inputData, Message::class.java)
-//                    viewModel.insertMessage(message)
-//                    Log.d("ahi3646", "connectToServer: inputData - $inputData ")
+                            val receivedMessage = reader.readUTF()
+                            log("host incoming message - $receivedMessage")
+
+                            val currentTime = Calendar.getInstance().time
+                            val message = Message.TextMessage(
+                                username = "from client",
+                                formattedTime = currentTime.toString(),
+                                message = receivedMessage.toString()
+                            )
+                            viewModel.insertMessage(message)
                         }
 
                         AppMessageType.FILE -> {}
@@ -1320,23 +1309,21 @@ class TcpFragment : Fragment() {
     }
 
     private fun sendClientMessage(message: Message) {
-        log("*** sending messages from client *** - message - $message".uppercase())
-
         if (!clientSocket.isClosed) {
             val writer = DataOutputStream(clientSocket.getOutputStream())
-
             when (message) {
                 is Message.TextMessage -> {
                     log("sending text message from client - $message")
 
                     val type = AppMessageType.TEXT.identifier
+                    //message is object and we are sending only message field
                     val data = message.message
-                    val dataInBytes = data.toByteArray(StandardCharsets.UTF_8)
 
                     try {
                         writer.writeChar(type.code)
-                        writer.writeInt(dataInBytes.size)
-                        writer.write(dataInBytes)
+                        writer.writeUTF(data)
+
+                        viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
                     } catch (e: IOException) {
                         Log.d(
                             "ahi3646",
@@ -1353,27 +1340,6 @@ class TcpFragment : Fragment() {
                             ex.printStackTrace()
                         }
                     }
-
-//                    val messageStringForms = gson.toJson(message)
-//                    Log.d("ahi3646", "sending text message : $messageStringForms ")
-//
-//                    try {
-//                        writer.writeUTF(messageStringForms)
-//                        writer.flush()
-//                        viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
-//                    } catch (exception: IOException) {
-//                        Log.d("ahi3646", "sending text message: io exception ")
-//                        viewModel.handleEvents(
-//                            TcpScreenEvents.OnDialogErrorOccurred(
-//                                TcpScreenDialogErrors.IOException
-//                            )
-//                        )
-//                        try {
-//                            writer.close()
-//                        } catch (ex: IOException) {
-//                            ex.printStackTrace()
-//                        }
-//                    }
                 }
 
                 is Message.FileMessage -> {
@@ -1405,12 +1371,11 @@ class TcpFragment : Fragment() {
 
                     val type = AppMessageType.TEXT.identifier
                     val data = message.message
-                    val dataInBytes = data.toByteArray(StandardCharsets.UTF_8)
 
                     try {
                         writer.writeChar(type.code)
-                        writer.writeInt(dataInBytes.size)
-                        writer.write(dataInBytes)
+                        writer.writeUTF(data)
+                        viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
                     } catch (e: IOException) {
                         Log.d(
                             "ahi3646",
@@ -1427,30 +1392,6 @@ class TcpFragment : Fragment() {
                             ex.printStackTrace()
                         }
                     }
-
-//                    val messageStringForms = gson.toJson(message)
-//                    Log.d("ahi3646", "sending text message: $messageStringForms ")
-//
-//                    try {
-//                        writer.writeUTF(messageStringForms)
-//                        writer.flush()
-//                        viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
-//                    } catch (e: IOException) {
-//                        Log.d(
-//                            "ahi3646",
-//                            "sendMessage server: dataOutputStream is closed io exception "
-//                        )
-//                        viewModel.handleEvents(
-//                            TcpScreenEvents.OnDialogErrorOccurred(
-//                                TcpScreenDialogErrors.IOException
-//                            )
-//                        )
-//                        try {
-//                            writer.close()
-//                        } catch (ex: IOException) {
-//                            ex.printStackTrace()
-//                        }
-//                    }
                 }
 
                 is Message.FileMessage -> {

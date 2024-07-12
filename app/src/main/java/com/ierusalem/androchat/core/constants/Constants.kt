@@ -39,6 +39,8 @@ object Constants {
 
     const val SOURCE_FOLDER_NAME_FOR_RESOURCES = "FastChat"
 
+    const val SOCKET_DEFAULT_BUFFER_SIZE = 4*1024
+
     fun getLanguageCode(language: AppLanguage): String {
         return when (language) {
             AppLanguage.English -> ENGLISH_LOCALE
