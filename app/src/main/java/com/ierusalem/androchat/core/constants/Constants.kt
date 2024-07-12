@@ -1,6 +1,7 @@
 package com.ierusalem.androchat.core.constants
 
 import com.ierusalem.androchat.core.app.AppLanguage
+import java.io.File
 
 object Constants {
 
@@ -36,6 +37,8 @@ object Constants {
 
     const val CHARACTERS_SET_FOR_RAND0M_PASSWORD_GENERATION  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
+    const val SOURCE_FOLDER_NAME_FOR_RESOURCES = "FastChat"
+
     fun getLanguageCode(language: AppLanguage): String {
         return when (language) {
             AppLanguage.English -> ENGLISH_LOCALE
@@ -49,6 +52,23 @@ object Constants {
             RUSSIAN_LOCALE -> AppLanguage.Russian
             else -> AppLanguage.Russian
         }
+    }
+
+    fun generateUniqueFileName(directory: String, baseFileName: String, extension: String): String {
+        var count = 0
+        var newFileName: String
+        val baseNameWithExtension = "$baseFileName.$extension"
+
+        do {
+            count++
+            newFileName = if (count == 1) {
+                "$directory/$baseNameWithExtension"
+            } else {
+                "$directory/$baseFileName($count).$extension"
+            }
+        } while (File(newFileName).exists())
+
+        return newFileName
     }
 
 }

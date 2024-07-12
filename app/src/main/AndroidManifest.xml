@@ -54,6 +54,7 @@
         android:allowBackup="true"
         android:localeConfig="@xml/locale_config"
         android:icon="@mipmap/ic_launcher"
+        android:requestLegacyExternalStorage="true"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"

@@ -52,10 +52,14 @@ import androidx.navigation.fragment.findNavController
 import com.google.gson.Gson
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
+import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.constants.Constants.generateUniqueFileName
 import com.ierusalem.androchat.core.ui.components.PermissionDialog
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
+import com.ierusalem.androchat.core.utils.getExtensionFromFilename
+import com.ierusalem.androchat.core.utils.getFileNameWithoutExtension
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
@@ -203,16 +207,19 @@ class TcpFragment : Fragment() {
                 val data: Intent = result.data!!
 
                 var fileName = "file"
+                var fileSize = 0L
 
                 data.data?.let { returnUri ->
                     contentResolver?.query(returnUri, null, null, null, null)
                 }?.use { cursor ->
                     val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
                     cursor.moveToFirst()
                     fileName = cursor.getString(nameIndex)
+                    fileSize = cursor.getLong(sizeIndex)
                 }
 
-                log("filename - $fileName, filepath - ${data.data!!}")
+                log("filename - $fileName, filepath - ${data.data!!} , size - $fileSize")
                 when (viewModel.state.value.generalConnectionStatus) {
                     GeneralConnectionStatus.Idle -> {
                         //do nothing
@@ -626,55 +633,88 @@ class TcpFragment : Fragment() {
             deviceAddress = wifiP2pDevice.deviceAddress
             wps.setup = WpsInfo.PBC
         }
-        wifiP2PManager.connect(channel, config, object : WifiP2pManager.ActionListener {
-            override fun onSuccess() {
-                // WiFiDirectBroadcastReceiver notifies us. Ignore for now
-                Log.d("ahi3646", "success: connected to wifi - ${wifiP2pDevice.deviceAddress}")
-            }
+        wifiP2PManager.connect(
+            channel,
+            config,
+            object : WifiP2pManager.ActionListener {
+                override fun onSuccess() {
+                    // WiFiDirectBroadcastReceiver notifies us. Ignore for now
+                    Log.d("ahi3646", "success: connected to wifi - ${wifiP2pDevice.deviceAddress}")
+                }
 
-            override fun onFailure(reason: Int) {
-                Log.d("ahi3646", "failure: failure on wifi connection ")
-                viewModel.emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.FailedToConnectToWifiDevice))
+                override fun onFailure(reason: Int) {
+                    Log.d("ahi3646", "failure: failure on wifi connection ")
+                    viewModel.emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.FailedToConnectToWifiDevice))
+                }
             }
-        })
+        )
     }
 
-
-    private fun receiveFile(fileName: String, dataInputStream: DataInputStream) {
+    private fun receiveFile(reader: DataInputStream) {
         log("receiving file ...")
-        val downloadsDirectory =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        //val fileName = "example.txt"
-        val file = File(downloadsDirectory, fileName)
+
+        val downloadsDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.SOURCE_FOLDER_NAME_FOR_RESOURCES}")
+        if(!downloadsDirectory.exists()){
+            downloadsDirectory.mkdirs()
+            log("Created directory: ${downloadsDirectory.absolutePath}")
+        }
+
+        //reading file name
+        val filename = reader.readUTF()
+        log("Expected file name - $filename")
+
+        // Check if a file with the same name already exists, generate unique name if necessary
+        var file = File(downloadsDirectory, filename)
+        if (file.exists()) {
+            log("same file found in folder, generating unique name ...")
+            val fileName = filename.getFileNameWithoutExtension()
+            val fileExtension = filename.getExtensionFromFilename()
+            val uniqueFileName = generateUniqueFileName(downloadsDirectory.toString(), fileName, fileExtension)
+            log("unique file name - $uniqueFileName")
+            file = File(uniqueFileName)
+        }
+
+        // Read the expected file size
+//        val fileSize = reader.readLong()
+//        var size: Long = fileSize
+//        log("Expected file size: $fileSize bytes")
+
+
+
+        // Create FileOutputStream to write the received file
+//        val fileOutputStream = FileOutputStream(file)
+//        val buffer = ByteArray(4 * 1024)
+//        var readBytesSum = 0L
+//        var bytesRead = 0
+//        while (size > 0 && reader.read(buffer, 0, min(buffer.size.toDouble(), size.toDouble()).toInt()).also { bytesRead = it } != -1) {
+//            readBytesSum += bytesRead
+//            val percentage = calculateDownloadPercentage(readBytesSum, fileSize)
+//            log("downloading - ${percentage.toInt()}% \n read bytes - $readBytesSum \n each read byte - $bytesRead")
+//            fileOutputStream.write(buffer, 0, bytesRead)
+//            size -= bytesRead.toLong() // read upto file size
+//        }
+
+        var bytes = 0
         val fileOutputStream = FileOutputStream(file)
 
-
-//        val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
-//        val fileOutputStream = FileOutputStream(file)
-
-        var size: Long = dataInputStream.readLong() // read file size
-        log("file length - $size")
-
-//        val content = "Hello, World!"
-//        fileOutputStream.write(content.toByteArray())
-//        fileOutputStream.close()
-
-        var bytesRead = 0
+        var size: Long = reader.readLong() // read file size
         val buffer = ByteArray(4 * 1024)
-        while (size > 0 && (dataInputStream.read(
-                buffer,
-                0,
+        while (size > 0
+            && (reader.read(
+                buffer, 0,
                 min(buffer.size.toDouble(), size.toDouble()).toInt()
-            ).also { bytesRead = it }) != -1
+            ).also { bytes = it })
+            != -1
         ) {
-            fileOutputStream.write(buffer, 0, bytesRead)
-            size -= bytesRead.toLong() // read upto file size
+            // Here we write the file using write method
+            fileOutputStream.write(buffer, 0, bytes)
+            size -= bytes.toLong() // read upto file size
         }
+
         fileOutputStream.close()
         log("file received successfully")
     }
 
-    // sendFile function define here
     private fun sendFile(path: Uri, writer: DataOutputStream, fileName: String) {
         log("sending file ...")
         log("filename - $fileName, filepath - $path")
@@ -684,37 +724,33 @@ class TcpFragment : Fragment() {
         // Here we send the File to Server
         writer.writeChar(type.code)
 
+        //sending file name
+        writer.writeUTF(fileName)
+        log("sending file name - $fileName")
+
         val inputStream = requireContext().contentResolver.openInputStream(path)
-        val filePathToSave =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val filePathToSave = context?.cacheDir
         val file = File(filePathToSave, fileName)
         val fileOutputStream = FileOutputStream(file)
         inputStream?.copyTo(fileOutputStream)
         fileOutputStream.close()
-
 
         //write length
         writer.writeLong(file.length())
         log("sending file length - ${file.length()}")
 
         var bytes: Int
-        // Open the File where he located in your pc
         val fileInputStream = FileInputStream(file)
 
-        // Here we send the file length to Server
-        writer.writeLong(file.length())
         // Here we  break file into chunks
         val buffer = ByteArray(4 * 1024)
-        while ((fileInputStream.read(buffer).also { bytes = it })
-            != -1
-        ) {
+        while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
             // Send the file to Server Socket
             writer.write(buffer, 0, bytes)
             writer.flush()
         }
         // close the file here
         fileInputStream.close()
-
         log("file sent successfully")
     }
 
@@ -790,7 +826,7 @@ class TcpFragment : Fragment() {
                         }
 
                         AppMessageType.FILE -> {
-                            receiveFile(dataInputStream = reader, fileName = "test123.pdf")
+                            receiveFile(reader = reader)
                         }
 
                         AppMessageType.UNKNOWN -> {}
@@ -1343,11 +1379,6 @@ class TcpFragment : Fragment() {
                 is Message.FileMessage -> {
                     log("sending file message - $message")
                     lifecycleScope.launch(Dispatchers.IO) {
-//                        sendFile(
-//                            writer = writer,
-//                            fileName = message.filename,
-//                            filePath = message.filePath
-//                        )
                         sendFile(
                             writer = writer,
                             path = message.filePath,
