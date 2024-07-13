@@ -143,7 +143,8 @@ private fun PreviewMessage() {
             message = Message.TextMessage(
                 message =("Hello it is a text"),
                 formattedTime = "12:32",
-                username = "Hasan"
+                username = "Hasan",
+                isFromYou = false
             ),
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,

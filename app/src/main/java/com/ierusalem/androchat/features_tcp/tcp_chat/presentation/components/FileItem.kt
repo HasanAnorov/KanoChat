@@ -110,7 +110,7 @@ fun FileMessageItem(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = message.filename,
+                        text = message.fileName,
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onBackground,
                     )
@@ -141,10 +141,11 @@ private fun PreviewLightFileItem() {
                 message = Message.FileMessage(
                     formattedTime = "12:12:12, jul 12 2034",
                     username = "Hasan",
-                    filename = "SamsungElectronics Dubai Global Version home.edition.com",
+                    fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
-                    filePath = Uri.EMPTY
+                    filePath = Uri.EMPTY,
+                    isFromYou = true
                 ),
                 onFileItemClick = {}
             )
@@ -162,10 +163,11 @@ private fun PreviewDarkFileItem() {
                 message = Message.FileMessage(
                     formattedTime = "12:12:12, jul 12 2034",
                     username = "Hasan",
-                    filename = "SamsungElectronics Dubai Global Version home.edition.com",
+                    fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
-                    filePath = Uri.EMPTY
+                    filePath = Uri.EMPTY,
+                    isFromYou = true
                 ),
                 onFileItemClick = {}
             )

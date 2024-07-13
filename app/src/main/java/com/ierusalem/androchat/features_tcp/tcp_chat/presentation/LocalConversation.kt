@@ -262,8 +262,10 @@ private fun PreviewLocalChatItemBubble() {
             message = Message.TextMessage(
                 username = "Hasn",
                 formattedTime = "12:12:12, jul 12 2034",
-                message = "Assalom alekum aka yaxshimisiz"
-            ), isUserMe = false
+                message = "Assalom alekum aka yaxshimisiz",
+                isFromYou = true
+            ),
+            isUserMe = false
         )
     }
 }
@@ -278,10 +280,11 @@ private fun PreviwLightFileItem() {
             message = Message.FileMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 username = "Hasan",
-                filename = "SamsungElectronics Dubai Global Version home.edition.com",
+                fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                 fileSize = "16 Kb",
                 fileExtension = ".pdf",
-                filePath = Uri.EMPTY
+                filePath = Uri.EMPTY,
+                isFromYou = true
             ),
             onFileItemClick = {}
         )
@@ -297,10 +300,11 @@ private fun PreviewDarkFileItem() {
             message = Message.FileMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 username = "Hasan",
-                filename = "SamsungElectronics Dubai Global Version home.edition.com",
+                fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                 fileSize = "16 Kb",
                 fileExtension = ".pdf",
-                filePath = Uri.EMPTY
+                filePath = Uri.EMPTY,
+                isFromYou = true
             ),
             onFileItemClick = {}
         )

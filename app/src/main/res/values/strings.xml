@@ -193,5 +193,7 @@
     <string name="contacts_permission_request">This app needs access to your contacts to share! Please grant it!</string>
     <string name="no_data_found">No data found!</string>
     <string name="please_install_a_file_manager">PLease install a file manager!</string>
+    <string name="no_application_found_to_open_this_file">No application found to open this file</string>
+    <string name="open_with">Open with</string>
 
 </resources>

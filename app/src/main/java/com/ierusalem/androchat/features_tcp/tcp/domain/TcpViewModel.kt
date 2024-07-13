@@ -1,11 +1,8 @@
 package com.ierusalem.androchat.features_tcp.tcp.domain
 
 import android.annotation.SuppressLint
-import android.content.ActivityNotFoundException
 import android.content.ContentResolver
-import android.content.Intent
 import android.database.Cursor
-import android.net.Uri
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.net.wifi.WifiManager.LocalOnlyHotspotCallback
@@ -14,7 +11,6 @@ import android.os.Build
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.util.Log
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
@@ -423,7 +419,8 @@ class TcpViewModel @Inject constructor(
                 val message = Message.TextMessage(
                     username = username,
                     message = event.message,
-                    formattedTime = currentTime
+                    formattedTime = currentTime,
+                    isFromYou = true
                 )
 
                 //todo - think about this later
@@ -777,7 +774,7 @@ class TcpViewModel @Inject constructor(
         val messages = state.value.messages
         val targetMessage = messages
             .findLast { it.username == message.username && it is Message.FileMessage }
-        if(targetMessage == null) return
+        if (targetMessage == null) return
         val updatedMessage = updateFileState(targetMessage as Message.FileMessage, fileState)
         val newMessages = state.value.messages.toMutableList().apply {
             set(messages.indexOf(targetMessage), updatedMessage)

@@ -17,6 +17,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.Looper
 import android.provider.OpenableColumns
+import android.text.format.Formatter
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -55,6 +56,7 @@ import com.google.gson.Gson
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.constants.Constants.FILE_PROVIDER_AUTHORITY
 import com.ierusalem.androchat.core.constants.Constants.SOCKET_DEFAULT_BUFFER_SIZE
 import com.ierusalem.androchat.core.constants.Constants.generateUniqueFileName
 import com.ierusalem.androchat.core.ui.components.PermissionDialog
@@ -66,6 +68,7 @@ import com.ierusalem.androchat.core.utils.getFileNameWithoutExtension
 import com.ierusalem.androchat.core.utils.getMimeType
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.openAppSettings
+import com.ierusalem.androchat.core.utils.toast
 import com.ierusalem.androchat.features.auth.register.domain.model.FileState
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features_tcp.server.ServerDefaults
@@ -85,7 +88,6 @@ import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEven
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpView
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactListContent
-import com.tougee.recorderview.BuildConfig
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -232,16 +234,19 @@ class TcpFragment : Fragment() {
                     }
 
                     GeneralConnectionStatus.ConnectedAsClient -> {
-                        sendClientMessage(
-                            Message.FileMessage(
-                                formattedTime = "",
-                                username = "",
-                                filePath = data.data!!,
-                                filename = fileName,
-                                fileSize = "12 Mb",
-                                fileExtension = ".pdf"
-                            )
+                        val currentTime = Calendar.getInstance().time
+                        val extension = fileName.getExtensionFromFilename()
+                        val fileMessage = Message.FileMessage(
+                            formattedTime = currentTime.toString(),
+                            username = "from client",
+                            filePath = data.data!!,
+                            fileName = fileName,
+                            fileSize = Formatter.formatShortFileSize(requireContext(), fileSize),
+                            fileExtension = extension,
+                            fileState = FileState.Success,
+                            isFromYou = true
                         )
+                        sendClientMessage(fileMessage)
                     }
 
                     GeneralConnectionStatus.ConnectedAsHost -> {
@@ -527,18 +532,37 @@ class TcpFragment : Fragment() {
 
             is TcpScreenNavigation.OnFileItemClick -> {
                 try {
-                    val uri: Uri = FileProvider.getUriForFile(requireContext(), "com.ierusalem.androchat.fileprovider", File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), navigation.message.filename))
-                    val mimeType  = navigation.message.filePath.getMimeType(requireContext())
+                    val file: File
+                    if(navigation.message.isFromYou){
+                        val inputStream = requireContext().contentResolver.openInputStream(navigation.message.filePath)
+                        val filePathToSave = context?.cacheDir
+                        file = File(filePathToSave, navigation.message.fileName)
+                        val fileOutputStream = FileOutputStream(file)
+                        inputStream?.copyTo(fileOutputStream)
+                        fileOutputStream.close()
+                    }else{
+                        file = File(
+                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}"),
+                            navigation.message.fileName
+                        )
+                    }
+                    val uri: Uri = FileProvider.getUriForFile(
+                        requireContext(),
+                        FILE_PROVIDER_AUTHORITY,
+                        file
+                    )
+                    val mimeType = navigation.message.filePath.getMimeType(requireContext())
                     log("mime type - $mimeType")
                     val intent = Intent(Intent.ACTION_VIEW).apply {
-                        type = mimeType
-                        putExtra(Intent.EXTRA_STREAM, uri)
+                        setDataAndType(uri, mimeType)
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
-                    startActivity(Intent.createChooser(intent, "Share file via"))
+                    val chooserIntent = Intent.createChooser(intent, getString(R.string.open_with))
+                    startActivity(chooserIntent)
                 } catch (e: ActivityNotFoundException) {
-                    log("can not open a file !")
                     // no Activity to handle this kind of files
+                    toast(getString(R.string.no_application_found_to_open_this_file))
+                    log("can not open a file !")
                 }
             }
 
@@ -677,7 +701,6 @@ class TcpFragment : Fragment() {
 
     private fun receiveFile(reader: DataInputStream) {
         log("receiving file ...")
-
         val downloadsDirectory =
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
         if (!downloadsDirectory.exists()) {
@@ -717,13 +740,14 @@ class TcpFragment : Fragment() {
             formattedTime = currentTime.toString(),
             username = "from client",
             filePath = Uri.fromFile(file),
-            filename = fileNameForUi,
-            fileSize = android.text.format.Formatter.formatShortFileSize(
+            fileName = fileNameForUi,
+            fileSize = Formatter.formatShortFileSize(
                 requireContext(),
                 fileSize
             ),
             fileExtension = filename.getExtensionFromFilename(),
-            fileState = FileState.Loading(0)
+            fileState = FileState.Loading(0),
+            isFromYou = false
         )
         viewModel.insertMessage(message)
 
@@ -756,9 +780,9 @@ class TcpFragment : Fragment() {
         log("file received successfully")
     }
 
-    private fun sendFile(path: Uri, writer: DataOutputStream, fileName: String) {
+    private fun sendFile(writer: DataOutputStream, fileMessage: Message.FileMessage) {
         log("sending file ...")
-        log("filename - $fileName, filepath - $path")
+        log("filename - ${fileMessage.fileName}, filepath - ${fileMessage.filePath}")
 
         val type = AppMessageType.FILE.identifier
 
@@ -766,12 +790,12 @@ class TcpFragment : Fragment() {
         writer.writeChar(type.code)
 
         //sending file name
-        writer.writeUTF(fileName)
-        log("sending file name - $fileName")
+        writer.writeUTF(fileMessage.fileName)
+        log("sending file name - ${fileMessage.fileName}")
 
-        val inputStream = requireContext().contentResolver.openInputStream(path)
+        val inputStream = requireContext().contentResolver.openInputStream(fileMessage.filePath)
         val filePathToSave = context?.cacheDir
-        val file = File(filePathToSave, fileName)
+        val file = File(filePathToSave, fileMessage.fileName)
         val fileOutputStream = FileOutputStream(file)
         inputStream?.copyTo(fileOutputStream)
         fileOutputStream.close()
@@ -793,6 +817,7 @@ class TcpFragment : Fragment() {
         // close the file here
         fileInputStream.close()
         log("file sent successfully")
+        viewModel.handleEvents(TcpScreenEvents.InsertMessage(fileMessage))
     }
 
     private suspend fun createServer(serverPort: Int) {
@@ -828,7 +853,8 @@ class TcpFragment : Fragment() {
                             val message = Message.TextMessage(
                                 username = "from client",
                                 formattedTime = currentTime.toString(),
-                                message = receivedMessage.toString()
+                                message = receivedMessage.toString(),
+                                isFromYou = false
                             )
                             viewModel.insertMessage(message)
                         }
@@ -837,7 +863,9 @@ class TcpFragment : Fragment() {
                             receiveFile(reader = reader)
                         }
 
-                        AppMessageType.UNKNOWN -> {}
+                        AppMessageType.UNKNOWN -> {
+                            //currently not handled
+                        }
                     }
 
 //                        try {
@@ -1205,7 +1233,8 @@ class TcpFragment : Fragment() {
                             val message = Message.TextMessage(
                                 username = "from client",
                                 formattedTime = currentTime.toString(),
-                                message = receivedMessage.toString()
+                                message = receivedMessage.toString(),
+                                isFromYou = false
                             )
                             viewModel.insertMessage(message)
                         }
@@ -1306,13 +1335,11 @@ class TcpFragment : Fragment() {
                     log("sending text message from client - $message")
 
                     val type = AppMessageType.TEXT.identifier
-                    //message is object and we are sending only message field
                     val data = message.message
 
                     try {
                         writer.writeChar(type.code)
                         writer.writeUTF(data)
-
                         viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
                     } catch (e: IOException) {
                         Log.d(
@@ -1333,12 +1360,10 @@ class TcpFragment : Fragment() {
                 }
 
                 is Message.FileMessage -> {
-                    log("sending file message - $message")
                     lifecycleScope.launch(Dispatchers.IO) {
                         sendFile(
                             writer = writer,
-                            path = message.filePath,
-                            fileName = message.filename
+                            fileMessage = message
                         )
                     }
                 }

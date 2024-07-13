@@ -4,24 +4,27 @@ import android.net.Uri
 
 sealed class Message(
     open val username: String,
-    open val formattedTime: String
+    open val formattedTime: String,
+    open val isFromYou:Boolean
 ) {
     data class TextMessage(
         //this username field should be removed
         override val username: String,
+        override val isFromYou: Boolean,
         val message: String,
         override val formattedTime: String
-    ) : Message(username, formattedTime)
+    ) : Message(username, formattedTime, isFromYou)
 
     data class FileMessage(
         override val formattedTime: String,
         override val username: String,
+        override val isFromYou: Boolean,
         val filePath: Uri,
-        val filename: String,
+        val fileName: String,
         val fileSize: String,
         val fileExtension: String,
         val fileState: FileState = FileState.Loading(0)
-    ) : Message(username, formattedTime)
+    ) : Message(username, formattedTime, isFromYou)
 }
 
 sealed interface FileState {

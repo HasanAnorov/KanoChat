@@ -1,5 +1,6 @@
 package com.ierusalem.androchat.core.constants
 
+import android.os.Environment
 import com.ierusalem.androchat.core.app.AppLanguage
 import java.io.File
 
@@ -38,6 +39,7 @@ object Constants {
     const val CHARACTERS_SET_FOR_RAND0M_PASSWORD_GENERATION  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
     const val FOLDER_NAME_FOR_RESOURCES = "FastChat"
+    const val FILE_PROVIDER_AUTHORITY = "com.ierusalem.androchat.fileprovider"
 
     const val SOCKET_DEFAULT_BUFFER_SIZE = 4*1024
 
