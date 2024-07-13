@@ -37,7 +37,7 @@ object Constants {
 
     const val CHARACTERS_SET_FOR_RAND0M_PASSWORD_GENERATION  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-    const val SOURCE_FOLDER_NAME_FOR_RESOURCES = "FastChat"
+    const val FOLDER_NAME_FOR_RESOURCES = "FastChat"
 
     const val SOCKET_DEFAULT_BUFFER_SIZE = 4*1024
 

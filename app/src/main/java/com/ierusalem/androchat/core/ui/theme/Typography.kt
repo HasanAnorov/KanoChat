@@ -108,7 +108,7 @@ val AndroChatTypography = Typography(
         letterSpacing = 0.15.sp
     ),
     titleSmall = TextStyle(
-        fontFamily = DMSansFontFamily,
+        fontFamily = MontserratFontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 14.sp,
         lineHeight = 20.sp,

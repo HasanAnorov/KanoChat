@@ -23,6 +23,7 @@ import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.core.utils.log
+import com.ierusalem.androchat.features.auth.register.domain.model.FileState
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuard
 import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiNetworkEvent
@@ -760,6 +761,31 @@ class TcpViewModel @Inject constructor(
                 hasDialogErrorOccurred = dialog
             )
         }
+    }
+
+    fun updatePercentageOfReceivingFile(message: Message, fileState: FileState) {
+
+        val messages = state.value.messages
+        val targetMessage = messages
+            .findLast { it.username == message.username && it is Message.FileMessage }
+        if(targetMessage == null) return
+        val updatedMessage = updateFileState(targetMessage as Message.FileMessage, fileState)
+        val newMessages = state.value.messages.toMutableList().apply {
+            set(messages.indexOf(targetMessage), updatedMessage)
+        }
+        _state.update {
+            it.copy(
+                messages = newMessages
+            )
+        }
+
+    }
+
+    private fun updateFileState(
+        fileMessage: Message.FileMessage,
+        newState: FileState
+    ): Message.FileMessage {
+        return fileMessage.copy(fileState = newState)
     }
 
     fun insertMessage(message: Message) {

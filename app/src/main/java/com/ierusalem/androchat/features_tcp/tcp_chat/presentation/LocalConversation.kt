@@ -1,6 +1,10 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.presentation
 
+import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -19,6 +24,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,8 +41,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,6 +56,7 @@ import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features.conversation.presentation.components.JumpToBottom
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.FileMessageItem
 import kotlinx.coroutines.launch
 
 @Composable
@@ -151,7 +160,7 @@ fun ChannelNameBar(
             )
         }
         // Search icon
-        IconButton(onClick = {  }) {
+        IconButton(onClick = { }) {
             Icon(
                 imageVector = Icons.Outlined.Search,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -184,23 +193,16 @@ fun Messages(
                 Spacer(modifier = Modifier.height(32.dp))
             }
             itemsIndexed(messages) { index, message ->
-                when(message){
-                    is Message.TextMessage -> {
-                        val prevAuthor = messages.getOrNull(index - 1)?.username
-                        val nextAuthor = messages.getOrNull(index + 1)?.username
-                        val isFirstMessageByAuthor = prevAuthor != message.username
-                        val isLastMessageByAuthor = nextAuthor != message.username
-                        LocalMessageItem(
-                            msg = message,
-                            isUserMe = message.username == authorMe,
-                            isFirstMessageByAuthor = isFirstMessageByAuthor,
-                            isLastMessageByAuthor = isLastMessageByAuthor
-                        )
-                    }
-                    is Message.FileMessage -> {
-                        log("File message - ${message.filePath}".uppercase())
-                    }
-                }
+                val prevAuthor = messages.getOrNull(index - 1)?.username
+                val nextAuthor = messages.getOrNull(index + 1)?.username
+                val isFirstMessageByAuthor = prevAuthor != message.username
+                val isLastMessageByAuthor = nextAuthor != message.username
+                LocalMessageItem(
+                    msg = message,
+                    isUserMe = message.username == authorMe,
+                    isFirstMessageByAuthor = isFirstMessageByAuthor,
+                    isLastMessageByAuthor = isLastMessageByAuthor
+                )
             }
         }
         // Jump to bottom button shows up when user scrolls past a threshold.
@@ -234,11 +236,10 @@ fun Messages(
 private val ChatBubbleShape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
 
 @Composable
-fun LocalChatItemBubble(
+fun LocalMessageItem(
     message: Message.TextMessage,
     isUserMe: Boolean,
 ) {
-
     val backgroundBubbleColor = if (isUserMe) {
         MaterialTheme.colorScheme.primary
     } else {
@@ -255,21 +256,58 @@ fun LocalChatItemBubble(
                 isUserMe = isUserMe,
             )
         }
-//        todo add this later
-//        message.image?.let {
-//            Spacer(modifier = Modifier.height(4.dp))
-//            Surface(
-//                color = backgroundBubbleColor,
-//                shape = ChatBubbleShape
-//            ) {
-//                Image(
-//                    painter = painterResource(it),
-//                    contentScale = ContentScale.Fit,
-//                    modifier = Modifier.size(160.dp),
-//                    contentDescription = stringResource(id = R.string.attached_image)
-//                )
-//            }
-//        }
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewLocalChatItemBubble() {
+    AndroChatTheme {
+        LocalMessageItem(
+            message = Message.TextMessage(
+                username = "Hasn",
+                formattedTime = "12:12:12, jul 12 2034",
+                message = "Assalom alekum aka yaxshimisiz"
+            ), isUserMe = false
+        )
+    }
+}
+
+
+
+@Preview
+@Composable
+private fun PreviwLightFileItem() {
+    AndroChatTheme {
+        FileMessageItem(
+            modifier = Modifier,
+            message = Message.FileMessage(
+                formattedTime = "12:12:12, jul 12 2034",
+                username = "Hasan",
+                filename = "SamsungElectronics Dubai Global Version home.edition.com",
+                fileSize = "16 Kb",
+                fileExtension = ".pdf",
+                filePath = Uri.EMPTY
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewDarkFileItem() {
+    AndroChatTheme(isDarkTheme = true) {
+        FileMessageItem(
+            modifier = Modifier,
+            message = Message.FileMessage(
+                formattedTime = "12:12:12, jul 12 2034",
+                username = "Hasan",
+                filename = "SamsungElectronics Dubai Global Version home.edition.com",
+                fileSize = "16 Kb",
+                fileExtension = ".pdf",
+                filePath = Uri.EMPTY
+            )
+        )
     }
 }
 

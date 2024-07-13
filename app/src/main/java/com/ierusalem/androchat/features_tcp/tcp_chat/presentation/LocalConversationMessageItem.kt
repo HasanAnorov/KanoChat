@@ -4,8 +4,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.paddingFrom
@@ -25,16 +27,18 @@ import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features.conversation.presentation.components.messageFormatter
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.FileMessageItem
 
 @Composable
 fun LocalMessageItem(
-    msg: Message.TextMessage,
+    msg: Message,
     isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean
@@ -85,7 +89,7 @@ fun LocalMessageItem(
 
 @Composable
 fun AuthorAndTextMessage(
-    msg: Message.TextMessage,
+    msg: Message,
     isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
@@ -93,9 +97,16 @@ fun AuthorAndTextMessage(
 ) {
     Column(modifier = modifier) {
         if (isLastMessageByAuthor) {
-            AuthorNameTimestamp(msg, isUserMe)
+            AuthorName(msg, isUserMe)
         }
-        LocalChatItemBubble(msg, isUserMe)
+        when(msg){
+            is Message.TextMessage -> {
+                LocalMessageItem(msg, isUserMe)
+            }
+            is Message.FileMessage -> {
+                FileMessageItem(message = msg)
+            }
+        }
         if (isFirstMessageByAuthor) {
             // Last bubble before next author
             Spacer(modifier = Modifier.height(8.dp))
@@ -116,20 +127,31 @@ fun LocalClickableMessage(
         text = message.message,
         primary = isUserMe
     )
-
-    ClickableText(
-        text = styledMessage,
-        style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-        modifier = Modifier.padding(16.dp),
-        onClick = {
-
-        }
-    )
+    Column(
+        modifier = Modifier
+        .padding(16.dp)
+        .width(IntrinsicSize.Max)
+    ) {
+        ClickableText(
+            text = styledMessage,
+            style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onBackground),
+            onClick = {}
+        )
+        Text(
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .fillMaxWidth(),
+            text = message.formattedTime,
+            textAlign = TextAlign.End,
+            color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+            style = MaterialTheme.typography.labelSmall
+        )
+    }
 }
 
 @Composable
-private fun AuthorNameTimestamp(
-    message: Message.TextMessage,
+private fun AuthorName(
+    message: Message,
     isUserMe: Boolean
 ) {
     // Combine author and timestamp for a11y.
@@ -140,13 +162,6 @@ private fun AuthorNameTimestamp(
             modifier = Modifier
                 .alignBy(LastBaseline)
                 .paddingFrom(LastBaseline, after = 8.dp) // Space to 1st bubble
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = message.formattedTime,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.alignBy(LastBaseline),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

@@ -63,6 +63,7 @@ import com.ierusalem.androchat.core.utils.getExtensionFromFilename
 import com.ierusalem.androchat.core.utils.getFileNameWithoutExtension
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.openAppSettings
+import com.ierusalem.androchat.features.auth.register.domain.model.FileState
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features_tcp.server.ServerDefaults
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
@@ -100,7 +101,6 @@ import java.net.Socket
 import java.net.UnknownHostException
 import java.util.Calendar
 import kotlin.math.min
-
 
 @AndroidEntryPoint
 class TcpFragment : Fragment() {
@@ -233,6 +233,8 @@ class TcpFragment : Fragment() {
                                 username = "",
                                 filePath = data.data!!,
                                 filename = fileName,
+                                fileSize = "12 Mb",
+                                fileExtension = ".pdf"
                             )
                         )
                     }
@@ -655,7 +657,7 @@ class TcpFragment : Fragment() {
         log("receiving file ...")
 
         val downloadsDirectory =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.SOURCE_FOLDER_NAME_FOR_RESOURCES}")
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
         if (!downloadsDirectory.exists()) {
             downloadsDirectory.mkdirs()
             log("Created directory: ${downloadsDirectory.absolutePath}")
@@ -663,6 +665,7 @@ class TcpFragment : Fragment() {
 
         //reading file name
         val filename = reader.readUTF()
+        var fileNameForUi = filename
         log("Expected file name - $filename")
 
         // Check if a file with the same name already exists, generate unique name if necessary
@@ -673,16 +676,35 @@ class TcpFragment : Fragment() {
             val fileExtension = filename.getExtensionFromFilename()
             val uniqueFileName =
                 generateUniqueFileName(downloadsDirectory.toString(), fileName, fileExtension)
+            fileNameForUi = Uri.parse(uniqueFileName).lastPathSegment
             log("unique file name - $uniqueFileName")
             file = File(uniqueFileName)
         }
 
         var bytes = 0
+        var bytesForPercentage = 0L
         // Create FileOutputStream to write the received file
         val fileOutputStream = FileOutputStream(file)
 
         // Read the expected file size
         var fileSize: Long = reader.readLong() // read file size
+        val fileSizeForPercentage = fileSize
+
+        val currentTime = Calendar.getInstance().time
+        val message = Message.FileMessage(
+            formattedTime = currentTime.toString(),
+            username = "from client",
+            filePath = Uri.fromFile(file),
+            filename = fileNameForUi,
+            fileSize = android.text.format.Formatter.formatShortFileSize(
+                requireContext(),
+                fileSize
+            ),
+            fileExtension = filename.getExtensionFromFilename(),
+            fileState = FileState.Loading(0)
+        )
+        viewModel.insertMessage(message)
+
         val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
         while (fileSize > 0
             && (reader.read(
@@ -694,9 +716,21 @@ class TcpFragment : Fragment() {
             // Here we write the file using write method
             fileOutputStream.write(buffer, 0, bytes)
             fileSize -= bytes.toLong()
-        }
 
+            bytesForPercentage += bytes.toLong()
+            val percentage =
+                (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+            val tempPercentage =
+                ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+            if (percentage != tempPercentage) {
+                log("progress - $percentage")
+                val newState = FileState.Loading(percentage)
+                viewModel.updatePercentageOfReceivingFile(message, newState)
+            }
+        }
         fileOutputStream.close()
+        val newState = FileState.Success
+        viewModel.updatePercentageOfReceivingFile(message, newState)
         log("file received successfully")
     }
 
@@ -765,72 +799,6 @@ class TcpFragment : Fragment() {
                         }
 
                         AppMessageType.TEXT -> {
-//                            val length = reader.readInt()
-//                            val messageByte = ByteArray(length)
-//                            var end = false
-//                            val dataString = java.lang.StringBuilder(length)
-//                            var totalBytesRead = 0
-//                            while (!end) {
-//                                val currentBytesRead: Int = reader.read(messageByte)
-//                                totalBytesRead += currentBytesRead
-//                                if (totalBytesRead <= length) {
-//                                    dataString.append(
-//                                        String(
-//                                            messageByte,
-//                                            0,
-//                                            currentBytesRead,
-//                                            StandardCharsets.UTF_8
-//                                        )
-//                                    )
-//                                } else {
-//                                    dataString.append(
-//                                        String(
-//                                            messageByte,
-//                                            0,
-//                                            length - totalBytesRead + currentBytesRead,
-//                                            StandardCharsets.UTF_8
-//                                        )
-//                                    )
-//                                }
-//                                if (dataString.length >= length) {
-//                                    end = true
-//                                    log("host incoming message - $dataString")
-//                                }
-//                            }
-//                            val length: Int = reader.readInt()
-//                            val messageByte = ByteArray(length)
-//                            var end = false
-//                            val dataString: java.lang.StringBuilder =
-//                                java.lang.StringBuilder(length)
-//                            var totalBytesRead = 0
-//                            while (!end) {
-//                                val currentBytesRead: Int = reader.read(messageByte)
-//                                totalBytesRead += currentBytesRead
-//                                if (totalBytesRead <= length) {
-//                                    dataString
-//                                        .append(
-//                                            String(
-//                                                messageByte,
-//                                                0,
-//                                                currentBytesRead,
-//                                                StandardCharsets.UTF_8
-//                                            )
-//                                        )
-//                                } else {
-//                                    dataString
-//                                        .append(
-//                                            String(
-//                                                messageByte,
-//                                                0,
-//                                                length - totalBytesRead + currentBytesRead,
-//                                                StandardCharsets.UTF_8
-//                                            )
-//                                        )
-//                                }
-//                                if (dataString.length >= length) {
-//                                    end = true
-//                                }
-//                            }
                             val receivedMessage = reader.readUTF()
                             log("host incoming message - $receivedMessage")
 
@@ -1360,8 +1328,6 @@ class TcpFragment : Fragment() {
     }
 
     private fun sendHostMessage(message: Message) {
-        log("*** sending messages from owner *** - message - $message".uppercase())
-
         if (!connectedClientSocketOnServer.isClosed) {
             val writer = DataOutputStream(connectedClientSocketOnServer.getOutputStream())
 
@@ -1444,3 +1410,5 @@ class TcpFragment : Fragment() {
     }
 
 }
+
+
