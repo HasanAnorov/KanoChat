@@ -1,8 +1,11 @@
 package com.ierusalem.androchat.features_tcp.tcp.domain
 
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
 import android.content.ContentResolver
+import android.content.Intent
 import android.database.Cursor
+import android.net.Uri
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.net.wifi.WifiManager.LocalOnlyHotspotCallback
@@ -11,6 +14,7 @@ import android.os.Build
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.util.Log
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
@@ -52,6 +56,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import javax.inject.Inject
+
 
 @HiltViewModel
 class TcpViewModel @Inject constructor(
@@ -275,6 +280,10 @@ class TcpViewModel @Inject constructor(
 
             TcpScreenEvents.ShowFileChooserClick -> {
                 emitNavigation(TcpScreenNavigation.ShowFileChooserClick)
+            }
+
+            is TcpScreenEvents.OnFileItemClick -> {
+                emitNavigation(TcpScreenNavigation.OnFileItemClick(event.message))
             }
 
             is TcpScreenEvents.UpdateBottomSheetState -> {

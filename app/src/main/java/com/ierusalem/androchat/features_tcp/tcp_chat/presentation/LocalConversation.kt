@@ -1,10 +1,7 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.presentation
 
 import android.net.Uri
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -24,7 +20,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,17 +36,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features.conversation.presentation.components.JumpToBottom
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
@@ -104,7 +96,8 @@ fun LocalConversationContent(
                     messages = uiState.messages.reversed(),
                     modifier = Modifier.weight(1f),
                     scrollState = scrollState,
-                    authorMe = uiState.authorMe
+                    authorMe = uiState.authorMe,
+                    onFileItemClicked = { eventHandler(TcpScreenEvents.OnFileItemClick(it)) }
                 )
                 LocalConversationUserInput(
                     // let this element handle the padding so that the elevation is shown behind the
@@ -178,6 +171,7 @@ fun Messages(
     scrollState: LazyListState,
     modifier: Modifier = Modifier,
     authorMe: String,
+    onFileItemClicked: (Message.FileMessage) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
@@ -201,7 +195,8 @@ fun Messages(
                     msg = message,
                     isUserMe = message.username == authorMe,
                     isFirstMessageByAuthor = isFirstMessageByAuthor,
-                    isLastMessageByAuthor = isLastMessageByAuthor
+                    isLastMessageByAuthor = isLastMessageByAuthor,
+                    onFileItemClick = onFileItemClicked
                 )
             }
         }
@@ -274,7 +269,6 @@ private fun PreviewLocalChatItemBubble() {
 }
 
 
-
 @Preview
 @Composable
 private fun PreviwLightFileItem() {
@@ -288,7 +282,8 @@ private fun PreviwLightFileItem() {
                 fileSize = "16 Kb",
                 fileExtension = ".pdf",
                 filePath = Uri.EMPTY
-            )
+            ),
+            onFileItemClick = {}
         )
     }
 }
@@ -306,7 +301,8 @@ private fun PreviewDarkFileItem() {
                 fileSize = "16 Kb",
                 fileExtension = ".pdf",
                 filePath = Uri.EMPTY
-            )
+            ),
+            onFileItemClick = {}
         )
     }
 }

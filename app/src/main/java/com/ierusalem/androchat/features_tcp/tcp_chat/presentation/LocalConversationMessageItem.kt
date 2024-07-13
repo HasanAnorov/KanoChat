@@ -2,7 +2,6 @@ package com.ierusalem.androchat.features_tcp.tcp_chat.presentation
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,7 +39,8 @@ fun LocalMessageItem(
     msg: Message,
     isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
-    isLastMessageByAuthor: Boolean
+    isLastMessageByAuthor: Boolean,
+    onFileItemClick: (Message.FileMessage) -> Unit
 ) {
     val borderColor = if (isUserMe) {
         MaterialTheme.colorScheme.primary
@@ -55,18 +54,12 @@ fun LocalMessageItem(
             // Avatar
             Image(
                 modifier = Modifier
-                    .clickable(
-                        onClick = {
-                            //onAuthorClick(msg.author)
-                        }
-                    )
                     .padding(horizontal = 16.dp)
                     .size(42.dp)
                     .border(1.5.dp, borderColor, CircleShape)
                     .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape)
                     .clip(CircleShape)
                     .align(Alignment.Top),
-                //painter = painterResource(id = msg.authorImage),
                 painter = painterResource(id = R.drawable.be_doer),
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
@@ -76,35 +69,38 @@ fun LocalMessageItem(
             Spacer(modifier = Modifier.width(74.dp))
         }
         AuthorAndTextMessage(
+            modifier = Modifier
+                .padding(end = 16.dp)
+                .weight(1f),
             msg = msg,
             isUserMe = isUserMe,
             isFirstMessageByAuthor = isFirstMessageByAuthor,
             isLastMessageByAuthor = isLastMessageByAuthor,
-            modifier = Modifier
-                .padding(end = 16.dp)
-                .weight(1f)
+            onFileItemClick = onFileItemClick
         )
     }
 }
 
 @Composable
 fun AuthorAndTextMessage(
+    modifier: Modifier = Modifier,
     msg: Message,
     isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
-    modifier: Modifier = Modifier
+    onFileItemClick: (Message.FileMessage) -> Unit
 ) {
     Column(modifier = modifier) {
         if (isLastMessageByAuthor) {
             AuthorName(msg, isUserMe)
         }
-        when(msg){
+        when (msg) {
             is Message.TextMessage -> {
                 LocalMessageItem(msg, isUserMe)
             }
+
             is Message.FileMessage -> {
-                FileMessageItem(message = msg)
+                FileMessageItem(message = msg, onFileItemClick = onFileItemClick)
             }
         }
         if (isFirstMessageByAuthor) {
@@ -129,8 +125,8 @@ fun LocalClickableMessage(
     )
     Column(
         modifier = Modifier
-        .padding(16.dp)
-        .width(IntrinsicSize.Max)
+            .padding(16.dp)
+            .width(IntrinsicSize.Max)
     ) {
         ClickableText(
             text = styledMessage,
@@ -178,7 +174,8 @@ private fun PreviewMessage() {
             ),
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,
-            isUserMe = true
+            isUserMe = true,
+            onFileItemClick = {}
         )
     }
 }

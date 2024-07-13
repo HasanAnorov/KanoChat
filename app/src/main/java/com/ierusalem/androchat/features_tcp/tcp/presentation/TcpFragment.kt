@@ -3,6 +3,7 @@ package com.ierusalem.androchat.features_tcp.tcp.presentation
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -44,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -61,6 +63,7 @@ import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.core.utils.getExtensionFromFilename
 import com.ierusalem.androchat.core.utils.getFileNameWithoutExtension
+import com.ierusalem.androchat.core.utils.getMimeType
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.features.auth.register.domain.model.FileState
@@ -82,6 +85,7 @@ import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEven
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpView
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactListContent
+import com.tougee.recorderview.BuildConfig
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -101,6 +105,7 @@ import java.net.Socket
 import java.net.UnknownHostException
 import java.util.Calendar
 import kotlin.math.min
+
 
 @AndroidEntryPoint
 class TcpFragment : Fragment() {
@@ -518,6 +523,23 @@ class TcpFragment : Fragment() {
 
             TcpScreenNavigation.OnReadContactsRequest -> {
                 readContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+            }
+
+            is TcpScreenNavigation.OnFileItemClick -> {
+                try {
+                    val uri: Uri = FileProvider.getUriForFile(requireContext(), "com.ierusalem.androchat.fileprovider", File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), navigation.message.filename))
+                    val mimeType  = navigation.message.filePath.getMimeType(requireContext())
+                    log("mime type - $mimeType")
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        type = mimeType
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    startActivity(Intent.createChooser(intent, "Share file via"))
+                } catch (e: ActivityNotFoundException) {
+                    log("can not open a file !")
+                    // no Activity to handle this kind of files
+                }
             }
 
             TcpScreenNavigation.OnNavIconClick -> {

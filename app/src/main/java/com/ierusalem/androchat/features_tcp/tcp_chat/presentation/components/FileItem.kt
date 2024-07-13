@@ -36,7 +36,7 @@ import com.ierusalem.androchat.features.auth.register.domain.model.Message
 fun FileMessageItem(
     modifier: Modifier = Modifier,
     message: Message.FileMessage,
-    onFileItemClick:() -> Unit
+    onFileItemClick:(Message.FileMessage) -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -65,7 +65,7 @@ fun FileMessageItem(
                                 .clip(CircleShape)
                                 .clickable(
                                     onClick = {
-
+                                        onFileItemClick(message)
                                     }
                                 )
                                 .background(MaterialTheme.colorScheme.background)
@@ -133,7 +133,7 @@ fun FileMessageItem(
 
 @Preview
 @Composable
-private fun PreviwLightFileItem() {
+private fun PreviewLightFileItem() {
     AndroChatTheme {
         Surface {
             FileMessageItem(
@@ -145,7 +145,8 @@ private fun PreviwLightFileItem() {
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
                     filePath = Uri.EMPTY
-                )
+                ),
+                onFileItemClick = {}
             )
         }
     }
@@ -165,7 +166,8 @@ private fun PreviewDarkFileItem() {
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
                     filePath = Uri.EMPTY
-                )
+                ),
+                onFileItemClick = {}
             )
         }
     }
