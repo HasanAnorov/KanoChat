@@ -37,12 +37,11 @@ import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.Fil
 @Composable
 fun LocalMessageItem(
     msg: Message,
-    isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
     onFileItemClick: (Message.FileMessage) -> Unit
 ) {
-    val borderColor = if (isUserMe) {
+    val borderColor = if (msg.isFromYou) {
         MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.tertiary
@@ -73,7 +72,7 @@ fun LocalMessageItem(
                 .padding(end = 16.dp)
                 .weight(1f),
             msg = msg,
-            isUserMe = isUserMe,
+            isUserMe = msg.isFromYou,
             isFirstMessageByAuthor = isFirstMessageByAuthor,
             isLastMessageByAuthor = isLastMessageByAuthor,
             onFileItemClick = onFileItemClick
@@ -175,7 +174,6 @@ private fun PreviewMessage() {
             ),
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,
-            isUserMe = true,
             onFileItemClick = {}
         )
     }

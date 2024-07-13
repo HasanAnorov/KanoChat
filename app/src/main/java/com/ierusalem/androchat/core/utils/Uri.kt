@@ -6,6 +6,9 @@ import android.net.Uri
 import android.webkit.MimeTypeMap
 import java.util.Locale
 
+/**
+ * Returns the MIME type of the given Uri.
+ */
 fun Uri.getMimeType(context: Context): String? {
     var mimeType: String? = null
     if (ContentResolver.SCHEME_CONTENT == this.scheme) {

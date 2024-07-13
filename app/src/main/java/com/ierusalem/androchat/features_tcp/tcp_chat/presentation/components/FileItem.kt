@@ -8,12 +8,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -36,10 +34,15 @@ import com.ierusalem.androchat.features.auth.register.domain.model.Message
 fun FileMessageItem(
     modifier: Modifier = Modifier,
     message: Message.FileMessage,
-    onFileItemClick:(Message.FileMessage) -> Unit,
+    onFileItemClick: (Message.FileMessage) -> Unit,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
+    val backgroundBubbleColor = if (message.isFromYou) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+    Surface(
+        color = backgroundBubbleColor,
         shape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
     ) {
         Column(modifier.padding(8.dp)) {
@@ -145,7 +148,7 @@ private fun PreviewLightFileItem() {
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
                     filePath = Uri.EMPTY,
-                    isFromYou = true
+                    isFromYou = false
                 ),
                 onFileItemClick = {}
             )

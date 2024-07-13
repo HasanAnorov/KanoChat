@@ -96,7 +96,6 @@ fun LocalConversationContent(
                     messages = uiState.messages.reversed(),
                     modifier = Modifier.weight(1f),
                     scrollState = scrollState,
-                    authorMe = uiState.authorMe,
                     onFileItemClicked = { eventHandler(TcpScreenEvents.OnFileItemClick(it)) }
                 )
                 LocalConversationUserInput(
@@ -170,7 +169,6 @@ fun Messages(
     messages: List<Message>,
     scrollState: LazyListState,
     modifier: Modifier = Modifier,
-    authorMe: String,
     onFileItemClicked: (Message.FileMessage) -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -193,7 +191,6 @@ fun Messages(
                 val isLastMessageByAuthor = nextAuthor != message.username
                 LocalMessageItem(
                     msg = message,
-                    isUserMe = message.username == authorMe,
                     isFirstMessageByAuthor = isFirstMessageByAuthor,
                     isLastMessageByAuthor = isLastMessageByAuthor,
                     onFileItemClick = onFileItemClicked
@@ -240,17 +237,14 @@ fun LocalMessageItem(
     } else {
         MaterialTheme.colorScheme.surfaceVariant
     }
-
-    Column {
-        Surface(
-            color = backgroundBubbleColor,
-            shape = ChatBubbleShape
-        ) {
-            LocalClickableMessage(
-                message = message,
-                isUserMe = isUserMe,
-            )
-        }
+    Surface(
+        color = backgroundBubbleColor,
+        shape = ChatBubbleShape
+    ) {
+        LocalClickableMessage(
+            message = message,
+            isUserMe = isUserMe,
+        )
     }
 }
 

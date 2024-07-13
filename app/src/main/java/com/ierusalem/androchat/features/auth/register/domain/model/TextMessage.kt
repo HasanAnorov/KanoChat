@@ -8,7 +8,7 @@ sealed class Message(
     open val isFromYou:Boolean
 ) {
     data class TextMessage(
-        //this username field should be removed
+        //todo - maybe this username field should be removed
         override val username: String,
         override val isFromYou: Boolean,
         val message: String,

@@ -238,7 +238,7 @@ class TcpFragment : Fragment() {
                         val extension = fileName.getExtensionFromFilename()
                         val fileMessage = Message.FileMessage(
                             formattedTime = currentTime.toString(),
-                            username = "from client",
+                            username = viewModel.state.value.authorMe,
                             filePath = data.data!!,
                             fileName = fileName,
                             fileSize = Formatter.formatShortFileSize(requireContext(), fileSize),
@@ -552,7 +552,6 @@ class TcpFragment : Fragment() {
                         file
                     )
                     val mimeType = navigation.message.filePath.getMimeType(requireContext())
-                    log("mime type - $mimeType")
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         setDataAndType(uri, mimeType)
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
