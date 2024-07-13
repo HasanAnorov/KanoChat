@@ -2,6 +2,7 @@ package com.ierusalem.androchat.core.constants
 
 import com.ierusalem.androchat.core.app.AppLanguage
 import java.io.File
+import java.util.Calendar
 
 object Constants {
 
@@ -73,6 +74,10 @@ object Constants {
         } while (File(newFileName).exists())
 
         return newFileName
+    }
+
+    fun getCurrentTime(): String {
+        return Calendar.getInstance().time.toString()
     }
 
 }

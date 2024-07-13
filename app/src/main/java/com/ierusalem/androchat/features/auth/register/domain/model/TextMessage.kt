@@ -25,6 +25,7 @@ sealed class Message(
         val fileExtension: String,
         val fileState: FileState = FileState.Loading(0)
     ) : Message(username, formattedTime, isFromYou)
+
 }
 
 sealed interface FileState {

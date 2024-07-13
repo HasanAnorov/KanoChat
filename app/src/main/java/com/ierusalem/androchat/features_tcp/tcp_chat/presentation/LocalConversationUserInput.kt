@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
 
 enum class LocalInputSelector {
@@ -206,6 +207,7 @@ fun LocalConversationUserInput(
                     eventHandler(TcpScreenEvents.UpdateBottomSheetState(true))
                 },
                 onFilesClicked = {
+                    log("click")
                     eventHandler(TcpScreenEvents.ShowFileChooserClick)
                 }
             )

@@ -554,10 +554,11 @@ class TcpFragment : Fragment() {
                     val mimeType = navigation.message.filePath.getMimeType(requireContext())
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         setDataAndType(uri, mimeType)
+                        addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        putExtra(Intent.EXTRA_TEXT, getString(R.string.open_with))
                     }
-                    val chooserIntent = Intent.createChooser(intent, getString(R.string.open_with))
-                    startActivity(chooserIntent)
+                    startActivity(intent)
                 } catch (e: ActivityNotFoundException) {
                     // no Activity to handle this kind of files
                     toast(getString(R.string.no_application_found_to_open_this_file))

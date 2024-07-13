@@ -29,13 +29,6 @@
         android:usesPermissionFlags="neverForLocation"
         tools:targetApi="s" />
 
-    <!--    delete this later-->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission
-        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
-
     <!-- For contact sharing option-->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
