@@ -243,7 +243,7 @@ class TcpFragment : Fragment() {
                             fileName = fileName,
                             fileSize = Formatter.formatShortFileSize(requireContext(), fileSize),
                             fileExtension = extension,
-                            fileState = FileState.Success,
+                            fileState = FileState.Loading(0),
                             isFromYou = true
                         )
                         sendClientMessage(fileMessage)
@@ -784,11 +784,11 @@ class TcpFragment : Fragment() {
         log("sending file ...")
         log("filename - ${fileMessage.fileName}, filepath - ${fileMessage.filePath}")
 
-        val type = AppMessageType.FILE.identifier
+        viewModel.handleEvents(TcpScreenEvents.InsertMessage(fileMessage))
 
+        val type = AppMessageType.FILE.identifier
         // Here we send the File to Server
         writer.writeChar(type.code)
-
         //sending file name
         writer.writeUTF(fileMessage.fileName)
         log("sending file name - ${fileMessage.fileName}")
@@ -801,10 +801,12 @@ class TcpFragment : Fragment() {
         fileOutputStream.close()
 
         //write length
+        val fileSizeForPercentage = file.length()
         writer.writeLong(file.length())
         log("sending file length - ${file.length()}")
 
         var bytes: Int
+        var bytesForPercentage = 0L
         val fileInputStream = FileInputStream(file)
 
         // Here we  break file into chunks
@@ -813,11 +815,23 @@ class TcpFragment : Fragment() {
             // Send the file to Server Socket
             writer.write(buffer, 0, bytes)
             writer.flush()
+
+            bytesForPercentage += bytes.toLong()
+            val percentage =
+                (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+            val tempPercentage =
+                ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+            if (percentage != tempPercentage) {
+                log("progress - $percentage")
+                val newState = FileState.Loading(percentage)
+                viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+            }
         }
         // close the file here
         fileInputStream.close()
+        val newState = FileState.Success
+        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
         log("file sent successfully")
-        viewModel.handleEvents(TcpScreenEvents.InsertMessage(fileMessage))
     }
 
     private suspend fun createServer(serverPort: Int) {
