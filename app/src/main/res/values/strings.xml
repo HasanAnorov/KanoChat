@@ -195,5 +195,7 @@
     <string name="please_install_a_file_manager">PLease install a file manager!</string>
     <string name="no_application_found_to_open_this_file">No application found to open this file</string>
     <string name="open_with">Open with</string>
+    <string name="contact">contact</string>
+    <string name="share">Share</string>
 
 </resources>

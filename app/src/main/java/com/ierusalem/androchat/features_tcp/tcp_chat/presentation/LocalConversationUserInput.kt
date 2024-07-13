@@ -124,6 +124,7 @@ fun LocalConversationUserInput(
     ) {
         Column(modifier = modifier) {
             Box(contentAlignment = Alignment.BottomStart) {
+                //Recording View ask about this later
 //                AndroidView(
 //                    modifier = Modifier
 //                        .align(Alignment.CenterEnd)

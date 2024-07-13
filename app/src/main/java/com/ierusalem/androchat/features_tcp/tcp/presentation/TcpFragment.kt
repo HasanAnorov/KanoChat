@@ -16,7 +16,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Looper
-import android.provider.OpenableColumns
 import android.text.format.Formatter
 import android.util.Log
 import android.view.LayoutInflater
@@ -59,12 +58,16 @@ import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.constants.Constants.FILE_PROVIDER_AUTHORITY
 import com.ierusalem.androchat.core.constants.Constants.SOCKET_DEFAULT_BUFFER_SIZE
 import com.ierusalem.androchat.core.constants.Constants.generateUniqueFileName
+import com.ierusalem.androchat.core.constants.Constants.getCurrentTime
 import com.ierusalem.androchat.core.ui.components.PermissionDialog
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.core.utils.getExtensionFromFilename
+import com.ierusalem.androchat.core.utils.getFileExtensionFromUri
+import com.ierusalem.androchat.core.utils.getFileNameFromUri
 import com.ierusalem.androchat.core.utils.getFileNameWithoutExtension
+import com.ierusalem.androchat.core.utils.getFileSizeInReadableFormat
 import com.ierusalem.androchat.core.utils.getMimeType
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.openAppSettings
@@ -77,6 +80,7 @@ import com.ierusalem.androchat.features_tcp.server.wifidirect.Reason
 import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiDirectBroadcastReceiver
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.ClientConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.ContactsMessageItem
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.HostConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.HotspotNetworkingStatus
@@ -91,6 +95,7 @@ import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.Con
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
@@ -211,38 +216,23 @@ class TcpFragment : Fragment() {
             }
 
             Activity.RESULT_OK -> {
-                val contentResolver = activity?.contentResolver
-                val data: Intent = result.data!!
+                val contentResolver = activity?.contentResolver!!
+                val intent: Intent = result.data!!
+                val uri = intent.data!!
 
-                var fileName = "file"
-                var fileSize = 0L
-
-                data.data?.let { returnUri ->
-                    contentResolver?.query(returnUri, null, null, null, null)
-                }?.use { cursor ->
-                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-                    cursor.moveToFirst()
-                    fileName = cursor.getString(nameIndex)
-                    fileSize = cursor.getLong(sizeIndex)
-                }
-
-                log("filename - $fileName, filepath - ${data.data!!} , size - $fileSize")
                 when (viewModel.state.value.generalConnectionStatus) {
                     GeneralConnectionStatus.Idle -> {
-                        //do nothing
+                        /** do nothing here */
                     }
 
                     GeneralConnectionStatus.ConnectedAsClient -> {
-                        val currentTime = Calendar.getInstance().time
-                        val extension = fileName.getExtensionFromFilename()
                         val fileMessage = Message.FileMessage(
-                            formattedTime = currentTime.toString(),
+                            formattedTime = getCurrentTime(),
                             username = viewModel.state.value.authorMe,
-                            filePath = data.data!!,
-                            fileName = fileName,
-                            fileSize = Formatter.formatShortFileSize(requireContext(), fileSize),
-                            fileExtension = extension,
+                            filePath = uri,
+                            fileName = uri.getFileNameFromUri(contentResolver),
+                            fileSize = uri.getFileSizeInReadableFormat(contentResolver),
+                            fileExtension = uri.getFileExtensionFromUri(contentResolver),
                             fileState = FileState.Loading(0),
                             isFromYou = true
                         )
@@ -250,7 +240,17 @@ class TcpFragment : Fragment() {
                     }
 
                     GeneralConnectionStatus.ConnectedAsHost -> {
-
+                        val fileMessage = Message.FileMessage(
+                            formattedTime = getCurrentTime(),
+                            username = viewModel.state.value.authorMe,
+                            filePath = uri,
+                            fileName = uri.getFileNameFromUri(contentResolver),
+                            fileSize = uri.getFileSizeInReadableFormat(contentResolver),
+                            fileExtension = uri.getFileExtensionFromUri(contentResolver),
+                            fileState = FileState.Loading(0),
+                            isFromYou = true
+                        )
+                        sendHostMessage(fileMessage)
                     }
                 }
             }
@@ -325,7 +325,7 @@ class TcpFragment : Fragment() {
                     focusManager.clearFocus()
                 }
 
-                val state by viewModel.state.collectAsStateWithLifecycle()
+                val uiState by viewModel.state.collectAsStateWithLifecycle()
 
                 val sheetState = rememberModalBottomSheetState(
                     skipPartiallyExpanded = false
@@ -339,16 +339,67 @@ class TcpFragment : Fragment() {
 //                }
 
                 AndroChatTheme {
-                    if (state.showBottomSheet) {
+                    if (uiState.showBottomSheet) {
                         ModalBottomSheet(
                             sheetState = sheetState, onDismissRequest = {
                                 viewModel.handleEvents(TcpScreenEvents.UpdateBottomSheetState(false))
                             }, windowInsets = WindowInsets(0, 0, 0, 0)
                         ) {
-                            if (state.isReadContactsGranted) {
+                            if (uiState.isReadContactsGranted) {
                                 viewModel.handleEvents(TcpScreenEvents.ReadContacts)
-                                ContactListContent(contacts = state.contacts,
-                                    shareSelectedContacts = {})
+                                ContactListContent(
+                                    contacts = uiState.contacts,
+                                    shareSelectedContacts = { selectedContacts ->
+                                        when (uiState.generalConnectionStatus) {
+                                            GeneralConnectionStatus.Idle -> {
+                                                //do nothing
+                                            }
+
+                                            GeneralConnectionStatus.ConnectedAsClient -> {
+                                                lifecycleScope.launch(Dispatchers.IO) {
+                                                    viewModel.handleEvents(
+                                                        TcpScreenEvents.UpdateBottomSheetState(
+                                                            false
+                                                        )
+                                                    )
+                                                    selectedContacts.forEach { contact ->
+                                                        val contactMessage = Message.ContactMessage(
+                                                            username = uiState.authorMe,
+                                                            formattedTime = getCurrentTime(),
+                                                            isFromYou = true,
+                                                            contactName = contact.contactName,
+                                                            contactNumber = contact.phoneNumber
+                                                        )
+                                                        sendClientMessage(contactMessage)
+                                                        delay(300)
+                                                    }
+                                                }
+                                            }
+
+                                            GeneralConnectionStatus.ConnectedAsHost -> {
+                                                lifecycleScope.launch(Dispatchers.IO) {
+                                                    viewModel.handleEvents(
+                                                        TcpScreenEvents.UpdateBottomSheetState(
+                                                            false
+                                                        )
+                                                    )
+                                                    selectedContacts.forEach { contact ->
+                                                        val contactMessage = Message.ContactMessage(
+                                                            username = uiState.authorMe,
+                                                            formattedTime = getCurrentTime(),
+                                                            isFromYou = true,
+                                                            contactName = contact.contactName,
+                                                            contactNumber = contact.phoneNumber
+                                                        )
+                                                        sendHostMessage(contactMessage)
+                                                        delay(300)
+                                                    }
+                                                }
+                                            }
+
+                                        }
+                                    }
+                                )
                             } else {
                                 Box(modifier = Modifier
                                     .height(300.dp)
@@ -366,7 +417,7 @@ class TcpFragment : Fragment() {
                             }
                         }
                     }
-                    if (state.shouldShowPermissionDialog) {
+                    if (uiState.shouldShowPermissionDialog) {
                         PermissionDialog(isPermanentlyDeclined = !shouldShowRequestPermissionRationale(
                             Manifest.permission.READ_CONTACTS
                         ),
@@ -381,7 +432,7 @@ class TcpFragment : Fragment() {
                             })
                     }
 
-                    TcpScreen(state = state,
+                    TcpScreen(state = uiState,
                         //try to use pass lambda like this, this will help to avoid extra recomposition
                         eventHandler = viewModel::handleEvents,
                         allTabs = allTabs,
@@ -530,17 +581,24 @@ class TcpFragment : Fragment() {
                 readContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
             }
 
+            is TcpScreenNavigation.OnContactItemClick -> {
+                val intent = Intent(Intent.ACTION_DIAL)
+                intent.setData(Uri.parse("tel:${navigation.message.contactNumber}"))
+                startActivity(intent)
+            }
+
             is TcpScreenNavigation.OnFileItemClick -> {
                 try {
                     val file: File
-                    if(navigation.message.isFromYou){
-                        val inputStream = requireContext().contentResolver.openInputStream(navigation.message.filePath)
+                    if (navigation.message.isFromYou) {
+                        val inputStream =
+                            requireContext().contentResolver.openInputStream(navigation.message.filePath)
                         val filePathToSave = context?.cacheDir
                         file = File(filePathToSave, navigation.message.fileName)
                         val fileOutputStream = FileOutputStream(file)
                         inputStream?.copyTo(fileOutputStream)
                         fileOutputStream.close()
-                    }else{
+                    } else {
                         file = File(
                             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}"),
                             navigation.message.fileName
@@ -782,7 +840,6 @@ class TcpFragment : Fragment() {
 
     private fun sendFile(writer: DataOutputStream, fileMessage: Message.FileMessage) {
         log("sending file ...")
-        log("filename - ${fileMessage.fileName}, filepath - ${fileMessage.filePath}")
 
         viewModel.handleEvents(TcpScreenEvents.InsertMessage(fileMessage))
 
@@ -839,383 +896,156 @@ class TcpFragment : Fragment() {
         viewModel.updateHostConnectionStatus(HostConnectionStatus.Creating)
 
         withContext(Dispatchers.IO) {
-            serverSocket = ServerSocket(serverPort)
-            if (serverSocket.isBound) {
-                viewModel.updateHostConnectionStatus(HostConnectionStatus.Created)
-                viewModel.updateConnectionsCount(true)
-            }
-            while (!serverSocket.isClosed) {
-                connectedClientSocketOnServer = serverSocket.accept()
-                Log.d("ahi3646", "New client : $connectedClientSocketOnServer ")
-                viewModel.updateConnectionsCount(true)
+            try {
+                serverSocket = ServerSocket(serverPort)
+                log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
+                if (serverSocket.isBound) {
+                    viewModel.updateHostConnectionStatus(HostConnectionStatus.Created)
+                    viewModel.updateConnectionsCount(true)
+                }
+                while (!serverSocket.isClosed) {
+                    connectedClientSocketOnServer = serverSocket.accept()
+                    Log.d("ahi3646", "New client : $connectedClientSocketOnServer ")
+                    viewModel.updateConnectionsCount(true)
 
-                while (!connectedClientSocketOnServer.isClosed) {
-                    val reader =
-                        DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
-                    val dataType = AppMessageType.fromChar(reader.readChar())
+                    while (!connectedClientSocketOnServer.isClosed) {
+                        val reader =
+                            DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
 
-                    when (dataType) {
-                        AppMessageType.INITIAL -> {
+                        try {
+                            val dataType = AppMessageType.fromChar(reader.readChar())
 
-                        }
+                            when (dataType) {
+                                AppMessageType.INITIAL -> {}
+                                AppMessageType.CONTACT -> {
+                                    val receivedMessage = reader.readUTF()
+                                    log("host incoming contact message - $receivedMessage")
+                                    val contactMessageItem =
+                                        gson.fromJson(receivedMessage, ContactsMessageItem::class.java)
+                                    val contactMessage = Message.ContactMessage(
+                                        username = "from client",
+                                        formattedTime = getCurrentTime(),
+                                        contactName = contactMessageItem.contactName,
+                                        contactNumber = contactMessageItem.contactNumber,
+                                        isFromYou = false
+                                    )
+                                    viewModel.insertMessage(contactMessage)
+                                }
 
-                        AppMessageType.TEXT -> {
-                            val receivedMessage = reader.readUTF()
-                            log("host incoming message - $receivedMessage")
+                                AppMessageType.TEXT -> {
+                                    val receivedMessage = reader.readUTF()
+                                    log("host incoming message - $receivedMessage")
 
-                            val currentTime = Calendar.getInstance().time
-                            val message = Message.TextMessage(
-                                username = "from client",
-                                formattedTime = currentTime.toString(),
-                                message = receivedMessage.toString(),
-                                isFromYou = false
+                                    val currentTime = Calendar.getInstance().time
+                                    val message = Message.TextMessage(
+                                        username = "from client",
+                                        formattedTime = currentTime.toString(),
+                                        message = receivedMessage.toString(),
+                                        isFromYou = false
+                                    )
+                                    viewModel.insertMessage(message)
+                                }
+
+                                AppMessageType.FILE -> {
+                                    receiveFile(reader = reader)
+                                }
+
+                                AppMessageType.UNKNOWN -> {
+                                    //currently not handled
+                                }
+                            }
+                        } catch (e: EOFException) {
+                            //if the IP address of the host could not be determined.
+                            Log.d("ahi3646", "createServer: EOFException")
+                            connectedClientSocketOnServer.close()
+                            viewModel.updateConnectionsCount(false)
+                            log("in while - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
+                            viewModel.handleEvents(
+                                TcpScreenEvents.OnDialogErrorOccurred(
+                                    TcpScreenDialogErrors.EOException
+                                )
                             )
-                            viewModel.insertMessage(message)
-                        }
-
-                        AppMessageType.FILE -> {
-                            receiveFile(reader = reader)
-                        }
-
-                        AppMessageType.UNKNOWN -> {
-                            //currently not handled
+                            //HERE IS THE POINT !!!
+                            try {
+                                reader.close()
+                            } catch (e: IOException) {
+                                e.printStackTrace()
+                            }
+                        } catch (e: IOException) {
+                            //the stream has been closed and the contained
+                            // input stream does not support reading after close,
+                            // or another I/O error occurs
+                            Log.d("ahi3646", "createServer: io exception ")
+                            viewModel.handleEvents(
+                                TcpScreenEvents.OnDialogErrorOccurred(
+                                    TcpScreenDialogErrors.IOException
+                                )
+                            )
+                            viewModel.updateConnectionsCount(false)
+                            connectedClientSocketOnServer.close()
+                            //serverSocket.close()
+                            try {
+                                reader.close()
+                            } catch (e: IOException) {
+                                e.printStackTrace()
+                                log("reader close exception - $e ")
+                            }
+                        } catch (e: UTFDataFormatException) {
+                            /** here is firing***/
+                            //if the bytes do not represent a valid modified UTF-8 encoding of a string.
+                            Log.d("ahi3646", "createServer: io exception ")
+                            viewModel.handleEvents(
+                                TcpScreenEvents.OnDialogErrorOccurred(
+                                    TcpScreenDialogErrors.UTFDataFormatException
+                                )
+                            )
+                            viewModel.updateConnectionsCount(false)
+                            connectedClientSocketOnServer.close()
+                            //serverSocket.close()
+                            try {
+                                reader.close()
+                            } catch (e: IOException) {
+                                e.printStackTrace()
+                            }
                         }
                     }
-
-//                        try {
-//                            val dataType = AppMessageType.fromChar(reader.readChar())
-//                            log("incoming message type - $dataType")
-//
-//                            when (dataType) {
-//                                AppMessageType.INITIAL -> {
-//
-//                                }
-//
-//                                AppMessageType.TEXT -> {
-//                                    val length = reader.readInt()
-//                                    val messageByte = ByteArray(length)
-//                                    var end = false
-//                                    val dataString = java.lang.StringBuilder(length)
-//                                    var totalBytesRead = 0
-//                                    while (!end) {
-//                                        val currentBytesRead: Int = reader.read(messageByte)
-//                                        totalBytesRead += currentBytesRead
-//                                        if (totalBytesRead <= length) {
-//                                            dataString.append(
-//                                                    String(
-//                                                        messageByte,
-//                                                        0,
-//                                                        currentBytesRead,
-//                                                        StandardCharsets.UTF_8
-//                                                    )
-//                                                )
-//                                        } else {
-//                                            dataString.append(
-//                                                    String(
-//                                                        messageByte,
-//                                                        0,
-//                                                        length - totalBytesRead + currentBytesRead,
-//                                                        StandardCharsets.UTF_8
-//                                                    )
-//                                                )
-//                                        }
-//                                        if (dataString.length >= length) {
-//                                            end = true
-//                                            log("host incoming message - $dataString")
-//                                        }
-//                                    }
-//                                    //                            val inputData = reader.readUTF()
-////                            val message = gson.fromJson(
-////                                inputData,
-////                                Message::class.java
-////                            )
-////                            viewModel.insertMessage(message)
-//                                }
-//
-//                                AppMessageType.FILE -> {
-//                                    receiveFile(dataInputStream = reader, fileName = "4228.pdf")
-//                                }
-//
-//                                AppMessageType.UNKNOWN -> {}
-//                            }
-//                        } catch (e: EOFException) {
-//                            //if the IP address of the host could not be determined.
-//                            Log.d("ahi3646", "createServer: EOFException")
-//                            connectedClientSocketOnServer.close()
-//                            viewModel.updateConnectionsCount(false)
-//                            log("in while - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
-//                            viewModel.handleEvents(
-//                                TcpScreenEvents.OnDialogErrorOccurred(
-//                                    TcpScreenDialogErrors.EOException
-//                                )
-//                            )
-//                            //HERE IS THE POINT !!!
-//                            try {
-//                                reader.close()
-//                            } catch (e: IOException) {
-//                                e.printStackTrace()
-//                            }
-//                        } catch (e: IOException) {
-//                            //the stream has been closed and the contained
-//                            // input stream does not support reading after close,
-//                            // or another I/O error occurs
-//                            Log.d("ahi3646", "createServer: io exception ")
-//                            viewModel.handleEvents(
-//                                TcpScreenEvents.OnDialogErrorOccurred(
-//                                    TcpScreenDialogErrors.IOException
-//                                )
-//                            )
-//                            viewModel.updateConnectionsCount(false)
-//                            connectedClientSocketOnServer.close()
-//                            //serverSocket.close()
-//                            try {
-//                                reader.close()
-//                            } catch (e: IOException) {
-//                                e.printStackTrace()
-//                                log("reader close exception - $e ")
-//                            }
-//                        } catch (e: UTFDataFormatException) {
-//                            /** here is firing***/
-//                            //if the bytes do not represent a valid modified UTF-8 encoding of a string.
-//                            Log.d("ahi3646", "createServer: io exception ")
-//                            viewModel.handleEvents(
-//                                TcpScreenEvents.OnDialogErrorOccurred(
-//                                    TcpScreenDialogErrors.UTFDataFormatException
-//                                )
-//                            )
-//                            viewModel.updateConnectionsCount(false)
-//                            connectedClientSocketOnServer.close()
-//                            //serverSocket.close()
-//                            try {
-//                                reader.close()
-//                            } catch (e: IOException) {
-//                                e.printStackTrace()
-//                            }
-//                        }
                 }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                try {
+                    viewModel.updateConnectionsCount(false)
+                } catch (ex: IOException) {
+                    ex.printStackTrace()
+                }
+                serverSocket.close()
+                //change server title status
+                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+
+            } catch (e: SecurityException) {
+                try {
+                    viewModel.updateConnectionsCount(false)
+                } catch (ex: IOException) {
+                    ex.printStackTrace()
+                }
+                serverSocket.close()
+                //change server title status
+                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+
+                //if a security manager exists and its checkConnect method doesn't allow the operation.
+                Log.d("ahi3646", "createServer: SecurityException ")
+            } catch (e: IllegalArgumentException) {
+                try {
+                    viewModel.updateConnectionsCount(false)
+                } catch (ex: IOException) {
+                    ex.printStackTrace()
+                }
+                serverSocket.close()
+                //change server title status
+                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+
+                //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
+                Log.d("ahi3646", "createServer: IllegalArgumentException ")
             }
-//            try {
-//                serverSocket = ServerSocket(serverPort)
-//                log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
-//                if (serverSocket.isBound) {
-//                    viewModel.updateHostConnectionStatus(HostConnectionStatus.Created)
-//                    viewModel.updateConnectionsCount(true)
-//                }
-//                while (!serverSocket.isClosed) {
-//
-//                    connectedClientSocketOnServer = serverSocket.accept()
-//                    Log.d("ahi3646", "New client : $connectedClientSocketOnServer ")
-//                    viewModel.updateConnectionsCount(true)
-//
-//                    while (!connectedClientSocketOnServer.isClosed) {
-//                        //reading incoming messages ...
-//                        val reader =
-//                            DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
-//
-//                        val dataType = AppMessageType.fromChar(reader.readChar())
-//                        log("incoming message type - $dataType")
-//
-//                        when (dataType) {
-//                            AppMessageType.INITIAL -> {
-//
-//                            }
-//
-//                            AppMessageType.TEXT -> {
-//                                val length = reader.readInt()
-//                                val messageByte = ByteArray(length)
-//                                var end = false
-//                                val dataString = java.lang.StringBuilder(length)
-//                                var totalBytesRead = 0
-//                                while (!end) {
-//                                    val currentBytesRead: Int = reader.read(messageByte)
-//                                    totalBytesRead += currentBytesRead
-//                                    if (totalBytesRead <= length) {
-//                                        dataString.append(
-//                                            String(
-//                                                messageByte,
-//                                                0,
-//                                                currentBytesRead,
-//                                                StandardCharsets.UTF_8
-//                                            )
-//                                        )
-//                                    } else {
-//                                        dataString.append(
-//                                            String(
-//                                                messageByte,
-//                                                0,
-//                                                length - totalBytesRead + currentBytesRead,
-//                                                StandardCharsets.UTF_8
-//                                            )
-//                                        )
-//                                    }
-//                                    if (dataString.length >= length) {
-//                                        end = true
-//                                        log("host incoming message - $dataString")
-//                                    }
-//                                }
-//                                //                            val inputData = reader.readUTF()
-////                            val message = gson.fromJson(
-////                                inputData,
-////                                Message::class.java
-////                            )
-////                            viewModel.insertMessage(message)
-//                            }
-//
-//                            AppMessageType.FILE -> {
-//                                receiveFile(dataInputStream = reader, fileName = "4228.pdf")
-//                            }
-//
-//                            AppMessageType.UNKNOWN -> {}
-//                        }
-//
-////                        try {
-////                            val dataType = AppMessageType.fromChar(reader.readChar())
-////                            log("incoming message type - $dataType")
-////
-////                            when (dataType) {
-////                                AppMessageType.INITIAL -> {
-////
-////                                }
-////
-////                                AppMessageType.TEXT -> {
-////                                    val length = reader.readInt()
-////                                    val messageByte = ByteArray(length)
-////                                    var end = false
-////                                    val dataString = java.lang.StringBuilder(length)
-////                                    var totalBytesRead = 0
-////                                    while (!end) {
-////                                        val currentBytesRead: Int = reader.read(messageByte)
-////                                        totalBytesRead += currentBytesRead
-////                                        if (totalBytesRead <= length) {
-////                                            dataString.append(
-////                                                    String(
-////                                                        messageByte,
-////                                                        0,
-////                                                        currentBytesRead,
-////                                                        StandardCharsets.UTF_8
-////                                                    )
-////                                                )
-////                                        } else {
-////                                            dataString.append(
-////                                                    String(
-////                                                        messageByte,
-////                                                        0,
-////                                                        length - totalBytesRead + currentBytesRead,
-////                                                        StandardCharsets.UTF_8
-////                                                    )
-////                                                )
-////                                        }
-////                                        if (dataString.length >= length) {
-////                                            end = true
-////                                            log("host incoming message - $dataString")
-////                                        }
-////                                    }
-////                                    //                            val inputData = reader.readUTF()
-//////                            val message = gson.fromJson(
-//////                                inputData,
-//////                                Message::class.java
-//////                            )
-//////                            viewModel.insertMessage(message)
-////                                }
-////
-////                                AppMessageType.FILE -> {
-////                                    receiveFile(dataInputStream = reader, fileName = "4228.pdf")
-////                                }
-////
-////                                AppMessageType.UNKNOWN -> {}
-////                            }
-////                        } catch (e: EOFException) {
-////                            //if the IP address of the host could not be determined.
-////                            Log.d("ahi3646", "createServer: EOFException")
-////                            connectedClientSocketOnServer.close()
-////                            viewModel.updateConnectionsCount(false)
-////                            log("in while - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
-////                            viewModel.handleEvents(
-////                                TcpScreenEvents.OnDialogErrorOccurred(
-////                                    TcpScreenDialogErrors.EOException
-////                                )
-////                            )
-////                            //HERE IS THE POINT !!!
-////                            try {
-////                                reader.close()
-////                            } catch (e: IOException) {
-////                                e.printStackTrace()
-////                            }
-////                        } catch (e: IOException) {
-////                            //the stream has been closed and the contained
-////                            // input stream does not support reading after close,
-////                            // or another I/O error occurs
-////                            Log.d("ahi3646", "createServer: io exception ")
-////                            viewModel.handleEvents(
-////                                TcpScreenEvents.OnDialogErrorOccurred(
-////                                    TcpScreenDialogErrors.IOException
-////                                )
-////                            )
-////                            viewModel.updateConnectionsCount(false)
-////                            connectedClientSocketOnServer.close()
-////                            //serverSocket.close()
-////                            try {
-////                                reader.close()
-////                            } catch (e: IOException) {
-////                                e.printStackTrace()
-////                                log("reader close exception - $e ")
-////                            }
-////                        } catch (e: UTFDataFormatException) {
-////                            /** here is firing***/
-////                            //if the bytes do not represent a valid modified UTF-8 encoding of a string.
-////                            Log.d("ahi3646", "createServer: io exception ")
-////                            viewModel.handleEvents(
-////                                TcpScreenEvents.OnDialogErrorOccurred(
-////                                    TcpScreenDialogErrors.UTFDataFormatException
-////                                )
-////                            )
-////                            viewModel.updateConnectionsCount(false)
-////                            connectedClientSocketOnServer.close()
-////                            //serverSocket.close()
-////                            try {
-////                                reader.close()
-////                            } catch (e: IOException) {
-////                                e.printStackTrace()
-////                            }
-////                        }
-//                    }
-//                }
-//            } catch (e: IOException) {
-//                e.printStackTrace()
-//                try {
-//                    viewModel.updateConnectionsCount(false)
-//                } catch (ex: IOException) {
-//                    ex.printStackTrace()
-//                }
-//                serverSocket.close()
-//                //change server title status
-//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-//
-//            } catch (e: SecurityException) {
-//                try {
-//                    viewModel.updateConnectionsCount(false)
-//                } catch (ex: IOException) {
-//                    ex.printStackTrace()
-//                }
-//                serverSocket.close()
-//                //change server title status
-//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-//
-//                //if a security manager exists and its checkConnect method doesn't allow the operation.
-//                Log.d("ahi3646", "createServer: SecurityException ")
-//            } catch (e: IllegalArgumentException) {
-//                try {
-//                    viewModel.updateConnectionsCount(false)
-//                } catch (ex: IOException) {
-//                    ex.printStackTrace()
-//                }
-//                serverSocket.close()
-//                //change server title status
-//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-//
-//                //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
-//                Log.d("ahi3646", "createServer: IllegalArgumentException ")
-//            }
         }
     }
 
@@ -1253,7 +1083,25 @@ class TcpFragment : Fragment() {
                             viewModel.insertMessage(message)
                         }
 
-                        AppMessageType.FILE -> {}
+                        AppMessageType.CONTACT -> {
+                            val receivedMessage = reader.readUTF()
+                            log("client incoming contact message - $receivedMessage")
+                            val contactMessageItem =
+                                gson.fromJson(receivedMessage, ContactsMessageItem::class.java)
+                            val contactMessage = Message.ContactMessage(
+                                username = "from client",
+                                formattedTime = getCurrentTime(),
+                                contactName = contactMessageItem.contactName,
+                                contactNumber = contactMessageItem.contactNumber,
+                                isFromYou = false
+                            )
+                            viewModel.insertMessage(contactMessage)
+                        }
+
+                        AppMessageType.FILE -> {
+                            receiveFile(reader = reader)
+                        }
+
                         AppMessageType.UNKNOWN -> {}
                     }
                 } catch (e: EOFException) {
@@ -1373,6 +1221,36 @@ class TcpFragment : Fragment() {
                     }
                 }
 
+                is Message.ContactMessage -> {
+                    val type = AppMessageType.CONTACT.identifier
+                    val contactsMessageItem = ContactsMessageItem(
+                        contactName = message.contactName,
+                        contactNumber = message.contactNumber
+                    )
+                    val contactsStringForm = gson.toJson(contactsMessageItem)
+
+                    try {
+                        writer.writeChar(type.code)
+                        writer.writeUTF(contactsStringForm)
+                        viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
+                    } catch (e: IOException) {
+                        Log.d(
+                            "ahi3646",
+                            "sendMessage server: dataOutputStream is closed io exception "
+                        )
+                        viewModel.handleEvents(
+                            TcpScreenEvents.OnDialogErrorOccurred(
+                                TcpScreenDialogErrors.IOException
+                            )
+                        )
+                        try {
+                            writer.close()
+                        } catch (ex: IOException) {
+                            ex.printStackTrace()
+                        }
+                    }
+                }
+
                 is Message.FileMessage -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         sendFile(
@@ -1421,8 +1299,43 @@ class TcpFragment : Fragment() {
                     }
                 }
 
+                is Message.ContactMessage -> {
+                    val type = AppMessageType.CONTACT.identifier
+                    val contactsMessageItem = ContactsMessageItem(
+                        contactName = message.contactName,
+                        contactNumber = message.contactNumber
+                    )
+                    val contactsStringForm = gson.toJson(contactsMessageItem)
+
+                    try {
+                        writer.writeChar(type.code)
+                        writer.writeUTF(contactsStringForm)
+                        viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
+                    } catch (e: IOException) {
+                        Log.d(
+                            "ahi3646",
+                            "sendMessage server: dataOutputStream is closed io exception "
+                        )
+                        viewModel.handleEvents(
+                            TcpScreenEvents.OnDialogErrorOccurred(
+                                TcpScreenDialogErrors.IOException
+                            )
+                        )
+                        try {
+                            writer.close()
+                        } catch (ex: IOException) {
+                            ex.printStackTrace()
+                        }
+                    }
+                }
+
                 is Message.FileMessage -> {
-                    log("sending file message - $message")
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        sendFile(
+                            writer = writer,
+                            fileMessage = message
+                        )
+                    }
                 }
             }
         } else {

@@ -96,7 +96,8 @@ fun LocalConversationContent(
                     messages = uiState.messages.reversed(),
                     modifier = Modifier.weight(1f),
                     scrollState = scrollState,
-                    onFileItemClicked = { eventHandler(TcpScreenEvents.OnFileItemClick(it)) }
+                    onFileItemClicked = { eventHandler(TcpScreenEvents.OnFileItemClick(it)) },
+                    onContactItemClick = { eventHandler(TcpScreenEvents.OnContactItemClick(it)) }
                 )
                 LocalConversationUserInput(
                     // let this element handle the padding so that the elevation is shown behind the
@@ -169,7 +170,8 @@ fun Messages(
     messages: List<Message>,
     scrollState: LazyListState,
     modifier: Modifier = Modifier,
-    onFileItemClicked: (Message.FileMessage) -> Unit
+    onFileItemClicked: (Message.FileMessage) -> Unit,
+    onContactItemClick: (Message.ContactMessage) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
@@ -193,7 +195,8 @@ fun Messages(
                     msg = message,
                     isFirstMessageByAuthor = isFirstMessageByAuthor,
                     isLastMessageByAuthor = isLastMessageByAuthor,
-                    onFileItemClick = onFileItemClicked
+                    onFileItemClick = onFileItemClicked,
+                    onContactItemClick = onContactItemClick
                 )
             }
         }
@@ -229,10 +232,9 @@ private val ChatBubbleShape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
 
 @Composable
 fun LocalMessageItem(
-    message: Message.TextMessage,
-    isUserMe: Boolean,
+    message: Message.TextMessage
 ) {
-    val backgroundBubbleColor = if (isUserMe) {
+    val backgroundBubbleColor = if (message.isFromYou) {
         MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.surfaceVariant
@@ -241,10 +243,7 @@ fun LocalMessageItem(
         color = backgroundBubbleColor,
         shape = ChatBubbleShape
     ) {
-        LocalClickableMessage(
-            message = message,
-            isUserMe = isUserMe,
-        )
+        LocalClickableMessage(message = message)
     }
 }
 
@@ -258,8 +257,7 @@ private fun PreviewLocalChatItemBubble() {
                 formattedTime = "12:12:12, jul 12 2034",
                 message = "Assalom alekum aka yaxshimisiz",
                 isFromYou = true
-            ),
-            isUserMe = false
+            )
         )
     }
 }

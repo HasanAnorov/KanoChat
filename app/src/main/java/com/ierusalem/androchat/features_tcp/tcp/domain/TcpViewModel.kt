@@ -10,7 +10,6 @@ import android.net.wifi.p2p.WifiP2pDevice
 import android.os.Build
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
-import android.provider.OpenableColumns
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,7 +20,6 @@ import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.utils.Resource
-import com.ierusalem.androchat.core.utils.getExtensionFromFilename
 import com.ierusalem.androchat.core.utils.getFileExtensionFromUri
 import com.ierusalem.androchat.core.utils.getFileNameFromUri
 import com.ierusalem.androchat.core.utils.getFileSizeInReadableFormat
@@ -29,7 +27,6 @@ import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.core.utils.log
-import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.features.auth.register.domain.model.FileState
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuard
@@ -282,6 +279,10 @@ class TcpViewModel @Inject constructor(
                 emitNavigation(TcpScreenNavigation.OnConnectToWifiClick(event.wifiDevice))
             }
 
+            is TcpScreenEvents.OnContactItemClick -> {
+                emitNavigation(TcpScreenNavigation.OnContactItemClick(event.message))
+            }
+
             TcpScreenEvents.ShowFileChooserClick -> {
                 emitNavigation(TcpScreenNavigation.ShowFileChooserClick)
             }
@@ -306,9 +307,26 @@ class TcpViewModel @Inject constructor(
                 viewModelScope.launch(Dispatchers.IO) {
                     when (state.value.generalConnectionStatus) {
                         GeneralConnectionStatus.Idle -> {}
-                        GeneralConnectionStatus.ConnectedAsHost -> {}
-                        GeneralConnectionStatus.ConnectedAsClient -> {
+                        GeneralConnectionStatus.ConnectedAsHost -> {
+                            event.medias.forEach { imageUri ->
+                                //todo - maybe username should be removed here
+                                val fileMessage = Message.FileMessage(
+                                    formattedTime = getCurrentTime(),
+                                    username = state.value.authorMe,
+                                    isFromYou = true,
+                                    filePath = imageUri,
+                                    fileName = imageUri.getFileNameFromUri(contentResolver),
+                                    fileSize = imageUri.getFileSizeInReadableFormat(contentResolver),
+                                    fileExtension = imageUri.getFileExtensionFromUri(contentResolver)
+                                )
+                                emitNavigation(TcpScreenNavigation.SendHostMessage(fileMessage))
+                                //i don't know why but adding this delay
+                                // maintained proper image transfer
+                                delay(300)
+                            }
+                        }
 
+                        GeneralConnectionStatus.ConnectedAsClient -> {
                             event.medias.forEach { imageUri ->
                                 //todo - maybe username should be removed here
                                 val fileMessage = Message.FileMessage(
@@ -323,13 +341,10 @@ class TcpViewModel @Inject constructor(
                                 emitNavigation(TcpScreenNavigation.SendClientMessage(fileMessage))
                                 //i don't know why but adding this delay
                                 // maintained proper image transfer
-                                delay(1000)
+                                delay(300)
                             }
                         }
                     }
-                }
-                event.medias.forEach {
-                    log(it.toString())
                 }
             }
 

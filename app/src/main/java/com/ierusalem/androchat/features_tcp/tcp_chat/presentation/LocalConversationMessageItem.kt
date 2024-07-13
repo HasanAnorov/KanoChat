@@ -32,6 +32,7 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features.conversation.presentation.components.messageFormatter
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactItem
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.FileMessageItem
 
 @Composable
@@ -39,7 +40,8 @@ fun LocalMessageItem(
     msg: Message,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
-    onFileItemClick: (Message.FileMessage) -> Unit
+    onFileItemClick: (Message.FileMessage) -> Unit,
+    onContactItemClick: (Message.ContactMessage) -> Unit
 ) {
     val borderColor = if (msg.isFromYou) {
         MaterialTheme.colorScheme.primary
@@ -72,10 +74,10 @@ fun LocalMessageItem(
                 .padding(end = 16.dp)
                 .weight(1f),
             msg = msg,
-            isUserMe = msg.isFromYou,
             isFirstMessageByAuthor = isFirstMessageByAuthor,
             isLastMessageByAuthor = isLastMessageByAuthor,
-            onFileItemClick = onFileItemClick
+            onFileItemClick = onFileItemClick,
+            onContactItemClick = onContactItemClick
         )
     }
 }
@@ -84,22 +86,28 @@ fun LocalMessageItem(
 fun AuthorAndTextMessage(
     modifier: Modifier = Modifier,
     msg: Message,
-    isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
-    onFileItemClick: (Message.FileMessage) -> Unit
+    onFileItemClick: (Message.FileMessage) -> Unit,
+    onContactItemClick: (Message.ContactMessage) -> Unit
 ) {
     Column(modifier = modifier) {
         if (isLastMessageByAuthor) {
-            AuthorName(msg, isUserMe)
+            AuthorName(msg)
         }
         when (msg) {
             is Message.TextMessage -> {
-                LocalMessageItem(msg, isUserMe)
+                LocalMessageItem(msg)
             }
 
             is Message.FileMessage -> {
                 FileMessageItem(message = msg, onFileItemClick = onFileItemClick)
+            }
+            is Message.ContactMessage -> {
+                ContactItem(
+                    message = msg,
+                    onContactNumberClick = onContactItemClick
+                )
             }
         }
         if (isFirstMessageByAuthor) {
@@ -114,13 +122,12 @@ fun AuthorAndTextMessage(
 
 @Composable
 fun LocalClickableMessage(
-    message: Message.TextMessage,
-    isUserMe: Boolean,
+    message: Message.TextMessage
 ) {
 
     val styledMessage = messageFormatter(
         text = message.message,
-        primary = isUserMe
+        primary = message.isFromYou
     )
     Column(
         modifier = Modifier
@@ -146,13 +153,11 @@ fun LocalClickableMessage(
 
 @Composable
 private fun AuthorName(
-    message: Message,
-    isUserMe: Boolean
+    message: Message
 ) {
-    // Combine author and timestamp for a11y.
     Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
-            text = if (isUserMe) stringResource(id = R.string.author_me) else message.username,
+            text = if (message.isFromYou) stringResource(id = R.string.author_me) else message.username,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .alignBy(LastBaseline)
@@ -174,7 +179,8 @@ private fun PreviewMessage() {
             ),
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,
-            onFileItemClick = {}
+            onFileItemClick = {},
+            onContactItemClick = {}
         )
     }
 }

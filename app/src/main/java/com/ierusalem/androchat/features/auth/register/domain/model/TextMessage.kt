@@ -3,12 +3,12 @@ package com.ierusalem.androchat.features.auth.register.domain.model
 import android.net.Uri
 
 sealed class Message(
+    //todo - maybe this username field should be removed
     open val username: String,
     open val formattedTime: String,
     open val isFromYou:Boolean
 ) {
     data class TextMessage(
-        //todo - maybe this username field should be removed
         override val username: String,
         override val isFromYou: Boolean,
         val message: String,
@@ -26,8 +26,22 @@ sealed class Message(
         val fileState: FileState = FileState.Loading(0)
     ) : Message(username, formattedTime, isFromYou)
 
+    data class ContactMessage(
+        override val formattedTime: String,
+        override val username: String,
+        override val isFromYou: Boolean,
+        val contactName: String,
+        val contactNumber: String
+    ):Message(
+        username,
+        formattedTime,
+        isFromYou
+    )
+
 }
 
+
+//todo - finish proper file handling ...
 sealed interface FileState {
     data class Loading(val percentage: Int) : FileState
     data object Success : FileState

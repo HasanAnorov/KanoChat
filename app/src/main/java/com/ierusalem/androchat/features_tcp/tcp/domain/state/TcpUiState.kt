@@ -76,5 +76,11 @@ data class ContactItem(
     val id: String = UUID.randomUUID().toString(),
 )
 
+@Immutable
+data class ContactsMessageItem(
+    val contactName: String,
+    val contactNumber: String
+)
+
 
 

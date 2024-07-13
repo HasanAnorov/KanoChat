@@ -17,6 +17,7 @@ enum class AppMessageType(val identifier: Char) {
     INITIAL('i'),
     TEXT('t'),
     FILE('f'),
+    CONTACT('c'),
 
     UNKNOWN('u');
 

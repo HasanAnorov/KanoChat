@@ -196,6 +196,10 @@ fun ChannelNameBar(
 
 const val ConversationTestTag = "ConversationTestTag"
 
+/**
+ * Some parameters have been changed, try not to affect general parameters to fix it
+ * */
+
 @Composable
 fun Messages(
     messages: List<Message>,
@@ -217,7 +221,7 @@ fun Messages(
                 Spacer(modifier = Modifier.height(32.dp))
             }
             itemsIndexed(messages) { index, message ->
-                when(message){
+                when (message) {
                     is Message.TextMessage -> {
                         val prevAuthor = messages.getOrNull(index - 1)?.username
                         val nextAuthor = messages.getOrNull(index + 1)?.username
@@ -231,7 +235,9 @@ fun Messages(
                             isLastMessageByAuthor = isLastMessageByAuthor
                         )
                     }
+
                     is Message.FileMessage -> {}
+                    is Message.ContactMessage -> {}
                 }
             }
         }
@@ -344,7 +350,7 @@ fun ClickableMessage(
     val uriHandler = LocalUriHandler.current
 
     val styledMessage = messageFormatter(
-        text =message.message,
+        text = message.message,
         primary = isUserMe
     )
 

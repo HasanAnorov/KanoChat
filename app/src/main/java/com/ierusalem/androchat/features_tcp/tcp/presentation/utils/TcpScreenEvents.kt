@@ -29,4 +29,5 @@ sealed interface TcpScreenEvents {
     data class UpdateBottomSheetState(val shouldBeShown:Boolean): TcpScreenEvents
 
     data class OnFileItemClick(val message: Message.FileMessage): TcpScreenEvents
+    data class OnContactItemClick(val message: Message.ContactMessage): TcpScreenEvents
 }

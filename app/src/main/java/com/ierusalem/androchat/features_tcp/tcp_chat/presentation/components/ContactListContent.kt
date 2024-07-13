@@ -25,6 +25,7 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
@@ -77,13 +78,13 @@ fun ContactListContent(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Share",
+                                    text = stringResource(R.string.share),
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
 
                                 Text(
-                                    text = if (selectedContacts.size == 1) "contact" else "( ${selectedContacts.size} contacts )",
+                                    text = if (selectedContacts.size == 1) stringResource(R.string.contact) else "( ${selectedContacts.size} ${stringResource(id = R.string.contacts)} )",
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Spacer(modifier = Modifier.weight(1F))

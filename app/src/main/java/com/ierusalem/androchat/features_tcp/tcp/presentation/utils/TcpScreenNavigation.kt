@@ -24,4 +24,6 @@ sealed interface TcpScreenNavigation {
     data object ShowFileChooserClick: TcpScreenNavigation
 
     data class OnFileItemClick(val message: Message.FileMessage): TcpScreenNavigation
+    data class OnContactItemClick(val message: Message.ContactMessage): TcpScreenNavigation
+
 }
