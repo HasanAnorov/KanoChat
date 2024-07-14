@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
@@ -401,19 +402,23 @@ class TcpFragment : Fragment() {
                                     }
                                 )
                             } else {
-                                Box(modifier = Modifier
-                                    .height(300.dp)
-                                    .fillMaxWidth(),
+                                Box(
+                                    modifier = Modifier
+                                        .height(300.dp)
+                                        .fillMaxWidth(),
                                     contentAlignment = Alignment.Center,
                                     content = {
-                                        Button(onClick = {
-                                            readContactsPermissionLauncher.launch(
-                                                Manifest.permission.READ_CONTACTS
-                                            )
-                                        }) {
-                                            Text(text = "Give Permission")
+                                        Button(
+                                            onClick = {
+                                                readContactsPermissionLauncher.launch(
+                                                    Manifest.permission.READ_CONTACTS
+                                                )
+                                            }
+                                        ) {
+                                            Text(text = stringResource(R.string.give_permission))
                                         }
-                                    })
+                                    }
+                                )
                             }
                         }
                     }
@@ -841,14 +846,13 @@ class TcpFragment : Fragment() {
     private fun sendFile(writer: DataOutputStream, fileMessage: Message.FileMessage) {
         log("sending file ...")
 
-        viewModel.handleEvents(TcpScreenEvents.InsertMessage(fileMessage))
+        viewModel.insertMessage(fileMessage)
 
-        val type = AppMessageType.FILE.identifier
-        // Here we send the File to Server
-        writer.writeChar(type.code)
+        //sending file type
+        writer.writeChar(fileMessage.messageType.identifier.code)
+
         //sending file name
         writer.writeUTF(fileMessage.fileName)
-        log("sending file name - ${fileMessage.fileName}")
 
         val inputStream = requireContext().contentResolver.openInputStream(fileMessage.filePath)
         val filePathToSave = context?.cacheDir
@@ -892,7 +896,7 @@ class TcpFragment : Fragment() {
     }
 
     private suspend fun createServer(serverPort: Int) {
-        log("creating server".uppercase())
+        log("creating server ...")
         viewModel.updateHostConnectionStatus(HostConnectionStatus.Creating)
 
         withContext(Dispatchers.IO) {
@@ -921,7 +925,10 @@ class TcpFragment : Fragment() {
                                     val receivedMessage = reader.readUTF()
                                     log("host incoming contact message - $receivedMessage")
                                     val contactMessageItem =
-                                        gson.fromJson(receivedMessage, ContactsMessageItem::class.java)
+                                        gson.fromJson(
+                                            receivedMessage,
+                                            ContactsMessageItem::class.java
+                                        )
                                     val contactMessage = Message.ContactMessage(
                                         username = "from client",
                                         formattedTime = getCurrentTime(),
@@ -1189,74 +1196,84 @@ class TcpFragment : Fragment() {
 
     }
 
+    private fun sendContactMessage(
+        writer: DataOutputStream,
+        contactMessage: Message.ContactMessage
+    ) {
+        val contactsMessageItem = ContactsMessageItem(
+            contactName = contactMessage.contactName,
+            contactNumber = contactMessage.contactNumber
+        )
+        val contactsStringForm = gson.toJson(contactsMessageItem)
+
+        try {
+            writer.writeChar(contactMessage.messageType.identifier.code)
+            writer.writeUTF(contactsStringForm)
+            viewModel.insertMessage(contactMessage)
+        } catch (e: IOException) {
+            Log.d(
+                "ahi3646",
+                "sendMessage server: dataOutputStream is closed io exception "
+            )
+            viewModel.handleEvents(
+                TcpScreenEvents.OnDialogErrorOccurred(
+                    TcpScreenDialogErrors.IOException
+                )
+            )
+            try {
+                writer.close()
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+            }
+        }
+    }
+
+    private fun sendTextMessage(writer: DataOutputStream, textMessage: Message.TextMessage) {
+        log("sending text message from client - $textMessage")
+
+        val data = textMessage.message
+
+        try {
+            writer.writeChar(textMessage.messageType.identifier.code)
+            writer.writeUTF(data)
+            viewModel.insertMessage(textMessage)
+        } catch (e: IOException) {
+            Log.d(
+                "ahi3646",
+                "sendMessage server: dataOutputStream is closed io exception "
+            )
+            viewModel.handleEvents(
+                TcpScreenEvents.OnDialogErrorOccurred(
+                    TcpScreenDialogErrors.IOException
+                )
+            )
+            try {
+                writer.close()
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+            }
+        }
+    }
+
     private fun sendClientMessage(message: Message) {
         if (!clientSocket.isClosed) {
             val writer = DataOutputStream(clientSocket.getOutputStream())
             when (message) {
                 is Message.TextMessage -> {
-                    log("sending text message from client - $message")
-
-                    val type = AppMessageType.TEXT.identifier
-                    val data = message.message
-
-                    try {
-                        writer.writeChar(type.code)
-                        writer.writeUTF(data)
-                        viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
-                    } catch (e: IOException) {
-                        Log.d(
-                            "ahi3646",
-                            "sendMessage server: dataOutputStream is closed io exception "
-                        )
-                        viewModel.handleEvents(
-                            TcpScreenEvents.OnDialogErrorOccurred(
-                                TcpScreenDialogErrors.IOException
-                            )
-                        )
-                        try {
-                            writer.close()
-                        } catch (ex: IOException) {
-                            ex.printStackTrace()
-                        }
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        sendTextMessage(writer = writer, textMessage = message)
                     }
                 }
 
                 is Message.ContactMessage -> {
-                    val type = AppMessageType.CONTACT.identifier
-                    val contactsMessageItem = ContactsMessageItem(
-                        contactName = message.contactName,
-                        contactNumber = message.contactNumber
-                    )
-                    val contactsStringForm = gson.toJson(contactsMessageItem)
-
-                    try {
-                        writer.writeChar(type.code)
-                        writer.writeUTF(contactsStringForm)
-                        viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
-                    } catch (e: IOException) {
-                        Log.d(
-                            "ahi3646",
-                            "sendMessage server: dataOutputStream is closed io exception "
-                        )
-                        viewModel.handleEvents(
-                            TcpScreenEvents.OnDialogErrorOccurred(
-                                TcpScreenDialogErrors.IOException
-                            )
-                        )
-                        try {
-                            writer.close()
-                        } catch (ex: IOException) {
-                            ex.printStackTrace()
-                        }
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        sendContactMessage(writer = writer, contactMessage = message)
                     }
                 }
 
                 is Message.FileMessage -> {
                     lifecycleScope.launch(Dispatchers.IO) {
-                        sendFile(
-                            writer = writer,
-                            fileMessage = message
-                        )
+                        sendFile(writer = writer, fileMessage = message)
                     }
                 }
             }
@@ -1272,69 +1289,20 @@ class TcpFragment : Fragment() {
 
             when (message) {
                 is Message.TextMessage -> {
-                    log("sending text message from host - $message")
-
-                    val type = AppMessageType.TEXT.identifier
-                    val data = message.message
-
-                    try {
-                        writer.writeChar(type.code)
-                        writer.writeUTF(data)
-                        viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
-                    } catch (e: IOException) {
-                        Log.d(
-                            "ahi3646",
-                            "sendMessage server: dataOutputStream is closed io exception "
-                        )
-                        viewModel.handleEvents(
-                            TcpScreenEvents.OnDialogErrorOccurred(
-                                TcpScreenDialogErrors.IOException
-                            )
-                        )
-                        try {
-                            writer.close()
-                        } catch (ex: IOException) {
-                            ex.printStackTrace()
-                        }
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        sendTextMessage(writer = writer, textMessage = message)
                     }
                 }
 
                 is Message.ContactMessage -> {
-                    val type = AppMessageType.CONTACT.identifier
-                    val contactsMessageItem = ContactsMessageItem(
-                        contactName = message.contactName,
-                        contactNumber = message.contactNumber
-                    )
-                    val contactsStringForm = gson.toJson(contactsMessageItem)
-
-                    try {
-                        writer.writeChar(type.code)
-                        writer.writeUTF(contactsStringForm)
-                        viewModel.handleEvents(TcpScreenEvents.InsertMessage(message))
-                    } catch (e: IOException) {
-                        Log.d(
-                            "ahi3646",
-                            "sendMessage server: dataOutputStream is closed io exception "
-                        )
-                        viewModel.handleEvents(
-                            TcpScreenEvents.OnDialogErrorOccurred(
-                                TcpScreenDialogErrors.IOException
-                            )
-                        )
-                        try {
-                            writer.close()
-                        } catch (ex: IOException) {
-                            ex.printStackTrace()
-                        }
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        sendContactMessage(writer = writer, contactMessage = message)
                     }
                 }
 
                 is Message.FileMessage -> {
                     lifecycleScope.launch(Dispatchers.IO) {
-                        sendFile(
-                            writer = writer,
-                            fileMessage = message
-                        )
+                        sendFile(writer = writer, fileMessage = message)
                     }
                 }
             }
@@ -1353,12 +1321,14 @@ class TcpFragment : Fragment() {
     //6-fragment lifecycle callback
     override fun onResume() {
         super.onResume()
-        receiver = WiFiDirectBroadcastReceiver(wifiP2pManager = wifiP2PManager,
+        receiver = WiFiDirectBroadcastReceiver(
+            wifiP2pManager = wifiP2PManager,
             channel = channel,
             peerListListener = peerListListener,
             networkEventHandler = { networkEvent ->
                 viewModel.handleNetworkEvents(networkEvent)
-            })
+            }
+        )
         requireActivity().registerReceiver(receiver, intentFilter)
     }
 
@@ -1367,7 +1337,6 @@ class TcpFragment : Fragment() {
         super.onPause()
         requireActivity().unregisterReceiver(receiver)
     }
-
 
     //8-fragment lifecycle callback
     override fun onDestroyView() {

@@ -360,10 +360,6 @@ class TcpViewModel @Inject constructor(
                 updateHasErrorOccurredDialog(event.error)
             }
 
-            is TcpScreenEvents.InsertMessage -> {
-                insertMessage(event.message)
-            }
-
             TcpScreenEvents.ReadContactsRequest -> {
                 emitNavigation(TcpScreenNavigation.OnReadContactsRequest)
             }

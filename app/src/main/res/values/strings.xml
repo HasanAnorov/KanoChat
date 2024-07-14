@@ -197,5 +197,6 @@
     <string name="open_with">Open with</string>
     <string name="contact">contact</string>
     <string name="share">Share</string>
+    <string name="give_permission">Give Permission!</string>
 
 </resources>

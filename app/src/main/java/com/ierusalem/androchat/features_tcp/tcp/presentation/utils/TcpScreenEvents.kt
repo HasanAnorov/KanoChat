@@ -17,7 +17,6 @@ sealed interface TcpScreenEvents {
     data class OnHotspotNameChanged(val hotspotName: String) : TcpScreenEvents
     data class OnConnectToWifiClick(val wifiDevice: WifiP2pDevice) : TcpScreenEvents
     data class SendMessageRequest(val message:String): TcpScreenEvents
-    data class InsertMessage(val message:Message): TcpScreenEvents
     data class OnDialogErrorOccurred(val error: TcpScreenDialogErrors?): TcpScreenEvents
 
     //local conversation
