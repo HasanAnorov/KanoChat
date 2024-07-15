@@ -14,7 +14,7 @@
         <DialogSelection />
       </SelectionState>
       <SelectionState runConfigName="app">
-        <option name="selectionMode" value="DIALOG" />
+        <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2024-07-11T15:08:53.199859900Z">
           <Target type="DEFAULT_BOOT">
             <handle>

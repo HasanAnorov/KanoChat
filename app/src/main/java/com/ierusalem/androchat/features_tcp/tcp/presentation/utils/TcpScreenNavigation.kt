@@ -1,5 +1,6 @@
 package com.ierusalem.androchat.features_tcp.tcp.presentation.utils
 
+import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
 import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenErrors
@@ -25,5 +26,6 @@ sealed interface TcpScreenNavigation {
 
     data class OnFileItemClick(val message: Message.FileMessage): TcpScreenNavigation
     data class OnContactItemClick(val message: Message.ContactMessage): TcpScreenNavigation
+    data class HandlePickingMultipleMedia(val medias: List<Uri>):TcpScreenNavigation
 
 }

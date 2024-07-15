@@ -14,15 +14,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
-import com.ierusalem.androchat.core.constants.Constants.getCurrentTime
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.utils.Resource
-import com.ierusalem.androchat.core.utils.getFileExtensionFromUri
-import com.ierusalem.androchat.core.utils.getFileNameFromUri
-import com.ierusalem.androchat.core.utils.getFileSizeInReadableFormat
 import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
@@ -46,7 +42,6 @@ import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEven
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -304,48 +299,7 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.HandlePickingMultipleMedia -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    when (state.value.generalConnectionStatus) {
-                        GeneralConnectionStatus.Idle -> {}
-                        GeneralConnectionStatus.ConnectedAsHost -> {
-                            event.medias.forEach { imageUri ->
-                                //todo - maybe username should be removed here
-                                val fileMessage = Message.FileMessage(
-                                    formattedTime = getCurrentTime(),
-                                    username = state.value.authorMe,
-                                    isFromYou = true,
-                                    filePath = imageUri,
-                                    fileName = imageUri.getFileNameFromUri(contentResolver),
-                                    fileSize = imageUri.getFileSizeInReadableFormat(contentResolver),
-                                    fileExtension = imageUri.getFileExtensionFromUri(contentResolver)
-                                )
-                                emitNavigation(TcpScreenNavigation.SendHostMessage(fileMessage))
-                                //i don't know why but adding this delay
-                                // maintained proper image transfer
-                                delay(300)
-                            }
-                        }
-
-                        GeneralConnectionStatus.ConnectedAsClient -> {
-                            event.medias.forEach { imageUri ->
-                                //todo - maybe username should be removed here
-                                val fileMessage = Message.FileMessage(
-                                    formattedTime = getCurrentTime(),
-                                    username = state.value.authorMe,
-                                    isFromYou = true,
-                                    filePath = imageUri,
-                                    fileName = imageUri.getFileNameFromUri(contentResolver),
-                                    fileSize = imageUri.getFileSizeInReadableFormat(contentResolver),
-                                    fileExtension = imageUri.getFileExtensionFromUri(contentResolver)
-                                )
-                                emitNavigation(TcpScreenNavigation.SendClientMessage(fileMessage))
-                                //i don't know why but adding this delay
-                                // maintained proper image transfer
-                                delay(300)
-                            }
-                        }
-                    }
-                }
+                emitNavigation(TcpScreenNavigation.HandlePickingMultipleMedia(event.medias))
             }
 
             TcpScreenEvents.OnNavIconClick -> {
