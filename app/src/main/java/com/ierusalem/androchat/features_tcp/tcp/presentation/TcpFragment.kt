@@ -98,7 +98,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
 import java.io.DataInputStream
@@ -136,6 +135,7 @@ class TcpFragment : Fragment() {
     //chatting server side
     private lateinit var serverSocket: ServerSocket
     private lateinit var connectedClientSocketOnServer: Socket
+    private lateinit var connectedClientWriter: DataOutputStream
 
     //chatting client side
     private lateinit var clientSocket: Socket
@@ -167,17 +167,17 @@ class TcpFragment : Fragment() {
         when {
             permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
                 // Precise location access granted.
-                Log.d("ahi3646", "Precise location access granted: ")
+                log("Precise location access granted: ")
             }
 
             permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
                 // Only approximate location access granted.
-                Log.d("ahi3646", "Only approximate location access granted: ")
+                log("Only approximate location access granted: ")
             }
 
             permissions.getOrDefault(Manifest.permission.NEARBY_WIFI_DEVICES, false) -> {
                 // Only approximate location access granted.
-                Log.d("ahi3646", "Only approximate location access granted: ")
+                log("Only approximate location access granted: ")
             }
 
             else -> {
@@ -194,7 +194,7 @@ class TcpFragment : Fragment() {
             viewModel.handleAvailableWifiListChange(refreshedPeers.toList())
         }
         if (peers.isEmpty()) {
-            Log.d("ahi3646", "No devices found")
+            log("No devices found")
             return@PeerListListener
         }
     }
@@ -215,7 +215,7 @@ class TcpFragment : Fragment() {
     ) { result ->
         when (result.resultCode) {
             Activity.RESULT_CANCELED -> {
-                Log.d("ahi3646", "onActivityResult: RESULT CANCELED ")
+                log("onActivityResult: RESULT CANCELED ")
             }
 
             Activity.RESULT_OK -> {
@@ -292,7 +292,7 @@ class TcpFragment : Fragment() {
         channel = wifiP2PManager.initialize(
             requireContext(), Looper.getMainLooper()
         ) {
-            Log.d("ahi3646", "WifiP2PManager Channel died! Do nothing :D")
+            log("WifiP2PManager Channel died! Do nothing :D")
         }
         intentFilter.apply {
             addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
@@ -594,46 +594,6 @@ class TcpFragment : Fragment() {
                     when (viewModel.state.value.generalConnectionStatus) {
                         GeneralConnectionStatus.Idle -> {}
                         GeneralConnectionStatus.ConnectedAsHost -> {
-                            runBlocking {
-                                navigation.medias.forEach { imageUri ->
-                                    //todo - maybe username should be removed here
-                                    val fileMessage = Message.FileMessage(
-                                        formattedTime = getCurrentTime(),
-                                        username = viewModel.state.value.authorMe,
-                                        isFromYou = true,
-                                        filePath = imageUri,
-                                        fileName = imageUri.getFileNameFromUri(requireContext().contentResolver),
-                                        fileSize = imageUri.getFileSizeInReadableFormat(
-                                            requireContext().contentResolver
-                                        ),
-                                        fileExtension = imageUri.getFileExtensionFromUri(
-                                            requireContext().contentResolver
-                                        )
-                                    )
-                                    //emitNavigation(TcpScreenNavigation.SendHostMessage(fileMessage))
-                                    //i don't know why but adding this delay
-                                    // maintained proper image transfer
-                                    sendHostMessage(
-                                        message = fileMessage
-                                    )
-                                }
-                            }
-                        }
-
-                        GeneralConnectionStatus.ConnectedAsClient -> {
-//                            val medias = navigation.medias
-//                            for (imageUri in medias){
-//                                val fileMessage = Message.FileMessage(
-//                                    formattedTime = getCurrentTime(),
-//                                    username = viewModel.state.value.authorMe,
-//                                    isFromYou = true,
-//                                    filePath = imageUri,
-//                                    fileName = imageUri.getFileNameFromUri(requireContext().contentResolver),
-//                                    fileSize = imageUri.getFileSizeInReadableFormat(requireContext().contentResolver),
-//                                    fileExtension = imageUri.getFileExtensionFromUri(requireContext().contentResolver)
-//                                )
-//                                sendClientMessage(message = fileMessage, onFinished = { log("message sending is finished ") })
-//                            }
                             val fileMessages = mutableListOf<Message.FileMessage>()
                             navigation.medias.forEach { imageUri ->
                                 //todo - maybe username should be removed here
@@ -651,11 +611,28 @@ class TcpFragment : Fragment() {
                                     )
                                 )
                                 fileMessages.add(fileMessage)
-                                //sendClientMessage(message = fileMessage)
-                                //emitNavigation(TcpScreenNavigation.SendClientMessage(fileMessage))
-                                //i don't know why but adding this delay
-                                // maintained proper image transfer
-                                //delay(5000)
+                            }
+                            sendFileMessage(writer = connectedClientWriter, messages = fileMessages)
+                        }
+
+                        GeneralConnectionStatus.ConnectedAsClient -> {
+                            val fileMessages = mutableListOf<Message.FileMessage>()
+                            navigation.medias.forEach { imageUri ->
+                                //todo - maybe username should be removed here
+                                val fileMessage = Message.FileMessage(
+                                    formattedTime = getCurrentTime(),
+                                    username = viewModel.state.value.authorMe,
+                                    isFromYou = true,
+                                    filePath = imageUri,
+                                    fileName = imageUri.getFileNameFromUri(requireContext().contentResolver),
+                                    fileSize = imageUri.getFileSizeInReadableFormat(
+                                        requireContext().contentResolver
+                                    ),
+                                    fileExtension = imageUri.getFileExtensionFromUri(
+                                        requireContext().contentResolver
+                                    )
+                                )
+                                fileMessages.add(fileMessage)
                             }
                             sendFileMessage(writer = clientWriter, messages = fileMessages)
                         }
@@ -793,14 +770,14 @@ class TcpFragment : Fragment() {
                         wifiP2PManager.discoverPeers(channel,
                             object : WifiP2pManager.ActionListener {
                                 override fun onSuccess() {
-                                    Log.d("ahi3646", "onSuccess: discover ")
+                                    log("onSuccess: discover ")
                                     viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
                                 }
 
                                 override fun onFailure(reason: Int) {
                                     // Code for when the discovery initiation fails goes here.
                                     // Alert the user that something went wrong.
-                                    Log.d("ahi3646", "onFailure: discover $reason ")
+                                    log("onFailure: discover $reason ")
                                     viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Failure)
                                 }
 
@@ -818,7 +795,7 @@ class TcpFragment : Fragment() {
 
     @SuppressLint("MissingPermission")
     private fun connectToWifi(wifiP2pDevice: WifiP2pDevice) {
-        Log.d("ahi3646", "connectToWifi: $wifiP2pDevice ")
+        log("connectToWifi: $wifiP2pDevice ")
         val config = WifiP2pConfig().apply {
             deviceAddress = wifiP2pDevice.deviceAddress
             wps.setup = WpsInfo.PBC
@@ -829,11 +806,11 @@ class TcpFragment : Fragment() {
             object : WifiP2pManager.ActionListener {
                 override fun onSuccess() {
                     // WiFiDirectBroadcastReceiver notifies us. Ignore for now
-                    Log.d("ahi3646", "success: connected to wifi - ${wifiP2pDevice.deviceAddress}")
+                    log("success: connected to wifi - ${wifiP2pDevice.deviceAddress}")
                 }
 
                 override fun onFailure(reason: Int) {
-                    Log.d("ahi3646", "failure: failure on wifi connection ")
+                    log("failure: failure on wifi connection ")
                     viewModel.emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.FailedToConnectToWifiDevice))
                 }
             }
@@ -934,7 +911,7 @@ class TcpFragment : Fragment() {
     ) {
         log("sending file , writer is - $clientWriter ...")
 
-        withContext(Dispatchers.IO){
+        withContext(Dispatchers.IO) {
 
             //sending file type
             val type = AppMessageType.FILE.identifier.code
@@ -1028,7 +1005,7 @@ class TcpFragment : Fragment() {
                 }
                 while (!serverSocket.isClosed) {
                     connectedClientSocketOnServer = serverSocket.accept()
-                    Log.d("ahi3646", "New client : $connectedClientSocketOnServer ")
+                    log("New client : $connectedClientSocketOnServer ")
                     viewModel.updateConnectionsCount(true)
 
                     while (!connectedClientSocketOnServer.isClosed) {
@@ -1083,7 +1060,7 @@ class TcpFragment : Fragment() {
                         } catch (e: EOFException) {
                             e.printStackTrace()
                             //if the IP address of the host could not be determined.
-                            Log.d("ahi3646", "createServer: EOFException")
+                            log("createServer: EOFException")
                             connectedClientSocketOnServer.close()
                             viewModel.updateConnectionsCount(false)
                             log("in while - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
@@ -1102,7 +1079,7 @@ class TcpFragment : Fragment() {
                             //the stream has been closed and the contained
                             // input stream does not support reading after close,
                             // or another I/O error occurs
-                            Log.d("ahi3646", "createServer: io exception ")
+                            log("createServer: io exception ")
                             viewModel.handleEvents(
                                 TcpScreenEvents.OnDialogErrorOccurred(
                                     TcpScreenDialogErrors.IOException
@@ -1121,7 +1098,7 @@ class TcpFragment : Fragment() {
                             e.printStackTrace()
                             /** here is firing***/
                             //if the bytes do not represent a valid modified UTF-8 encoding of a string.
-                            Log.d("ahi3646", "createServer: io exception ")
+                            log("createServer: io exception ")
                             viewModel.handleEvents(
                                 TcpScreenEvents.OnDialogErrorOccurred(
                                     TcpScreenDialogErrors.UTFDataFormatException
@@ -1140,41 +1117,25 @@ class TcpFragment : Fragment() {
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
-                try {
-                    viewModel.updateConnectionsCount(false)
-                } catch (ex: IOException) {
-                    ex.printStackTrace()
-                }
                 serverSocket.close()
                 //change server title status
                 viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
 
             } catch (e: SecurityException) {
                 e.printStackTrace()
-                try {
-                    viewModel.updateConnectionsCount(false)
-                } catch (ex: IOException) {
-                    ex.printStackTrace()
-                }
                 serverSocket.close()
                 //change server title status
                 viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
 
                 //if a security manager exists and its checkConnect method doesn't allow the operation.
-                Log.d("ahi3646", "createServer: SecurityException ")
+                log("createServer: SecurityException ")
             } catch (e: IllegalArgumentException) {
                 e.printStackTrace()
-                try {
-                    viewModel.updateConnectionsCount(false)
-                } catch (ex: IOException) {
-                    ex.printStackTrace()
-                }
                 serverSocket.close()
                 //change server title status
                 viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-
                 //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
-                Log.d("ahi3646", "createServer: IllegalArgumentException ")
+                log("createServer: IllegalArgumentException ")
             }
         }
     }
@@ -1238,7 +1199,7 @@ class TcpFragment : Fragment() {
                 } catch (e: EOFException) {
                     e.printStackTrace()
                     //if the IP address of the host could not be determined.
-                    Log.d("ahi3646", "connectToServer: EOFException ")
+                    log("connectToServer: EOFException ")
                     viewModel.handleEvents(
                         TcpScreenEvents.OnDialogErrorOccurred(
                             TcpScreenDialogErrors.EOException
@@ -1255,7 +1216,7 @@ class TcpFragment : Fragment() {
                     //the stream has been closed and the contained
                     // input stream does not support reading after close,
                     // or another I/O error occurs
-                    Log.d("ahi3646", "connectToServer: io exception ")
+                    log("connectToServer: io exception ")
                     viewModel.updateClientConnectionStatus(ClientConnectionStatus.Failure)
                     viewModel.updateConnectionsCount(false)
                     viewModel.handleEvents(
@@ -1271,7 +1232,7 @@ class TcpFragment : Fragment() {
                 } catch (e: UTFDataFormatException) {
                     e.printStackTrace()
                     //if the bytes do not represent a valid modified UTF-8 encoding of a string.
-                    Log.d("ahi3646", "connectToServer: io exception ")
+                    log("connectToServer: io exception ")
                     viewModel.handleEvents(
                         TcpScreenEvents.OnDialogErrorOccurred(
                             TcpScreenDialogErrors.UTFDataFormatException
@@ -1394,39 +1355,40 @@ class TcpFragment : Fragment() {
                 }
             }
         } else {
-            Log.d("ahi3646", "send client message: client socket is closed ")
+            log("send client message: client socket is closed ")
             viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
         }
     }
 
     private fun sendHostMessage(message: Message) {
         if (!connectedClientSocketOnServer.isClosed) {
-            val writer = DataOutputStream(connectedClientSocketOnServer.getOutputStream())
+            connectedClientWriter =
+                DataOutputStream(connectedClientSocketOnServer.getOutputStream())
 
             when (message) {
                 is Message.TextMessage -> {
                     lifecycleScope.launch(Dispatchers.IO) {
-                        sendTextMessage(writer = writer, textMessage = message)
+                        sendTextMessage(writer = connectedClientWriter, textMessage = message)
                     }
                 }
 
                 is Message.ContactMessage -> {
                     lifecycleScope.launch(Dispatchers.IO) {
-                        sendContactMessage(writer = writer, contactMessage = message)
+                        sendContactMessage(writer = connectedClientWriter, contactMessage = message)
                     }
                 }
 
                 is Message.FileMessage -> {
                     lifecycleScope.launch {
                         sendFileMessage(
-                            writer = writer,
+                            writer = connectedClientWriter,
                             messages = listOf(message),
                         )
                     }
                 }
             }
         } else {
-            Log.d("ahi3646", "send host message: client socket is closed ")
+            log("send host message: client socket is closed ")
             viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
         }
     }
