@@ -11,8 +11,9 @@ import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.emulator_detection.EmulatorDetector
 import com.ierusalem.androchat.core.utils.log
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,10 +23,7 @@ class AndroChatApp : Application() {
     @Inject
     lateinit var dataStorePreferenceRepository: DataStorePreferenceRepository
 
-    companion object {
-        var applicationScope = MainScope()
-    }
-
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {
         super.onCreate()
 
@@ -35,20 +33,9 @@ class AndroChatApp : Application() {
             throw IllegalStateException("Mobile Device Required!")
         }
 
-        applicationScope.launch {
-            dataStorePreferenceRepository.getLanguage.collect { languageCode ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    applicationContext.getSystemService(LocaleManager::class.java).applicationLocales =
-                        LocaleList.forLanguageTags(languageCode)
-                } else {
-                    AppCompatDelegate.setApplicationLocales(
-                        LocaleListCompat.forLanguageTags(languageCode)
-                    )
-                }
-            }
-        }
-        applicationScope.launch {
+        GlobalScope.launch(Dispatchers.IO) {
             dataStorePreferenceRepository.getTheme.collect { isSystemInDarkMode ->
+                log("isSystemInDarkMode: $isSystemInDarkMode")
                 if (isSystemInDarkMode) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         applicationContext.getSystemService(UiModeManager::class.java)
@@ -62,17 +49,21 @@ class AndroChatApp : Application() {
                             .setApplicationNightMode(UiModeManager.MODE_NIGHT_NO)
                     } else {
                         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                        log("MODE_NIGHT_NO")
                     }
+                }
+            }
+            dataStorePreferenceRepository.getLanguage.collect { languageCode ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    applicationContext.getSystemService(LocaleManager::class.java).applicationLocales =
+                        LocaleList.forLanguageTags(languageCode)
+                } else {
+                    AppCompatDelegate.setApplicationLocales(
+                        LocaleListCompat.forLanguageTags(languageCode)
+                    )
                 }
             }
         }
 
     }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        applicationScope.cancel("onLowMemory() called by system")
-        applicationScope = MainScope()
-    }
-
 }

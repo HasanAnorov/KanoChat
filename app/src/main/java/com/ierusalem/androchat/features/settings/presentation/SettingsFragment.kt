@@ -33,7 +33,7 @@ class SettingsFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 val uiState by viewModel.state.collectAsStateWithLifecycle()
-                AndroChatTheme {
+                AndroChatTheme(isDarkTheme = uiState.appTheme) {
                     SettingsScreen(
                         uiState = uiState,
                         eventHandler = {
