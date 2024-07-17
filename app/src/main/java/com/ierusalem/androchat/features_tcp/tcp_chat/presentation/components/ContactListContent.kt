@@ -84,7 +84,7 @@ fun ContactListContent(
                                 Spacer(modifier = Modifier.width(8.dp))
 
                                 Text(
-                                    text = if (selectedContacts.size == 1) stringResource(R.string.contact) else "( ${selectedContacts.size} ${stringResource(id = R.string.contacts)} )",
+                                    text = if (selectedContacts.size == 1) stringResource(R.string.contact) else "( ${selectedContacts.size} ${stringResource(id = R.string.contacts_lowercase)} )",
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Spacer(modifier = Modifier.weight(1F))

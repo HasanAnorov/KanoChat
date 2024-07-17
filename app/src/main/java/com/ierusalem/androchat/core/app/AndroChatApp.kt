@@ -34,6 +34,16 @@ class AndroChatApp : Application() {
         }
 
         GlobalScope.launch(Dispatchers.IO) {
+            dataStorePreferenceRepository.getLanguage.collect { languageCode ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    applicationContext.getSystemService(LocaleManager::class.java).applicationLocales =
+                        LocaleList.forLanguageTags(languageCode)
+                } else {
+                    AppCompatDelegate.setApplicationLocales(
+                        LocaleListCompat.forLanguageTags(languageCode)
+                    )
+                }
+            }
             dataStorePreferenceRepository.getTheme.collect { isSystemInDarkMode ->
                 if (isSystemInDarkMode) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -49,16 +59,6 @@ class AndroChatApp : Application() {
                     } else {
                         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
                     }
-                }
-            }
-            dataStorePreferenceRepository.getLanguage.collect { languageCode ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    applicationContext.getSystemService(LocaleManager::class.java).applicationLocales =
-                        LocaleList.forLanguageTags(languageCode)
-                } else {
-                    AppCompatDelegate.setApplicationLocales(
-                        LocaleListCompat.forLanguageTags(languageCode)
-                    )
                 }
             }
         }

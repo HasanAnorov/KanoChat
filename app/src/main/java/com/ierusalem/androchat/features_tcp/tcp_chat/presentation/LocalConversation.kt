@@ -78,7 +78,7 @@ fun LocalConversationContent(
                 contentAlignment = Alignment.Center
             ) {
                 ChannelNameBar(
-                    channelName = uiState.groupOwnerAddress,
+                    channelName = uiState.groupOwnerAddress.takeIf { it.isNotEmpty() } ?: stringResource(R.string.not_connected),
                     channelMembers = uiState.connectionsCount,
                 )
             }

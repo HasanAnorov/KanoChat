@@ -20,9 +20,7 @@ enum class TcpCloseDialogReason(@StringRes val reason: Int, @StringRes val descr
 
 enum class TcpScreenErrors(@StringRes val errorMessage: Int) {
     WifiNotEnabled(R.string.wifi_should_be_enabled_to_perform_this_action),
-    AlreadyDiscoveringWifi(R.string.already_discovering_wifi_networks),
     InvalidPortNumber(R.string.try_to_use_another_port_number_current_port_is_already_in_use_or_invalid),
-    InvalidHostAddress(R.string.try_to_reconnect_to_the_server_again_current_address_is_invalid),
     InvalidWiFiServerIpAddress(R.string.current_connected_wifi_server_ip_address_is_not_a_valid),
     FailedToConnectToWifiDevice(R.string.couldn_t_connect_to_chosen_wifi_device),
 }
@@ -52,21 +50,6 @@ enum class TcpScreenDialogErrors(
         R.string.the_ip_address_of_the_host_could_not_be_determined,
         R.drawable.info
     ),
-    YouAreNotOwner(
-        R.string.you_are_not_the_owner,
-        R.string.you_connected_as_client_thus_you_can_t_create_a_server,
-        R.drawable.info
-    ),
-    YouAreNotClient(
-        R.string.you_are_not_the_client,
-        R.string.you_connected_as_a_host_for_this_server_thus_you_can_t_be_a_client,
-        R.drawable.info
-    ),
-    ServerCreationOrConnectionWithoutWifiConnection(
-        R.string.no_wifi_connection,
-        R.string.you_need_to_connect_to_a_wifi_network_to_create_or_connect_to_a_server,
-        R.drawable.info
-    ),
     EstablishConnectionToSendMessage(
         R.string.no_one_to_chat,
         R.string.could_not_establish_connection_with_your_partner_please_try_to_reconnect_and_try_again,
@@ -74,7 +57,7 @@ enum class TcpScreenDialogErrors(
     ),
     AlreadyP2PNetworkingRunning(
         R.string.peer_networking_is_running,
-        R.string.peer_networking_is_running_cancel_it_to_creat_group_networking,
+        R.string.peer_networking_is_running_cancel_it_to_create_group_networking,
         R.drawable.info
     ),
     AlreadyHotspotNetworkingRunning(

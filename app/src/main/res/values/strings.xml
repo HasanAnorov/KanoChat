@@ -26,6 +26,10 @@
     <string name="swipe_to_cancel_recording">&#x25C0; Swipe to cancel</string>
     <string name="emojis_label">Emojis</string>
     <string name="stickers_label">Stickers</string>
+    <string name="open_with">Open with</string>
+    <string name="please_install_a_file_manager">PLease install a file manager!</string>
+    <string name="no_application_found_to_open_this_file">No application found to open this file</string>
+    <string name="give_permission">Give Permission!</string>
 
     <!-- Profile strings-->
     <string name="message">Message</string>
@@ -82,6 +86,8 @@
     <string name="invite_a_friend">Invite a friend</string>
     <string name="select_app_language">Select app language</string>
     <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="confirm">Confirm</string>
 
     <!-- Local connection strings-->
     <string name="local_connection">Local connection</string>
@@ -151,29 +157,43 @@
     <string name="no_one_to_chat">No one to chat</string>
     <string name="you_have_existing_messages_with_your_partner_and_if_you_close_the_this_window_messages_will_not_be_saved">You have existing messages with your partner and if you close the this window messages will not be saved</string>
     <string name="message_are_not_saved">The messages are not saved</string>
-    <string name="you_have_established_connection_with_your_partner_if_you_close_this_window_the_connection_will_not_be_saved">You have established connection with your partner, if you close this window the connection will not be saved</string>
+    <string name="you_have_established_connection_with_your_partner_if_you_close_this_window_the_connection_will_not_be_saved">You have established a connection with your partner, if you close this window the connection will not be saved</string>
     <string name="the_connection_will_not_be_saved">The connection will not be saved</string>
     <string name="don_t_ask_me_again">Don\'t ask me again</string>
-    <string name="save">Save</string>
-    <string name="confirm">Confirm</string>
-    <string name="group_connection">Group Connection</string>
+
+    <!-- Networking strings-->
     <string name="networking">Networking</string>
+    <string name="start_local_only_hotspot">Start Local Only Hotspot</string>
     <string name="group_networking">Group Networking</string>
-    <string name="group_address">"Group Address: "</string>
     <string name="peer_networking">Peer Networking</string>
-    <string name="hotspot_running">Hotspot running</string>
-    <string name="couldn_t_create_a_server">Couldn\'t create a server</string>
-    <string name="couldn_t_connect_to_server">Couldn\'t connect to server</string>
+    <string name="hotspot_name">Hotspot Name</string>
+    <string name="networking_status">Networking Status:</string>
+    <string name="stop_local_only_hotspot">Stop Local-Only Hotspot</string>
+    <string name="enter_hotspot_name">Enter hotspot name</string>
+
+    <!-- Contact sharing string-->
+    <string name="share">Share</string>
+    <string name="contact">contact</string>
+    <string name="contacts_lowercase">contacts</string>
+    <string name="ok">Ok</string>
+    <string name="permission_required">Permission Required</string>
+    <string name="contacts_denied">It seems you permanently declined read-contacts permission. \nYou can go to the app settings to grant it.</string>
+    <string name="contacts_permission_request">This app needs access to your contacts to share! Please grant it!</string>
+
+    <!-- Empty screen strings-->
+    <string name="no_data_found">No data found!</string>
+
+    <!-- Dialog Errors strings-->
+    <string name="couldn_t_create_a_server">Could not create a server</string>
+    <string name="couldn_t_connect_to_server">Could not connect to server</string>
     <string name="launching_hotspot">Launching hotspot ...</string>
-    <string name="couldn_t_launch_hotspot">Couldn\'t launch hotspot</string>
-    <string name="peer_networking_is_running_cancel_it_to_creat_group_networking">Peer Networking is running, cancel it to creat Group Networking!</string>
+    <string name="couldn_t_launch_hotspot">Could not launch hotspot</string>
+    <string name="peer_networking_is_running_cancel_it_to_create_group_networking">Peer Networking is running, cancel it to create Group Networking!</string>
     <string name="peer_networking_is_running">Peer Networking is running</string>
-    <string name="peer_networking_running">Peer Networking Running</string>
     <string name="group_networking_is_running">Group Networking is running</string>
     <string name="group_networking_is_running_cancel_it_to_create_peer_networking">Group Networking is running, cancel it to create Peer Networking</string>
     <string name="stop_peer_networking">Stop Peer Networking</string>
     <string name="stop_group_networking">Stop Group Networking</string>
-    <string name="networking_status">Networking Status:</string>
     <string name="your_device_does_not_support_group_networking">Your device does not support group networking</string>
     <string name="at_least_android_10_is_required_for_group_networking">At least Android 10 is required for group networking</string>
     <string name="there_is_no_online_peers_to_chat">There is no online peers to chat!</string>
@@ -182,21 +202,5 @@
     <string name="not_defined">Not defined</string>
     <string name="no_peer_to_chat">No peer to chat!</string>
     <string name="current_connected_wifi_server_ip_address_is_not_a_valid">Current connected wifi server ip address is not a valid</string>
-    <string name="hotspot_name">Hotspot Name</string>
-    <string name="enter_hotspot_name">Enter hotspot name</string>
-    <string name="start_local_only_hotspot">Start Local Only Hotspot</string>
-    <string name="stop_local_only_hotspot">Stop Local-Only Hotspot</string>
-    <string name="grant_permission">Grant Permission</string>
-    <string name="ok">Ok</string>
-    <string name="permission_required">Permission Required</string>
-    <string name="contacts_denied">It seems you permanently declined read-contacts permission. \\nYou can go to the app settings to grant it.</string>
-    <string name="contacts_permission_request">This app needs access to your contacts to share! Please grant it!</string>
-    <string name="no_data_found">No data found!</string>
-    <string name="please_install_a_file_manager">PLease install a file manager!</string>
-    <string name="no_application_found_to_open_this_file">No application found to open this file</string>
-    <string name="open_with">Open with</string>
-    <string name="contact">contact</string>
-    <string name="share">Share</string>
-    <string name="give_permission">Give Permission!</string>
 
 </resources>

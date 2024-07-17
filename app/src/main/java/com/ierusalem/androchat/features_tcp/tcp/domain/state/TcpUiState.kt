@@ -28,7 +28,7 @@ data class TcpScreenUiState(
 
     val portNumber: String = Constants.DEFAULT_PORT_NUMBER,
     val isValidPortNumber: Boolean = isValidPortNumber(portNumber),
-    val groupOwnerAddress: String = "Not created",
+    val groupOwnerAddress: String = "",
     val isValidGroupOwnerAddress: Boolean = isValidIpAddress(groupOwnerAddress),
 
     val localOnlyHotspotStatus:LocalOnlyHotspotStatus = LocalOnlyHotspotStatus.Idle,

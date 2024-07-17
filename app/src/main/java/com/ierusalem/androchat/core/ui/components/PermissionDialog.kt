@@ -36,7 +36,7 @@ fun PermissionDialog(
                     HorizontalDivider()
                     Text(
                         text = if (isPermanentlyDeclined) {
-                            stringResource(R.string.grant_permission)
+                            stringResource(R.string.give_permission)
                         } else {
                             stringResource(R.string.ok)
                         },

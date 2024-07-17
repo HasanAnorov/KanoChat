@@ -22,6 +22,10 @@
     <string name="swipe_to_cancel_recording">&#x25C0; Проведите, чтобы отменить</string>
     <string name="emojis_label">Смайлики</string>
     <string name="stickers_label">Наклейки</string>
+    <string name="open_with">Открыть с</string>
+    <string name="please_install_a_file_manager">Пожалуйста, установите файловый менеджер!</string>
+    <string name="no_application_found_to_open_this_file">Не найдено приложение для открытия этого файла</string>
+    <string name="give_permission">Давать разрешение!</string>
 
     <!-- Profile strings-->
     <string name="message">Сообщение</string>
@@ -78,6 +82,8 @@
     <string name="invite_a_friend">Пригласить друга</string>
     <string name="select_app_language">Выберите язык приложения</string>
     <string name="cancel">Отмена</string>
+    <string name="save">Сохранить</string>
+    <string name="confirm">Подтверждать</string>
 
     <!-- Local connection strings-->
     <string name="local_connection">Локальное соединение</string>
@@ -147,5 +153,50 @@
     <string name="no_one_to_chat">Не с кем пообщаться</string>
     <string name="you_have_existing_messages_with_your_partner_and_if_you_close_the_this_window_messages_will_not_be_saved">У вас есть сообщения с вашим партнером, и если вы закроете это окно, сообщения не будут сохранены.</string>
     <string name="message_are_not_saved">Сообщения не сохраняются</string>
+    <string name="you_have_established_connection_with_your_partner_if_you_close_this_window_the_connection_will_not_be_saved">Вы установили соединение с партнером, если вы закроете это окно, соединение не сохранится.</string>
+    <string name="the_connection_will_not_be_saved">Соединение не будет сохранено</string>
+    <string name="don_t_ask_me_again">Не спрашивай меня больше</string>
+
+    <!-- Networking strings-->
+    <string name="networking">Сеть</string>
+    <string name="start_local_only_hotspot">Запустить только локальную точку доступа</string>
+    <string name="group_networking">Групповая сеть</string>
+    <string name="peer_networking">Одноранговая сеть</string>
+    <string name="hotspot_name">Имя точки доступа</string>
+    <string name="networking_status">Статус сети:</string>
+    <string name="stop_local_only_hotspot">Остановить локальную точку доступа</string>
+    <string name="enter_hotspot_name">Введите название точки доступа</string>
+
+    <!-- Contact sharing string-->
+    <string name="share">Делиться</string>
+    <string name="contact">контакт</string>
+    <string name="contacts_lowercase">контакты</string>
+    <string name="ok">Хорошо</string>
+    <string name="permission_required">Требуется разрешение</string>
+    <string name="contacts_denied">Кажется, вы навсегда отклонили разрешение на чтение контактов. \Вы можете перейти в настройки приложения, чтобы предоставить его.</string>
+    <string name="contacts_permission_request">Чтобы поделиться этим приложением, необходим доступ к вашим контактам! Пожалуйста, даруйте это!</string>
+
+    <!-- Empty screen strings-->
+    <string name="no_data_found">Данные не найдены!</string>
+
+    <!-- Dialog Errors strings-->
+    <string name="couldn_t_create_a_server">Не удалось создать сервер</string>
+    <string name="couldn_t_connect_to_server">Не удалось подключиться к серверу</string>
+    <string name="launching_hotspot">Запускаем точку доступа...</string>
+    <string name="couldn_t_launch_hotspot">Не удалось запустить точку доступа</string>
+    <string name="peer_networking_is_running_cancel_it_to_create_group_networking">Одноранговая сеть запущена. Отмените ее, чтобы создать групповую сеть!</string>
+    <string name="peer_networking_is_running">Одноранговая сеть работает</string>
+    <string name="group_networking_is_running">Групповая сеть работает</string>
+    <string name="group_networking_is_running_cancel_it_to_create_peer_networking">Групповая сеть запущена. Отмените ее, чтобы создать одноранговую сеть.</string>
+    <string name="stop_peer_networking">Остановить одноранговую сеть</string>
+    <string name="stop_group_networking">Остановить групповую сеть</string>
+    <string name="your_device_does_not_support_group_networking">Ваше устройство не поддерживает групповую сеть</string>
+    <string name="at_least_android_10_is_required_for_group_networking">ля групповой работы в сети требуется Андроид версия 10 или меньше</string>
+    <string name="there_is_no_online_peers_to_chat">Нет пользователей в сети для общения!</string>
+    <string name="connected_as_host">Подключено как хост</string>
+    <string name="connected_as_client">Подключился как клиент</string>
+    <string name="not_defined">Не определен</string>
+    <string name="no_peer_to_chat">Нет собеседника для общения!</string>
+    <string name="current_connected_wifi_server_ip_address_is_not_a_valid">Текущий IP-адрес подключенного Wi-Fi-сервера недействителен.</string>
 
 </resources>

@@ -715,6 +715,7 @@ class TcpFragment : Fragment() {
                 }
             }
 
+            //fixme clarify error
             TcpScreenNavigation.OnStartHotspotNetworking -> {
                 lifecycleScope.launch {
                     if (permissionGuard.canCreateNetwork()) {
