@@ -1,28 +1,30 @@
 [versions]
-agp = "8.3.1"
+agp = "8.3.2"
 audiorecorderview = "1.0.4"
 coilCompose = "2.6.0"
 converterGson = "2.9.0"
-kotlin = "1.9.0"
-coreKtx = "1.12.0"
+hiltAndroid = "2.48.1"
+hiltAndroidCompiler = "2.48.1"
+kotlin = "1.9.24"
+coreKtx = "1.13.1"
 junit = "4.13.2"
-junitVersion = "1.1.5"
-espressoCore = "3.5.1"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
 kotlinxSerializationJson = "1.5.1"
 landscapistGlide = "2.2.9"
-lifecycleRuntimeKtx = "2.7.0"
-activityCompose = "1.8.2"
-composeBom = "2024.03.00"
-material = "1.11.0"
-lifecycleRuntimeCompose = "2.7.0"
+lifecycleRuntimeKtx = "2.8.3"
+activityCompose = "1.9.0"
+composeBom = "2024.06.00"
+material = "1.12.0"
+lifecycleRuntimeCompose = "2.8.3"
 constraintlayout = "2.1.4"
-fragment = "1.6.2"
+fragment = "1.8.1"
 navigationFragment = "2.7.7"
-uiTextGoogleFonts = "1.6.4"
-appcompat = "1.6.1"
-uiViewbinding = "1.6.4"
+uiTextGoogleFonts = "1.6.8"
+appcompat = "1.7.0"
+uiViewbinding = "1.6.8"
 
-datastorePreferences = "1.1.0"
+datastorePreferences = "1.1.1"
 
 [libraries]
 #data store
@@ -37,6 +39,8 @@ converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref
 google-android-material = { module = "com.google.android.material:material", version.ref = "material" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-ui-text-google-fonts = { module = "androidx.compose.ui:ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
+hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroidCompiler" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

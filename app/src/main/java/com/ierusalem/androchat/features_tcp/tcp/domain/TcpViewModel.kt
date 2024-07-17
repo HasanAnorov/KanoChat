@@ -481,14 +481,15 @@ class TcpViewModel @Inject constructor(
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidPortNumber))
                     return
                 }
-                if (!state.value.isValidGroupOwnerAddress) {
-                    Log.d(
-                        "ahi3646",
-                        "handleEvents: invalid ip address - ${state.value.groupOwnerAddress} "
-                    )
-                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidHostAddress))
-                    return
-                }
+                //CLARIFY WHY WE NEED GROUP ADDRESS
+//                if (!state.value.isValidGroupOwnerAddress) {
+//                    Log.d(
+//                        "ahi3646",
+//                        "handleEvents: invalid ip address - ${state.value.groupOwnerAddress} "
+//                    )
+//                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidHostAddress))
+//                    return
+//                }
 
                 //this when loop determines the state of wi fi connection
                 when (state.value.hostConnectionStatus) {
@@ -519,7 +520,6 @@ class TcpViewModel @Inject constructor(
             }
 
             TcpScreenEvents.ConnectToServerClick -> {
-
 
                 showWifiErrorIfNotEnabled()
 
@@ -557,6 +557,12 @@ class TcpViewModel @Inject constructor(
 
                     ClientConnectionStatus.Failure -> {
                         log("client is failure")
+                        emitNavigation(
+                            TcpScreenNavigation.OnConnectToServerClick(
+                                serverIpAddress = state.value.connectedWifiAddress,
+                                portNumber = state.value.portNumber.toInt()
+                            )
+                        )
                     }
                 }
             }

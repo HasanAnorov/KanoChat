@@ -75,6 +75,7 @@ fun NetworkingContent(
                         containerColor = MaterialTheme.colorScheme.background
                     ),
                     content = {
+                        //todo - optimize ui
                         Column {
                             Row(
                                 modifier = Modifier
@@ -123,7 +124,7 @@ fun NetworkingContent(
                                 )
                                 Icon(
                                     modifier = Modifier.padding(start = 8.dp),
-                                    painter = painterResource(id = state.p2pNetworkingStatus.icon),
+                                    painter = painterResource(id = state.hotspotNetworkingStatus.icon),
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onErrorContainer
                                 )

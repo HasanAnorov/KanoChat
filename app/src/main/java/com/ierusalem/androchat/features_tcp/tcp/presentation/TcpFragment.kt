@@ -139,7 +139,7 @@ class TcpFragment : Fragment() {
 
     //chatting client side
     private lateinit var clientSocket: Socket
-    private lateinit var clientWriter:DataOutputStream
+    private lateinit var clientWriter: DataOutputStream
 
     //audio recording
 //    private var audioRecord: AudioRecorder? = null
@@ -509,12 +509,12 @@ class TcpFragment : Fragment() {
             }
         }
         if (config != null) {
-            log("Creating group")
+            log("Creating group with configuration")
             wifiP2PManager.createGroup(
                 channel, getConfiguration(), listener
             )
         } else {
-            log("Creating group1")
+            log("Creating group without custom configuration")
             wifiP2PManager.createGroup(
                 channel, listener
             )
@@ -657,7 +657,7 @@ class TcpFragment : Fragment() {
                                 // maintained proper image transfer
                                 //delay(5000)
                             }
-                            sendFileMessage(writer = clientWriter, messages =  fileMessages)
+                            sendFileMessage(writer = clientWriter, messages = fileMessages)
                         }
                     }
                 }
@@ -925,27 +925,28 @@ class TcpFragment : Fragment() {
             viewModel.updatePercentageOfReceivingFile(message, newState)
             log("file received successfully")
         }
+//        reader.close()
     }
 
     private suspend fun sendFileMessage(
         writer: DataOutputStream,
-//        fileMessage: Message.FileMessage
         messages: List<Message.FileMessage>
     ) {
-        log("sending file ...")
+        log("sending file , writer is - $clientWriter ...")
 
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO){
+
+            //sending file type
+            val type = AppMessageType.FILE.identifier.code
+            writer.writeChar(type)
+
+            //sending file count
             writer.writeInt(messages.size)
             log("messages size - ${messages.size}")
-        }
 
-        messages.forEach { fileMessage ->
-            try {
-                withContext(Dispatchers.IO) {
+            messages.forEach { fileMessage ->
+                try {
                     viewModel.insertMessage(fileMessage)
-
-                    //sending file type
-                    writer.writeChar(fileMessage.messageType.identifier.code)
 
                     //sending file name
                     writer.writeUTF(fileMessage.fileName)
@@ -994,20 +995,20 @@ class TcpFragment : Fragment() {
                         val newState = FileState.Success
                         viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
                     }
-                }
-            } catch (exception: IOException) {
-                exception.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    log("file sent failed")
-                    val newState = FileState.Failure
-                    viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
-                }
-            } catch (error: Exception) {
-                error.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    log("file sent failed")
-                    val newState = FileState.Failure
-                    viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+                } catch (exception: IOException) {
+                    exception.printStackTrace()
+                    withContext(Dispatchers.Main) {
+                        log("file sent failed")
+                        val newState = FileState.Failure
+                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+                    }
+                } catch (error: Exception) {
+                    error.printStackTrace()
+                    withContext(Dispatchers.Main) {
+                        log("file sent failed")
+                        val newState = FileState.Failure
+                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+                    }
                 }
             }
         }
@@ -1091,7 +1092,6 @@ class TcpFragment : Fragment() {
                                     TcpScreenDialogErrors.EOException
                                 )
                             )
-                            //HERE IS THE POINT !!!
                             try {
                                 reader.close()
                             } catch (e: IOException) {
@@ -1185,6 +1185,7 @@ class TcpFragment : Fragment() {
             //create client
             clientSocket = Socket(serverIpAddress, serverPort)
             clientWriter = DataOutputStream(clientSocket.getOutputStream())
+            log("client writer initialized - $clientWriter")
 
             viewModel.updateClientConnectionStatus(ClientConnectionStatus.Connected)
             viewModel.updateConnectionsCount(true)
@@ -1255,12 +1256,13 @@ class TcpFragment : Fragment() {
                     // input stream does not support reading after close,
                     // or another I/O error occurs
                     Log.d("ahi3646", "connectToServer: io exception ")
+                    viewModel.updateClientConnectionStatus(ClientConnectionStatus.Failure)
+                    viewModel.updateConnectionsCount(false)
                     viewModel.handleEvents(
                         TcpScreenEvents.OnDialogErrorOccurred(
                             TcpScreenDialogErrors.IOException
                         )
                     )
-
                     try {
                         reader.close()
                     } catch (e: IOException) {
@@ -1285,41 +1287,20 @@ class TcpFragment : Fragment() {
         } catch (exception: UnknownHostException) {
             exception.printStackTrace()
             log("unknown host exception".uppercase())
-            try {
-                //todo change connection status here
-                viewModel.updateConnectionsCount(false)
-            } catch (ex: IOException) {
-                ex.printStackTrace()
-            }
             viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.UnknownHostException))
         } catch (exception: IOException) {
             exception.printStackTrace()
-            try {
-                viewModel.updateConnectionsCount(false)
-            } catch (ex: IOException) {
-                ex.printStackTrace()
-            }
             //could not connect to a server
             log("connectToServer: IOException ".uppercase())
             viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.IOException))
         } catch (e: SecurityException) {
             e.printStackTrace()
-            try {
-                //todo change connection status here
-                viewModel.updateConnectionsCount(false)
-            } catch (ex: IOException) {
-                ex.printStackTrace()
-            }
+            //fixme add security exception handling
             //if a security manager exists and its checkConnect method doesn't allow the operation.
             log("connectToServer: SecurityException".uppercase())
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
-            try {
-                //todo change connection status here
-                viewModel.updateConnectionsCount(false)
-            } catch (ex: IOException) {
-                ex.printStackTrace()
-            }
+            //fixme add illegal argument handling
             //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
             log("connectToServer: IllegalArgumentException".uppercase())
         }

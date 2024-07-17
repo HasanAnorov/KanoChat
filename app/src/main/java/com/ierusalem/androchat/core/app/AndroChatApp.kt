@@ -35,7 +35,6 @@ class AndroChatApp : Application() {
 
         GlobalScope.launch(Dispatchers.IO) {
             dataStorePreferenceRepository.getTheme.collect { isSystemInDarkMode ->
-                log("isSystemInDarkMode: $isSystemInDarkMode")
                 if (isSystemInDarkMode) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         applicationContext.getSystemService(UiModeManager::class.java)
@@ -49,7 +48,6 @@ class AndroChatApp : Application() {
                             .setApplicationNightMode(UiModeManager.MODE_NIGHT_NO)
                     } else {
                         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-                        log("MODE_NIGHT_NO")
                     }
                 }
             }
