@@ -1,10 +1,11 @@
-package com.ierusalem.androchat.features.auth.register.domain.model
+package com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity
 
 import android.net.Uri
+import androidx.annotation.Keep
 import com.ierusalem.androchat.core.app.AppMessageType
 
-sealed class Message(
-    //todo - maybe this username field should be removed
+@Keep
+sealed class ChatMessage(
     open val username: String,
     open val formattedTime: String,
     open val isFromYou: Boolean,
@@ -16,7 +17,7 @@ sealed class Message(
         override val messageType: AppMessageType = AppMessageType.TEXT,
         val message: String,
         override val formattedTime: String
-    ) : Message(username, formattedTime, isFromYou, messageType)
+    ) : ChatMessage(username, formattedTime, isFromYou, messageType)
 
     data class FileMessage(
         override val formattedTime: String,
@@ -27,8 +28,8 @@ sealed class Message(
         val fileName: String,
         val fileSize: String,
         val fileExtension: String,
-        val fileState: FileState = FileState.Loading(0)
-    ) : Message(username, formattedTime, isFromYou, messageType)
+        val fileState: FileMessageState = FileMessageState.Loading(0)
+    ) : ChatMessage(username, formattedTime, isFromYou, messageType)
 
     data class ContactMessage(
         override val formattedTime: String,
@@ -37,7 +38,7 @@ sealed class Message(
         override val messageType: AppMessageType = AppMessageType.CONTACT,
         val contactName: String,
         val contactNumber: String
-    ) : Message(
+    ) : ChatMessage(
         username,
         formattedTime,
         isFromYou,
@@ -46,11 +47,4 @@ sealed class Message(
 
 }
 
-
-//todo - finish proper file handling ...
-sealed interface FileState {
-    data class Loading(val percentage: Int) : FileState
-    data object Success : FileState
-    data object Failure : FileState
-}
 

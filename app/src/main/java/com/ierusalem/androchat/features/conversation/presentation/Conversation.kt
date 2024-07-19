@@ -57,7 +57,7 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
 import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features.conversation.domain.ConversationEvents
 import com.ierusalem.androchat.features.conversation.domain.ConversationState
 import com.ierusalem.androchat.features.conversation.presentation.components.ConversationUiState
@@ -202,7 +202,7 @@ const val ConversationTestTag = "ConversationTestTag"
 
 @Composable
 fun Messages(
-    messages: List<Message>,
+    messages: List<ChatMessage>,
     navigateToProfile: (String) -> Unit,
     scrollState: LazyListState,
     modifier: Modifier = Modifier
@@ -222,7 +222,7 @@ fun Messages(
             }
             itemsIndexed(messages) { index, message ->
                 when (message) {
-                    is Message.TextMessage -> {
+                    is ChatMessage.TextMessage -> {
                         val prevAuthor = messages.getOrNull(index - 1)?.username
                         val nextAuthor = messages.getOrNull(index + 1)?.username
                         val isFirstMessageByAuthor = prevAuthor != message.username
@@ -236,8 +236,8 @@ fun Messages(
                         )
                     }
 
-                    is Message.FileMessage -> {}
-                    is Message.ContactMessage -> {}
+                    is ChatMessage.FileMessage -> {}
+                    is ChatMessage.ContactMessage -> {}
                 }
             }
         }
@@ -301,7 +301,7 @@ private val ChatBubbleShape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
 
 @Composable
 fun ChatItemBubble(
-    message: Message.TextMessage,
+    message: ChatMessage.TextMessage,
     isUserMe: Boolean,
     authorClicked: (String) -> Unit
 ) {
@@ -343,7 +343,7 @@ fun ChatItemBubble(
 
 @Composable
 fun ClickableMessage(
-    message: Message.TextMessage,
+    message: ChatMessage.TextMessage,
     isUserMe: Boolean,
     authorClicked: (String) -> Unit
 ) {

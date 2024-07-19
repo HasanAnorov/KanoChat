@@ -26,13 +26,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features.conversation.presentation.ChatItemBubble
 
 @Composable
 fun MessageItem(
     onAuthorClick: (String) -> Unit,
-    message: Message.TextMessage,
+    message: ChatMessage.TextMessage,
     isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean
@@ -84,7 +84,7 @@ fun MessageItem(
 
 @Composable
 fun AuthorAndTextMessage(
-    message: Message.TextMessage,
+    message: ChatMessage.TextMessage,
     isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
@@ -113,7 +113,7 @@ fun AuthorAndTextMessage(
 
 @Composable
 private fun AuthorNameTimestamp(
-    message: Message.TextMessage
+    message: ChatMessage.TextMessage
 ) {
     // Combine author and timestamp for a11y.
     Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
@@ -140,7 +140,7 @@ private fun PreviewMessage() {
     AndroChatTheme {
         MessageItem(
             onAuthorClick = {},
-            message = Message.TextMessage(
+            message = ChatMessage.TextMessage(
                 message =("Hello it is a text"),
                 formattedTime = "12:32",
                 username = "Hasan",

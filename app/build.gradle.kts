@@ -1,9 +1,9 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
-    kotlin("kapt")
-    id("com.google.dagger.hilt.android")
-    id("org.jetbrains.kotlin.plugin.serialization")
+    alias(libs.plugins.hiltAndroid)
+    alias(libs.plugins.devtoolsKsp)
+    alias(libs.plugins.pluginSerialization)
 }
 
 android {
@@ -21,11 +21,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-    }
-
-    // Allow references to generated code
-    kapt {
-        correctErrorTypes = true
     }
 
     buildTypes {
@@ -92,7 +87,7 @@ dependencies {
 
     //hilt
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
 
     //kotlin json serializer
     implementation(libs.kotlinx.serialization.json)
@@ -105,5 +100,9 @@ dependencies {
 
     //image loading - coil
     implementation(libs.coil.compose)
+
+    // add the following lines
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
 }

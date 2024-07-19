@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,7 +44,7 @@ class ConversationViewModel @Inject constructor(
 }
 
 data class ConversationState(
-    val messages: List<Message> = emptyList(),
+    val messages: List<ChatMessage> = emptyList(),
     val isLoading: Boolean = false
 )
 

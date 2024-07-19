@@ -23,8 +23,6 @@ import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.core.utils.log
-import com.ierusalem.androchat.features.auth.register.domain.model.FileState
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuard
 import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.ClientConnectionStatus
@@ -40,6 +38,10 @@ import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenErrors
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavigation
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.dao.MessagesDao
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,7 +62,8 @@ class TcpViewModel @Inject constructor(
     private val dataStorePreferenceRepository: DataStorePreferenceRepository,
     private val connectivityObserver: ConnectivityObserver,
     private val wifiManager: WifiManager,
-    private val contentResolver: ContentResolver
+    private val contentResolver: ContentResolver,
+    private val messagesDao: MessagesDao
 ) : ViewModel(),
     NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
 
@@ -73,6 +76,41 @@ class TcpViewModel @Inject constructor(
         initializeAuthorMe()
         initializeHotspotName()
         listenWifiConnections()
+    }
+
+    fun updatePeerUserUniqueId(userUniqueId: String) {
+        _state.update {
+            it.copy(
+                peerUserUniqueId = userUniqueId
+            )
+        }
+    }
+
+    fun createNewChatHistory(userUniqueId: String){
+        updatePeerUserUniqueId(userUniqueId)
+        viewModelScope.launch(Dispatchers.IO) {
+            val userMessages = UserMessages(
+                userUniqueId = userUniqueId,
+                messages = emptyList()
+            )
+            messagesDao.createNewChatHistory(userMessages)
+        }
+    }
+
+    fun loadChatHistory(userUniqueId: String) {
+        updatePeerUserUniqueId(userUniqueId)
+        viewModelScope.launch(Dispatchers.IO) {
+            val messages = messagesDao.getUserHistory(userUniqueId).messages
+            loadMessages(messages)
+        }
+    }
+
+    fun checkForUserExistence(userUniqueId: String): Boolean {
+        return messagesDao.isUserExist(userUniqueId)
+    }
+
+    suspend fun getUniqueDeviceId(): String {
+        return dataStorePreferenceRepository.getUniqueDeviceId.first()
     }
 
     fun checkReadContactsPermission() {
@@ -414,7 +452,7 @@ class TcpViewModel @Inject constructor(
             is TcpScreenEvents.SendMessageRequest -> {
                 val currentTime = Calendar.getInstance().time.toString()
                 val username = state.value.authorMe
-                val message = Message.TextMessage(
+                val message = ChatMessage.TextMessage(
                     username = username,
                     message = event.message,
                     formattedTime = currentTime,
@@ -481,7 +519,7 @@ class TcpViewModel @Inject constructor(
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidPortNumber))
                     return
                 }
-                //CLARIFY WHY WE NEED GROUP ADDRESS
+                //todo - CLARIFY WHY WE NEED GROUP ADDRESS
 //                if (!state.value.isValidGroupOwnerAddress) {
 //                    Log.d(
 //                        "ahi3646",
@@ -773,35 +811,42 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updatePercentageOfReceivingFile(message: Message, fileState: FileState) {
+    fun updatePercentageOfReceivingFile(message: ChatMessage, fileState: FileMessageState) {
 
         val messages = state.value.messages
         val targetMessage = messages
-            .findLast { it.username == message.username && it is Message.FileMessage }
+            .findLast { it.username == message.username && it is ChatMessage.FileMessage }
         if (targetMessage == null) return
-        val updatedMessage = updateFileState(targetMessage as Message.FileMessage, fileState)
+        val updatedMessage = updateFileState(targetMessage as ChatMessage.FileMessage, fileState)
         val newMessages = state.value.messages.toMutableList().apply {
             set(messages.indexOf(targetMessage), updatedMessage)
         }
-        _state.update {
-            it.copy(
-                messages = newMessages
-            )
-        }
+        loadMessages(newMessages)
 
     }
 
     private fun updateFileState(
-        fileMessage: Message.FileMessage,
-        newState: FileState
-    ): Message.FileMessage {
+        fileMessage: ChatMessage.FileMessage,
+        newState: FileMessageState
+    ): ChatMessage.FileMessage {
         return fileMessage.copy(fileState = newState)
     }
 
-    fun insertMessage(message: Message) {
+    fun insertMessage(message: ChatMessage) {
         val newMessages = state.value.messages.toMutableList().apply {
             add(message)
         }
+        val newUserMessages = UserMessages(
+            userUniqueId = state.value.peerUserUniqueId,
+            messages = newMessages
+        )
+        viewModelScope.launch(Dispatchers.IO) {
+            messagesDao.updateUserHistory(newUserMessages)
+        }
+        loadMessages(newMessages)
+    }
+
+    private fun loadMessages(newMessages: List<ChatMessage>) {
         _state.update {
             it.copy(
                 messages = newMessages

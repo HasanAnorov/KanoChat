@@ -10,7 +10,7 @@ import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import java.util.UUID
 
 data class TcpScreenUiState(
@@ -23,6 +23,7 @@ data class TcpScreenUiState(
     //general state
     val isWifiOn: Boolean = false,
     val authorMe: String = Constants.UNKNOWN_USER,
+    val peerUserUniqueId: String = "",
     val hotspotName: String = Constants.UNKNOWN_HOTSPOT_NAME,
     val isValidHotSpotName: Boolean = isValidHotspotName(hotspotName),
 
@@ -48,7 +49,7 @@ data class TcpScreenUiState(
     val connectedWifiNetworks: List<WifiP2pDevice> = emptyList(),
 
     //chat room
-    val messages: List<Message> = emptyList(),
+    val messages: List<ChatMessage> = emptyList(),
     //but Erkin aka said, chat should be between only two people
     //todo maybe you should use connectedWifiNetworks.size here !!!
     val connectionsCount: Int = 0,

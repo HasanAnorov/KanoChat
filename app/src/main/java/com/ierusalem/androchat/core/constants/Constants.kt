@@ -12,8 +12,9 @@ object Constants {
     const val PREFERENCE_THEME = "device_theme"
     const val PREFERENCE_USERNAME = "device_user_username"
     const val PREFERENCE_HOTSPOT_NAME = "device_hotspot_name"
+    const val PREFERENCE_UNIQUE_DEVICE_ID = "device_unique_id"
 
-    //todo, may be this should be linked to unique identifiers like ANDROID ID
+    //todo - may be this should be linked to unique identifiers like ANDROID ID
     const val UNKNOWN_USER = "Unknown User"
     const val UNKNOWN_HOTSPOT_NAME = "TEMP-HOTSPOT"
 
@@ -43,6 +44,8 @@ object Constants {
     const val FILE_PROVIDER_AUTHORITY = "com.ierusalem.androchat.fileprovider"
 
     const val SOCKET_DEFAULT_BUFFER_SIZE = 4 * 1024
+
+    const val MESSAGES_DATABASE_NAME = "messages_db"
 
     fun getLanguageCode(language: AppLanguage): String {
         return when (language) {

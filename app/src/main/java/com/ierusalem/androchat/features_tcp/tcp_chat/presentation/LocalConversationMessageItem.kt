@@ -30,18 +30,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features.conversation.presentation.components.messageFormatter
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactItem
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.FileMessageItem
 
 @Composable
 fun LocalMessageItem(
-    msg: Message,
+    msg: ChatMessage,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
-    onFileItemClick: (Message.FileMessage) -> Unit,
-    onContactItemClick: (Message.ContactMessage) -> Unit
+    onFileItemClick: (ChatMessage.FileMessage) -> Unit,
+    onContactItemClick: (ChatMessage.ContactMessage) -> Unit
 ) {
     val borderColor = if (msg.isFromYou) {
         MaterialTheme.colorScheme.primary
@@ -85,25 +85,25 @@ fun LocalMessageItem(
 @Composable
 fun AuthorAndTextMessage(
     modifier: Modifier = Modifier,
-    msg: Message,
+    msg: ChatMessage,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
-    onFileItemClick: (Message.FileMessage) -> Unit,
-    onContactItemClick: (Message.ContactMessage) -> Unit
+    onFileItemClick: (ChatMessage.FileMessage) -> Unit,
+    onContactItemClick: (ChatMessage.ContactMessage) -> Unit
 ) {
     Column(modifier = modifier) {
         if (isLastMessageByAuthor) {
             AuthorName(msg)
         }
         when (msg) {
-            is Message.TextMessage -> {
+            is ChatMessage.TextMessage -> {
                 LocalMessageItem(msg)
             }
 
-            is Message.FileMessage -> {
+            is ChatMessage.FileMessage -> {
                 FileMessageItem(message = msg, onFileItemClick = onFileItemClick)
             }
-            is Message.ContactMessage -> {
+            is ChatMessage.ContactMessage -> {
                 ContactItem(
                     message = msg,
                     onContactNumberClick = onContactItemClick
@@ -122,7 +122,7 @@ fun AuthorAndTextMessage(
 
 @Composable
 fun LocalClickableMessage(
-    message: Message.TextMessage
+    message: ChatMessage.TextMessage
 ) {
 
     val styledMessage = messageFormatter(
@@ -153,7 +153,7 @@ fun LocalClickableMessage(
 
 @Composable
 private fun AuthorName(
-    message: Message
+    message: ChatMessage
 ) {
     Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
@@ -171,7 +171,7 @@ private fun AuthorName(
 private fun PreviewMessage() {
     AndroChatTheme {
         LocalMessageItem(
-            msg = Message.TextMessage(
+            msg = ChatMessage.TextMessage(
                 message = ("Hello it is a text"),
                 formattedTime = "12:32",
                 username = "Owner",

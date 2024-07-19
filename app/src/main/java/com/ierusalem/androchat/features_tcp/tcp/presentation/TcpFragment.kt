@@ -72,9 +72,9 @@ import com.ierusalem.androchat.core.utils.getFileSizeInReadableFormat
 import com.ierusalem.androchat.core.utils.getMimeType
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.openAppSettings
-import com.ierusalem.androchat.core.utils.toast
-import com.ierusalem.androchat.features.auth.register.domain.model.FileState
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
+import com.ierusalem.androchat.core.utils.shortToast
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_tcp.server.ServerDefaults
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
 import com.ierusalem.androchat.features_tcp.server.wifidirect.Reason
@@ -113,7 +113,6 @@ import java.net.Socket
 import java.net.UnknownHostException
 import java.util.Calendar
 import kotlin.math.min
-
 
 @AndroidEntryPoint
 class TcpFragment : Fragment() {
@@ -229,28 +228,28 @@ class TcpFragment : Fragment() {
                     }
 
                     GeneralConnectionStatus.ConnectedAsClient -> {
-                        val fileMessage = Message.FileMessage(
+                        val fileMessage = ChatMessage.FileMessage(
                             formattedTime = getCurrentTime(),
                             username = viewModel.state.value.authorMe,
                             filePath = uri,
                             fileName = uri.getFileNameFromUri(contentResolver),
                             fileSize = uri.getFileSizeInReadableFormat(contentResolver),
                             fileExtension = uri.getFileExtensionFromUri(contentResolver),
-                            fileState = FileState.Loading(0),
+                            fileState = FileMessageState.Loading(0),
                             isFromYou = true
                         )
                         sendClientMessage(fileMessage)
                     }
 
                     GeneralConnectionStatus.ConnectedAsHost -> {
-                        val fileMessage = Message.FileMessage(
+                        val fileMessage = ChatMessage.FileMessage(
                             formattedTime = getCurrentTime(),
                             username = viewModel.state.value.authorMe,
                             filePath = uri,
                             fileName = uri.getFileNameFromUri(contentResolver),
                             fileSize = uri.getFileSizeInReadableFormat(contentResolver),
                             fileExtension = uri.getFileExtensionFromUri(contentResolver),
-                            fileState = FileState.Loading(0),
+                            fileState = FileMessageState.Loading(0),
                             isFromYou = true
                         )
                         sendHostMessage(fileMessage)
@@ -259,7 +258,6 @@ class TcpFragment : Fragment() {
             }
         }
     }
-
 
     private fun showFileChooser() {
         val intent = Intent().setType("*/*").setAction(Intent.ACTION_GET_CONTENT)
@@ -307,7 +305,6 @@ class TcpFragment : Fragment() {
                 val scope = rememberCoroutineScope()
                 val allTabs = rememberTcpAllTabs()
                 val pagerState = rememberPagerState(
-                    //fixme change tab here
                     initialPage = 0,
                     initialPageOffsetFraction = 0F,
                     pageCount = { allTabs.size },
@@ -330,105 +327,101 @@ class TcpFragment : Fragment() {
                 }
 
                 val uiState by viewModel.state.collectAsStateWithLifecycle()
-
-                val sheetState = rememberModalBottomSheetState(
-                    skipPartiallyExpanded = false
-                )
-
-                //todo
-//                BackHandler {
-//                    if (state.messages.isNotEmpty()) {
-//                        //show close dialog here
-//                    }
-//                }
+                val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
                 AndroChatTheme {
                     if (uiState.showBottomSheet) {
                         ModalBottomSheet(
-                            sheetState = sheetState, onDismissRequest = {
+                            sheetState = sheetState,
+                            onDismissRequest = {
                                 viewModel.handleEvents(TcpScreenEvents.UpdateBottomSheetState(false))
-                            }, windowInsets = WindowInsets(0, 0, 0, 0)
-                        ) {
-                            if (uiState.isReadContactsGranted) {
-                                viewModel.handleEvents(TcpScreenEvents.ReadContacts)
-                                ContactListContent(
-                                    contacts = uiState.contacts,
-                                    shareSelectedContacts = { selectedContacts ->
-                                        when (uiState.generalConnectionStatus) {
-                                            GeneralConnectionStatus.Idle -> {
-                                                //do nothing
-                                            }
+                            },
+                            windowInsets = WindowInsets(0, 0, 0, 0),
+                            content = {
+                                if (uiState.isReadContactsGranted) {
+                                    viewModel.handleEvents(TcpScreenEvents.ReadContacts)
+                                    ContactListContent(
+                                        contacts = uiState.contacts,
+                                        shareSelectedContacts = { selectedContacts ->
+                                            when (uiState.generalConnectionStatus) {
+                                                GeneralConnectionStatus.Idle -> {
+                                                    //do nothing
+                                                }
 
-                                            GeneralConnectionStatus.ConnectedAsClient -> {
-                                                lifecycleScope.launch(Dispatchers.IO) {
-                                                    viewModel.handleEvents(
-                                                        TcpScreenEvents.UpdateBottomSheetState(
-                                                            false
+                                                GeneralConnectionStatus.ConnectedAsClient -> {
+                                                    lifecycleScope.launch(Dispatchers.IO) {
+                                                        viewModel.handleEvents(
+                                                            TcpScreenEvents.UpdateBottomSheetState(
+                                                                false
+                                                            )
                                                         )
-                                                    )
-                                                    selectedContacts.forEach { contact ->
-                                                        val contactMessage = Message.ContactMessage(
-                                                            username = uiState.authorMe,
-                                                            formattedTime = getCurrentTime(),
-                                                            isFromYou = true,
-                                                            contactName = contact.contactName,
-                                                            contactNumber = contact.phoneNumber
-                                                        )
-                                                        sendClientMessage(contactMessage)
-                                                        delay(300)
+                                                        selectedContacts.forEach { contact ->
+                                                            val contactMessage =
+                                                                ChatMessage.ContactMessage(
+                                                                    username = uiState.authorMe,
+                                                                    formattedTime = getCurrentTime(),
+                                                                    isFromYou = true,
+                                                                    contactName = contact.contactName,
+                                                                    contactNumber = contact.phoneNumber
+                                                                )
+                                                            sendClientMessage(contactMessage)
+                                                            delay(300)
+                                                        }
                                                     }
                                                 }
-                                            }
 
-                                            GeneralConnectionStatus.ConnectedAsHost -> {
-                                                lifecycleScope.launch(Dispatchers.IO) {
-                                                    viewModel.handleEvents(
-                                                        TcpScreenEvents.UpdateBottomSheetState(
-                                                            false
+                                                GeneralConnectionStatus.ConnectedAsHost -> {
+                                                    lifecycleScope.launch(Dispatchers.IO) {
+                                                        viewModel.handleEvents(
+                                                            TcpScreenEvents.UpdateBottomSheetState(
+                                                                false
+                                                            )
                                                         )
-                                                    )
-                                                    selectedContacts.forEach { contact ->
-                                                        val contactMessage = Message.ContactMessage(
-                                                            username = uiState.authorMe,
-                                                            formattedTime = getCurrentTime(),
-                                                            isFromYou = true,
-                                                            contactName = contact.contactName,
-                                                            contactNumber = contact.phoneNumber
-                                                        )
-                                                        sendHostMessage(contactMessage)
-                                                        delay(300)
+                                                        selectedContacts.forEach { contact ->
+                                                            val contactMessage =
+                                                                ChatMessage.ContactMessage(
+                                                                    username = uiState.authorMe,
+                                                                    formattedTime = getCurrentTime(),
+                                                                    isFromYou = true,
+                                                                    contactName = contact.contactName,
+                                                                    contactNumber = contact.phoneNumber
+                                                                )
+                                                            sendHostMessage(contactMessage)
+                                                            delay(300)
+                                                        }
                                                     }
                                                 }
-                                            }
 
-                                        }
-                                    }
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .height(300.dp)
-                                        .fillMaxWidth(),
-                                    contentAlignment = Alignment.Center,
-                                    content = {
-                                        Button(
-                                            onClick = {
-                                                readContactsPermissionLauncher.launch(
-                                                    Manifest.permission.READ_CONTACTS
-                                                )
                                             }
-                                        ) {
-                                            Text(text = stringResource(R.string.give_permission))
                                         }
-                                    }
-                                )
+                                    )
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .height(300.dp)
+                                            .fillMaxWidth(),
+                                        contentAlignment = Alignment.Center,
+                                        content = {
+                                            Button(
+                                                onClick = {
+                                                    readContactsPermissionLauncher.launch(
+                                                        Manifest.permission.READ_CONTACTS
+                                                    )
+                                                }
+                                            ) {
+                                                Text(text = stringResource(R.string.give_permission))
+                                            }
+                                        }
+                                    )
+                                }
                             }
-                        }
+                        )
                     }
                     if (uiState.shouldShowPermissionDialog) {
-                        PermissionDialog(isPermanentlyDeclined = !shouldShowRequestPermissionRationale(
-                            Manifest.permission.READ_CONTACTS
-                        ),
+                        PermissionDialog(
+                            isPermanentlyDeclined = !shouldShowRequestPermissionRationale(
+                                Manifest.permission.READ_CONTACTS
+                            ),
                             onDismiss = { viewModel.updateShowPermissionRequestState(false) },
                             onOkClick = {
                                 readContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
@@ -437,11 +430,14 @@ class TcpFragment : Fragment() {
                             onGoToAppSettingsClick = {
                                 openAppSettings()
                                 viewModel.updateShowPermissionRequestState(false)
-                            })
+                            }
+                        )
                     }
 
-                    TcpScreen(state = uiState,
-                        //try to use pass lambda like this, this will help to avoid extra recomposition
+                    TcpScreen(
+                        state = uiState,
+                        //try to use pass lambda like this,
+                        // this will help to avoid extra recomposition
                         eventHandler = viewModel::handleEvents,
                         allTabs = allTabs,
                         pagerState = pagerState,
@@ -456,16 +452,17 @@ class TcpFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.screenNavigation.executeWithLifecycle(
-            lifecycle = viewLifecycleOwner.lifecycle, action = ::executeNavigation
+            lifecycle = viewLifecycleOwner.lifecycle,
+            action = ::executeNavigation
         )
     }
 
-    // todo - use this method to close servers
+    // todo - check stream closes also
     // network clean up should be carried out in viewmodel
     private fun handleWifiDisabledCase() {
         when (viewModel.state.value.generalConnectionStatus) {
             GeneralConnectionStatus.Idle -> {
-                //do nothing
+                /** do nothing */
             }
 
             GeneralConnectionStatus.ConnectedAsClient -> {
@@ -550,7 +547,7 @@ class TcpFragment : Fragment() {
             connectedClientSocketOnServer.close()
         }
 
-        wifiP2PManager.removeGroup(channel, object : WifiP2pManager.ActionListener {
+        val listener = object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 log("Wifi P2P Channel is removed")
                 viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Idle)
@@ -560,7 +557,8 @@ class TcpFragment : Fragment() {
                 val r = Reason.parseReason(reason)
                 log("Failed to stop network: ${r.displayReason}")
             }
-        })
+        }
+        wifiP2PManager.removeGroup(channel, listener)
     }
 
     private fun stopPeerDiscovery() {
@@ -576,9 +574,7 @@ class TcpFragment : Fragment() {
                 log("Failed to stop p2p discovery: ${r.displayReason}")
             }
         }
-        wifiP2PManager.stopPeerDiscovery(
-            channel, listener
-        )
+        wifiP2PManager.stopPeerDiscovery(channel, listener)
     }
 
     @SuppressLint("MissingPermission")
@@ -594,10 +590,10 @@ class TcpFragment : Fragment() {
                     when (viewModel.state.value.generalConnectionStatus) {
                         GeneralConnectionStatus.Idle -> {}
                         GeneralConnectionStatus.ConnectedAsHost -> {
-                            val fileMessages = mutableListOf<Message.FileMessage>()
+                            val fileMessages = mutableListOf<ChatMessage.FileMessage>()
                             navigation.medias.forEach { imageUri ->
                                 //todo - maybe username should be removed here
-                                val fileMessage = Message.FileMessage(
+                                val fileMessage = ChatMessage.FileMessage(
                                     formattedTime = getCurrentTime(),
                                     username = viewModel.state.value.authorMe,
                                     isFromYou = true,
@@ -616,10 +612,10 @@ class TcpFragment : Fragment() {
                         }
 
                         GeneralConnectionStatus.ConnectedAsClient -> {
-                            val fileMessages = mutableListOf<Message.FileMessage>()
+                            val fileMessages = mutableListOf<ChatMessage.FileMessage>()
                             navigation.medias.forEach { imageUri ->
                                 //todo - maybe username should be removed here
-                                val fileMessage = Message.FileMessage(
+                                val fileMessage = ChatMessage.FileMessage(
                                     formattedTime = getCurrentTime(),
                                     username = viewModel.state.value.authorMe,
                                     isFromYou = true,
@@ -678,7 +674,7 @@ class TcpFragment : Fragment() {
                     startActivity(intent)
                 } catch (e: ActivityNotFoundException) {
                     // no Activity to handle this kind of files
-                    toast(getString(R.string.no_application_found_to_open_this_file))
+                    shortToast(getString(R.string.no_application_found_to_open_this_file))
                     log("can not open a file !")
                     e.printStackTrace()
                 }
@@ -767,22 +763,19 @@ class TcpFragment : Fragment() {
             TcpScreenNavigation.OnDiscoverP2PClick -> {
                 lifecycleScope.launch {
                     if (permissionGuard.canCreateNetwork()) {
-
-                        wifiP2PManager.discoverPeers(channel,
-                            object : WifiP2pManager.ActionListener {
-                                override fun onSuccess() {
-                                    log("onSuccess: discover ")
-                                    viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
-                                }
-
-                                override fun onFailure(reason: Int) {
-                                    // Code for when the discovery initiation fails goes here.
-                                    // Alert the user that something went wrong.
-                                    log("onFailure: discover $reason ")
-                                    viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Failure)
-                                }
-
-                            })
+                        val listener = object : WifiP2pManager.ActionListener {
+                            override fun onSuccess() {
+                                log("onSuccess: discover ")
+                                viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
+                            }
+                            override fun onFailure(reason: Int) {
+                                // Code for when the discovery initiation fails goes here.
+                                // Alert the user that something went wrong.
+                                log("onFailure: discover $reason ")
+                                viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Failure)
+                            }
+                        }
+                        wifiP2PManager.discoverPeers(channel, listener)
                     } else {
                         log("Permissions not granted!")
                         locationPermissionRequest.launch(
@@ -860,7 +853,7 @@ class TcpFragment : Fragment() {
             val fileSizeForPercentage = fileSize
 
             val currentTime = Calendar.getInstance().time
-            val message = Message.FileMessage(
+            val message = ChatMessage.FileMessage(
                 formattedTime = currentTime.toString(),
                 username = "from client",
                 filePath = Uri.fromFile(file),
@@ -870,7 +863,7 @@ class TcpFragment : Fragment() {
                     fileSize
                 ),
                 fileExtension = filename.getExtensionFromFilename(),
-                fileState = FileState.Loading(0),
+                fileState = FileMessageState.Loading(0),
                 isFromYou = false
             )
             viewModel.insertMessage(message)
@@ -894,24 +887,22 @@ class TcpFragment : Fragment() {
                     ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
                 if (percentage != tempPercentage) {
                     log("progress - $percentage")
-                    val newState = FileState.Loading(percentage)
+                    val newState = FileMessageState.Loading(percentage)
                     viewModel.updatePercentageOfReceivingFile(message, newState)
                 }
             }
             fileOutputStream.close()
-            val newState = FileState.Success
+            val newState = FileMessageState.Success
             viewModel.updatePercentageOfReceivingFile(message, newState)
             log("file received successfully")
         }
-//        reader.close()
     }
 
     private suspend fun sendFileMessage(
         writer: DataOutputStream,
-        messages: List<Message.FileMessage>
+        messages: List<ChatMessage.FileMessage>
     ) {
         log("sending file , writer is - $clientWriter ...")
-
         withContext(Dispatchers.IO) {
 
             //sending file type
@@ -961,7 +952,7 @@ class TcpFragment : Fragment() {
                         if (percentage != tempPercentage) {
                             withContext(Dispatchers.Main) {
                                 log("progress - $percentage")
-                                val newState = FileState.Loading(percentage)
+                                val newState = FileMessageState.Loading(percentage)
                                 viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
                             }
                         }
@@ -970,21 +961,21 @@ class TcpFragment : Fragment() {
                     fileInputStream.close()
                     withContext(Dispatchers.Main) {
                         log("file sent successfully")
-                        val newState = FileState.Success
+                        val newState = FileMessageState.Success
                         viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
                     }
                 } catch (exception: IOException) {
                     exception.printStackTrace()
                     withContext(Dispatchers.Main) {
                         log("file sent failed")
-                        val newState = FileState.Failure
+                        val newState = FileMessageState.Failure
                         viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
                     }
                 } catch (error: Exception) {
                     error.printStackTrace()
                     withContext(Dispatchers.Main) {
                         log("file sent failed")
-                        val newState = FileState.Failure
+                        val newState = FileMessageState.Failure
                         viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
                     }
                 }
@@ -1006,6 +997,8 @@ class TcpFragment : Fragment() {
                 }
                 while (!serverSocket.isClosed) {
                     connectedClientSocketOnServer = serverSocket.accept()
+                    connectedClientWriter = DataOutputStream(connectedClientSocketOnServer.getOutputStream())
+                    initializeUser(connectedClientWriter)
                     log("New client : $connectedClientSocketOnServer ")
                     viewModel.updateConnectionsCount(true)
 
@@ -1017,7 +1010,9 @@ class TcpFragment : Fragment() {
                             val dataType = AppMessageType.fromChar(reader.readChar())
 
                             when (dataType) {
-                                AppMessageType.INITIAL -> {}
+                                AppMessageType.INITIAL -> {
+                                    setupUserData(reader)
+                                }
                                 AppMessageType.CONTACT -> {
                                     val receivedMessage = reader.readUTF()
                                     log("host incoming contact message - $receivedMessage")
@@ -1026,7 +1021,7 @@ class TcpFragment : Fragment() {
                                             receivedMessage,
                                             ContactsMessageItem::class.java
                                         )
-                                    val contactMessage = Message.ContactMessage(
+                                    val contactMessage = ChatMessage.ContactMessage(
                                         username = "from client",
                                         formattedTime = getCurrentTime(),
                                         contactName = contactMessageItem.contactName,
@@ -1041,7 +1036,7 @@ class TcpFragment : Fragment() {
                                     log("host incoming message - $receivedMessage")
 
                                     val currentTime = Calendar.getInstance().time
-                                    val message = Message.TextMessage(
+                                    val message = ChatMessage.TextMessage(
                                         username = "from client",
                                         formattedTime = currentTime.toString(),
                                         message = receivedMessage.toString(),
@@ -1141,12 +1136,53 @@ class TcpFragment : Fragment() {
         }
     }
 
+    private fun initializeUser(writer: DataOutputStream){
+        val type = AppMessageType.INITIAL.identifier.code
+        lifecycleScope.launch(Dispatchers.IO){
+            try {
+                writer.writeChar(type)
+                writer.writeUTF(viewModel.getUniqueDeviceId())
+            } catch (e: IOException) {
+                e.printStackTrace()
+                Log.d(
+                    "ahi3646",
+                    "sendMessage server: dataOutputStream is closed io exception "
+                )
+                viewModel.handleEvents(
+                    TcpScreenEvents.OnDialogErrorOccurred(
+                        TcpScreenDialogErrors.IOException
+                    )
+                )
+                try {
+                    writer.close()
+                } catch (ex: IOException) {
+                    ex.printStackTrace()
+                }
+            }
+        }
+    }
+
+    private fun setupUserData(reader: DataInputStream){
+        val uniqueDeviceId = reader.readUTF()
+        log("unique device id - $uniqueDeviceId")
+        val isUserExist = viewModel.checkForUserExistence(uniqueDeviceId)
+        log("isUserExist - $isUserExist")
+        if(isUserExist){
+            //user found, load chat history
+            viewModel.loadChatHistory(uniqueDeviceId)
+        }else{
+            //user not found, create new chat history with associated user id
+            viewModel.createNewChatHistory(uniqueDeviceId)
+        }
+    }
+
     private fun connectToServer(serverIpAddress: String, serverPort: Int) {
         log("connecting to server - $serverIpAddress:$serverPort")
         try {
             //create client
             clientSocket = Socket(serverIpAddress, serverPort)
             clientWriter = DataOutputStream(clientSocket.getOutputStream())
+            initializeUser(clientWriter)
             log("client writer initialized - $clientWriter")
 
             viewModel.updateClientConnectionStatus(ClientConnectionStatus.Connected)
@@ -1162,12 +1198,14 @@ class TcpFragment : Fragment() {
                     log("incoming message type - $dataType")
 
                     when (dataType) {
-                        AppMessageType.INITIAL -> {}
+                        AppMessageType.INITIAL -> {
+                            setupUserData(reader)
+                        }
                         AppMessageType.TEXT -> {
                             val receivedMessage = reader.readUTF()
                             log("host incoming message - $receivedMessage")
 
-                            val message = Message.TextMessage(
+                            val message = ChatMessage.TextMessage(
                                 username = "from client",
                                 formattedTime = getCurrentTime(),
                                 message = receivedMessage.toString(),
@@ -1181,7 +1219,7 @@ class TcpFragment : Fragment() {
                             log("client incoming contact message - $receivedMessage")
                             val contactMessageItem =
                                 gson.fromJson(receivedMessage, ContactsMessageItem::class.java)
-                            val contactMessage = Message.ContactMessage(
+                            val contactMessage = ChatMessage.ContactMessage(
                                 username = "from client",
                                 formattedTime = getCurrentTime(),
                                 contactName = contactMessageItem.contactName,
@@ -1271,7 +1309,7 @@ class TcpFragment : Fragment() {
 
     private fun sendContactMessage(
         writer: DataOutputStream,
-        contactMessage: Message.ContactMessage
+        contactMessage: ChatMessage.ContactMessage
     ) {
         val contactsMessageItem = ContactsMessageItem(
             contactName = contactMessage.contactName,
@@ -1302,7 +1340,7 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun sendTextMessage(writer: DataOutputStream, textMessage: Message.TextMessage) {
+    private fun sendTextMessage(writer: DataOutputStream, textMessage: ChatMessage.TextMessage) {
         log("sending text message from client - $textMessage")
 
         val data = textMessage.message
@@ -1330,23 +1368,23 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun sendClientMessage(message: Message) {
+    private fun sendClientMessage(message: ChatMessage) {
         if (!clientSocket.isClosed) {
 //            val writer = DataOutputStream(clientSocket.getOutputStream())
             when (message) {
-                is Message.TextMessage -> {
+                is ChatMessage.TextMessage -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         sendTextMessage(writer = clientWriter, textMessage = message)
                     }
                 }
 
-                is Message.ContactMessage -> {
+                is ChatMessage.ContactMessage -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         sendContactMessage(writer = clientWriter, contactMessage = message)
                     }
                 }
 
-                is Message.FileMessage -> {
+                is ChatMessage.FileMessage -> {
                     lifecycleScope.launch {
                         sendFileMessage(
                             writer = clientWriter,
@@ -1361,25 +1399,22 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun sendHostMessage(message: Message) {
+    private fun sendHostMessage(message: ChatMessage) {
         if (!connectedClientSocketOnServer.isClosed) {
-            connectedClientWriter =
-                DataOutputStream(connectedClientSocketOnServer.getOutputStream())
-
             when (message) {
-                is Message.TextMessage -> {
+                is ChatMessage.TextMessage -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         sendTextMessage(writer = connectedClientWriter, textMessage = message)
                     }
                 }
 
-                is Message.ContactMessage -> {
+                is ChatMessage.ContactMessage -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         sendContactMessage(writer = connectedClientWriter, contactMessage = message)
                     }
                 }
 
-                is Message.FileMessage -> {
+                is ChatMessage.FileMessage -> {
                     lifecycleScope.launch {
                         sendFileMessage(
                             writer = connectedClientWriter,

@@ -14,7 +14,7 @@ fun Fragment.openAppSettings() {
     ).also(::startActivity)
 }
 
-fun Fragment.toast(text: CharSequence, duration: Int = Toast.LENGTH_SHORT): Toast {
+fun Fragment.shortToast(text: CharSequence, duration: Int = Toast.LENGTH_SHORT): Toast {
     return Toast.makeText(requireContext(), text, duration).apply {
         setGravity(Gravity.CENTER, 0, 0)
         show()

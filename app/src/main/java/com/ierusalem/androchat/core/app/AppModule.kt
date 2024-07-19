@@ -4,12 +4,16 @@ import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
 import android.net.wifi.WifiManager
+import androidx.room.Room
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.core.connectivity.NetworkConnectivityObserver
+import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.utils.FieldValidator
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuard
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.MessagesDatabase
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.dao.MessagesDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,6 +23,22 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    @Singleton
+    fun provideMessageDatabase(application: Application): MessagesDatabase {
+        return Room.databaseBuilder(
+            application,
+            MessagesDatabase::class.java,
+            Constants.MESSAGES_DATABASE_NAME
+        ).build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDao(messagesDatabase: MessagesDatabase) : MessagesDao {
+        return messagesDatabase.dao
+    }
 
     @Provides
     @Singleton

@@ -19,14 +19,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features.conversation.presentation.components.messageFormatter
 
 @Composable
 fun ContactItem(
     modifier: Modifier = Modifier,
-    message: Message.ContactMessage,
-    onContactNumberClick:(Message.ContactMessage) -> Unit
+    message: ChatMessage.ContactMessage,
+    onContactNumberClick:(ChatMessage.ContactMessage) -> Unit
 ) {
     val backgroundBubbleColor = if (message.isFromYou) {
         MaterialTheme.colorScheme.primary
@@ -102,7 +102,7 @@ fun ContactItem(
 private fun PreviewLightContactItem() {
     AndroChatTheme {
         ContactItem(
-            message = Message.ContactMessage(
+            message = ChatMessage.ContactMessage(
                 username = "Hasn",
                 formattedTime = "12:12:12, jul 12 2034",
                 contactNumber = "93 337 36 46",
@@ -119,7 +119,7 @@ private fun PreviewLightContactItem() {
 private fun PreviewDarkContactItem() {
     AndroChatTheme(isDarkTheme = true) {
         ContactItem(
-            message = Message.ContactMessage(
+            message = ChatMessage.ContactMessage(
                 username = "Hasn",
                 formattedTime = "12:12:12, jul 12 2034",
                 contactNumber = "93 337 36 46",

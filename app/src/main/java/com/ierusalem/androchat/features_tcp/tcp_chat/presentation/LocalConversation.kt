@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features.conversation.presentation.components.JumpToBottom
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
@@ -167,11 +167,11 @@ const val ConversationTestTag = "ConversationTestTag"
 
 @Composable
 fun Messages(
-    messages: List<Message>,
+    messages: List<ChatMessage>,
     scrollState: LazyListState,
     modifier: Modifier = Modifier,
-    onFileItemClicked: (Message.FileMessage) -> Unit,
-    onContactItemClick: (Message.ContactMessage) -> Unit
+    onFileItemClicked: (ChatMessage.FileMessage) -> Unit,
+    onContactItemClick: (ChatMessage.ContactMessage) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
@@ -232,7 +232,7 @@ private val ChatBubbleShape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
 
 @Composable
 fun LocalMessageItem(
-    message: Message.TextMessage
+    message: ChatMessage.TextMessage
 ) {
     val backgroundBubbleColor = if (message.isFromYou) {
         MaterialTheme.colorScheme.primary
@@ -252,7 +252,7 @@ fun LocalMessageItem(
 private fun PreviewLocalChatItemBubble() {
     AndroChatTheme {
         LocalMessageItem(
-            message = Message.TextMessage(
+            message = ChatMessage.TextMessage(
                 username = "Hasn",
                 formattedTime = "12:12:12, jul 12 2034",
                 message = "Assalom alekum aka yaxshimisiz",
@@ -269,7 +269,7 @@ private fun PreviwLightFileItem() {
     AndroChatTheme {
         FileMessageItem(
             modifier = Modifier,
-            message = Message.FileMessage(
+            message = ChatMessage.FileMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 username = "Hasan",
                 fileName = "SamsungElectronics Dubai Global Version home.edition.com",
@@ -289,7 +289,7 @@ private fun PreviewDarkFileItem() {
     AndroChatTheme(isDarkTheme = true) {
         FileMessageItem(
             modifier = Modifier,
-            message = Message.FileMessage(
+            message = ChatMessage.FileMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 username = "Hasan",
                 fileName = "SamsungElectronics Dubai Global Version home.edition.com",

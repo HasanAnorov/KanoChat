@@ -19,12 +19,15 @@ class DataStorePreferenceRepository(context: Context) {
     private val defaultTheme = Constants.DEFAULT_THEME
     private val defaultUsername = Constants.UNKNOWN_USER
     private val defaultHotspotName = Constants.DEFAULT_HOTSPOT_NAME
+    private val defaultUniqueDeviceId = ""
 
     companion object {
         val PREF_LANGUAGE = stringPreferencesKey(name = Constants.PREFERENCE_LANGUAGE)
         val PREF_THEME = booleanPreferencesKey(name = Constants.PREFERENCE_THEME)
         val PREF_USERNAME = stringPreferencesKey(name = Constants.PREFERENCE_USERNAME)
         val PREF_HOTSPOT_NAME = stringPreferencesKey(name = Constants.PREFERENCE_HOTSPOT_NAME)
+
+        val PREF_UNIQUE_DEVICE_ID = stringPreferencesKey(name = Constants.PREFERENCE_UNIQUE_DEVICE_ID)
 
         private var INSTANCE: DataStorePreferenceRepository? = null
 
@@ -38,6 +41,17 @@ class DataStorePreferenceRepository(context: Context) {
                 instance
             }
         }
+    }
+
+    suspend fun setUniqueDeviceId(uniqueDeviceId: String) {
+        dataStore.edit { preferences ->
+            preferences[PREF_UNIQUE_DEVICE_ID] = uniqueDeviceId
+        }
+    }
+
+    val getUniqueDeviceId: Flow<String> = dataStore.data
+        .map {preferences ->
+            preferences[PREF_UNIQUE_DEVICE_ID] ?: defaultUniqueDeviceId
     }
 
     suspend fun setHotSpotName(hotspotName: String) {

@@ -1,9 +1,9 @@
 [versions]
-agp = "8.3.2"
+agp = "8.5.1"
 audiorecorderview = "1.0.4"
 coilCompose = "2.6.0"
 converterGson = "2.9.0"
-hiltAndroid = "2.48.1"
+hiltAndroid = "2.50"
 hiltAndroidCompiler = "2.48.1"
 kotlin = "1.9.24"
 coreKtx = "1.13.1"
@@ -20,18 +20,22 @@ lifecycleRuntimeCompose = "2.8.3"
 constraintlayout = "2.1.4"
 fragment = "1.8.1"
 navigationFragment = "2.7.7"
+roomCompiler = "2.6.1"
+roomKtx = "2.6.1"
 uiTextGoogleFonts = "1.6.8"
 appcompat = "1.7.0"
 uiViewbinding = "1.6.8"
-
+devtoolsKsp = "1.9.10-1.0.13"
 datastorePreferences = "1.1.1"
+pluginSerialization = "1.7.10"
 
 [libraries]
-#data store
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 
 androidx-compose-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata" }
 androidx-compose-material-iconsExtended = { module = "androidx.compose.material:material-icons-extended" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
 androidx-ui-viewbinding = { module = "androidx.compose.ui:ui-viewbinding", version.ref = "uiViewbinding" }
 audiorecorderview = { module = "com.github.tougee:audiorecorderview", version.ref = "audiorecorderview" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
@@ -65,4 +69,6 @@ landscapist-glide = { module = "com.github.skydoves:landscapist-glide", version.
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-
+hiltAndroid = { id = "com.google.dagger.hilt.android", version.ref = "hiltAndroidCompiler"}
+devtoolsKsp = { id = "com.google.devtools.ksp", version.ref = "devtoolsKsp"}
+pluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "pluginSerialization"}

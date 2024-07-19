@@ -27,14 +27,14 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.CircularProgressBar
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.log
-import com.ierusalem.androchat.features.auth.register.domain.model.FileState
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 
 @Composable
 fun FileMessageItem(
     modifier: Modifier = Modifier,
-    message: Message.FileMessage,
-    onFileItemClick: (Message.FileMessage) -> Unit,
+    message: ChatMessage.FileMessage,
+    onFileItemClick: (ChatMessage.FileMessage) -> Unit,
 ) {
     val backgroundBubbleColor = if (message.isFromYou) {
         MaterialTheme.colorScheme.primary
@@ -51,12 +51,12 @@ fun FileMessageItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 when (val state = message.fileState) {
-                    is FileState.Loading -> {
+                    is FileMessageState.Loading -> {
                         log("in file item progress - ${state.percentage}")
                         CircularProgressBar(percentage = (state.percentage.toFloat() / 100))
                     }
 
-                    FileState.Success -> {
+                    FileMessageState.Success -> {
                         Box(
                             modifier = Modifier
                                 .size(64.dp)
@@ -84,7 +84,7 @@ fun FileMessageItem(
                         )
                     }
 
-                    FileState.Failure -> {
+                    FileMessageState.Failure -> {
                         Box(
                             modifier = Modifier
                                 .size(64.dp)
@@ -141,7 +141,7 @@ private fun PreviewLightFileItem() {
         Surface {
             FileMessageItem(
                 modifier = Modifier,
-                message = Message.FileMessage(
+                message = ChatMessage.FileMessage(
                     formattedTime = "12:12:12, jul 12 2034",
                     username = "Hasan",
                     fileName = "SamsungElectronics Dubai Global Version home.edition.com",
@@ -163,7 +163,7 @@ private fun PreviewDarkFileItem() {
         Surface {
             FileMessageItem(
                 modifier = Modifier,
-                message = Message.FileMessage(
+                message = ChatMessage.FileMessage(
                     formattedTime = "12:12:12, jul 12 2034",
                     username = "Hasan",
                     fileName = "SamsungElectronics Dubai Global Version home.edition.com",
