@@ -1,15 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/record_view_relative_layout"
+    android:layout_width="match_parent"
+    android:layout_height="90dp">
 
-<com.tougee.recorderview.AudioRecordView
-    android:id="@+id/record_view"
-    android:layout_width="64dp"
-    android:layout_height="wrap_content"
-    app:cancel_text="Cancel"
-    app:mic_active_icon="@drawable/mic_fill"
-    app:mic_hint_enable="true"
-    app:mic_hint_text="mic hint text"
-    app:mic_icon="@drawable/mic_fill"
-    app:slide_cancel_text="Slide To Cancel"
-    app:vibration_enable="true"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto" />
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_above="@id/record_button"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="24dp">
+
+        <com.devlomi.record_view.RecordLockView
+            android:id="@+id/record_lock"
+            android:layout_marginTop="2.dp"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:backgroundTint="@android:color/transparent"
+            android:background="@android:color/transparent"
+            android:layout_gravity="center"
+            android:visibility="invisible" />
+
+        <ImageView
+            android:id="@+id/record_lock_cover"
+            android:layout_width="20dp"
+            android:layout_marginEnd="8dp"
+            android:background="@android:color/transparent"
+            android:backgroundTint="@android:color/transparent"
+            android:layout_height="20dp"
+            android:contentDescription="@null"
+            android:src="@drawable/lock_open"
+            android:visibility="invisible"
+            app:tint="@color/colorAccent" />
+
+    </FrameLayout>
+
+    <com.devlomi.record_view.RecordView
+        android:id="@+id/record_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toStartOf="@id/record_button"
+        app:counter_time_color="#ff0000"
+        app:slide_to_cancel_arrow="@drawable/recv_ic_arrow"
+        app:slide_to_cancel_arrow_color="#000000"
+        app:slide_to_cancel_bounds="8dp"
+        app:slide_to_cancel_margin_right="10dp"
+        app:slide_to_cancel_text="Slide To Cancel" />
+
+    <com.devlomi.record_view.RecordButton
+        android:id="@+id/record_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/recv_bg_mic"
+        android:scaleType="centerInside"
+        app:mic_icon="@drawable/recv_ic_mic_white" />
+
+</RelativeLayout>

@@ -35,8 +35,9 @@
     <!-- For VpnChecker -->
     <!--    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />-->
     <!--    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />-->
+
     <!-- For Recording Audio Messages -->
-    <!--    <uses-permission android:name="android.permission.RECORD_AUDIO" />-->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:name=".core.app.AndroChatApp"

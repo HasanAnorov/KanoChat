@@ -28,4 +28,5 @@ sealed interface TcpScreenNavigation {
     data class OnContactItemClick(val message: ChatMessage.ContactMessage): TcpScreenNavigation
     data class HandlePickingMultipleMedia(val medias: List<Uri>):TcpScreenNavigation
 
+
 }

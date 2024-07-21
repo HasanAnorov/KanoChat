@@ -64,6 +64,7 @@ import com.ierusalem.androchat.core.ui.components.PermissionDialog
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
+import com.ierusalem.androchat.core.utils.getAudioFileDuration
 import com.ierusalem.androchat.core.utils.getExtensionFromFilename
 import com.ierusalem.androchat.core.utils.getFileExtensionFromUri
 import com.ierusalem.androchat.core.utils.getFileNameFromUri
@@ -139,26 +140,6 @@ class TcpFragment : Fragment() {
     //chatting client side
     private lateinit var clientSocket: Socket
     private lateinit var clientWriter: DataOutputStream
-
-    //audio recording
-//    private var audioRecord: AudioRecorder? = null
-//    private var audioPlayer: AudioPlayer? = null
-//
-//    private val file: File by lazy {
-//        val f = File("${Environment.DIRECTORY_DOWNLOADS}${File.separator}audio.pcm")
-//        if (!f.exists()) {
-//            f.createNewFile()
-//        }
-//        f
-//    }
-//
-//    private val tmpFile: File by lazy {
-//        val f = File("${Environment.DIRECTORY_DOWNLOADS}${File.separator}tmp.pcm")
-//        if (!f.exists()) {
-//            f.createNewFile()
-//        }
-//        f
-//    }
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -302,10 +283,11 @@ class TcpFragment : Fragment() {
 
         return ComposeView(requireContext()).apply {
             setContent {
+
                 val scope = rememberCoroutineScope()
                 val allTabs = rememberTcpAllTabs()
                 val pagerState = rememberPagerState(
-                    initialPage = 0,
+                    initialPage = 2,
                     initialPageOffsetFraction = 0F,
                     pageCount = { allTabs.size },
                 )
@@ -577,6 +559,7 @@ class TcpFragment : Fragment() {
         wifiP2PManager.stopPeerDiscovery(channel, listener)
     }
 
+
     @SuppressLint("MissingPermission")
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
@@ -608,7 +591,10 @@ class TcpFragment : Fragment() {
                                 )
                                 fileMessages.add(fileMessage)
                             }
-                            sendFileMessage(writer = connectedClientWriter, messages = fileMessages)
+                            sendFileMessages(
+                                writer = connectedClientWriter,
+                                messages = fileMessages
+                            )
                         }
 
                         GeneralConnectionStatus.ConnectedAsClient -> {
@@ -630,7 +616,7 @@ class TcpFragment : Fragment() {
                                 )
                                 fileMessages.add(fileMessage)
                             }
-                            sendFileMessage(writer = clientWriter, messages = fileMessages)
+                            sendFileMessages(writer = clientWriter, messages = fileMessages)
                         }
                     }
                 }
@@ -768,6 +754,7 @@ class TcpFragment : Fragment() {
                                 log("onSuccess: discover ")
                                 viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
                             }
+
                             override fun onFailure(reason: Int) {
                                 // Code for when the discovery initiation fails goes here.
                                 // Alert the user that something went wrong.
@@ -898,7 +885,166 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private suspend fun sendFileMessage(
+    private fun receiveVoiceMessage(reader: DataInputStream) {
+        log("receiving file ...")
+
+        val downloadsDirectory =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+        if (!downloadsDirectory.exists()) {
+            downloadsDirectory.mkdirs()
+            log("Created directory: ${downloadsDirectory.absolutePath}")
+        }
+
+        //reading file name
+        val filename = reader.readUTF()
+        var fileNameForUi = filename
+        log("Expected file name - $filename")
+
+        // Check if a file with the same name already exists, generate unique name if necessary
+        var file = File(downloadsDirectory, filename)
+        if (file.exists()) {
+            log("same file found in folder, generating unique name ...")
+            val fileName = filename.getFileNameWithoutExtension()
+            val fileExtension = filename.getExtensionFromFilename()
+            val uniqueFileName =
+                generateUniqueFileName(downloadsDirectory.toString(), fileName, fileExtension)
+            fileNameForUi = Uri.parse(uniqueFileName).lastPathSegment
+            log("unique file name - $uniqueFileName")
+            file = File(uniqueFileName)
+        }
+
+        var bytes = 0
+        var bytesForPercentage = 0L
+        // Create FileOutputStream to write the received file
+        val fileOutputStream = FileOutputStream(file)
+
+        // Read the expected file size
+        var fileSize: Long = reader.readLong() // read file size
+        val fileSizeForPercentage = fileSize
+
+        val currentTime = Calendar.getInstance().time
+        val message = ChatMessage.VoiceMessage(
+            formattedTime = currentTime.toString(),
+            username = "from client",
+            filePath = Uri.fromFile(file),
+            fileName = fileNameForUi,
+            fileSize = Formatter.formatShortFileSize(
+                requireContext(),
+                fileSize
+            ),
+            fileExtension = filename.getExtensionFromFilename(),
+            duration = file.getAudioFileDuration(),
+            isFromYou = false,
+            fileState = FileMessageState.Loading(0)
+        )
+        viewModel.insertMessage(message)
+
+        val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+        while (fileSize > 0
+            && (reader.read(
+                buffer, 0,
+                min(buffer.size.toDouble(), fileSize.toDouble()).toInt()
+            ).also { bytes = it })
+            != -1
+        ) {
+            // Here we write the file using write method
+            fileOutputStream.write(buffer, 0, bytes)
+            fileSize -= bytes.toLong()
+
+            bytesForPercentage += bytes.toLong()
+            val percentage =
+                (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+            val tempPercentage =
+                ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+            if (percentage != tempPercentage) {
+                log("progress - $percentage")
+                val newState = FileMessageState.Loading(percentage)
+                viewModel.updatePercentageOfReceivingFile(message, newState)
+            }
+        }
+        fileOutputStream.close()
+        val newState = FileMessageState.Success
+        viewModel.updatePercentageOfReceivingFile(message, newState)
+        log("file received successfully")
+    }
+
+    private suspend fun sendVoiceMessage(
+        writer: DataOutputStream,
+        voiceMessage: ChatMessage.VoiceMessage
+    ) {
+        log("sending voice message ...")
+        viewModel.insertMessage(voiceMessage)
+
+        try {
+            withContext(Dispatchers.IO) {
+                //sending file type
+                val type = AppMessageType.VOICE.identifier.code
+                writer.writeChar(type)
+
+                //sending file name
+                writer.writeUTF(voiceMessage.fileName)
+
+                val inputStream =
+                    requireContext().contentResolver.openInputStream(voiceMessage.filePath)
+                val filePathToSave = context?.cacheDir
+                val file = File(filePathToSave, voiceMessage.fileName)
+                val fileOutputStream = FileOutputStream(file)
+                inputStream?.copyTo(fileOutputStream)
+                fileOutputStream.close()
+
+                //write length
+                val fileSizeForPercentage = file.length()
+                writer.writeLong(file.length())
+                log("sending file length - ${file.length()}")
+
+                var bytes: Int
+                var bytesForPercentage = 0L
+                val fileInputStream = FileInputStream(file)
+
+                // Here we  break file into chunks
+                val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+                while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
+                    // Send the file to Server Socket
+                    writer.write(buffer, 0, bytes)
+                    writer.flush()
+
+                    bytesForPercentage += bytes.toLong()
+                    val percentage =
+                        (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                    val tempPercentage =
+                        ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+                    if (percentage != tempPercentage) {
+                        withContext(Dispatchers.Main) {
+                            log("progress - $percentage")
+                            val newState = FileMessageState.Loading(percentage)
+                            viewModel.updatePercentageOfReceivingFile(voiceMessage, newState)
+                        }
+                    }
+                }
+                // close the file here
+                fileInputStream.close()
+                withContext(Dispatchers.Main) {
+                    log("file sent successfully")
+                    val newState = FileMessageState.Success
+                    viewModel.updatePercentageOfReceivingFile(voiceMessage, newState)
+                }
+            }
+        } catch (exception: IOException) {
+            withContext(Dispatchers.Main) {
+                log("file sent failed")
+                val newState = FileMessageState.Failure
+                viewModel.updatePercentageOfReceivingFile(voiceMessage, newState)
+            }
+        } catch (error: Exception) {
+            withContext(Dispatchers.Main) {
+                log("file sent failed")
+                val newState = FileMessageState.Failure
+                viewModel.updatePercentageOfReceivingFile(voiceMessage, newState)
+            }
+        }
+    }
+
+    private suspend fun sendFileMessages(
         writer: DataOutputStream,
         messages: List<ChatMessage.FileMessage>
     ) {
@@ -997,7 +1143,8 @@ class TcpFragment : Fragment() {
                 }
                 while (!serverSocket.isClosed) {
                     connectedClientSocketOnServer = serverSocket.accept()
-                    connectedClientWriter = DataOutputStream(connectedClientSocketOnServer.getOutputStream())
+                    connectedClientWriter =
+                        DataOutputStream(connectedClientSocketOnServer.getOutputStream())
                     initializeUser(connectedClientWriter)
                     log("New client : $connectedClientSocketOnServer ")
                     viewModel.updateConnectionsCount(true)
@@ -1013,6 +1160,11 @@ class TcpFragment : Fragment() {
                                 AppMessageType.INITIAL -> {
                                     setupUserData(reader)
                                 }
+
+                                AppMessageType.VOICE -> {
+                                    receiveVoiceMessage(reader)
+                                }
+
                                 AppMessageType.CONTACT -> {
                                     val receivedMessage = reader.readUTF()
                                     log("host incoming contact message - $receivedMessage")
@@ -1136,9 +1288,9 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun initializeUser(writer: DataOutputStream){
+    private fun initializeUser(writer: DataOutputStream) {
         val type = AppMessageType.INITIAL.identifier.code
-        lifecycleScope.launch(Dispatchers.IO){
+        lifecycleScope.launch(Dispatchers.IO) {
             try {
                 writer.writeChar(type)
                 writer.writeUTF(viewModel.getUniqueDeviceId())
@@ -1162,15 +1314,15 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun setupUserData(reader: DataInputStream){
+    private fun setupUserData(reader: DataInputStream) {
         val uniqueDeviceId = reader.readUTF()
         log("unique device id - $uniqueDeviceId")
         val isUserExist = viewModel.checkForUserExistence(uniqueDeviceId)
         log("isUserExist - $isUserExist")
-        if(isUserExist){
+        if (isUserExist) {
             //user found, load chat history
             viewModel.loadChatHistory(uniqueDeviceId)
-        }else{
+        } else {
             //user not found, create new chat history with associated user id
             viewModel.createNewChatHistory(uniqueDeviceId)
         }
@@ -1201,6 +1353,11 @@ class TcpFragment : Fragment() {
                         AppMessageType.INITIAL -> {
                             setupUserData(reader)
                         }
+
+                        AppMessageType.VOICE -> {
+
+                        }
+
                         AppMessageType.TEXT -> {
                             val receivedMessage = reader.readUTF()
                             log("host incoming message - $receivedMessage")
@@ -1370,11 +1527,16 @@ class TcpFragment : Fragment() {
 
     private fun sendClientMessage(message: ChatMessage) {
         if (!clientSocket.isClosed) {
-//            val writer = DataOutputStream(clientSocket.getOutputStream())
             when (message) {
                 is ChatMessage.TextMessage -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         sendTextMessage(writer = clientWriter, textMessage = message)
+                    }
+                }
+
+                is ChatMessage.VoiceMessage -> {
+                    lifecycleScope.launch {
+                        sendVoiceMessage(writer = clientWriter, voiceMessage = message)
                     }
                 }
 
@@ -1386,7 +1548,7 @@ class TcpFragment : Fragment() {
 
                 is ChatMessage.FileMessage -> {
                     lifecycleScope.launch {
-                        sendFileMessage(
+                        sendFileMessages(
                             writer = clientWriter,
                             messages = listOf(message),
                         )
@@ -1408,6 +1570,10 @@ class TcpFragment : Fragment() {
                     }
                 }
 
+                is ChatMessage.VoiceMessage -> {
+
+                }
+
                 is ChatMessage.ContactMessage -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         sendContactMessage(writer = connectedClientWriter, contactMessage = message)
@@ -1416,7 +1582,7 @@ class TcpFragment : Fragment() {
 
                 is ChatMessage.FileMessage -> {
                     lifecycleScope.launch {
-                        sendFileMessage(
+                        sendFileMessages(
                             writer = connectedClientWriter,
                             messages = listOf(message),
                         )

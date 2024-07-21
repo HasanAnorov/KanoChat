@@ -100,6 +100,10 @@ fun AuthorAndTextMessage(
                 LocalMessageItem(msg)
             }
 
+            is ChatMessage.VoiceMessage -> {
+
+            }
+
             is ChatMessage.FileMessage -> {
                 FileMessageItem(message = msg, onFileItemClick = onFileItemClick)
             }
@@ -145,8 +149,8 @@ fun LocalClickableMessage(
                 .fillMaxWidth(),
             text = message.formattedTime,
             textAlign = TextAlign.End,
-            color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
-            style = MaterialTheme.typography.labelSmall
+            color = MaterialTheme.colorScheme.outline.copy(0.8F),
+            style = MaterialTheme.typography.bodySmall
         )
     }
 }

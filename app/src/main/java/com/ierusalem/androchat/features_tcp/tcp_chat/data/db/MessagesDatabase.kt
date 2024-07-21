@@ -10,7 +10,7 @@ import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.UserMessages
     entities = [UserMessages::class],
     version = 1
 )
-@TypeConverters(ChatMessageTypeConverter::class)
+@TypeConverters(Converters::class)
 abstract class MessagesDatabase: RoomDatabase() {
     abstract val dao: MessagesDao
 }

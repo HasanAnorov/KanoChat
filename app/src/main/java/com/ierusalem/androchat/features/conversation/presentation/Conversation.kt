@@ -235,7 +235,7 @@ fun Messages(
                             isLastMessageByAuthor = isLastMessageByAuthor
                         )
                     }
-
+                    is ChatMessage.VoiceMessage -> {}
                     is ChatMessage.FileMessage -> {}
                     is ChatMessage.ContactMessage -> {}
                 }

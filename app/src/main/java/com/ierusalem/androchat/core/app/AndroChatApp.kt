@@ -48,7 +48,7 @@ class AndroChatApp : Application() {
             }
         }
 
-        GlobalScope.launch(Dispatchers.IO) {
+        GlobalScope.launch {
             dataStorePreferenceRepository.getLanguage.collect { languageCode ->
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     applicationContext.getSystemService(LocaleManager::class.java).applicationLocales =
@@ -59,6 +59,9 @@ class AndroChatApp : Application() {
                     )
                 }
             }
+        }
+
+        GlobalScope.launch(Dispatchers.IO) {
             dataStorePreferenceRepository.getTheme.collect { isSystemInDarkMode ->
                 if (isSystemInDarkMode) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

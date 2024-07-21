@@ -10,6 +10,8 @@ import com.ierusalem.androchat.core.connectivity.NetworkConnectivityObserver
 import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.utils.FieldValidator
+import com.ierusalem.androchat.core.voice_message.playback.AndroidAudioPlayer
+import com.ierusalem.androchat.core.voice_message.recorder.AndroidAudioRecorder
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuard
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.MessagesDatabase
@@ -32,6 +34,18 @@ object AppModule {
             MessagesDatabase::class.java,
             Constants.MESSAGES_DATABASE_NAME
         ).build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideAudioPlayer(application: Application): AndroidAudioPlayer {
+        return AndroidAudioPlayer(application)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAudioRecorder(application: Application): AndroidAudioRecorder {
+        return AndroidAudioRecorder(application)
     }
 
     @Provides

@@ -1,6 +1,10 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.presentation
 
 import android.net.Uri
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.FrameLayout
+import android.widget.ImageView
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -71,6 +75,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.devlomi.record_view.OnRecordListener
+import com.devlomi.record_view.RecordButton
+import com.devlomi.record_view.RecordLockView
+import com.devlomi.record_view.RecordView
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.log
@@ -114,7 +123,7 @@ fun LocalConversationUserInput(
     // Used to decide if the keyboard should be shown
     var textFieldFocusState by remember { mutableStateOf(false) }
 
-    val isRecording by rememberSaveable {
+    var isRecording by rememberSaveable {
         mutableStateOf(false)
     }
 
@@ -124,45 +133,93 @@ fun LocalConversationUserInput(
     ) {
         Column(modifier = modifier) {
             Box(contentAlignment = Alignment.BottomStart) {
-                //Recording View ask about this later
-//                AndroidView(
-//                    modifier = Modifier
-//                        .align(Alignment.CenterEnd)
-//                        .fillMaxWidth()
-//                        .background(MaterialTheme.colorScheme.surface),
-//                    factory = { context ->
-//                        val mContext = if (context is ViewComponentManager.FragmentContextWrapper)
-//                            context.baseContext
-//                        else
-//                            context
-//                        val parent = FrameLayout(context)
-//                        LayoutInflater.from(context).inflate(R.layout.recording_view, parent, false)
-//                            .apply {
-//                                val recordingView = findViewById<AudioRecordView>(R.id.record_view)
-//                                recordingView.apply {
-//                                    activity = (mContext as FragmentActivity)
-//                                    callback = object : AudioRecordView.Callback {
-//                                        override fun isReady(): Boolean = true
-//
-//                                        override fun onRecordCancel() {
-//                                            isRecording = false
-//                                        }
-//
-//                                        override fun onRecordEnd() {
-//                                            isRecording = false
-//                                        }
-//
-//                                        override fun onRecordStart() {
-//                                            isRecording = true
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                    },
-//                    update = {
-//
-//                    }
-//                )
+                AndroidView(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    factory = { context ->
+                        val parent = FrameLayout(context)
+                        LayoutInflater.from(context).inflate(R.layout.recording_view, parent, false)
+                            .apply {
+                                val recordingView = findViewById<RecordView>(R.id.record_view)
+                                val recordButton = findViewById<RecordButton>(R.id.record_button)
+                                val recordLockView = findViewById<RecordLockView>(R.id.record_lock)
+                                val recordLockCoverView = findViewById<ImageView>(R.id.record_lock_cover)
+                                recordLockView.visibility = View.INVISIBLE
+                                recordButton.setRecordView(recordingView)
+                                recordingView.setOnRecordListener(
+                                    object : OnRecordListener {
+                                        override fun onStart() {
+                                            //Start Recording..
+                                            log("onStart")
+                                            eventHandler(TcpScreenEvents.OnVoiceRecordStart)
+                                            isRecording = true
+                                            recordLockCoverView.visibility = View.VISIBLE
+                                        }
+
+                                        override fun onCancel() {
+                                            //On Swipe To Cancel
+                                            log("onCancel")
+                                            eventHandler(TcpScreenEvents.OnVoiceRecordCancelled)
+                                            isRecording = false
+                                            recordLockCoverView.visibility = View.INVISIBLE
+                                        }
+
+                                        override fun onFinish(
+                                            recordTime: Long,
+                                            limitReached: Boolean
+                                        ) {
+                                            //Stop Recording..
+                                            //limitReached to determine if the Record
+                                            // was finished when time limit reached.
+                                            log("onFinish")
+                                            eventHandler(TcpScreenEvents.OnVoiceRecordFinished)
+                                            isRecording = false
+                                            recordLockCoverView.visibility = View.INVISIBLE
+
+                                        }
+
+                                        override fun onLessThanSecond() {
+                                            //When the record time is less than One Second
+                                            log("onLessThanSecond")
+                                            isRecording = false
+                                            eventHandler(TcpScreenEvents.OnVoiceRecordCancelled)
+                                            recordLockCoverView.visibility = View.INVISIBLE
+                                        }
+
+                                        override fun onLock() {
+                                            //When Lock gets activated
+                                            log("onLock")
+                                            recordLockCoverView.visibility = View.INVISIBLE
+                                        }
+                                    }
+                                )
+
+                                recordingView.setLockEnabled(true)
+                                recordingView.setRecordLockImageView(recordLockView)
+
+                                // prevent recording under one Second (it's false by default)
+                                recordingView.setLessThanSecondAllowed(false)
+
+                                // enable or disable the Growing animation for record Button.
+                                recordingView.setRecordButtonGrowingAnimationEnabled(false)
+
+                                // change scale up value on Growing animation.
+                                recordButton.setScaleUpTo(1f)
+
+                                // disable Sounds
+                                recordingView.setSoundEnabled(true)
+
+                                // auto cancelling recording after timeLimit (In millis)
+                                recordingView.setTimeLimit(5*60*1000) //5 minutes
+
+                                //set send icon
+                                recordButton.setSendIconResource(R.drawable.send)
+                            }
+                    },
+                    update = {
+
+                    }
+                )
                 if (!isRecording) {
                     UserInputText(
                         textFieldValue = textState,
@@ -478,7 +535,7 @@ private fun BoxScope.UserInputTextField(
             keyboardType = keyboardType,
             imeAction = ImeAction.Send
         ),
-        maxLines = 2,
+        maxLines = 4,
         cursorBrush = SolidColor(LocalContentColor.current),
         textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current)
     )

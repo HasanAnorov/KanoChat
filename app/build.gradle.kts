@@ -74,6 +74,7 @@ dependencies {
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.appcompat)
+    implementation(libs.firebase.crashlytics.buildtools)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -93,7 +94,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     //recording view
-    implementation(libs.audiorecorderview)
+    implementation(libs.recordview)
 
     //gson
     implementation (libs.converter.gson)
@@ -101,8 +102,10 @@ dependencies {
     //image loading - coil
     implementation(libs.coil.compose)
 
-    // add the following lines
+    // room
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+
+    implementation (libs.kotlin.reflect)
 
 }

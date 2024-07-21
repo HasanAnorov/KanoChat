@@ -47,6 +47,9 @@ object Constants {
 
     const val MESSAGES_DATABASE_NAME = "messages_db"
 
+    const val VOICE_MESSAGE_FILE_NAME = "audio_"
+    const val AUDIO_EXTENSION = ".mp3"
+
     fun getLanguageCode(language: AppLanguage): String {
         return when (language) {
             AppLanguage.English -> ENGLISH_LOCALE
@@ -81,6 +84,15 @@ object Constants {
 
     fun getCurrentTime(): String {
         return Calendar.getInstance().time.toString()
+    }
+
+    fun getTimeInHours(): String {
+        val calendar = Calendar.getInstance()
+        val currentHour = calendar.get(Calendar.HOUR)
+        val currentMinute = calendar.get(Calendar.MINUTE)
+        val currentSecond = calendar.get(Calendar.SECOND)
+        val time = ("${currentHour}_${currentMinute}_$currentSecond")
+        return time
     }
 
 }

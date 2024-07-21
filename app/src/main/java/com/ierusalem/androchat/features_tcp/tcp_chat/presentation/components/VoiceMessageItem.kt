@@ -3,7 +3,6 @@ package com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,14 +28,17 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.CircularProgressBar
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.log
-import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 
 @Composable
-fun FileMessageItem(
+fun VoiceMessageItem(
     modifier: Modifier = Modifier,
-    message: ChatMessage.FileMessage,
-    onFileItemClick: (ChatMessage.FileMessage) -> Unit,
+    message: ChatMessage.VoiceMessage,
+    onPlayClick: () -> Unit,
+    onPauseClick: () -> Unit,
+    onStopClick: () -> Unit,
+    isPlaying: Boolean = false
 ) {
     val backgroundBubbleColor = if (message.isFromYou) {
         MaterialTheme.colorScheme.primary
@@ -57,31 +61,19 @@ fun FileMessageItem(
                     }
 
                     FileMessageState.Success -> {
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .border(
-                                    1.5.dp,
-                                    MaterialTheme.colorScheme.tertiary,
-                                    CircleShape
-                                )
-                                .clip(CircleShape)
-                                .clickable(
-                                    onClick = {
-                                        onFileItemClick(message)
-                                    }
-                                )
-                                .background(MaterialTheme.colorScheme.background)
-                                .align(Alignment.Top),
-                            contentAlignment = Alignment.Center,
-                            content = {
-                                Icon(
-                                    modifier = Modifier.size(28.dp),
-                                    painter = painterResource(id = R.drawable.file_text),
-                                    contentDescription = null
-                                )
+                        IconButton(
+                            onClick = {
+                                if (isPlaying) onPauseClick() else onPlayClick()
                             }
-                        )
+                        ) {
+                            val icon =
+                                if (isPlaying) R.drawable.pause_circle_fill else R.drawable.play_circle_fill
+                            Icon(
+                                modifier = Modifier.size(32.dp),
+                                painter = painterResource(id = icon),
+                                contentDescription = null
+                            )
+                        }
                     }
 
                     FileMessageState.Failure -> {
@@ -99,7 +91,7 @@ fun FileMessageItem(
                             contentAlignment = Alignment.Center,
                             content = {
                                 Icon(
-                                    modifier = Modifier.size(28.dp),
+                                    modifier = Modifier.size(32.dp),
                                     painter = painterResource(id = R.drawable.file_failed),
                                     contentDescription = null
                                 )
@@ -108,18 +100,19 @@ fun FileMessageItem(
                     }
                 }
                 Column(
-                    modifier = Modifier.padding(start = 8.dp),
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .weight(1F),
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
-                        text = message.fileName,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onBackground,
+                    LinearProgressIndicator(
+                        progress = { 0.7F },
+                        trackColor = MaterialTheme.colorScheme.tertiary,
                     )
                     Text(
                         modifier = Modifier.padding(top = 4.dp),
-                        text = message.fileSize,
+                        text = (message.duration/1000).toString(),
                         color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
                         style = MaterialTheme.typography.titleSmall
                     )
@@ -129,6 +122,14 @@ fun FileMessageItem(
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
+                if (isPlaying) {
+                    IconButton(onClick = { onStopClick() }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.close_circle),
+                            contentDescription = null
+                        )
+                    }
+                }
             }
         }
     }
@@ -136,21 +137,25 @@ fun FileMessageItem(
 
 @Preview
 @Composable
-private fun PreviewLightFileItem() {
+private fun PreviewLightVoiceMessageItem() {
     AndroChatTheme {
         Surface {
-            FileMessageItem(
+            VoiceMessageItem(
                 modifier = Modifier,
-                message = ChatMessage.FileMessage(
+                message = ChatMessage.VoiceMessage(
                     formattedTime = "12:12:12, jul 12 2034",
                     username = "Hasan",
                     fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
                     filePath = Uri.EMPTY,
-                    isFromYou = false
+                    isFromYou = false,
+                    duration = 12000,
+                    fileState = FileMessageState.Success
                 ),
-                onFileItemClick = {}
+                onPlayClick = {},
+                onPauseClick = {},
+                onStopClick = {}
             )
         }
     }
@@ -158,21 +163,26 @@ private fun PreviewLightFileItem() {
 
 @Preview
 @Composable
-private fun PreviewDarkFileItem() {
+private fun PreviewDarkVoiceMessageItem() {
     AndroChatTheme(isDarkTheme = true) {
         Surface {
-            FileMessageItem(
+            VoiceMessageItem(
                 modifier = Modifier,
-                message = ChatMessage.FileMessage(
+                message = ChatMessage.VoiceMessage(
                     formattedTime = "12:12:12, jul 12 2034",
                     username = "Hasan",
                     fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
                     filePath = Uri.EMPTY,
-                    isFromYou = true
+                    isFromYou = false,
+                    duration = 12000,
+                    fileState = FileMessageState.Success
                 ),
-                onFileItemClick = {}
+                onPlayClick = {},
+                onPauseClick = {},
+                onStopClick = {},
+                isPlaying = true,
             )
         }
     }

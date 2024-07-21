@@ -29,4 +29,10 @@ sealed interface TcpScreenEvents {
 
     data class OnFileItemClick(val message: ChatMessage.FileMessage): TcpScreenEvents
     data class OnContactItemClick(val message: ChatMessage.ContactMessage): TcpScreenEvents
+
+    //voice messages
+    data object OnVoiceRecordStart: TcpScreenEvents
+    data object OnVoiceRecordFinished: TcpScreenEvents
+    data object OnVoiceRecordCancelled: TcpScreenEvents
+
 }

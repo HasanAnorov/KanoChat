@@ -8,21 +8,28 @@ import android.net.wifi.WifiManager
 import android.net.wifi.WifiManager.LocalOnlyHotspotCallback
 import android.net.wifi.p2p.WifiP2pDevice
 import android.os.Build
+import android.os.Environment
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
+import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.constants.Constants.getTimeInHours
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.utils.Resource
+import com.ierusalem.androchat.core.utils.getAudioFileDuration
 import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.core.utils.log
+import com.ierusalem.androchat.core.voice_message.playback.AndroidAudioPlayer
+import com.ierusalem.androchat.core.voice_message.recorder.AndroidAudioRecorder
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuard
 import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.ClientConnectionStatus
@@ -52,6 +59,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.Calendar
 import javax.inject.Inject
 
@@ -63,9 +71,10 @@ class TcpViewModel @Inject constructor(
     private val connectivityObserver: ConnectivityObserver,
     private val wifiManager: WifiManager,
     private val contentResolver: ContentResolver,
-    private val messagesDao: MessagesDao
-) : ViewModel(),
-    NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
+    private val messagesDao: MessagesDao,
+    private val audioRecorder: AndroidAudioRecorder,
+    private val audioPlayer: AndroidAudioPlayer
+) : ViewModel(), NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
 
     private val _state: MutableStateFlow<TcpScreenUiState> = MutableStateFlow(TcpScreenUiState())
     val state: StateFlow<TcpScreenUiState> = _state.asStateFlow()
@@ -78,7 +87,7 @@ class TcpViewModel @Inject constructor(
         listenWifiConnections()
     }
 
-    fun updatePeerUserUniqueId(userUniqueId: String) {
+    private fun updatePeerUserUniqueId(userUniqueId: String) {
         _state.update {
             it.copy(
                 peerUserUniqueId = userUniqueId
@@ -86,7 +95,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun createNewChatHistory(userUniqueId: String){
+    fun createNewChatHistory(userUniqueId: String) {
         updatePeerUserUniqueId(userUniqueId)
         viewModelScope.launch(Dispatchers.IO) {
             val userMessages = UserMessages(
@@ -184,15 +193,12 @@ class TcpViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val contacts = mutableListOf<ContactItem>()
             val cursor: Cursor = contentResolver.query(
-                Phone.CONTENT_URI,
-                arrayOf(
+                Phone.CONTENT_URI, arrayOf(
                     ContactsContract.Contacts._ID,
                     ContactsContract.Contacts.DISPLAY_NAME,
                     Phone.NUMBER,
                     ContactsContract.RawContacts.ACCOUNT_TYPE
-                ),
-                ContactsContract.RawContacts.ACCOUNT_TYPE + " <> 'google' ",
-                null, null
+                ), ContactsContract.RawContacts.ACCOUNT_TYPE + " <> 'google' ", null, null
             )!!
             while (cursor.moveToNext()) {
                 if (cursor.getColumnIndex(Phone.DISPLAY_NAME) != -1 && cursor.getColumnIndex(
@@ -305,9 +311,79 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    private lateinit var currentAudioFileName: String
+
+    private fun startRecording() {
+        currentAudioFileName =
+            "${Constants.VOICE_MESSAGE_FILE_NAME}${getTimeInHours()}${Constants.AUDIO_EXTENSION}"
+        val downloadsDirectory =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+
+        File(downloadsDirectory, currentAudioFileName).also {
+            audioRecorder.startAudio(it)
+        }
+    }
+
+    private fun finishRecording() {
+        audioRecorder.stopAudio()
+        val downloadsDirectory =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+        val file = File(downloadsDirectory, currentAudioFileName)
+        val voiceMessage = ChatMessage.VoiceMessage(
+            username = state.value.authorMe,
+            formattedTime = Calendar.getInstance().time.toString(),
+            isFromYou = true,
+            filePath = file.toUri(),
+            fileName = currentAudioFileName,
+            fileSize = file.length().toString(),
+            fileExtension = file.extension,
+            duration = file.getAudioFileDuration()
+        )
+        when (state.value.generalConnectionStatus) {
+            GeneralConnectionStatus.Idle -> {}
+            GeneralConnectionStatus.ConnectedAsClient -> {
+                emitNavigation(TcpScreenNavigation.SendClientMessage(voiceMessage))
+            }
+
+            GeneralConnectionStatus.ConnectedAsHost -> {
+                emitNavigation(TcpScreenNavigation.SendHostMessage(voiceMessage))
+            }
+        }
+    }
+
+    private fun cancelRecording() {
+        finishRecording()
+        val isDeleted = deleteFile(currentAudioFileName)
+        log("is cancelled audio deleted - $isDeleted")
+    }
+
+    private fun deleteFile(fileName: String): Boolean {
+        val downloadsDirectory =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+        val file = File(downloadsDirectory, fileName)
+        return if (file.exists()) {
+            file.delete()
+        } else {
+            false
+        }
+    }
+
     @SuppressLint("MissingPermission")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
+
+            TcpScreenEvents.OnVoiceRecordStart -> {
+                startRecording()
+            }
+
+            TcpScreenEvents.OnVoiceRecordFinished -> {
+                finishRecording()
+            }
+
+            TcpScreenEvents.OnVoiceRecordCancelled -> {
+                cancelRecording()
+            }
+
             is TcpScreenEvents.OnConnectToWifiClick -> {
                 emitNavigation(TcpScreenNavigation.OnConnectToWifiClick(event.wifiDevice))
             }
@@ -415,8 +491,7 @@ class TcpViewModel @Inject constructor(
                                     )
                                 }
                             }
-                        },
-                        null
+                        }, null
                     )
                 }
             }
@@ -630,8 +705,7 @@ class TcpViewModel @Inject constructor(
                 }
             }
 
-            ClientConnectionStatus.Connecting,
-            ClientConnectionStatus.Connected -> {
+            ClientConnectionStatus.Connecting, ClientConnectionStatus.Connected -> {
                 _state.update {
                     it.copy(
                         clientConnectionStatus = status,
@@ -662,8 +736,7 @@ class TcpViewModel @Inject constructor(
                 }
             }
 
-            HostConnectionStatus.Creating,
-            HostConnectionStatus.Created -> {
+            HostConnectionStatus.Creating, HostConnectionStatus.Created -> {
                 _state.update {
                     it.copy(
                         hostConnectionStatus = status,
@@ -733,8 +806,7 @@ class TcpViewModel @Inject constructor(
                 }
             }
 
-            HotspotNetworkingStatus.LaunchingHotspot,
-            HotspotNetworkingStatus.HotspotRunning -> {
+            HotspotNetworkingStatus.LaunchingHotspot, HotspotNetworkingStatus.HotspotRunning -> {
                 _state.update {
                     it.copy(
                         hotspotNetworkingStatus = status,
@@ -770,14 +842,12 @@ class TcpViewModel @Inject constructor(
 
             GeneralNetworkingStatus.P2PDiscovery -> {
                 when (state.value.hotspotNetworkingStatus) {
-                    HotspotNetworkingStatus.Idle,
-                    HotspotNetworkingStatus.Failure -> {
+                    HotspotNetworkingStatus.Idle, HotspotNetworkingStatus.Failure -> {
                         //ignore case
                         false
                     }
 
-                    HotspotNetworkingStatus.HotspotRunning,
-                    HotspotNetworkingStatus.LaunchingHotspot -> {
+                    HotspotNetworkingStatus.HotspotRunning, HotspotNetworkingStatus.LaunchingHotspot -> {
                         //show error here
                         updateHasErrorOccurredDialog(TcpScreenDialogErrors.AlreadyHotspotNetworkingRunning)
                         return true
@@ -787,8 +857,7 @@ class TcpViewModel @Inject constructor(
 
             GeneralNetworkingStatus.HotspotDiscovery -> {
                 when (state.value.p2pNetworkingStatus) {
-                    P2PNetworkingStatus.Idle,
-                    P2PNetworkingStatus.Failure -> {
+                    P2PNetworkingStatus.Idle, P2PNetworkingStatus.Failure -> {
                         //ignore case
                         false
                     }
@@ -814,20 +883,18 @@ class TcpViewModel @Inject constructor(
     fun updatePercentageOfReceivingFile(message: ChatMessage, fileState: FileMessageState) {
 
         val messages = state.value.messages
-        val targetMessage = messages
-            .findLast { it.username == message.username && it is ChatMessage.FileMessage }
+        val targetMessage =
+            messages.findLast { it.username == message.username && it is ChatMessage.FileMessage }
         if (targetMessage == null) return
         val updatedMessage = updateFileState(targetMessage as ChatMessage.FileMessage, fileState)
         val newMessages = state.value.messages.toMutableList().apply {
             set(messages.indexOf(targetMessage), updatedMessage)
         }
         loadMessages(newMessages)
-
     }
 
     private fun updateFileState(
-        fileMessage: ChatMessage.FileMessage,
-        newState: FileMessageState
+        fileMessage: ChatMessage.FileMessage, newState: FileMessageState
     ): ChatMessage.FileMessage {
         return fileMessage.copy(fileState = newState)
     }
@@ -837,8 +904,7 @@ class TcpViewModel @Inject constructor(
             add(message)
         }
         val newUserMessages = UserMessages(
-            userUniqueId = state.value.peerUserUniqueId,
-            messages = newMessages
+            userUniqueId = state.value.peerUserUniqueId, messages = newMessages
         )
         viewModelScope.launch(Dispatchers.IO) {
             messagesDao.updateUserHistory(newUserMessages)
