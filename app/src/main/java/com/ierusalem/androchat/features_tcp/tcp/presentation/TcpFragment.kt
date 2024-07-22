@@ -287,7 +287,7 @@ class TcpFragment : Fragment() {
                 val scope = rememberCoroutineScope()
                 val allTabs = rememberTcpAllTabs()
                 val pagerState = rememberPagerState(
-                    initialPage = 2,
+                    initialPage = 0,
                     initialPageOffsetFraction = 0F,
                     pageCount = { allTabs.size },
                 )
@@ -1152,6 +1152,7 @@ class TcpFragment : Fragment() {
                     connectedClientSocketOnServer = serverSocket.accept()
                     connectedClientWriter =
                         DataOutputStream(connectedClientSocketOnServer.getOutputStream())
+                    //here we sending the unique device id to the client
                     initializeUser(connectedClientWriter)
                     log("New client : $connectedClientSocketOnServer ")
                     viewModel.updateConnectionsCount(true)

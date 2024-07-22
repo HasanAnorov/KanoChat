@@ -34,6 +34,7 @@ import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features.conversation.presentation.components.messageFormatter
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactItem
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.FileMessageItem
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.VoiceMessageItem
 
 @Composable
 fun LocalMessageItem(
@@ -41,7 +42,10 @@ fun LocalMessageItem(
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
     onFileItemClick: (ChatMessage.FileMessage) -> Unit,
-    onContactItemClick: (ChatMessage.ContactMessage) -> Unit
+    onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
+    onPlayVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
+    onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
+    onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit
 ) {
     val borderColor = if (msg.isFromYou) {
         MaterialTheme.colorScheme.primary
@@ -77,7 +81,10 @@ fun LocalMessageItem(
             isFirstMessageByAuthor = isFirstMessageByAuthor,
             isLastMessageByAuthor = isLastMessageByAuthor,
             onFileItemClick = onFileItemClick,
-            onContactItemClick = onContactItemClick
+            onContactItemClick = onContactItemClick,
+            onPlayVoiceMessageClick = { onPlayVoiceMessageClick(it) },
+            onPauseVoiceMessageClick = { onPauseVoiceMessageClick(it) },
+            onStopVoiceMessageClick = { onStopVoiceMessageClick(it) }
         )
     }
 }
@@ -89,7 +96,10 @@ fun AuthorAndTextMessage(
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
     onFileItemClick: (ChatMessage.FileMessage) -> Unit,
-    onContactItemClick: (ChatMessage.ContactMessage) -> Unit
+    onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
+    onPlayVoiceMessageClick:(ChatMessage.VoiceMessage)-> Unit,
+    onPauseVoiceMessageClick:(ChatMessage.VoiceMessage) -> Unit,
+    onStopVoiceMessageClick:(ChatMessage.VoiceMessage) -> Unit
 ) {
     Column(modifier = modifier) {
         if (isLastMessageByAuthor) {
@@ -101,7 +111,12 @@ fun AuthorAndTextMessage(
             }
 
             is ChatMessage.VoiceMessage -> {
-
+                VoiceMessageItem(
+                    message = msg,
+                    onPlayClick = { onPlayVoiceMessageClick(msg) },
+                    onPauseClick = { onPauseVoiceMessageClick(msg) },
+                    onStopClick = { onStopVoiceMessageClick(msg) }
+                )
             }
 
             is ChatMessage.FileMessage -> {
@@ -184,7 +199,10 @@ private fun PreviewMessage() {
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,
             onFileItemClick = {},
-            onContactItemClick = {}
+            onContactItemClick = {},
+            onPlayVoiceMessageClick = {},
+            onPauseVoiceMessageClick = {},
+            onStopVoiceMessageClick = {}
         )
     }
 }

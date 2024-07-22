@@ -59,7 +59,11 @@ data class TcpScreenUiState(
     val isValidConnectedWifiAddress: Boolean = isValidIpAddress(connectedWifiAddress),
 
     //error handling
-    val hasDialogErrorOccurred: TcpScreenDialogErrors? = null
+    val hasDialogErrorOccurred: TcpScreenDialogErrors? = null,
+
+    //to disable user scroll enabling in view pager
+    val isRecording:Boolean = false,
+
 )
 
 enum class LocalOnlyHotspotStatus(@StringRes val res: Int, @DrawableRes val icon: Int){

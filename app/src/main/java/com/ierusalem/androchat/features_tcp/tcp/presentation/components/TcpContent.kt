@@ -28,7 +28,7 @@ fun TcpContent(
     HorizontalPager(
         modifier = modifier,
         state = pagerState,
-        userScrollEnabled = true
+        userScrollEnabled = !state.isRecording
     ) { page ->
         val screen = remember(
             allTabs,

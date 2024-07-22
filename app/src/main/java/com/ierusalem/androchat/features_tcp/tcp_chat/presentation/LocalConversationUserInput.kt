@@ -83,6 +83,8 @@ import com.devlomi.record_view.RecordView
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.log
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
 
 enum class LocalInputSelector {
@@ -98,6 +100,7 @@ enum class LocalInputSelector {
 fun UserInputPreview() {
     LocalConversationUserInput(
         eventHandler = {},
+        uiState = TcpScreenUiState()
     )
 }
 
@@ -107,6 +110,7 @@ fun LocalConversationUserInput(
     eventHandler: (TcpScreenEvents) -> Unit,
     modifier: Modifier = Modifier,
     resetScroll: () -> Unit = {},
+    uiState: TcpScreenUiState
 ) {
     var currentInputSelector by rememberSaveable { mutableStateOf(LocalInputSelector.NONE) }
     val dismissKeyboard = { currentInputSelector = LocalInputSelector.NONE }
@@ -123,10 +127,6 @@ fun LocalConversationUserInput(
     // Used to decide if the keyboard should be shown
     var textFieldFocusState by remember { mutableStateOf(false) }
 
-    var isRecording by rememberSaveable {
-        mutableStateOf(false)
-    }
-
     Surface(
         tonalElevation = 2.dp,
         contentColor = MaterialTheme.colorScheme.secondary
@@ -142,8 +142,14 @@ fun LocalConversationUserInput(
                             .apply {
                                 val recordingView = findViewById<RecordView>(R.id.record_view)
                                 val recordButton = findViewById<RecordButton>(R.id.record_button)
+
+                                val isEnabled =
+                                    uiState.generalConnectionStatus != GeneralConnectionStatus.Idle
+                                recordButton.isEnabled = isEnabled
+
                                 val recordLockView = findViewById<RecordLockView>(R.id.record_lock)
-                                val recordLockCoverView = findViewById<ImageView>(R.id.record_lock_cover)
+                                val recordLockCoverView =
+                                    findViewById<ImageView>(R.id.record_lock_cover)
                                 recordLockView.visibility = View.INVISIBLE
                                 recordButton.setRecordView(recordingView)
                                 recordingView.setOnRecordListener(
@@ -152,7 +158,6 @@ fun LocalConversationUserInput(
                                             //Start Recording..
                                             log("onStart")
                                             eventHandler(TcpScreenEvents.OnVoiceRecordStart)
-                                            isRecording = true
                                             recordLockCoverView.visibility = View.VISIBLE
                                         }
 
@@ -160,7 +165,6 @@ fun LocalConversationUserInput(
                                             //On Swipe To Cancel
                                             log("onCancel")
                                             eventHandler(TcpScreenEvents.OnVoiceRecordCancelled)
-                                            isRecording = false
                                             recordLockCoverView.visibility = View.INVISIBLE
                                         }
 
@@ -173,7 +177,6 @@ fun LocalConversationUserInput(
                                             // was finished when time limit reached.
                                             log("onFinish")
                                             eventHandler(TcpScreenEvents.OnVoiceRecordFinished)
-                                            isRecording = false
                                             recordLockCoverView.visibility = View.INVISIBLE
 
                                         }
@@ -181,7 +184,6 @@ fun LocalConversationUserInput(
                                         override fun onLessThanSecond() {
                                             //When the record time is less than One Second
                                             log("onLessThanSecond")
-                                            isRecording = false
                                             eventHandler(TcpScreenEvents.OnVoiceRecordCancelled)
                                             recordLockCoverView.visibility = View.INVISIBLE
                                         }
@@ -201,16 +203,16 @@ fun LocalConversationUserInput(
                                 recordingView.setLessThanSecondAllowed(false)
 
                                 // enable or disable the Growing animation for record Button.
-                                recordingView.setRecordButtonGrowingAnimationEnabled(false)
+                                recordingView.setRecordButtonGrowingAnimationEnabled(true)
 
                                 // change scale up value on Growing animation.
-                                recordButton.setScaleUpTo(1f)
+                                recordButton.setScaleUpTo(1.5f)
 
                                 // disable Sounds
                                 recordingView.setSoundEnabled(true)
 
                                 // auto cancelling recording after timeLimit (In millis)
-                                recordingView.setTimeLimit(5*60*1000) //5 minutes
+                                recordingView.setTimeLimit(5 * 60 * 1000) //5 minutes
 
                                 //set send icon
                                 recordButton.setSendIconResource(R.drawable.send)
@@ -220,7 +222,7 @@ fun LocalConversationUserInput(
 
                     }
                 )
-                if (!isRecording) {
+                if (!uiState.isRecording) {
                     UserInputText(
                         textFieldValue = textState,
                         onTextChanged = { textState = it },

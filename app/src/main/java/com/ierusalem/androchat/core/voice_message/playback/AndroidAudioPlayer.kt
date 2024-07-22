@@ -16,7 +16,7 @@ class AndroidAudioPlayer(private val context: Context): AudioPlayer {
     }
 
     override fun pause() {
-
+        mediaPlayer?.pause()
     }
 
     override fun stop() {

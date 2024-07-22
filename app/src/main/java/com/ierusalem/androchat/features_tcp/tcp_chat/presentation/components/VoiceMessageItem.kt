@@ -62,7 +62,8 @@ fun VoiceMessageItem(
                     FileMessageState.Success -> {
                         IconButton(
                             onClick = {
-                                if (isPlaying) onPauseClick() else onPlayClick()
+                                onPlayClick()
+                                //if (isPlaying) onPauseClick() else onPlayClick()
                             }
                         ) {
                             val icon =

@@ -77,7 +77,8 @@ fun LocalConversationContent(
                 contentAlignment = Alignment.Center
             ) {
                 ChannelNameBar(
-                    channelName = uiState.groupOwnerAddress.takeIf { it.isNotEmpty() } ?: stringResource(R.string.not_connected),
+                    channelName = uiState.groupOwnerAddress.takeIf { it.isNotEmpty() }
+                        ?: stringResource(R.string.not_connected),
                     channelMembers = uiState.connectionsCount,
                 )
             }
@@ -96,7 +97,28 @@ fun LocalConversationContent(
                     modifier = Modifier.weight(1f),
                     scrollState = scrollState,
                     onFileItemClicked = { eventHandler(TcpScreenEvents.OnFileItemClick(it)) },
-                    onContactItemClick = { eventHandler(TcpScreenEvents.OnContactItemClick(it)) }
+                    onContactItemClick = { eventHandler(TcpScreenEvents.OnContactItemClick(it)) },
+                    onPlayVoiceMessageClick = {
+                        eventHandler(
+                            TcpScreenEvents.OnPlayVoiceMessageClick(
+                                it
+                            )
+                        )
+                    },
+                    onPauseVoiceMessageClick = {
+                        eventHandler(
+                            TcpScreenEvents.OnPauseVoiceMessageClick(
+                                it
+                            )
+                        )
+                    },
+                    onStopVoiceMessageClick = {
+                        eventHandler(
+                            TcpScreenEvents.OnStopVoiceMessageClick(
+                                it
+                            )
+                        )
+                    }
                 )
                 LocalConversationUserInput(
                     // let this element handle the padding so that the elevation is shown behind the
@@ -104,6 +126,7 @@ fun LocalConversationContent(
                     modifier = Modifier
                         .navigationBarsPadding()
                         .imePadding(),
+                    uiState = uiState,
                     eventHandler = eventHandler,
                     resetScroll = {
                         scope.launch {
@@ -170,7 +193,10 @@ fun Messages(
     scrollState: LazyListState,
     modifier: Modifier = Modifier,
     onFileItemClicked: (ChatMessage.FileMessage) -> Unit,
-    onContactItemClick: (ChatMessage.ContactMessage) -> Unit
+    onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
+    onPlayVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
+    onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
+    onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
@@ -195,7 +221,10 @@ fun Messages(
                     isFirstMessageByAuthor = isFirstMessageByAuthor,
                     isLastMessageByAuthor = isLastMessageByAuthor,
                     onFileItemClick = onFileItemClicked,
-                    onContactItemClick = onContactItemClick
+                    onContactItemClick = onContactItemClick,
+                    onPlayVoiceMessageClick = {onPlayVoiceMessageClick(it)},
+                    onPauseVoiceMessageClick = {onPauseVoiceMessageClick(it)},
+                    onStopVoiceMessageClick = {onStopVoiceMessageClick(it)}
                 )
             }
         }

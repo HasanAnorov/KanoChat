@@ -8,31 +8,34 @@
     <FrameLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
         android:layout_above="@id/record_button"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="14dp"
-        android:layout_marginBottom="24dp">
+        android:layout_marginBottom="20dp">
 
         <com.devlomi.record_view.RecordLockView
             android:id="@+id/record_lock"
-            android:layout_marginTop="2.dp"
             android:layout_width="1dp"
             android:layout_height="1dp"
-            android:backgroundTint="@android:color/transparent"
-            android:background="@android:color/transparent"
             android:layout_gravity="center"
-            android:visibility="invisible" />
-
-        <ImageView
-            android:id="@+id/record_lock_cover"
-            android:layout_width="20dp"
+            android:layout_marginTop="2.dp"
             android:layout_marginEnd="8dp"
             android:background="@android:color/transparent"
             android:backgroundTint="@android:color/transparent"
-            android:layout_height="20dp"
+            android:elevation="0dp"
+            android:visibility="visible" />
+
+        <ImageView
+            android:id="@+id/record_lock_cover"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="8dp"
+            android:background="@android:color/transparent"
+            android:backgroundTint="@android:color/transparent"
             android:contentDescription="@null"
+            android:elevation="10dp"
             android:src="@drawable/lock_open"
             android:visibility="invisible"
             app:tint="@color/colorAccent" />

@@ -15,6 +15,7 @@ import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.constants.Constants.getTimeInHours
@@ -62,7 +63,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Calendar
 import javax.inject.Inject
-
 
 @HiltViewModel
 class TcpViewModel @Inject constructor(
@@ -311,33 +311,41 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private lateinit var currentAudioFileName: String
+    private lateinit var currentAudioFile: File
+
+    private fun updateIsRecording(isRecording: Boolean) {
+        _state.update {
+            it.copy(
+                isRecording = isRecording
+            )
+        }
+    }
 
     private fun startRecording() {
-        currentAudioFileName =
+        updateIsRecording(true)
+        val currentAudioFileName =
             "${Constants.VOICE_MESSAGE_FILE_NAME}${getTimeInHours()}${Constants.AUDIO_EXTENSION}"
         val downloadsDirectory =
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
 
-        File(downloadsDirectory, currentAudioFileName).also {
+        currentAudioFile = File(downloadsDirectory, currentAudioFileName).also {
             audioRecorder.startAudio(it)
         }
     }
 
     private fun finishRecording() {
+        updateIsRecording(false)
         audioRecorder.stopAudio()
-        val downloadsDirectory =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
-        val file = File(downloadsDirectory, currentAudioFileName)
+        currentAudioFile
         val voiceMessage = ChatMessage.VoiceMessage(
             username = state.value.authorMe,
             formattedTime = Calendar.getInstance().time.toString(),
             isFromYou = true,
-            filePath = file.toUri().toString(),
-            fileName = currentAudioFileName,
-            fileSize = file.length().toString(),
-            fileExtension = file.extension,
-            duration = file.getAudioFileDuration()
+            filePath = currentAudioFile.toUri().toString(),
+            fileName = currentAudioFile.name,
+            fileSize = currentAudioFile.length().toString(),
+            fileExtension = currentAudioFile.extension,
+            duration = currentAudioFile.getAudioFileDuration()
         )
         when (state.value.generalConnectionStatus) {
             GeneralConnectionStatus.Idle -> {}
@@ -352,17 +360,15 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun cancelRecording() {
+        updateIsRecording(false)
         finishRecording()
-        val isDeleted = deleteFile(currentAudioFileName)
+        val isDeleted = deleteFile()
         log("is cancelled audio deleted - $isDeleted")
     }
 
-    private fun deleteFile(fileName: String): Boolean {
-        val downloadsDirectory =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
-        val file = File(downloadsDirectory, fileName)
-        return if (file.exists()) {
-            file.delete()
+    private fun deleteFile(): Boolean {
+        return if (currentAudioFile.exists()) {
+            currentAudioFile.delete()
         } else {
             false
         }
@@ -371,6 +377,22 @@ class TcpViewModel @Inject constructor(
     @SuppressLint("MissingPermission")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
+
+            //you did not use the parameter inside on play voice message
+            is TcpScreenEvents.OnPlayVoiceMessageClick -> {
+                log("on play clicked")
+                audioPlayer.playFile(currentAudioFile)
+            }
+
+            is TcpScreenEvents.OnPauseVoiceMessageClick -> {
+                log("on pause clicked")
+                audioPlayer.pause()
+            }
+
+            is TcpScreenEvents.OnStopVoiceMessageClick -> {
+                log("on stop clicked")
+                audioPlayer.stop()
+            }
 
             TcpScreenEvents.OnVoiceRecordStart -> {
                 startRecording()
@@ -880,22 +902,37 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updatePercentageOfReceivingFile(message: ChatMessage, fileState: FileMessageState) {
-
+    fun updatePercentageOfReceivingFile(message: ChatMessage, fileState: FileMessageState, ) {
+        log("updatePercentageOfReceivingFile - $message")
         val messages = state.value.messages
         val targetMessage =
-            messages.findLast { it.username == message.username && it is ChatMessage.FileMessage }
+            messages.findLast { it.username == message.username && it.messageType == message.messageType }
         if (targetMessage == null) return
-        val updatedMessage = updateFileState(targetMessage as ChatMessage.FileMessage, fileState)
+        log("target message - $targetMessage")
+        val updatedMessage = when(targetMessage.messageType){
+            AppMessageType.FILE -> {
+                updateFileMessageState(targetMessage as ChatMessage.FileMessage, fileState)
+            }
+            AppMessageType.VOICE -> {
+                updateVoiceMessageState(targetMessage as ChatMessage.VoiceMessage, fileState)
+            }
+            else -> return
+        }
         val newMessages = state.value.messages.toMutableList().apply {
             set(messages.indexOf(targetMessage), updatedMessage)
         }
         loadMessages(newMessages)
     }
 
-    private fun updateFileState(
+    private fun updateFileMessageState(
         fileMessage: ChatMessage.FileMessage, newState: FileMessageState
     ): ChatMessage.FileMessage {
+        return fileMessage.copy(fileState = newState)
+    }
+
+    private fun updateVoiceMessageState(
+        fileMessage: ChatMessage.VoiceMessage, newState: FileMessageState
+    ): ChatMessage.VoiceMessage {
         return fileMessage.copy(fileState = newState)
     }
 
