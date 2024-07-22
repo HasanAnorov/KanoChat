@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -147,7 +146,7 @@ private fun PreviewLightFileItem() {
                     fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
-                    filePath = Uri.EMPTY,
+                    filePath = "file_path_uri",
                     isFromYou = false
                 ),
                 onFileItemClick = {}
@@ -169,7 +168,7 @@ private fun PreviewDarkFileItem() {
                     fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
-                    filePath = Uri.EMPTY,
+                    filePath = "file_path_uri",
                     isFromYou = true
                 ),
                 onFileItemClick = {}

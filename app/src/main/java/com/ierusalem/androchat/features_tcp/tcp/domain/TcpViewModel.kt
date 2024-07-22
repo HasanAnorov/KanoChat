@@ -333,7 +333,7 @@ class TcpViewModel @Inject constructor(
             username = state.value.authorMe,
             formattedTime = Calendar.getInstance().time.toString(),
             isFromYou = true,
-            filePath = file.toUri(),
+            filePath = file.toUri().toString(),
             fileName = currentAudioFileName,
             fileSize = file.length().toString(),
             fileExtension = file.extension,

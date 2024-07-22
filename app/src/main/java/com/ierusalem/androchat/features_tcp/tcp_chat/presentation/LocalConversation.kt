@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.presentation
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,10 +43,10 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features.conversation.presentation.components.JumpToBottom
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.FileMessageItem
 import kotlinx.coroutines.launch
 
@@ -275,7 +274,7 @@ private fun PreviwLightFileItem() {
                 fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                 fileSize = "16 Kb",
                 fileExtension = ".pdf",
-                filePath = Uri.EMPTY,
+                filePath = "file_path_uri",
                 isFromYou = true
             ),
             onFileItemClick = {}
@@ -295,7 +294,7 @@ private fun PreviewDarkFileItem() {
                 fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                 fileSize = "16 Kb",
                 fileExtension = ".pdf",
-                filePath = Uri.EMPTY,
+                filePath = "file_path_uri",
                 isFromYou = true
             ),
             onFileItemClick = {}

@@ -11,7 +11,7 @@ import kotlin.jvm.internal.Reflection
 import kotlin.reflect.KClass
 
 object Json {
-    val gson =
+    val gson: Gson =
         GsonBuilder().registerTypeAdapterFactory(
             object : TypeAdapterFactory {
                 override fun <T : Any> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T> {
@@ -26,6 +26,7 @@ object Json {
     inline fun <reified T> fromJson(x: String): T = this.gson.fromJson(x, T::class.java)
     fun <T> fromJsonWithClass(x: String, classObj: Class<T>): T =
         this.gson.fromJson(x, classObj)
+
     inline fun <T> toJson(item: T): String = this.gson.toJson(item)
 }
 
@@ -35,7 +36,8 @@ class SealedClassTypeAdapter<T : Any>(val kclass: KClass<Any>, val gson: Gson) :
         val nextName = jsonReader.nextName() //get the name on the object
         val innerClass = kclass.sealedSubclasses.firstOrNull {
             it.simpleName!!.contains(nextName)
-        } ?: throw Exception("$nextName is not found to be a data class of the sealed class ${kclass.qualifiedName}")
+        }
+            ?: throw Exception("$nextName is not found to be a data class of the sealed class ${kclass.qualifiedName}")
         val x = gson.fromJson<T>(jsonReader, innerClass.javaObjectType)
         jsonReader.endObject()
         //if there a static object, actually return that back to ensure equality and such!

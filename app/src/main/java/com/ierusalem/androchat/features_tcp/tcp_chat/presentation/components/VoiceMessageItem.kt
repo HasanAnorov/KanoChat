@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -148,7 +147,7 @@ private fun PreviewLightVoiceMessageItem() {
                     fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
-                    filePath = Uri.EMPTY,
+                    filePath = "file_path_uri",
                     isFromYou = false,
                     duration = 12000,
                     fileState = FileMessageState.Success
@@ -174,7 +173,7 @@ private fun PreviewDarkVoiceMessageItem() {
                     fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
-                    filePath = Uri.EMPTY,
+                    filePath = "file_path_uri",
                     isFromYou = false,
                     duration = 12000,
                     fileState = FileMessageState.Success

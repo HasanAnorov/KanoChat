@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity
 
-import android.net.Uri
 import com.ierusalem.androchat.core.app.AppMessageType
 
 sealed interface ChatMessage {
@@ -23,7 +22,7 @@ sealed interface ChatMessage {
         override val username: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.FILE,
-        val filePath: Uri,
+        val filePath: String,
         val fileName: String,
         val fileSize: String,
         val fileExtension: String,
@@ -36,7 +35,7 @@ sealed interface ChatMessage {
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.VOICE,
         val duration: Long,
-        val filePath: Uri,
+        val filePath: String,
         val fileName: String,
         val fileSize: String,
         val fileExtension: String,

@@ -212,7 +212,7 @@ class TcpFragment : Fragment() {
                         val fileMessage = ChatMessage.FileMessage(
                             formattedTime = getCurrentTime(),
                             username = viewModel.state.value.authorMe,
-                            filePath = uri,
+                            filePath = uri.toString(),
                             fileName = uri.getFileNameFromUri(contentResolver),
                             fileSize = uri.getFileSizeInReadableFormat(contentResolver),
                             fileExtension = uri.getFileExtensionFromUri(contentResolver),
@@ -226,7 +226,7 @@ class TcpFragment : Fragment() {
                         val fileMessage = ChatMessage.FileMessage(
                             formattedTime = getCurrentTime(),
                             username = viewModel.state.value.authorMe,
-                            filePath = uri,
+                            filePath = uri.toString(),
                             fileName = uri.getFileNameFromUri(contentResolver),
                             fileSize = uri.getFileSizeInReadableFormat(contentResolver),
                             fileExtension = uri.getFileExtensionFromUri(contentResolver),
@@ -580,7 +580,7 @@ class TcpFragment : Fragment() {
                                     formattedTime = getCurrentTime(),
                                     username = viewModel.state.value.authorMe,
                                     isFromYou = true,
-                                    filePath = imageUri,
+                                    filePath = imageUri.toString(),
                                     fileName = imageUri.getFileNameFromUri(requireContext().contentResolver),
                                     fileSize = imageUri.getFileSizeInReadableFormat(
                                         requireContext().contentResolver
@@ -605,7 +605,7 @@ class TcpFragment : Fragment() {
                                     formattedTime = getCurrentTime(),
                                     username = viewModel.state.value.authorMe,
                                     isFromYou = true,
-                                    filePath = imageUri,
+                                    filePath = imageUri.toString(),
                                     fileName = imageUri.getFileNameFromUri(requireContext().contentResolver),
                                     fileSize = imageUri.getFileSizeInReadableFormat(
                                         requireContext().contentResolver
@@ -632,8 +632,10 @@ class TcpFragment : Fragment() {
                 try {
                     val file: File
                     if (navigation.message.isFromYou) {
+                        //todo optimize this later
+                        val uri = Uri.parse(navigation.message.filePath)
                         val inputStream =
-                            requireContext().contentResolver.openInputStream(navigation.message.filePath)
+                            requireContext().contentResolver.openInputStream(uri)
                         val filePathToSave = context?.cacheDir
                         file = File(filePathToSave, navigation.message.fileName)
                         val fileOutputStream = FileOutputStream(file)
@@ -650,7 +652,9 @@ class TcpFragment : Fragment() {
                         FILE_PROVIDER_AUTHORITY,
                         file
                     )
-                    val mimeType = navigation.message.filePath.getMimeType(requireContext())
+                    //todo optimize this later
+                    val uriX = Uri.parse(navigation.message.filePath)
+                    val mimeType = uriX.getMimeType(requireContext())
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         setDataAndType(uri, mimeType)
                         addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
@@ -843,7 +847,7 @@ class TcpFragment : Fragment() {
             val message = ChatMessage.FileMessage(
                 formattedTime = currentTime.toString(),
                 username = "from client",
-                filePath = Uri.fromFile(file),
+                filePath = Uri.fromFile(file).toString(),
                 fileName = fileNameForUi,
                 fileSize = Formatter.formatShortFileSize(
                     requireContext(),
@@ -926,7 +930,7 @@ class TcpFragment : Fragment() {
         val message = ChatMessage.VoiceMessage(
             formattedTime = currentTime.toString(),
             username = "from client",
-            filePath = Uri.fromFile(file),
+            filePath = Uri.fromFile(file).toString(),
             fileName = fileNameForUi,
             fileSize = Formatter.formatShortFileSize(
                 requireContext(),
@@ -984,8 +988,10 @@ class TcpFragment : Fragment() {
                 //sending file name
                 writer.writeUTF(voiceMessage.fileName)
 
+                //todo optimize this later
+                val uri = Uri.parse(voiceMessage.filePath)
                 val inputStream =
-                    requireContext().contentResolver.openInputStream(voiceMessage.filePath)
+                    requireContext().contentResolver.openInputStream(uri)
                 val filePathToSave = context?.cacheDir
                 val file = File(filePathToSave, voiceMessage.fileName)
                 val fileOutputStream = FileOutputStream(file)
@@ -1066,8 +1072,9 @@ class TcpFragment : Fragment() {
                     //sending file name
                     writer.writeUTF(fileMessage.fileName)
 
+                    val uri = Uri.parse(fileMessage.filePath)
                     val inputStream =
-                        requireContext().contentResolver.openInputStream(fileMessage.filePath)
+                        requireContext().contentResolver.openInputStream(uri)
                     val filePathToSave = context?.cacheDir
                     val file = File(filePathToSave, fileMessage.fileName)
                     val fileOutputStream = FileOutputStream(file)
