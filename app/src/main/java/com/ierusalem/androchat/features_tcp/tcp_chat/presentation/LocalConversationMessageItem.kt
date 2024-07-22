@@ -180,7 +180,7 @@ private fun AuthorName(
 ) {
     Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
-            text = if (message.isFromYou) stringResource(id = R.string.author_me) else message.username,
+            text = if (message.isFromYou) stringResource(id = R.string.author_me) else "message.username",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .alignBy(LastBaseline)
@@ -197,7 +197,6 @@ private fun PreviewMessage() {
             msg = ChatMessage.TextMessage(
                 message = ("Hello it is a text"),
                 formattedTime = "12:32",
-                username = "Owner",
                 isFromYou = true
             ),
             isVoiceMessagePlaying = false,

@@ -223,14 +223,14 @@ fun Messages(
             itemsIndexed(messages) { index, message ->
                 when (message) {
                     is ChatMessage.TextMessage -> {
-                        val prevAuthor = messages.getOrNull(index - 1)?.username
-                        val nextAuthor = messages.getOrNull(index + 1)?.username
-                        val isFirstMessageByAuthor = prevAuthor != message.username
-                        val isLastMessageByAuthor = nextAuthor != message.username
+                        val prevAuthor = messages.getOrNull(index - 1)?.isFromYou
+                        val nextAuthor = messages.getOrNull(index + 1)?.isFromYou
+                        val isFirstMessageByAuthor = prevAuthor != message.isFromYou
+                        val isLastMessageByAuthor = nextAuthor != message.isFromYou
                         MessageItem(
                             onAuthorClick = { userId -> navigateToProfile(userId) },
                             message = message,
-                            isUserMe = message.username == authorMe,
+                            isUserMe = message.isFromYou,
                             isFirstMessageByAuthor = isFirstMessageByAuthor,
                             isLastMessageByAuthor = isLastMessageByAuthor
                         )

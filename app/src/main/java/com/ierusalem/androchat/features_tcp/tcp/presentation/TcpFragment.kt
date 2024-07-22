@@ -73,6 +73,7 @@ import com.ierusalem.androchat.core.utils.getFileSizeInReadableFormat
 import com.ierusalem.androchat.core.utils.getMimeType
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.openAppSettings
+import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.core.utils.shortToast
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
@@ -202,6 +203,32 @@ class TcpFragment : Fragment() {
                 val intent: Intent = result.data!!
                 val uri = intent.data!!
 
+                val resourceDirectory =
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+                if (!resourceDirectory.exists()) {
+                    resourceDirectory.mkdir()
+                }
+
+                val fileName = uri.getFileNameFromUri(contentResolver)
+                var file = File(resourceDirectory, fileName)
+                if (file.exists()) {
+                    log("same file found in folder, generating unique name ...")
+                    val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
+                    log("file name without ext - $fileNameWithoutExt")
+                    val uniqueFileName =
+                        generateUniqueFileName(resourceDirectory.toString(), fileNameWithoutExt, file.extension)
+                    log("unique file name - $uniqueFileName")
+                    file = File(uniqueFileName)
+                }
+
+                val inputStream = requireContext().contentResolver.openInputStream(uri)
+                val fileOutputStream = FileOutputStream(file)
+                inputStream?.copyTo(fileOutputStream)
+                fileOutputStream.close()
+
+                log("file info, size - ${uri.getFileSizeInReadableFormat(contentResolver)} - file - $file")
+
+
                 when (viewModel.state.value.generalConnectionStatus) {
                     GeneralConnectionStatus.Idle -> {
                         /** do nothing here */
@@ -210,11 +237,10 @@ class TcpFragment : Fragment() {
                     GeneralConnectionStatus.ConnectedAsClient -> {
                         val fileMessage = ChatMessage.FileMessage(
                             formattedTime = getCurrentTime(),
-                            username = viewModel.state.value.authorMe,
-                            filePath = uri.toString(),
-                            fileName = uri.getFileNameFromUri(contentResolver),
-                            fileSize = uri.getFileSizeInReadableFormat(contentResolver),
-                            fileExtension = uri.getFileExtensionFromUri(contentResolver),
+                            filePath = file.path,
+                            fileName = file.name,
+                            fileSize = file.length().readableFileSize(),
+                            fileExtension = file.extension,
                             fileState = FileMessageState.Loading(0),
                             isFromYou = true
                         )
@@ -224,11 +250,10 @@ class TcpFragment : Fragment() {
                     GeneralConnectionStatus.ConnectedAsHost -> {
                         val fileMessage = ChatMessage.FileMessage(
                             formattedTime = getCurrentTime(),
-                            username = viewModel.state.value.authorMe,
-                            filePath = uri.toString(),
-                            fileName = uri.getFileNameFromUri(contentResolver),
-                            fileSize = uri.getFileSizeInReadableFormat(contentResolver),
-                            fileExtension = uri.getFileExtensionFromUri(contentResolver),
+                            filePath = file.path,
+                            fileName = file.name,
+                            fileSize = file.length().readableFileSize(),
+                            fileExtension = file.extension,
                             fileState = FileMessageState.Loading(0),
                             isFromYou = true
                         )
@@ -238,6 +263,7 @@ class TcpFragment : Fragment() {
             }
         }
     }
+
 
     private fun showFileChooser() {
         val intent = Intent().setType("*/*").setAction(Intent.ACTION_GET_CONTENT)
@@ -339,7 +365,6 @@ class TcpFragment : Fragment() {
                                                         selectedContacts.forEach { contact ->
                                                             val contactMessage =
                                                                 ChatMessage.ContactMessage(
-                                                                    username = uiState.authorMe,
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
                                                                     contactName = contact.contactName,
@@ -361,7 +386,6 @@ class TcpFragment : Fragment() {
                                                         selectedContacts.forEach { contact ->
                                                             val contactMessage =
                                                                 ChatMessage.ContactMessage(
-                                                                    username = uiState.authorMe,
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
                                                                     contactName = contact.contactName,
@@ -577,7 +601,6 @@ class TcpFragment : Fragment() {
                                 //todo - maybe username should be removed here
                                 val fileMessage = ChatMessage.FileMessage(
                                     formattedTime = getCurrentTime(),
-                                    username = viewModel.state.value.authorMe,
                                     isFromYou = true,
                                     filePath = imageUri.toString(),
                                     fileName = imageUri.getFileNameFromUri(requireContext().contentResolver),
@@ -602,7 +625,6 @@ class TcpFragment : Fragment() {
                                 //todo - maybe username should be removed here
                                 val fileMessage = ChatMessage.FileMessage(
                                     formattedTime = getCurrentTime(),
-                                    username = viewModel.state.value.authorMe,
                                     isFromYou = true,
                                     filePath = imageUri.toString(),
                                     fileName = imageUri.getFileNameFromUri(requireContext().contentResolver),
@@ -801,6 +823,85 @@ class TcpFragment : Fragment() {
         )
     }
 
+//    private fun receiveFile(reader: DataInputStream) {
+//        log("receiving file ...")
+//        val downloadsDirectory =
+//            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+//        if (!downloadsDirectory.exists()) {
+//            downloadsDirectory.mkdirs()
+//            log("Created directory: ${downloadsDirectory.absolutePath}")
+//        }
+//
+//        val fileCount = reader.readInt()
+//        log("file count - $fileCount")
+//        for (i in 0 until fileCount) {
+//            log("file order - $i")
+//
+//            //reading file name
+//            val filename = reader.readUTF()
+//            log("Expected file name - $filename")
+//
+//            // Check if a file with the same name already exists, generate unique name if necessary
+//            var file = File(downloadsDirectory, filename)
+//            if (file.exists()) {
+//                log("same file found in folder, generating unique name ...")
+//                val fileName = filename.getFileNameWithoutExtension()
+//                val uniqueFileName =
+//                    generateUniqueFileName(downloadsDirectory.toString(), fileName, file.extension)
+//                log("unique file name - $uniqueFileName")
+//                file = File(uniqueFileName)
+//            }
+//
+//            var bytes = 0
+//            var bytesForPercentage = 0L
+//            // Create FileOutputStream to write the received file
+//            val fileOutputStream = FileOutputStream(file)
+//
+//            // Read the expected file size
+//            var fileSize: Long = reader.readLong() // read file size
+//            val fileSizeForPercentage = fileSize
+//
+//            val message = ChatMessage.FileMessage(
+//                formattedTime = getCurrentTime(),
+//                filePath = file.path,
+//                fileName = file.name,
+//                fileSize =fileSize.readableFileSize(),
+//                fileExtension = file.extension,
+//                fileState = FileMessageState.Loading(0),
+//                isFromYou = false
+//            )
+//            viewModel.insertMessage(message)
+//
+//            val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+//            while (fileSize > 0
+//                && (reader.read(
+//                    buffer, 0,
+//                    min(buffer.size.toDouble(), fileSize.toDouble()).toInt()
+//                ).also { bytes = it })
+//                != -1
+//            ) {
+//                // Here we write the file using write method
+//                fileOutputStream.write(buffer, 0, bytes)
+//                fileSize -= bytes.toLong()
+//
+//                bytesForPercentage += bytes.toLong()
+//                val percentage =
+//                    (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+//                val tempPercentage =
+//                    ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+//                if (percentage != tempPercentage) {
+//                    log("progress - $percentage")
+//                    val newState = FileMessageState.Loading(percentage)
+//                    viewModel.updatePercentageOfReceivingFile(message, newState)
+//                }
+//            }
+//            fileOutputStream.close()
+//            val newState = FileMessageState.Success
+//            viewModel.updatePercentageOfReceivingFile(message, newState)
+//            log("file received successfully")
+//        }
+//    }
+
     private fun receiveFile(reader: DataInputStream) {
         log("receiving file ...")
         val downloadsDirectory =
@@ -817,8 +918,16 @@ class TcpFragment : Fragment() {
 
             //reading file name
             val filename = reader.readUTF()
-            var fileNameForUi = filename
             log("Expected file name - $filename")
+
+
+            var bytes = 0
+            var bytesForPercentage = 0L
+
+            // Read the expected file size
+            var fileSize: Long = reader.readLong() // read file size
+            val fileSizeForPercentage = fileSize
+            log("file size - $fileSize")
 
             // Check if a file with the same name already exists, generate unique name if necessary
             var file = File(downloadsDirectory, filename)
@@ -828,29 +937,18 @@ class TcpFragment : Fragment() {
                 val fileExtension = filename.getExtensionFromFilename()
                 val uniqueFileName =
                     generateUniqueFileName(downloadsDirectory.toString(), fileName, fileExtension)
-                fileNameForUi = Uri.parse(uniqueFileName).lastPathSegment
                 log("unique file name - $uniqueFileName")
                 file = File(uniqueFileName)
             }
 
-            var bytes = 0
-            var bytesForPercentage = 0L
             // Create FileOutputStream to write the received file
             val fileOutputStream = FileOutputStream(file)
 
-            // Read the expected file size
-            var fileSize: Long = reader.readLong() // read file size
-            val fileSizeForPercentage = fileSize
-
             val message = ChatMessage.FileMessage(
                 formattedTime = getCurrentTime(),
-                username = "from client",
-                filePath = Uri.fromFile(file).toString(),
-                fileName = fileNameForUi,
-                fileSize = Formatter.formatShortFileSize(
-                    requireContext(),
-                    fileSize
-                ),
+                filePath = file.path,
+                fileName = file.name,
+                fileSize = fileSize.readableFileSize(),
                 fileExtension = filename.getExtensionFromFilename(),
                 fileState = FileMessageState.Loading(0),
                 isFromYou = false
@@ -876,8 +974,8 @@ class TcpFragment : Fragment() {
                     ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
                 if (percentage != tempPercentage) {
                     log("progress - $percentage")
-                    val newState = FileMessageState.Loading(percentage)
-                    viewModel.updatePercentageOfReceivingFile(message, newState)
+//                    viewModel.updatePercentageOfReceivingFile(message, newState)
+//                    val newState = FileMessageState.Loading(percentage)
                 }
             }
             fileOutputStream.close()
@@ -885,7 +983,9 @@ class TcpFragment : Fragment() {
             viewModel.updatePercentageOfReceivingFile(message, newState)
             log("file received successfully")
         }
+//        reader.close()
     }
+
 
     private fun receiveVoiceMessage(reader: DataInputStream) {
         log("receiving file ...")
@@ -926,7 +1026,6 @@ class TcpFragment : Fragment() {
 
         val message = ChatMessage.VoiceMessage(
             formattedTime = getCurrentTime(),
-            username = "from client",
             filePath = Uri.fromFile(file).toString(),
             fileName = fileNameForUi,
             fileSize = Formatter.formatShortFileSize(
@@ -1051,7 +1150,7 @@ class TcpFragment : Fragment() {
         writer: DataOutputStream,
         messages: List<ChatMessage.FileMessage>
     ) {
-        log("sending file , writer is - $clientWriter ...")
+        log("sending file , writer is - $writer ...")
         withContext(Dispatchers.IO) {
 
             //sending file type
@@ -1063,72 +1162,77 @@ class TcpFragment : Fragment() {
             log("messages size - ${messages.size}")
 
             messages.forEach { fileMessage ->
-                try {
-                    viewModel.insertMessage(fileMessage)
+//                try {
+                val resourceDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+                val file = File(resourceDirectory, fileMessage.fileName)
+                log("sending file info: file size - ${file.length()} - ${file.name}")
 
-                    //sending file name
-                    writer.writeUTF(fileMessage.fileName)
 
-                    val uri = Uri.parse(fileMessage.filePath)
-                    val inputStream =
-                        requireContext().contentResolver.openInputStream(uri)
-                    val filePathToSave = context?.cacheDir
-                    val file = File(filePathToSave, fileMessage.fileName)
-                    val fileOutputStream = FileOutputStream(file)
-                    inputStream?.copyTo(fileOutputStream)
-                    fileOutputStream.close()
+                viewModel.insertMessage(fileMessage)
 
-                    //write length
-                    val fileSizeForPercentage = file.length()
-                    writer.writeLong(file.length())
-                    log("sending file length - ${file.length()}")
+                //sending file name
+                writer.writeUTF(fileMessage.fileName)
 
-                    var bytes: Int
-                    var bytesForPercentage = 0L
-                    val fileInputStream = FileInputStream(file)
+//                val uri = Uri.parse(fileMessage.filePath)
+//                val inputStream =
+//                    requireContext().contentResolver.openInputStream(uri)
+//                val filePathToSave = context?.cacheDir
+//                val file = File(filePathToSave, fileMessage.fileName)
+//                val fileOutputStream = FileOutputStream(file)
+//                inputStream?.copyTo(fileOutputStream)
+//                fileOutputStream.close()
 
-                    // Here we  break file into chunks
-                    val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
-                    while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
-                        // Send the file to Server Socket
-                        writer.write(buffer, 0, bytes)
-                        writer.flush()
+                //write length
+                val fileSizeForPercentage = file.length()
+                writer.writeLong(file.length())
+                log("sending file length - ${file.length()}")
 
-                        bytesForPercentage += bytes.toLong()
-                        val percentage =
-                            (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-                        val tempPercentage =
-                            ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
-                        if (percentage != tempPercentage) {
-                            withContext(Dispatchers.Main) {
-                                log("progress - $percentage")
-                                val newState = FileMessageState.Loading(percentage)
-                                viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
-                            }
+                var bytes: Int
+                var bytesForPercentage = 0L
+                val fileInputStream = FileInputStream(file)
+
+                // Here we  break file into chunks
+                val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+                while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
+                    // Send the file to Server Socket
+                    writer.write(buffer, 0, bytes)
+                    writer.flush()
+
+                    bytesForPercentage += bytes.toLong()
+                    val percentage =
+                        (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                    val tempPercentage =
+                        ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+                    if (percentage != tempPercentage) {
+                        withContext(Dispatchers.Main) {
+                            log("progress - $percentage")
+                            val newState = FileMessageState.Loading(percentage)
+                            viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
                         }
                     }
-                    // close the file here
-                    fileInputStream.close()
-                    withContext(Dispatchers.Main) {
-                        log("file sent successfully")
-                        val newState = FileMessageState.Success
-                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
-                    }
-                } catch (exception: IOException) {
-                    exception.printStackTrace()
-                    withContext(Dispatchers.Main) {
-                        log("file sent failed")
-                        val newState = FileMessageState.Failure
-                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
-                    }
-                } catch (error: Exception) {
-                    error.printStackTrace()
-                    withContext(Dispatchers.Main) {
-                        log("file sent failed")
-                        val newState = FileMessageState.Failure
-                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
-                    }
                 }
+                // close the file here
+                fileInputStream.close()
+                withContext(Dispatchers.Main) {
+                    log("file sent successfully")
+                    val newState = FileMessageState.Success
+                    viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+                }
+//                } catch (exception: IOException) {
+//                    exception.printStackTrace()
+//                    withContext(Dispatchers.Main) {
+//                        log("file sent failed")
+//                        val newState = FileMessageState.Failure
+//                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+//                    }
+//                } catch (error: Exception) {
+//                    error.printStackTrace()
+//                    withContext(Dispatchers.Main) {
+//                        log("file sent failed")
+//                        val newState = FileMessageState.Failure
+//                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+//                    }
+//                }
             }
         }
     }
@@ -1158,7 +1262,7 @@ class TcpFragment : Fragment() {
                         val reader =
                             DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
 
-                        try {
+//                        try {
                             val dataType = AppMessageType.fromChar(reader.readChar())
 
                             when (dataType) {
@@ -1179,7 +1283,6 @@ class TcpFragment : Fragment() {
                                             ContactsMessageItem::class.java
                                         )
                                     val contactMessage = ChatMessage.ContactMessage(
-                                        username = "from client",
                                         formattedTime = getCurrentTime(),
                                         contactName = contactMessageItem.contactName,
                                         contactNumber = contactMessageItem.contactNumber,
@@ -1193,7 +1296,6 @@ class TcpFragment : Fragment() {
                                     log("host incoming message - $receivedMessage")
 
                                     val message = ChatMessage.TextMessage(
-                                        username = "from client",
                                         formattedTime = getCurrentTime(),
                                         message = receivedMessage.toString(),
                                         isFromYou = false
@@ -1209,62 +1311,62 @@ class TcpFragment : Fragment() {
                                     //currently not handled
                                 }
                             }
-                        } catch (e: EOFException) {
-                            e.printStackTrace()
-                            //if the IP address of the host could not be determined.
-                            log("createServer: EOFException")
-                            connectedClientSocketOnServer.close()
-                            viewModel.updateConnectionsCount(false)
-                            log("in while - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
-                            viewModel.handleEvents(
-                                TcpScreenEvents.OnDialogErrorOccurred(
-                                    TcpScreenDialogErrors.EOException
-                                )
-                            )
-                            try {
-                                reader.close()
-                            } catch (e: IOException) {
-                                e.printStackTrace()
-                            }
-                        } catch (e: IOException) {
-                            e.printStackTrace()
-                            //the stream has been closed and the contained
-                            // input stream does not support reading after close,
-                            // or another I/O error occurs
-                            log("createServer: io exception ")
-                            viewModel.handleEvents(
-                                TcpScreenEvents.OnDialogErrorOccurred(
-                                    TcpScreenDialogErrors.IOException
-                                )
-                            )
-                            viewModel.updateConnectionsCount(false)
-                            connectedClientSocketOnServer.close()
-                            //serverSocket.close()
-                            try {
-                                reader.close()
-                            } catch (e: IOException) {
-                                e.printStackTrace()
-                                log("reader close exception - $e ")
-                            }
-                        } catch (e: UTFDataFormatException) {
-                            e.printStackTrace()
-                            /** here is firing***/
-                            //if the bytes do not represent a valid modified UTF-8 encoding of a string.
-                            log("createServer: io exception ")
-                            viewModel.handleEvents(
-                                TcpScreenEvents.OnDialogErrorOccurred(
-                                    TcpScreenDialogErrors.UTFDataFormatException
-                                )
-                            )
-                            viewModel.updateConnectionsCount(false)
-                            connectedClientSocketOnServer.close()
-                            //serverSocket.close()
-                            try {
-                                reader.close()
-                            } catch (e: IOException) {
-                                e.printStackTrace()
-                            }
-                        }
+//                        } catch (e: EOFException) {
+//                            e.printStackTrace()
+//                            //if the IP address of the host could not be determined.
+//                            log("createServer: EOFException")
+//                            connectedClientSocketOnServer.close()
+//                            viewModel.updateConnectionsCount(false)
+//                            log("in while - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
+//                            viewModel.handleEvents(
+//                                TcpScreenEvents.OnDialogErrorOccurred(
+//                                    TcpScreenDialogErrors.EOException
+//                                )
+//                            )
+//                            try {
+//                                reader.close()
+//                            } catch (e: IOException) {
+//                                e.printStackTrace()
+//                            }
+//                        } catch (e: IOException) {
+//                            e.printStackTrace()
+//                            //the stream has been closed and the contained
+//                            // input stream does not support reading after close,
+//                            // or another I/O error occurs
+//                            log("createServer: io exception ")
+//                            viewModel.handleEvents(
+//                                TcpScreenEvents.OnDialogErrorOccurred(
+//                                    TcpScreenDialogErrors.IOException
+//                                )
+//                            )
+//                            viewModel.updateConnectionsCount(false)
+//                            connectedClientSocketOnServer.close()
+//                            //serverSocket.close()
+//                            try {
+//                                reader.close()
+//                            } catch (e: IOException) {
+//                                e.printStackTrace()
+//                                log("reader close exception - $e ")
+//                            }
+//                        } catch (e: UTFDataFormatException) {
+//                            e.printStackTrace()
+//                            /** here is firing***/
+//                            //if the bytes do not represent a valid modified UTF-8 encoding of a string.
+//                            log("createServer: io exception ")
+//                            viewModel.handleEvents(
+//                                TcpScreenEvents.OnDialogErrorOccurred(
+//                                    TcpScreenDialogErrors.UTFDataFormatException
+//                                )
+//                            )
+//                            viewModel.updateConnectionsCount(false)
+//                            connectedClientSocketOnServer.close()
+//                            //serverSocket.close()
+//                            try {
+//                                reader.close()
+//                            } catch (e: IOException) {
+//                                e.printStackTrace()
+//                            }
+//                        }
                     }
                 }
             } catch (e: IOException) {
@@ -1323,13 +1425,7 @@ class TcpFragment : Fragment() {
         log("unique device id - $uniqueDeviceId")
         val isUserExist = viewModel.checkForUserExistence(uniqueDeviceId)
         log("isUserExist - $isUserExist")
-        if (isUserExist) {
-            //user found, load chat history
-            viewModel.loadChatHistory(uniqueDeviceId)
-        } else {
-            //user not found, create new chat history with associated user id
-            viewModel.createNewChatHistory(uniqueDeviceId)
-        }
+        viewModel.loadChatHistory(uniqueDeviceId)
     }
 
     private fun connectToServer(serverIpAddress: String, serverPort: Int) {
@@ -1349,7 +1445,7 @@ class TcpFragment : Fragment() {
             while (!clientSocket.isClosed) {
                 val reader = DataInputStream(BufferedInputStream(clientSocket.getInputStream()))
 
-                try {
+//                try {
                     val dataType = AppMessageType.fromChar(reader.readChar())
                     log("incoming message type - $dataType")
 
@@ -1367,7 +1463,6 @@ class TcpFragment : Fragment() {
                             log("host incoming message - $receivedMessage")
 
                             val message = ChatMessage.TextMessage(
-                                username = "from client",
                                 formattedTime = getCurrentTime(),
                                 message = receivedMessage.toString(),
                                 isFromYou = false
@@ -1381,7 +1476,6 @@ class TcpFragment : Fragment() {
                             val contactMessageItem =
                                 gson.fromJson(receivedMessage, ContactsMessageItem::class.java)
                             val contactMessage = ChatMessage.ContactMessage(
-                                username = "from client",
                                 formattedTime = getCurrentTime(),
                                 contactName = contactMessageItem.contactName,
                                 contactNumber = contactMessageItem.contactNumber,
@@ -1396,54 +1490,54 @@ class TcpFragment : Fragment() {
 
                         AppMessageType.UNKNOWN -> {}
                     }
-                } catch (e: EOFException) {
-                    e.printStackTrace()
-                    //if the IP address of the host could not be determined.
-                    log("connectToServer: EOFException ")
-                    viewModel.handleEvents(
-                        TcpScreenEvents.OnDialogErrorOccurred(
-                            TcpScreenDialogErrors.EOException
-                        )
-                    )
-
-                    try {
-                        reader.close()
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                    //the stream has been closed and the contained
-                    // input stream does not support reading after close,
-                    // or another I/O error occurs
-                    log("connectToServer: io exception ")
-                    viewModel.updateClientConnectionStatus(ClientConnectionStatus.Failure)
-                    viewModel.updateConnectionsCount(false)
-                    viewModel.handleEvents(
-                        TcpScreenEvents.OnDialogErrorOccurred(
-                            TcpScreenDialogErrors.IOException
-                        )
-                    )
-                    try {
-                        reader.close()
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
-                } catch (e: UTFDataFormatException) {
-                    e.printStackTrace()
-                    //if the bytes do not represent a valid modified UTF-8 encoding of a string.
-                    log("connectToServer: io exception ")
-                    viewModel.handleEvents(
-                        TcpScreenEvents.OnDialogErrorOccurred(
-                            TcpScreenDialogErrors.UTFDataFormatException
-                        )
-                    )
-                    try {
-                        reader.close()
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
-                }
+//                } catch (e: EOFException) {
+//                    e.printStackTrace()
+//                    //if the IP address of the host could not be determined.
+//                    log("connectToServer: EOFException ")
+//                    viewModel.handleEvents(
+//                        TcpScreenEvents.OnDialogErrorOccurred(
+//                            TcpScreenDialogErrors.EOException
+//                        )
+//                    )
+//
+//                    try {
+//                        reader.close()
+//                    } catch (e: IOException) {
+//                        e.printStackTrace()
+//                    }
+//                } catch (e: IOException) {
+//                    e.printStackTrace()
+//                    //the stream has been closed and the contained
+//                    // input stream does not support reading after close,
+//                    // or another I/O error occurs
+//                    log("connectToServer: io exception ")
+//                    viewModel.updateClientConnectionStatus(ClientConnectionStatus.Failure)
+//                    viewModel.updateConnectionsCount(false)
+//                    viewModel.handleEvents(
+//                        TcpScreenEvents.OnDialogErrorOccurred(
+//                            TcpScreenDialogErrors.IOException
+//                        )
+//                    )
+//                    try {
+//                        reader.close()
+//                    } catch (e: IOException) {
+//                        e.printStackTrace()
+//                    }
+//                } catch (e: UTFDataFormatException) {
+//                    e.printStackTrace()
+//                    //if the bytes do not represent a valid modified UTF-8 encoding of a string.
+//                    log("connectToServer: io exception ")
+//                    viewModel.handleEvents(
+//                        TcpScreenEvents.OnDialogErrorOccurred(
+//                            TcpScreenDialogErrors.UTFDataFormatException
+//                        )
+//                    )
+//                    try {
+//                        reader.close()
+//                    } catch (e: IOException) {
+//                        e.printStackTrace()
+//                    }
+//                }
             }
         } catch (exception: UnknownHostException) {
             exception.printStackTrace()
@@ -1640,5 +1734,3 @@ class TcpFragment : Fragment() {
     }
 
 }
-
-

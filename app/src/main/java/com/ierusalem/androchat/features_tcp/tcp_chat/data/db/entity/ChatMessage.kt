@@ -3,23 +3,22 @@ package com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity
 import com.ierusalem.androchat.core.app.AppMessageType
 
 sealed interface ChatMessage {
-
-    val username: String
+    val messageId: Long
     val formattedTime: String
     val isFromYou: Boolean
     val messageType: AppMessageType
 
     data class TextMessage(
+        override val messageId: Long = 0L,
         override val formattedTime: String,
-        override val username: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.TEXT,
         val message: String
     ) : ChatMessage
 
     data class FileMessage(
+        override val messageId: Long = 0L,
         override val formattedTime: String,
-        override val username: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.FILE,
         val filePath: String,
@@ -30,8 +29,8 @@ sealed interface ChatMessage {
     ) : ChatMessage
 
     data class VoiceMessage(
+        override val messageId: Long = 0L,
         override val formattedTime: String,
-        override val username: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.VOICE,
         val duration: Long,
@@ -43,8 +42,8 @@ sealed interface ChatMessage {
     ) : ChatMessage
 
     data class ContactMessage(
+        override val messageId: Long = 0L,
         override val formattedTime: String,
-        override val username: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.CONTACT,
         val contactName: String,

@@ -33,7 +33,9 @@ object AppModule {
             application,
             MessagesDatabase::class.java,
             Constants.MESSAGES_DATABASE_NAME
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides

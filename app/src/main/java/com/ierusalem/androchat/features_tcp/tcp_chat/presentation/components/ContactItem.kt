@@ -103,7 +103,6 @@ private fun PreviewLightContactItem() {
     AndroChatTheme {
         ContactItem(
             message = ChatMessage.ContactMessage(
-                username = "Hasn",
                 formattedTime = "12:12:12, jul 12 2034",
                 contactNumber = "93 337 36 46",
                 contactName = "Anorov Hasan",
@@ -120,7 +119,6 @@ private fun PreviewDarkContactItem() {
     AndroChatTheme(isDarkTheme = true) {
         ContactItem(
             message = ChatMessage.ContactMessage(
-                username = "Hasn",
                 formattedTime = "12:12:12, jul 12 2034",
                 contactNumber = "93 337 36 46",
                 contactName = "Anorov Hasan",

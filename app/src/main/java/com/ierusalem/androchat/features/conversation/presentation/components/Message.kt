@@ -118,7 +118,7 @@ private fun AuthorNameTimestamp(
     // Combine author and timestamp for a11y.
     Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
-            text = message.username,
+            text = "message.username",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .alignBy(LastBaseline)
@@ -143,8 +143,8 @@ private fun PreviewMessage() {
             message = ChatMessage.TextMessage(
                 message =("Hello it is a text"),
                 formattedTime = "12:32",
-                username = "Hasan",
-                isFromYou = false
+                isFromYou = false,
+                messageId = 23431241
             ),
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,
