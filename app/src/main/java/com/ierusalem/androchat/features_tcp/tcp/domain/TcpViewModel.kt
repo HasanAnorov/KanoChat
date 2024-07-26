@@ -18,6 +18,7 @@ import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.constants.Constants.getCurrentTime
 import com.ierusalem.androchat.core.constants.Constants.getTimeInHours
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
@@ -61,7 +62,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.Calendar
 import javax.inject.Inject
 
 @HiltViewModel
@@ -85,6 +85,26 @@ class TcpViewModel @Inject constructor(
         initializeAuthorMe()
         initializeHotspotName()
         listenWifiConnections()
+        audioPlayer.onFinished {
+            resetAudioPlayerUi()
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            audioPlayer.playTiming.collect{
+                _state.update { state ->
+                    state.copy(
+                        audioPlayTiming = it.toLong()
+                    )
+                }
+            }
+        }
+    }
+
+    private fun resetAudioPlayerUi() {
+        _state.update {
+            it.copy(
+                isAudioPlaying = false
+            )
+        }
     }
 
     private fun updatePeerUserUniqueId(userUniqueId: String) {
@@ -339,7 +359,7 @@ class TcpViewModel @Inject constructor(
         currentAudioFile
         val voiceMessage = ChatMessage.VoiceMessage(
             username = state.value.authorMe,
-            formattedTime = Calendar.getInstance().time.toString(),
+            formattedTime = getCurrentTime(),
             isFromYou = true,
             filePath = currentAudioFile.toUri().toString(),
             fileName = currentAudioFile.name,
@@ -374,23 +394,31 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    private fun updateIsPlaying(isPlaying: Boolean) {
+        _state.update {
+            it.copy(
+                isAudioPlaying = isPlaying
+            )
+        }
+    }
+
+
     @SuppressLint("MissingPermission")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
-
-            //you did not use the parameter inside on play voice message
+            //todo - you did not use the parameter inside on play voice message
             is TcpScreenEvents.OnPlayVoiceMessageClick -> {
-                log("on play clicked")
+                updateIsPlaying(true)
                 audioPlayer.playFile(currentAudioFile)
             }
 
             is TcpScreenEvents.OnPauseVoiceMessageClick -> {
-                log("on pause clicked")
+                updateIsPlaying(false)
                 audioPlayer.pause()
             }
 
             is TcpScreenEvents.OnStopVoiceMessageClick -> {
-                log("on stop clicked")
+                updateIsPlaying(false)
                 audioPlayer.stop()
             }
 
@@ -547,12 +575,11 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.SendMessageRequest -> {
-                val currentTime = Calendar.getInstance().time.toString()
                 val username = state.value.authorMe
                 val message = ChatMessage.TextMessage(
                     username = username,
                     message = event.message,
-                    formattedTime = currentTime,
+                    formattedTime = getCurrentTime(),
                     isFromYou = true
                 )
 

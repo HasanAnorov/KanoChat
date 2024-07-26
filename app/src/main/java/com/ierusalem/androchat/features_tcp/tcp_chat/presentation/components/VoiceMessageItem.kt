@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -27,6 +28,7 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.CircularProgressBar
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.log
+import com.ierusalem.androchat.core.utils.millisecondsToTime
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 
@@ -62,14 +64,13 @@ fun VoiceMessageItem(
                     FileMessageState.Success -> {
                         IconButton(
                             onClick = {
-                                onPlayClick()
-                                //if (isPlaying) onPauseClick() else onPlayClick()
+                                if (isPlaying) onPauseClick() else onPlayClick()
                             }
                         ) {
                             val icon =
                                 if (isPlaying) R.drawable.pause_circle_fill else R.drawable.play_circle_fill
                             Icon(
-                                modifier = Modifier.size(32.dp),
+                                modifier = Modifier.size(42.dp),
                                 painter = painterResource(id = icon),
                                 contentDescription = null
                             )
@@ -106,16 +107,40 @@ fun VoiceMessageItem(
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    val customPadding = if (isPlaying) 0.dp else 16.dp
                     LinearProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = customPadding),
                         progress = { 0.7F },
                         trackColor = MaterialTheme.colorScheme.tertiary,
                     )
-                    Text(
-                        modifier = Modifier.padding(top = 4.dp),
-                        text = (message.duration/1000).toString(),
-                        color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
-                        style = MaterialTheme.typography.titleSmall
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        if (isPlaying){
+                            Text(
+                                modifier = Modifier.padding(top = 4.dp),
+                                text = message.duration.millisecondsToTime(),
+                                color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                            Text(
+                                modifier = Modifier.padding(top = 4.dp),
+                                text = " / ",
+                                color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                        }
+                        Text(
+                            modifier = Modifier.padding(top = 4.dp),
+                            text = message.duration.millisecondsToTime(),
+                            color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    }
                     Text(
                         text = message.formattedTime,
                         color = MaterialTheme.colorScheme.outline.copy(0.8F),

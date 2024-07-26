@@ -45,7 +45,8 @@ fun LocalMessageItem(
     onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
     onPlayVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
-    onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit
+    onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
+    isVoiceMessagePlaying: Boolean,
 ) {
     val borderColor = if (msg.isFromYou) {
         MaterialTheme.colorScheme.primary
@@ -84,7 +85,8 @@ fun LocalMessageItem(
             onContactItemClick = onContactItemClick,
             onPlayVoiceMessageClick = { onPlayVoiceMessageClick(it) },
             onPauseVoiceMessageClick = { onPauseVoiceMessageClick(it) },
-            onStopVoiceMessageClick = { onStopVoiceMessageClick(it) }
+            onStopVoiceMessageClick = { onStopVoiceMessageClick(it) },
+            isVoiceMessagePlaying = isVoiceMessagePlaying
         )
     }
 }
@@ -99,7 +101,8 @@ fun AuthorAndTextMessage(
     onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
     onPlayVoiceMessageClick:(ChatMessage.VoiceMessage)-> Unit,
     onPauseVoiceMessageClick:(ChatMessage.VoiceMessage) -> Unit,
-    onStopVoiceMessageClick:(ChatMessage.VoiceMessage) -> Unit
+    onStopVoiceMessageClick:(ChatMessage.VoiceMessage) -> Unit,
+    isVoiceMessagePlaying: Boolean,
 ) {
     Column(modifier = modifier) {
         if (isLastMessageByAuthor) {
@@ -115,7 +118,8 @@ fun AuthorAndTextMessage(
                     message = msg,
                     onPlayClick = { onPlayVoiceMessageClick(msg) },
                     onPauseClick = { onPauseVoiceMessageClick(msg) },
-                    onStopClick = { onStopVoiceMessageClick(msg) }
+                    onStopClick = { onStopVoiceMessageClick(msg) },
+                    isPlaying = isVoiceMessagePlaying
                 )
             }
 
@@ -196,6 +200,7 @@ private fun PreviewMessage() {
                 username = "Owner",
                 isFromYou = true
             ),
+            isVoiceMessagePlaying = false,
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,
             onFileItemClick = {},

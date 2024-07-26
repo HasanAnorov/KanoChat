@@ -2,7 +2,9 @@ package com.ierusalem.androchat.core.constants
 
 import com.ierusalem.androchat.core.app.AppLanguage
 import java.io.File
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 object Constants {
 
@@ -83,7 +85,20 @@ object Constants {
     }
 
     fun getCurrentTime(): String {
-        return Calendar.getInstance().time.toString()
+        val calendar = Calendar.getInstance()
+        val currentHour = calendar.get(Calendar.HOUR)
+        val currentMinute = calendar.get(Calendar.MINUTE)
+        val currentSecond = calendar.get(Calendar.SECOND)
+
+        val currentDate = calendar.get(Calendar.DATE)
+
+        val currentYear = calendar.get(Calendar.YEAR)
+
+        val monthDate = SimpleDateFormat("MMM", Locale.getDefault())
+        val currentShortMontName = monthDate.format(calendar.time)
+        val currentTime = "$currentHour:$currentMinute:$currentSecond, $currentShortMontName $currentDate $currentYear"
+
+        return currentTime
     }
 
     fun getTimeInHours(): String {

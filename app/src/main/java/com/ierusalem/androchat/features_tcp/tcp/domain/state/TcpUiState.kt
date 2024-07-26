@@ -64,6 +64,10 @@ data class TcpScreenUiState(
     //to disable user scroll enabling in view pager
     val isRecording:Boolean = false,
 
+    //todo - for voice message, delegate this state to voice message item
+    val isAudioPlaying: Boolean = false,
+    val audioPlayTiming: Long = 0,
+
 )
 
 enum class LocalOnlyHotspotStatus(@StringRes val res: Int, @DrawableRes val icon: Int){

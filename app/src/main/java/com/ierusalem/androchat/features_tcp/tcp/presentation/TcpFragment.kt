@@ -112,7 +112,6 @@ import java.io.UTFDataFormatException
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.UnknownHostException
-import java.util.Calendar
 import kotlin.math.min
 
 @AndroidEntryPoint
@@ -843,9 +842,8 @@ class TcpFragment : Fragment() {
             var fileSize: Long = reader.readLong() // read file size
             val fileSizeForPercentage = fileSize
 
-            val currentTime = Calendar.getInstance().time
             val message = ChatMessage.FileMessage(
-                formattedTime = currentTime.toString(),
+                formattedTime = getCurrentTime(),
                 username = "from client",
                 filePath = Uri.fromFile(file).toString(),
                 fileName = fileNameForUi,
@@ -926,9 +924,8 @@ class TcpFragment : Fragment() {
         var fileSize: Long = reader.readLong() // read file size
         val fileSizeForPercentage = fileSize
 
-        val currentTime = Calendar.getInstance().time
         val message = ChatMessage.VoiceMessage(
-            formattedTime = currentTime.toString(),
+            formattedTime = getCurrentTime(),
             username = "from client",
             filePath = Uri.fromFile(file).toString(),
             fileName = fileNameForUi,
@@ -1195,10 +1192,9 @@ class TcpFragment : Fragment() {
                                     val receivedMessage = reader.readUTF()
                                     log("host incoming message - $receivedMessage")
 
-                                    val currentTime = Calendar.getInstance().time
                                     val message = ChatMessage.TextMessage(
                                         username = "from client",
-                                        formattedTime = currentTime.toString(),
+                                        formattedTime = getCurrentTime(),
                                         message = receivedMessage.toString(),
                                         isFromYou = false
                                     )

@@ -118,7 +118,8 @@ fun LocalConversationContent(
                                 it
                             )
                         )
-                    }
+                    },
+                    isVoiceMessagePlaying = uiState.isAudioPlaying
                 )
                 LocalConversationUserInput(
                     // let this element handle the padding so that the elevation is shown behind the
@@ -196,7 +197,8 @@ fun Messages(
     onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
     onPlayVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
-    onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit
+    onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
+    isVoiceMessagePlaying: Boolean,
 ) {
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
@@ -224,7 +226,8 @@ fun Messages(
                     onContactItemClick = onContactItemClick,
                     onPlayVoiceMessageClick = {onPlayVoiceMessageClick(it)},
                     onPauseVoiceMessageClick = {onPauseVoiceMessageClick(it)},
-                    onStopVoiceMessageClick = {onStopVoiceMessageClick(it)}
+                    onStopVoiceMessageClick = {onStopVoiceMessageClick(it)},
+                    isVoiceMessagePlaying = isVoiceMessagePlaying
                 )
             }
         }
