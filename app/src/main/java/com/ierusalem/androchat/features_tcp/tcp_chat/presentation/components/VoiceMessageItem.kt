@@ -169,7 +169,6 @@ private fun PreviewLightVoiceMessageItem() {
                 modifier = Modifier,
                 message = ChatMessage.VoiceMessage(
                     formattedTime = "12:12:12, jul 12 2034",
-                    username = "Hasan",
                     fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
@@ -195,7 +194,6 @@ private fun PreviewDarkVoiceMessageItem() {
                 modifier = Modifier,
                 message = ChatMessage.VoiceMessage(
                     formattedTime = "12:12:12, jul 12 2034",
-                    username = "Hasan",
                     fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",

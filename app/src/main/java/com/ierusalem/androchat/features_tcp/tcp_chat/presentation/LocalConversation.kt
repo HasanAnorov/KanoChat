@@ -214,10 +214,11 @@ fun Messages(
                 Spacer(modifier = Modifier.height(32.dp))
             }
             itemsIndexed(messages) { index, message ->
-                val prevAuthor = messages.getOrNull(index - 1)?.username
-                val nextAuthor = messages.getOrNull(index + 1)?.username
-                val isFirstMessageByAuthor = prevAuthor != message.username
-                val isLastMessageByAuthor = nextAuthor != message.username
+                /// todo: fix this
+                val prevAuthor = messages.getOrNull(index - 1)?.isFromYou
+                val nextAuthor = messages.getOrNull(index + 1)?.isFromYou
+                val isFirstMessageByAuthor = prevAuthor != message.isFromYou
+                val isLastMessageByAuthor = nextAuthor != message.isFromYou
                 LocalMessageItem(
                     msg = message,
                     isFirstMessageByAuthor = isFirstMessageByAuthor,
@@ -284,7 +285,6 @@ private fun PreviewLocalChatItemBubble() {
     AndroChatTheme {
         LocalMessageItem(
             message = ChatMessage.TextMessage(
-                username = "Hasn",
                 formattedTime = "12:12:12, jul 12 2034",
                 message = "Assalom alekum aka yaxshimisiz",
                 isFromYou = true
@@ -302,7 +302,6 @@ private fun PreviwLightFileItem() {
             modifier = Modifier,
             message = ChatMessage.FileMessage(
                 formattedTime = "12:12:12, jul 12 2034",
-                username = "Hasan",
                 fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                 fileSize = "16 Kb",
                 fileExtension = ".pdf",
@@ -322,7 +321,6 @@ private fun PreviewDarkFileItem() {
             modifier = Modifier,
             message = ChatMessage.FileMessage(
                 formattedTime = "12:12:12, jul 12 2034",
-                username = "Hasan",
                 fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                 fileSize = "16 Kb",
                 fileExtension = ".pdf",

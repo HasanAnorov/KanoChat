@@ -142,7 +142,6 @@ private fun PreviewLightFileItem() {
                 modifier = Modifier,
                 message = ChatMessage.FileMessage(
                     formattedTime = "12:12:12, jul 12 2034",
-                    username = "Hasan",
                     fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
@@ -164,7 +163,6 @@ private fun PreviewDarkFileItem() {
                 modifier = Modifier,
                 message = ChatMessage.FileMessage(
                     formattedTime = "12:12:12, jul 12 2034",
-                    username = "Hasan",
                     fileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",

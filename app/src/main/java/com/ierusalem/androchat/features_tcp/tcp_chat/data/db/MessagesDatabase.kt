@@ -4,11 +4,11 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.dao.MessagesDao
-import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.UserMessages
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessageEntity
 
 @Database(
-    entities = [UserMessages::class],
-    version = 1
+    entities = [ChatMessageEntity::class],
+    version = 2,
 )
 @TypeConverters(Converters::class)
 abstract class MessagesDatabase: RoomDatabase() {
