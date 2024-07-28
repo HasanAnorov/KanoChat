@@ -142,7 +142,7 @@
 
     <!--    TcpScreenDialog Errors strings-->
     <string name="network_error_occurred">Network Error Occurred</string>
-    <string name="your_network_connection_was_interrupted_check_your_connection_and_try_again">Network connection with your peer has interrupted. Check your connection and try again.</string>
+    <string name="your_network_connection_was_interrupted_check_your_connection_and_try_again">Network connection with your peer has been interrupted. Check your connection and try again.</string>
     <string name="close_lowercase">Close</string>
     <string name="incoming_messages_are_not_in_utf_8_format_the_data_do_not_represent_a_valid_modified_utf_8_encoding_of_a_string">Incoming messages are not in UTF-8 format, the data do not represent a valid modified UTF-8 encoding of a string</string>
     <string name="the_ip_address_of_the_host_could_not_be_determined">The IP address of the host could not be determined</string>
@@ -175,7 +175,7 @@
     <string name="share">Share</string>
     <string name="contact">contact</string>
     <string name="contacts_lowercase">contacts</string>
-    <string name="ok">Ok</string>
+    <string name="OK">@android:string/ok</string>
     <string name="permission_required">Permission Required</string>
     <string name="contacts_denied">It seems you permanently declined read-contacts permission. \nYou can go to the app settings to grant it.</string>
     <string name="contacts_permission_request">This app needs access to your contacts to share! Please grant it!</string>
@@ -186,7 +186,7 @@
     <!-- Dialog Errors strings-->
     <string name="couldn_t_create_a_server">Could not create a server</string>
     <string name="couldn_t_connect_to_server">Could not connect to server</string>
-    <string name="launching_hotspot">Launching hotspot ...</string>
+    <string name="launching_hotspot">Launching hotspot …</string>
     <string name="couldn_t_launch_hotspot">Could not launch hotspot</string>
     <string name="peer_networking_is_running_cancel_it_to_create_group_networking">Peer Networking is running, cancel it to create Group Networking!</string>
     <string name="peer_networking_is_running">Peer Networking is running</string>

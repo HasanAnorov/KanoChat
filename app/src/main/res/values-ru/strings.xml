@@ -137,8 +137,8 @@
     <string name="try_to_reconnect_to_the_server_again_current_address_is_invalid">Попробуйте снова подключиться к серверу, текущий адрес недействителен!</string>
 
     <!--    TcpScreenDialog Errors strings-->
-    <string name="network_error_occurred">Произошла сетевая ошибка</string>
-    <string name="your_network_connection_was_interrupted_check_your_connection_and_try_again">Network connection with your peer has interrupted. Check your connection and try again.</string>
+    <string name="network_error_occurred">Произошла сетевая ошибка</string>Сетевое соединение с вашим пиром было прервано. Проверьте соединение и повторите попытку.
+    <string name="your_network_connection_was_interrupted_check_your_connection_and_try_again">Network connection with your peer has been interrupted. Check your connection and try again.</string>
     <string name="close_lowercase">Закрывать</string>
     <string name="incoming_messages_are_not_in_utf_8_format_the_data_do_not_represent_a_valid_modified_utf_8_encoding_of_a_string">Входящие сообщения не в формате UTF-8, данные не представляют собой допустимую модифицированную кодировку строки UTF-8.</string>
     <string name="the_ip_address_of_the_host_could_not_be_determined">IP-адрес хоста не удалось определить</string>
@@ -171,7 +171,7 @@
     <string name="share">Делиться</string>
     <string name="contact">контакт</string>
     <string name="contacts_lowercase">контакты</string>
-    <string name="ok">Хорошо</string>
+    <string name="OK">Хорошо</string>
     <string name="permission_required">Требуется разрешение</string>
     <string name="contacts_denied">Кажется, вы навсегда отклонили разрешение на чтение контактов. \Вы можете перейти в настройки приложения, чтобы предоставить его.</string>
     <string name="contacts_permission_request">Чтобы поделиться этим приложением, необходим доступ к вашим контактам! Пожалуйста, даруйте это!</string>
@@ -182,7 +182,7 @@
     <!-- Dialog Errors strings-->
     <string name="couldn_t_create_a_server">Не удалось создать сервер</string>
     <string name="couldn_t_connect_to_server">Не удалось подключиться к серверу</string>
-    <string name="launching_hotspot">Запускаем точку доступа...</string>
+    <string name="launching_hotspot">Запускаем точку доступа…</string>
     <string name="couldn_t_launch_hotspot">Не удалось запустить точку доступа</string>
     <string name="peer_networking_is_running_cancel_it_to_create_group_networking">Одноранговая сеть запущена. Отмените ее, чтобы создать групповую сеть!</string>
     <string name="peer_networking_is_running">Одноранговая сеть работает</string>

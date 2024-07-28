@@ -38,7 +38,7 @@ fun PermissionDialog(
                         text = if (isPermanentlyDeclined) {
                             stringResource(R.string.give_permission)
                         } else {
-                            stringResource(R.string.ok)
+                            stringResource(R.string.OK)
                         },
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,

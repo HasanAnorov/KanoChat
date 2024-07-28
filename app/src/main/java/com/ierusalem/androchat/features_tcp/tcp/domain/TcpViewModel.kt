@@ -50,7 +50,6 @@ import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavi
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.dao.MessagesDao
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessageEntity
-import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -852,6 +851,7 @@ class TcpViewModel @Inject constructor(
             }
 
             HostConnectionStatus.Failure -> {
+                log("on general connection status changed 6")
                 _state.update {
                     it.copy(
                         hostConnectionStatus = status,
@@ -987,21 +987,16 @@ class TcpViewModel @Inject constructor(
     }
 
     fun updatePercentageOfReceivingFile(message: ChatMessage) {
-        log("updatePercentageOfReceivingFile - $message")
         when (message) {
+            //todo - this should be same for voice message
             is ChatMessage.FileMessage -> {
                 viewModelScope.launch(Dispatchers.IO) {
                     val newFileState = message.fileState
                     messagesDao.updateFileMessage(messageId = message.messageId, newFileState = newFileState)
-
-                    messagesDao.getMessage(message.messageId).collect {
-                        log("updated message - $it")
-                    }
                 }
             }
 
-            is ChatMessage.VoiceMessage -> {
-            }
+            is ChatMessage.VoiceMessage -> {}
 
             else -> return
         }

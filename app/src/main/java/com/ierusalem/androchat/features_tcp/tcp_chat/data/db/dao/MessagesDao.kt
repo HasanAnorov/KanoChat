@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 import kotlinx.coroutines.flow.Flow
@@ -22,10 +21,7 @@ interface MessagesDao {
     suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState)
 
     @Query("SELECT * FROM messages where id = :messageId")
-    fun getMessage(messageId: Long): Flow<ChatMessageEntity>
-
-    @Update
-    suspend fun updateMessage(message: ChatMessageEntity)
+    fun getMessageById(messageId: Long): Flow<ChatMessageEntity>
 
     @Query("SELECT * FROM messages WHERE userId = :userId")
     fun getUserMessagesById(userId: String): Flow<List<ChatMessageEntity>>
