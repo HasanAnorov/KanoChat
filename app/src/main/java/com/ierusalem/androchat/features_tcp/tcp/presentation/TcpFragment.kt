@@ -138,6 +138,7 @@ class TcpFragment : Fragment() {
     private lateinit var clientSocket: Socket
     private lateinit var clientWriter: DataOutputStream
 
+
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -176,10 +177,13 @@ class TcpFragment : Fragment() {
         }
     }
 
+    private lateinit var resourceDirectory: File
+
     //1-fragment lifecycle callback
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         gson = Gson()
+        resourceDirectory = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")!!
     }
 
     private val readContactsPermissionLauncher =
@@ -200,8 +204,6 @@ class TcpFragment : Fragment() {
                 val intent: Intent = result.data!!
                 val uri = intent.data!!
 
-                val resourceDirectory =
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
                 if (!resourceDirectory.exists()) {
                     resourceDirectory.mkdir()
                 }
@@ -596,43 +598,12 @@ class TcpFragment : Fragment() {
                 lifecycleScope.launch(Dispatchers.IO) {
                     when (viewModel.state.value.generalConnectionStatus) {
                         GeneralConnectionStatus.Idle -> {
-                            navigation.medias.forEach { imageUri ->
-
-                                val resourceDirectory =
-                                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
-                                if (!resourceDirectory.exists()) {
-                                    resourceDirectory.mkdir()
-                                }
-
-                                val fileName =
-                                    imageUri.getFileNameFromUri(contentResolver = requireContext().contentResolver)
-                                var file = File(resourceDirectory, fileName)
-                                if (file.exists()) {
-                                    log("same file found in folder, generating unique name ...")
-                                    val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
-                                    log("file name without ext - $fileNameWithoutExt")
-                                    val uniqueFileName =
-                                        generateUniqueFileName(
-                                            resourceDirectory.toString(),
-                                            fileNameWithoutExt,
-                                            file.extension
-                                        )
-                                    log("unique file name - $uniqueFileName")
-                                    file = File(uniqueFileName)
-                                }
-
-                                val inputStream = requireContext().contentResolver.openInputStream(imageUri)
-                                val fileOutputStream = FileOutputStream(file)
-                                inputStream?.copyTo(fileOutputStream)
-                                fileOutputStream.close()
-                            }
+                            //todo - show error for idling
                         }
                         GeneralConnectionStatus.ConnectedAsHost -> {
                             val fileMessages = mutableListOf<ChatMessage.FileMessage>()
                             navigation.medias.forEach { imageUri ->
 
-                                val resourceDirectory =
-                                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
                                 if (!resourceDirectory.exists()) {
                                     resourceDirectory.mkdir()
                                 }
@@ -674,8 +645,7 @@ class TcpFragment : Fragment() {
                         GeneralConnectionStatus.ConnectedAsClient -> {
                             val fileMessages = mutableListOf<ChatMessage.FileMessage>()
                             navigation.medias.forEach { imageUri ->
-                                val resourceDirectory =
-                                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+
                                 if (!resourceDirectory.exists()) {
                                     resourceDirectory.mkdir()
                                 }
@@ -722,23 +692,10 @@ class TcpFragment : Fragment() {
 
             is TcpScreenNavigation.OnFileItemClick -> {
                 try {
-                    val file: File
-                    if (navigation.message.isFromYou) {
-                        //todo optimize this later
-                        val uri = Uri.parse(navigation.message.filePath)
-                        val inputStream =
-                            requireContext().contentResolver.openInputStream(uri)
-                        val filePathToSave = context?.cacheDir
-                        file = File(filePathToSave, navigation.message.fileName)
-                        val fileOutputStream = FileOutputStream(file)
-                        inputStream?.copyTo(fileOutputStream)
-                        fileOutputStream.close()
-                    } else {
-                        file = File(
-                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}"),
-                            navigation.message.fileName
-                        )
-                    }
+                    val file = File(
+                        resourceDirectory,
+                        navigation.message.fileName
+                    )
                     val uri: Uri = FileProvider.getUriForFile(
                         requireContext(),
                         FILE_PROVIDER_AUTHORITY,
@@ -747,6 +704,7 @@ class TcpFragment : Fragment() {
                     //todo optimize this later
                     val uriX = Uri.parse(navigation.message.filePath)
                     val mimeType = uriX.getMimeType(requireContext())
+                    log("on file open - $mimeType - $uri - $uriX")
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         setDataAndType(uri, mimeType)
                         addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
@@ -896,11 +854,10 @@ class TcpFragment : Fragment() {
 
     private fun receiveFile(reader: DataInputStream) {
         log("receiving file ...")
-        val downloadsDirectory =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
-        if (!downloadsDirectory.exists()) {
-            downloadsDirectory.mkdirs()
-            log("Created directory: ${downloadsDirectory.absolutePath}")
+
+        if (!resourceDirectory.exists()) {
+            resourceDirectory.mkdirs()
+            log("Created directory: ${resourceDirectory.absolutePath}")
         }
 
         val fileCount = reader.readInt()
@@ -922,13 +879,13 @@ class TcpFragment : Fragment() {
             log("file size - $fileSize")
 
             // Check if a file with the same name already exists, generate unique name if necessary
-            var file = File(downloadsDirectory, filename)
+            var file = File(resourceDirectory, filename)
             if (file.exists()) {
                 log("same file found in folder, generating unique name ...")
                 val fileName = filename.getFileNameWithoutExtension()
                 val fileExtension = filename.getExtensionFromFilename()
                 val uniqueFileName =
-                    generateUniqueFileName(downloadsDirectory.toString(), fileName, fileExtension)
+                    generateUniqueFileName(resourceDirectory.toString(), fileName, fileExtension)
                 log("unique file name - $uniqueFileName")
                 file = File(uniqueFileName)
             }
@@ -984,11 +941,10 @@ class TcpFragment : Fragment() {
     private fun receiveVoiceMessage(reader: DataInputStream) {
         log("receiving file ...")
 
-        val downloadsDirectory =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
-        if (!downloadsDirectory.exists()) {
-            downloadsDirectory.mkdirs()
-            log("Created directory: ${downloadsDirectory.absolutePath}")
+
+        if (!resourceDirectory.exists()) {
+            resourceDirectory.mkdirs()
+            log("Created directory: ${resourceDirectory.absolutePath}")
         }
 
         //reading file name
@@ -997,13 +953,13 @@ class TcpFragment : Fragment() {
         log("Expected file name - $filename")
 
         // Check if a file with the same name already exists, generate unique name if necessary
-        var file = File(downloadsDirectory, filename)
+        var file = File(resourceDirectory, filename)
         if (file.exists()) {
             log("same file found in folder, generating unique name ...")
             val fileName = filename.getFileNameWithoutExtension()
             val fileExtension = filename.getExtensionFromFilename()
             val uniqueFileName =
-                generateUniqueFileName(downloadsDirectory.toString(), fileName, fileExtension)
+                generateUniqueFileName(resourceDirectory.toString(), fileName, fileExtension)
             fileNameForUi = Uri.parse(uniqueFileName).lastPathSegment
             log("unique file name - $uniqueFileName")
             file = File(uniqueFileName)
@@ -1164,7 +1120,7 @@ class TcpFragment : Fragment() {
 
             messages.forEach { fileMessage ->
 //                try {
-                val resourceDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+
                 val file = File(resourceDirectory, fileMessage.fileName)
                 log("sending file info: file size - ${file.length()} - ${file.name}")
 
