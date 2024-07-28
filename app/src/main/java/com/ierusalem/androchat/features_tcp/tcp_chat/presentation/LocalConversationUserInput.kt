@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.presentation
 
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
@@ -127,6 +126,14 @@ fun LocalConversationUserInput(
     // Used to decide if the keyboard should be shown
     var textFieldFocusState by remember { mutableStateOf(false) }
 
+    val multiplePhotoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(),
+        onResult = { medias ->
+            eventHandler(TcpScreenEvents.HandlePickingMultipleMedia(medias))
+            dismissKeyboard()
+        }
+    )
+
     Surface(
         tonalElevation = 2.dp,
         contentColor = MaterialTheme.colorScheme.secondary
@@ -242,7 +249,26 @@ fun LocalConversationUserInput(
             }
             UserInputSelector(
                 onSelectorChange = {
-                    currentInputSelector = it
+                    when (it) {
+                        LocalInputSelector.EMOJI, LocalInputSelector.NONE -> {
+                            currentInputSelector = it
+                        }
+
+                        LocalInputSelector.FILE -> {
+                            eventHandler(TcpScreenEvents.ShowFileChooserClick)
+                        }
+
+                        LocalInputSelector.PHONE -> {
+                            dismissKeyboard()
+                            eventHandler(TcpScreenEvents.UpdateBottomSheetState(true))
+                        }
+
+                        LocalInputSelector.PICTURE -> {
+                            multiplePhotoPickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                            )
+                        }
+                    }
                 },
                 sendMessageEnabled = textState.text.isNotBlank(),
                 onMessageSent = {
@@ -256,20 +282,8 @@ fun LocalConversationUserInput(
                 currentInputSelector = currentInputSelector
             )
             SelectorExpanded(
-                onCloseRequested = dismissKeyboard,
                 onTextAdded = { textState = textState.addText(it) },
                 currentSelector = currentInputSelector,
-                onMultipleMediasPicked = { medias ->
-                    eventHandler(TcpScreenEvents.HandlePickingMultipleMedia(medias))
-                },
-                onContactsClicked = {
-                    dismissKeyboard()
-                    eventHandler(TcpScreenEvents.UpdateBottomSheetState(true))
-                },
-                onFilesClicked = {
-                    log("click")
-                    eventHandler(TcpScreenEvents.ShowFileChooserClick)
-                }
             )
         }
     }
@@ -292,13 +306,9 @@ private fun TextFieldValue.addText(newString: String): TextFieldValue {
 @Composable
 private fun SelectorExpanded(
     currentSelector: LocalInputSelector,
-    onCloseRequested: () -> Unit,
     onTextAdded: (String) -> Unit,
-    onMultipleMediasPicked: (List<Uri>) -> Unit,
-    onContactsClicked: () -> Unit,
-    onFilesClicked: () -> Unit,
 ) {
-    if (currentSelector == LocalInputSelector.NONE) return
+    if (currentSelector == LocalInputSelector.FILE) return
 
     // Request focus to force the TextField to lose it
     val focusRequester = FocusRequester()
@@ -309,52 +319,11 @@ private fun SelectorExpanded(
         }
     }
 
-    val multiplePhotoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(),
-        onResult = { uris ->
-            onMultipleMediasPicked(uris)
-            onCloseRequested()
-        }
-    )
-
     Surface(tonalElevation = 8.dp) {
         when (currentSelector) {
             LocalInputSelector.EMOJI -> EmojiSelector(onTextAdded, focusRequester)
-            LocalInputSelector.PICTURE -> {
-                SideEffect {
-                    multiplePhotoPickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-                    )
-                }
-            }
-
-            LocalInputSelector.PHONE -> {
-                onContactsClicked()
-            }
-
-            LocalInputSelector.FILE -> {
-                onFilesClicked()
-            }
-
-            else -> {
-                throw NotImplementedError()
-            }
+            else -> {}
         }
-    }
-}
-
-@Preview
-@Composable
-private fun PreviewSelectorExpended() {
-    AndroChatTheme {
-        SelectorExpanded(
-            onCloseRequested = { },
-            onTextAdded = { },
-            currentSelector = LocalInputSelector.PICTURE,
-            onMultipleMediasPicked = {},
-            onContactsClicked = {},
-            onFilesClicked = {}
-        )
     }
 }
 
@@ -392,7 +361,9 @@ private fun UserInputSelector(
             description = stringResource(id = R.string.videochat_desc)
         )
         InputSelectorButton(
-            onClick = { onSelectorChange(LocalInputSelector.FILE) },
+            onClick = {
+                onSelectorChange(LocalInputSelector.FILE)
+            },
             icon = Icons.Outlined.AttachFile,
             selected = false,
             description = stringResource(id = R.string.videochat_desc)

@@ -35,11 +35,6 @@
     <!-- For Recording Audio Messages -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
-
     <application
         android:name=".core.app.AndroChatApp"
         android:allowBackup="true"

@@ -209,12 +209,9 @@ class TcpFragment : Fragment() {
                 val fileName = uri.getFileNameFromUri(contentResolver)
                 var file = File(resourceDirectory, fileName)
                 if (file.exists()) {
-                    log("same file found in folder, generating unique name ...")
                     val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
-                    log("file name without ext - $fileNameWithoutExt")
                     val uniqueFileName =
                         generateUniqueFileName(resourceDirectory.toString(), fileNameWithoutExt, file.extension)
-                    log("unique file name - $uniqueFileName")
                     file = File(uniqueFileName)
                 }
 
@@ -265,11 +262,14 @@ class TcpFragment : Fragment() {
 
 
     private fun showFileChooser() {
-        val intent = Intent().setType("*/*").setAction(Intent.ACTION_GET_CONTENT)
+
+        val intent = Intent()
+            .setType("*/*")
+            .setAction(Intent.ACTION_GET_CONTENT)
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
-        intent.flags =
-            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+
         try {
             getFilesLauncher.launch(intent)
         } catch (e: Exception) {
@@ -595,7 +595,38 @@ class TcpFragment : Fragment() {
             is TcpScreenNavigation.HandlePickingMultipleMedia -> {
                 lifecycleScope.launch(Dispatchers.IO) {
                     when (viewModel.state.value.generalConnectionStatus) {
-                        GeneralConnectionStatus.Idle -> {}
+                        GeneralConnectionStatus.Idle -> {
+                            navigation.medias.forEach { imageUri ->
+
+                                val resourceDirectory =
+                                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+                                if (!resourceDirectory.exists()) {
+                                    resourceDirectory.mkdir()
+                                }
+
+                                val fileName =
+                                    imageUri.getFileNameFromUri(contentResolver = requireContext().contentResolver)
+                                var file = File(resourceDirectory, fileName)
+                                if (file.exists()) {
+                                    log("same file found in folder, generating unique name ...")
+                                    val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
+                                    log("file name without ext - $fileNameWithoutExt")
+                                    val uniqueFileName =
+                                        generateUniqueFileName(
+                                            resourceDirectory.toString(),
+                                            fileNameWithoutExt,
+                                            file.extension
+                                        )
+                                    log("unique file name - $uniqueFileName")
+                                    file = File(uniqueFileName)
+                                }
+
+                                val inputStream = requireContext().contentResolver.openInputStream(imageUri)
+                                val fileOutputStream = FileOutputStream(file)
+                                inputStream?.copyTo(fileOutputStream)
+                                fileOutputStream.close()
+                            }
+                        }
                         GeneralConnectionStatus.ConnectedAsHost -> {
                             val fileMessages = mutableListOf<ChatMessage.FileMessage>()
                             navigation.medias.forEach { imageUri ->
@@ -616,6 +647,11 @@ class TcpFragment : Fragment() {
                                         generateUniqueFileName(resourceDirectory.toString(), fileNameWithoutExt, file.extension)
                                     log("unique file name - $uniqueFileName")
                                     file = File(uniqueFileName)
+
+                                    val inputStream = requireContext().contentResolver.openInputStream(imageUri)
+                                    val fileOutputStream = FileOutputStream(file)
+                                    inputStream?.copyTo(fileOutputStream)
+                                    fileOutputStream.close()
                                 }
 
                                 val fileMessage = ChatMessage.FileMessage(
@@ -655,6 +691,11 @@ class TcpFragment : Fragment() {
                                     log("unique file name - $uniqueFileName")
                                     file = File(uniqueFileName)
                                 }
+
+                                val inputStream = requireContext().contentResolver.openInputStream(imageUri)
+                                val fileOutputStream = FileOutputStream(file)
+                                inputStream?.copyTo(fileOutputStream)
+                                fileOutputStream.close()
 
                                 val fileMessage = ChatMessage.FileMessage(
                                     formattedTime = getCurrentTime(),
@@ -1197,7 +1238,7 @@ class TcpFragment : Fragment() {
         viewModel.updateHostConnectionStatus(HostConnectionStatus.Creating)
 
         withContext(Dispatchers.IO) {
-            try {
+//            try {
                 serverSocket = ServerSocket(serverPort)
                 log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
                 if (serverSocket.isBound) {
@@ -1326,28 +1367,28 @@ class TcpFragment : Fragment() {
 //                        }
                     }
                 }
-            } catch (e: IOException) {
-                e.printStackTrace()
-                serverSocket.close()
-                //change server title status
-                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-
-            } catch (e: SecurityException) {
-                e.printStackTrace()
-                serverSocket.close()
-                //change server title status
-                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-
-                //if a security manager exists and its checkConnect method doesn't allow the operation.
-                log("createServer: SecurityException ")
-            } catch (e: IllegalArgumentException) {
-                e.printStackTrace()
-                serverSocket.close()
-                //change server title status
-                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-                //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
-                log("createServer: IllegalArgumentException ")
-            }
+//            } catch (e: IOException) {
+//                e.printStackTrace()
+//                serverSocket.close()
+//                //change server title status
+//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+//
+//            } catch (e: SecurityException) {
+//                e.printStackTrace()
+//                serverSocket.close()
+//                //change server title status
+//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+//
+//                //if a security manager exists and its checkConnect method doesn't allow the operation.
+//                log("createServer: SecurityException ")
+//            } catch (e: IllegalArgumentException) {
+//                e.printStackTrace()
+//                serverSocket.close()
+//                //change server title status
+//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+//                //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
+//                log("createServer: IllegalArgumentException ")
+//            }
         }
     }
 

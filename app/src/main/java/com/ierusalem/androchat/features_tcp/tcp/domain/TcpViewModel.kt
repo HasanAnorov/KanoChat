@@ -173,9 +173,6 @@ class TcpViewModel @Inject constructor(
                 val newMessages = messages.mapNotNull {
                     it.toChatMessage()
                 }
-                newMessages.forEach{
-                    log("message ids- ${it.messageId}")
-                }
                 _state.update {
                     it.copy(
                         messages = newMessages
