@@ -106,7 +106,8 @@ private fun PreviewLightContactItem() {
                 formattedTime = "12:12:12, jul 12 2034",
                 contactNumber = "93 337 36 46",
                 contactName = "Anorov Hasan",
-                isFromYou = true
+                isFromYou = true,
+                messageId = 0L
             ),
             onContactNumberClick = {}
         )
@@ -122,7 +123,8 @@ private fun PreviewDarkContactItem() {
                 formattedTime = "12:12:12, jul 12 2034",
                 contactNumber = "93 337 36 46",
                 contactName = "Anorov Hasan",
-                isFromYou = true
+                isFromYou = true,
+                messageId = 0L
             ),
             onContactNumberClick = {}
         )

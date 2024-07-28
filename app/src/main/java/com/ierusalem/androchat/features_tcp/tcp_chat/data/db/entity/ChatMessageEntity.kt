@@ -1,12 +1,11 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity
 
 
-import android.os.Environment
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.ierusalem.androchat.core.app.AppMessageType
-import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.utils.getAudioFileDuration
+import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.readableFileSize
 import java.io.File
 
@@ -20,25 +19,20 @@ data class ChatMessageEntity(
     val userId: String,
 
     val text: String? = null,
-    val fileMessage: FileMessage? = null,
+
     val voiceMessageName: String? = null,
-    val contactInfo: ContactMessageEntity? = null
+
+    val fileState: FileMessageState = FileMessageState.Loading(0),
+    val filePath: String? = null,
+    val fileSize: String? = null,
+    val fileName: String? = null,
+    val fileExtension: String? = null,
+
+    val contactName: String? = null,
+    val contactNumber: String? = null
 ) {
 
-    //todo add time and file size
-    data class FileMessage(
-        val fileState: FileMessageState = FileMessageState.Loading(0),
-        val filePath: String,
-    )
-
-    data class ContactMessageEntity(
-        val contactName: String,
-        val contactNumber: String
-    )
-
     fun toChatMessage(): ChatMessage? {
-        val resourceDirectory =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
         return when (type) {
             AppMessageType.TEXT -> {
                 text?.let {
@@ -54,7 +48,7 @@ data class ChatMessageEntity(
 
             AppMessageType.VOICE -> {
                 voiceMessageName?.let {
-                    val voiceMessageAudioFile = File(resourceDirectory, voiceMessageName)
+                    val voiceMessageAudioFile = File(voiceMessageName)
                     ChatMessage.VoiceMessage(
                         messageType = type,
                         isFromYou = isFromYou,
@@ -71,33 +65,29 @@ data class ChatMessageEntity(
             }
 
             AppMessageType.FILE -> {
-                fileMessage?.let {
-                    val file = File( fileMessage.filePath)
-                    ChatMessage.FileMessage(
-                        isFromYou = isFromYou,
-                        formattedTime = formattedTime,
-                        messageType = type,
-                        filePath = file.path,
-                        fileName = file.name,
-                        fileSize = file.length().readableFileSize(),
-                        fileExtension = file.extension,
-                        fileState = fileMessage.fileState,
-                        messageId = id
-                    )
-                }
+
+                ChatMessage.FileMessage(
+                    isFromYou = isFromYou,
+                    formattedTime = formattedTime,
+                    messageType = type,
+                    filePath = filePath!!,
+                    fileName = fileName!!,
+                    fileSize = fileSize!!,
+                    fileExtension = fileExtension!!,
+                    fileState = fileState,
+                    messageId = id
+                )
             }
 
             AppMessageType.CONTACT -> {
-                contactInfo?.let {
-                    ChatMessage.ContactMessage(
-                        isFromYou = isFromYou,
-                        formattedTime = formattedTime,
-                        messageType = type,
-                        contactName = it.contactName,
-                        contactNumber = it.contactNumber,
-                        messageId = id
-                    )
-                }
+                ChatMessage.ContactMessage(
+                    isFromYou = isFromYou,
+                    formattedTime = formattedTime,
+                    messageType = type,
+                    contactName = contactName!!,
+                    contactNumber = contactNumber!!,
+                    messageId = id
+                )
             }
 
             else -> {

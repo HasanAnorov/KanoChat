@@ -197,7 +197,8 @@ private fun PreviewMessage() {
             msg = ChatMessage.TextMessage(
                 message = ("Hello it is a text"),
                 formattedTime = "12:32",
-                isFromYou = true
+                isFromYou = true,
+                messageId = 0L
             ),
             isVoiceMessagePlaying = false,
             isFirstMessageByAuthor = false,

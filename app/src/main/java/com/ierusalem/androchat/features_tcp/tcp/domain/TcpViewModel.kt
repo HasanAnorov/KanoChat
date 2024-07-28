@@ -115,15 +115,15 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun insertMessageToDb(isFromYou: Boolean, userId: String, message: ChatMessage) {
+    private fun insertMessageToDb(isFromYou: Boolean, userId: String, message: ChatMessage):Long {
         val messageEntity = when (message) {
             is ChatMessage.TextMessage -> {
                 ChatMessageEntity(
                     type = AppMessageType.TEXT,
-                    text = message.message,
                     isFromYou = isFromYou,
                     userId = userId,
-                    formattedTime = message.formattedTime
+                    formattedTime = message.formattedTime,
+                    text = message.message
                 )
             }
 
@@ -140,10 +140,14 @@ class TcpViewModel @Inject constructor(
             is ChatMessage.FileMessage -> {
                 ChatMessageEntity(
                     type = AppMessageType.FILE,
-                    fileMessage = ChatMessageEntity.FileMessage(fileState = message.fileState, filePath = message.filePath),
                     userId = userId,
                     isFromYou = isFromYou,
-                    formattedTime = message.formattedTime
+                    formattedTime = message.formattedTime,
+                    fileName = message.fileName,
+                    fileSize = message.fileSize,
+                    filePath = message.filePath,
+                    fileExtension = message.fileExtension,
+                    fileState = message.fileState
                 )
             }
 
@@ -153,25 +157,31 @@ class TcpViewModel @Inject constructor(
                     userId = userId,
                     isFromYou = isFromYou,
                     formattedTime = message.formattedTime,
-                    contactInfo = ChatMessageEntity.ContactMessageEntity(message.contactName, message.contactNumber)
+                    contactName = message.contactName,
+                    contactNumber = message.contactNumber,
                 )
             }
         }
 
-        viewModelScope.launch {
-            messagesDao.insertMessage(messageEntity)
-        }
+        return messagesDao.insertMessage(messageEntity)
+
     }
 
     fun loadChatHistory(userUniqueId: String) {
         updatePeerUserUniqueId(userUniqueId)
         viewModelScope.launch(Dispatchers.IO) {
             messagesDao.getUserMessagesById(userUniqueId).collect { messages ->
-                loadMessages(
-                    messages.mapNotNull {
-                        it.toChatMessage()
-                    }
-                )
+                val newMessages = messages.mapNotNull {
+                    it.toChatMessage()
+                }
+                newMessages.forEach{
+                    log("message ids- ${it.messageId}")
+                }
+                _state.update {
+                    it.copy(
+                        messages = newMessages
+                    )
+                }
             }
         }
     }
@@ -327,6 +337,7 @@ class TcpViewModel @Inject constructor(
             }
 
             is WiFiNetworkEvent.ConnectionStatusChanged -> {
+                log("on general connection status changed 1 - network event - $networkEvent")
                 _state.update {
                     it.copy(
                         generalConnectionStatus = networkEvent.status
@@ -622,6 +633,7 @@ class TcpViewModel @Inject constructor(
                     message = event.message,
                     formattedTime = getCurrentTime(),
                     isFromYou = true,
+                    messageId = 0L
                 )
 
                 //todo - think about this later
@@ -788,6 +800,7 @@ class TcpViewModel @Inject constructor(
     fun updateClientConnectionStatus(status: ClientConnectionStatus) {
         when (status) {
             ClientConnectionStatus.Idle -> {
+                log("on general connection status changed 2")
                 _state.update {
                     it.copy(
                         clientConnectionStatus = status,
@@ -806,6 +819,7 @@ class TcpViewModel @Inject constructor(
             }
 
             ClientConnectionStatus.Failure -> {
+                log("on general connection status changed 4")
                 _state.update {
                     it.copy(
                         clientConnectionStatus = status,
@@ -819,6 +833,7 @@ class TcpViewModel @Inject constructor(
     fun updateHostConnectionStatus(status: HostConnectionStatus) {
         when (status) {
             HostConnectionStatus.Idle -> {
+                log("on general connection status changed 5")
                 _state.update {
                     it.copy(
                         hostConnectionStatus = status,
@@ -971,56 +986,33 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updatePercentageOfReceivingFile(message: ChatMessage, fileState: FileMessageState) {
+    fun updatePercentageOfReceivingFile(message: ChatMessage) {
         log("updatePercentageOfReceivingFile - $message")
-//        val messages = state.value.messages
-//        val targetMessage =
-//            messages.findLast { it.messageId == message.messageId && it.messageType == message.messageType }
-//        if (targetMessage == null) return
-//        log("target message - $targetMessage")
-//        val updatedMessage = when (targetMessage.messageType) {
-//            AppMessageType.FILE -> {
-//                updateFileMessageState(targetMessage as ChatMessage.FileMessage, fileState)
-//            }
-//
-//            AppMessageType.VOICE -> {
-//                updateVoiceMessageState(targetMessage as ChatMessage.VoiceMessage, fileState)
-//            }
-//
-//            else -> return
-//        }
-//        val newMessages = state.value.messages.toMutableList().apply {
-//            set(messages.indexOf(targetMessage), updatedMessage)
-//        }
-//        loadMessages(newMessages)
+        when (message) {
+            is ChatMessage.FileMessage -> {
+                viewModelScope.launch(Dispatchers.IO) {
+                    val newFileState = message.fileState
+                    messagesDao.updateFileMessage(messageId = message.messageId, newFileState = newFileState)
+
+                    messagesDao.getMessage(message.messageId).collect {
+                        log("updated message - $it")
+                    }
+                }
+            }
+
+            is ChatMessage.VoiceMessage -> {
+            }
+
+            else -> return
+        }
     }
 
-    private fun updateFileMessageState(
-        fileMessage: ChatMessage.FileMessage, newState: FileMessageState
-    ): ChatMessage.FileMessage {
-        return fileMessage.copy(fileState = newState)
-    }
-
-    private fun updateVoiceMessageState(
-        fileMessage: ChatMessage.VoiceMessage, newState: FileMessageState
-    ): ChatMessage.VoiceMessage {
-        return fileMessage.copy(fileState = newState)
-    }
-
-    fun insertMessage(message: ChatMessage) {
-        insertMessageToDb(
+    fun insertMessage(message: ChatMessage):Long {
+        return insertMessageToDb(
             isFromYou = message.isFromYou,
             userId = state.value.peerUserUniqueId,
             message = message
         )
-    }
-
-    private fun loadMessages(newMessages: List<ChatMessage>) {
-        _state.update {
-            it.copy(
-                messages = newMessages
-            )
-        }
     }
 
     fun updateConnectionsCount(shouldIncrease: Boolean) {

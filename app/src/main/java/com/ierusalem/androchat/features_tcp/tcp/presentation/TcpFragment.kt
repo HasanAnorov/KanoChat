@@ -66,7 +66,6 @@ import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.core.utils.getAudioFileDuration
 import com.ierusalem.androchat.core.utils.getExtensionFromFilename
-import com.ierusalem.androchat.core.utils.getFileExtensionFromUri
 import com.ierusalem.androchat.core.utils.getFileNameFromUri
 import com.ierusalem.androchat.core.utils.getFileNameWithoutExtension
 import com.ierusalem.androchat.core.utils.getFileSizeInReadableFormat
@@ -104,12 +103,10 @@ import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import java.io.EOFException
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.UTFDataFormatException
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.UnknownHostException
@@ -242,7 +239,8 @@ class TcpFragment : Fragment() {
                             fileSize = file.length().readableFileSize(),
                             fileExtension = file.extension,
                             fileState = FileMessageState.Loading(0),
-                            isFromYou = true
+                            isFromYou = true,
+                            messageId = 0L
                         )
                         sendClientMessage(fileMessage)
                     }
@@ -255,7 +253,8 @@ class TcpFragment : Fragment() {
                             fileSize = file.length().readableFileSize(),
                             fileExtension = file.extension,
                             fileState = FileMessageState.Loading(0),
-                            isFromYou = true
+                            isFromYou = true,
+                            messageId = 0L
                         )
                         sendHostMessage(fileMessage)
                     }
@@ -368,7 +367,8 @@ class TcpFragment : Fragment() {
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
                                                                     contactName = contact.contactName,
-                                                                    contactNumber = contact.phoneNumber
+                                                                    contactNumber = contact.phoneNumber,
+                                                                    messageId = 0L
                                                                 )
                                                             sendClientMessage(contactMessage)
                                                             delay(300)
@@ -389,7 +389,8 @@ class TcpFragment : Fragment() {
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
                                                                     contactName = contact.contactName,
-                                                                    contactNumber = contact.phoneNumber
+                                                                    contactNumber = contact.phoneNumber,
+                                                                    messageId = 0L
                                                                 )
                                                             sendHostMessage(contactMessage)
                                                             delay(300)
@@ -598,18 +599,33 @@ class TcpFragment : Fragment() {
                         GeneralConnectionStatus.ConnectedAsHost -> {
                             val fileMessages = mutableListOf<ChatMessage.FileMessage>()
                             navigation.medias.forEach { imageUri ->
-                                //todo - maybe username should be removed here
+
+                                val resourceDirectory =
+                                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+                                if (!resourceDirectory.exists()) {
+                                    resourceDirectory.mkdir()
+                                }
+
+                                val fileName = imageUri.getFileNameFromUri(contentResolver = requireContext().contentResolver)
+                                var file = File(resourceDirectory, fileName)
+                                if (file.exists()) {
+                                    log("same file found in folder, generating unique name ...")
+                                    val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
+                                    log("file name without ext - $fileNameWithoutExt")
+                                    val uniqueFileName =
+                                        generateUniqueFileName(resourceDirectory.toString(), fileNameWithoutExt, file.extension)
+                                    log("unique file name - $uniqueFileName")
+                                    file = File(uniqueFileName)
+                                }
+
                                 val fileMessage = ChatMessage.FileMessage(
                                     formattedTime = getCurrentTime(),
                                     isFromYou = true,
-                                    filePath = imageUri.toString(),
-                                    fileName = imageUri.getFileNameFromUri(requireContext().contentResolver),
-                                    fileSize = imageUri.getFileSizeInReadableFormat(
-                                        requireContext().contentResolver
-                                    ),
-                                    fileExtension = imageUri.getFileExtensionFromUri(
-                                        requireContext().contentResolver
-                                    )
+                                    filePath = file.path,
+                                    fileName = file.name,
+                                    fileSize = file.length().readableFileSize(),
+                                    fileExtension = file.extension,
+                                    messageId = 0L
                                 )
                                 fileMessages.add(fileMessage)
                             }
@@ -622,18 +638,32 @@ class TcpFragment : Fragment() {
                         GeneralConnectionStatus.ConnectedAsClient -> {
                             val fileMessages = mutableListOf<ChatMessage.FileMessage>()
                             navigation.medias.forEach { imageUri ->
-                                //todo - maybe username should be removed here
+                                val resourceDirectory =
+                                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+                                if (!resourceDirectory.exists()) {
+                                    resourceDirectory.mkdir()
+                                }
+
+                                val fileName = imageUri.getFileNameFromUri(contentResolver = requireContext().contentResolver)
+                                var file = File(resourceDirectory, fileName)
+                                if (file.exists()) {
+                                    log("same file found in folder, generating unique name ...")
+                                    val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
+                                    log("file name without ext - $fileNameWithoutExt")
+                                    val uniqueFileName =
+                                        generateUniqueFileName(resourceDirectory.toString(), fileNameWithoutExt, file.extension)
+                                    log("unique file name - $uniqueFileName")
+                                    file = File(uniqueFileName)
+                                }
+
                                 val fileMessage = ChatMessage.FileMessage(
                                     formattedTime = getCurrentTime(),
                                     isFromYou = true,
-                                    filePath = imageUri.toString(),
-                                    fileName = imageUri.getFileNameFromUri(requireContext().contentResolver),
-                                    fileSize = imageUri.getFileSizeInReadableFormat(
-                                        requireContext().contentResolver
-                                    ),
-                                    fileExtension = imageUri.getFileExtensionFromUri(
-                                        requireContext().contentResolver
-                                    )
+                                    filePath = file.path,
+                                    fileName = file.name,
+                                    fileSize = file.length().readableFileSize(),
+                                    fileExtension = file.extension,
+                                    messageId = 0L
                                 )
                                 fileMessages.add(fileMessage)
                             }
@@ -823,85 +853,6 @@ class TcpFragment : Fragment() {
         )
     }
 
-//    private fun receiveFile(reader: DataInputStream) {
-//        log("receiving file ...")
-//        val downloadsDirectory =
-//            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
-//        if (!downloadsDirectory.exists()) {
-//            downloadsDirectory.mkdirs()
-//            log("Created directory: ${downloadsDirectory.absolutePath}")
-//        }
-//
-//        val fileCount = reader.readInt()
-//        log("file count - $fileCount")
-//        for (i in 0 until fileCount) {
-//            log("file order - $i")
-//
-//            //reading file name
-//            val filename = reader.readUTF()
-//            log("Expected file name - $filename")
-//
-//            // Check if a file with the same name already exists, generate unique name if necessary
-//            var file = File(downloadsDirectory, filename)
-//            if (file.exists()) {
-//                log("same file found in folder, generating unique name ...")
-//                val fileName = filename.getFileNameWithoutExtension()
-//                val uniqueFileName =
-//                    generateUniqueFileName(downloadsDirectory.toString(), fileName, file.extension)
-//                log("unique file name - $uniqueFileName")
-//                file = File(uniqueFileName)
-//            }
-//
-//            var bytes = 0
-//            var bytesForPercentage = 0L
-//            // Create FileOutputStream to write the received file
-//            val fileOutputStream = FileOutputStream(file)
-//
-//            // Read the expected file size
-//            var fileSize: Long = reader.readLong() // read file size
-//            val fileSizeForPercentage = fileSize
-//
-//            val message = ChatMessage.FileMessage(
-//                formattedTime = getCurrentTime(),
-//                filePath = file.path,
-//                fileName = file.name,
-//                fileSize =fileSize.readableFileSize(),
-//                fileExtension = file.extension,
-//                fileState = FileMessageState.Loading(0),
-//                isFromYou = false
-//            )
-//            viewModel.insertMessage(message)
-//
-//            val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
-//            while (fileSize > 0
-//                && (reader.read(
-//                    buffer, 0,
-//                    min(buffer.size.toDouble(), fileSize.toDouble()).toInt()
-//                ).also { bytes = it })
-//                != -1
-//            ) {
-//                // Here we write the file using write method
-//                fileOutputStream.write(buffer, 0, bytes)
-//                fileSize -= bytes.toLong()
-//
-//                bytesForPercentage += bytes.toLong()
-//                val percentage =
-//                    (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-//                val tempPercentage =
-//                    ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
-//                if (percentage != tempPercentage) {
-//                    log("progress - $percentage")
-//                    val newState = FileMessageState.Loading(percentage)
-//                    viewModel.updatePercentageOfReceivingFile(message, newState)
-//                }
-//            }
-//            fileOutputStream.close()
-//            val newState = FileMessageState.Success
-//            viewModel.updatePercentageOfReceivingFile(message, newState)
-//            log("file received successfully")
-//        }
-//    }
-
     private fun receiveFile(reader: DataInputStream) {
         log("receiving file ...")
         val downloadsDirectory =
@@ -944,16 +895,17 @@ class TcpFragment : Fragment() {
             // Create FileOutputStream to write the received file
             val fileOutputStream = FileOutputStream(file)
 
-            val message = ChatMessage.FileMessage(
+            val fileMessage = ChatMessage.FileMessage(
                 formattedTime = getCurrentTime(),
                 filePath = file.path,
                 fileName = file.name,
                 fileSize = fileSize.readableFileSize(),
                 fileExtension = filename.getExtensionFromFilename(),
                 fileState = FileMessageState.Loading(0),
-                isFromYou = false
+                isFromYou = false,
+                messageId = 0L
             )
-            viewModel.insertMessage(message)
+            val messageId = viewModel.insertMessage(fileMessage)
 
             val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
             while (fileSize > 0
@@ -974,16 +926,17 @@ class TcpFragment : Fragment() {
                     ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
                 if (percentage != tempPercentage) {
                     log("progress - $percentage")
-//                    viewModel.updatePercentageOfReceivingFile(message, newState)
-//                    val newState = FileMessageState.Loading(percentage)
+                    val newState = FileMessageState.Loading(percentage)
+                    val newFileMessage = fileMessage.copy(fileState = newState, messageId = messageId)
+                    viewModel.updatePercentageOfReceivingFile(newFileMessage)
                 }
             }
             fileOutputStream.close()
             val newState = FileMessageState.Success
-            viewModel.updatePercentageOfReceivingFile(message, newState)
+            val newFileMessage = fileMessage.copy(fileState = newState, messageId = messageId)
+            viewModel.updatePercentageOfReceivingFile(newFileMessage)
             log("file received successfully")
         }
-//        reader.close()
     }
 
 
@@ -1024,7 +977,7 @@ class TcpFragment : Fragment() {
         var fileSize: Long = reader.readLong() // read file size
         val fileSizeForPercentage = fileSize
 
-        val message = ChatMessage.VoiceMessage(
+        val voiceMessage = ChatMessage.VoiceMessage(
             formattedTime = getCurrentTime(),
             filePath = Uri.fromFile(file).toString(),
             fileName = fileNameForUi,
@@ -1035,9 +988,10 @@ class TcpFragment : Fragment() {
             fileExtension = filename.getExtensionFromFilename(),
             duration = file.getAudioFileDuration(),
             isFromYou = false,
-            fileState = FileMessageState.Loading(0)
+            fileState = FileMessageState.Loading(0),
+            messageId = 0L
         )
-        viewModel.insertMessage(message)
+        viewModel.insertMessage(voiceMessage)
 
         val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
         while (fileSize > 0
@@ -1059,12 +1013,14 @@ class TcpFragment : Fragment() {
             if (percentage != tempPercentage) {
                 log("progress - $percentage")
                 val newState = FileMessageState.Loading(percentage)
-                viewModel.updatePercentageOfReceivingFile(message, newState)
+                val newVoiceMessage = voiceMessage.copy(fileState = newState)
+                viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
             }
         }
         fileOutputStream.close()
         val newState = FileMessageState.Success
-        viewModel.updatePercentageOfReceivingFile(message, newState)
+        val newVoiceMessage = voiceMessage.copy(fileState = newState)
+        viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
         log("file received successfully")
     }
 
@@ -1119,7 +1075,8 @@ class TcpFragment : Fragment() {
                         withContext(Dispatchers.Main) {
                             log("progress - $percentage")
                             val newState = FileMessageState.Loading(percentage)
-                            viewModel.updatePercentageOfReceivingFile(voiceMessage, newState)
+                            val newVoiceMessage = voiceMessage.copy(fileState = newState)
+                            viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
                         }
                     }
                 }
@@ -1128,20 +1085,23 @@ class TcpFragment : Fragment() {
                 withContext(Dispatchers.Main) {
                     log("file sent successfully")
                     val newState = FileMessageState.Success
-                    viewModel.updatePercentageOfReceivingFile(voiceMessage, newState)
+                    val newVoiceMessage = voiceMessage.copy(fileState = newState)
+                    viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
                 }
             }
         } catch (exception: IOException) {
             withContext(Dispatchers.Main) {
                 log("file sent failed")
                 val newState = FileMessageState.Failure
-                viewModel.updatePercentageOfReceivingFile(voiceMessage, newState)
+                val newVoiceMessage = voiceMessage.copy(fileState = newState)
+                viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
             }
         } catch (error: Exception) {
             withContext(Dispatchers.Main) {
                 log("file sent failed")
                 val newState = FileMessageState.Failure
-                viewModel.updatePercentageOfReceivingFile(voiceMessage, newState)
+                val newVoiceMessage = voiceMessage.copy(fileState = newState)
+                viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
             }
         }
     }
@@ -1168,19 +1128,10 @@ class TcpFragment : Fragment() {
                 log("sending file info: file size - ${file.length()} - ${file.name}")
 
 
-                viewModel.insertMessage(fileMessage)
+                val messageId = viewModel.insertMessage(fileMessage)
 
                 //sending file name
                 writer.writeUTF(fileMessage.fileName)
-
-//                val uri = Uri.parse(fileMessage.filePath)
-//                val inputStream =
-//                    requireContext().contentResolver.openInputStream(uri)
-//                val filePathToSave = context?.cacheDir
-//                val file = File(filePathToSave, fileMessage.fileName)
-//                val fileOutputStream = FileOutputStream(file)
-//                inputStream?.copyTo(fileOutputStream)
-//                fileOutputStream.close()
 
                 //write length
                 val fileSizeForPercentage = file.length()
@@ -1207,16 +1158,20 @@ class TcpFragment : Fragment() {
                         withContext(Dispatchers.Main) {
                             log("progress - $percentage")
                             val newState = FileMessageState.Loading(percentage)
-                            viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+                            val newFileMessage = fileMessage.copy(fileState = newState, messageId = messageId)
+                            viewModel.updatePercentageOfReceivingFile(newFileMessage)
                         }
                     }
                 }
+
                 // close the file here
                 fileInputStream.close()
+
                 withContext(Dispatchers.Main) {
                     log("file sent successfully")
                     val newState = FileMessageState.Success
-                    viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+                    val newFileMessage = fileMessage.copy(fileState = newState, messageId = messageId)
+                    viewModel.updatePercentageOfReceivingFile(newFileMessage)
                 }
 //                } catch (exception: IOException) {
 //                    exception.printStackTrace()
@@ -1286,7 +1241,8 @@ class TcpFragment : Fragment() {
                                         formattedTime = getCurrentTime(),
                                         contactName = contactMessageItem.contactName,
                                         contactNumber = contactMessageItem.contactNumber,
-                                        isFromYou = false
+                                        isFromYou = false,
+                                        messageId = 0L
                                     )
                                     viewModel.insertMessage(contactMessage)
                                 }
@@ -1298,7 +1254,8 @@ class TcpFragment : Fragment() {
                                     val message = ChatMessage.TextMessage(
                                         formattedTime = getCurrentTime(),
                                         message = receivedMessage.toString(),
-                                        isFromYou = false
+                                        isFromYou = false,
+                                        messageId = 0L
                                     )
                                     viewModel.insertMessage(message)
                                 }
@@ -1465,7 +1422,8 @@ class TcpFragment : Fragment() {
                             val message = ChatMessage.TextMessage(
                                 formattedTime = getCurrentTime(),
                                 message = receivedMessage.toString(),
-                                isFromYou = false
+                                isFromYou = false,
+                                messageId = 0L
                             )
                             viewModel.insertMessage(message)
                         }
@@ -1479,7 +1437,8 @@ class TcpFragment : Fragment() {
                                 formattedTime = getCurrentTime(),
                                 contactName = contactMessageItem.contactName,
                                 contactNumber = contactMessageItem.contactNumber,
-                                isFromYou = false
+                                isFromYou = false,
+                                messageId = 0L
                             )
                             viewModel.insertMessage(contactMessage)
                         }

@@ -175,7 +175,8 @@ private fun PreviewLightVoiceMessageItem() {
                     filePath = "file_path_uri",
                     isFromYou = false,
                     duration = 12000,
-                    fileState = FileMessageState.Success
+                    fileState = FileMessageState.Success,
+                    messageId = 0L
                 ),
                 onPlayClick = {},
                 onPauseClick = {},
@@ -200,7 +201,8 @@ private fun PreviewDarkVoiceMessageItem() {
                     filePath = "file_path_uri",
                     isFromYou = false,
                     duration = 12000,
-                    fileState = FileMessageState.Success
+                    fileState = FileMessageState.Success,
+                    messageId = 0L
                 ),
                 onPlayClick = {},
                 onPauseClick = {},

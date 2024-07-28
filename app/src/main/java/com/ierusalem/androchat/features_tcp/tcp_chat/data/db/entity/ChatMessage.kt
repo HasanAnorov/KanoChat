@@ -9,7 +9,7 @@ sealed interface ChatMessage {
     val messageType: AppMessageType
 
     data class TextMessage(
-        override val messageId: Long = 0L,
+        override val messageId:Long,
         override val formattedTime: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.TEXT,
@@ -17,7 +17,7 @@ sealed interface ChatMessage {
     ) : ChatMessage
 
     data class FileMessage(
-        override val messageId: Long = 0L,
+        override val messageId: Long,
         override val formattedTime: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.FILE,
@@ -29,7 +29,7 @@ sealed interface ChatMessage {
     ) : ChatMessage
 
     data class VoiceMessage(
-        override val messageId: Long = 0L,
+        override val messageId: Long,
         override val formattedTime: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.VOICE,
@@ -42,7 +42,7 @@ sealed interface ChatMessage {
     ) : ChatMessage
 
     data class ContactMessage(
-        override val messageId: Long = 0L,
+        override val messageId: Long,
         override val formattedTime: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.CONTACT,

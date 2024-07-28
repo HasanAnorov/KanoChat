@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
-    "identityHash": "3ce90c088f99c2370ae5045425d0d086",
+    "identityHash": "336e55b7e7158916e96ba5a0b0f815f2",
     "entities": [
       {
         "tableName": "messages",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `formattedTime` TEXT NOT NULL, `isFromYou` INTEGER NOT NULL, `userId` TEXT NOT NULL, `text` TEXT, `fileMessage` TEXT, `voiceMessageName` TEXT, `contactInfo` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `formattedTime` TEXT NOT NULL, `isFromYou` INTEGER NOT NULL, `userId` TEXT NOT NULL, `text` TEXT, `voiceMessageName` TEXT, `fileState` TEXT NOT NULL, `filePath` TEXT, `fileSize` TEXT, `fileName` TEXT, `fileExtension` TEXT, `contactName` TEXT, `contactNumber` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -45,20 +45,50 @@
             "notNull": false
           },
           {
-            "fieldPath": "fileMessage",
-            "columnName": "fileMessage",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
             "fieldPath": "voiceMessageName",
             "columnName": "voiceMessageName",
             "affinity": "TEXT",
             "notNull": false
           },
           {
-            "fieldPath": "contactInfo",
-            "columnName": "contactInfo",
+            "fieldPath": "fileState",
+            "columnName": "fileState",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filePath",
+            "columnName": "filePath",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "fileSize",
+            "columnName": "fileSize",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "fileName",
+            "columnName": "fileName",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "fileExtension",
+            "columnName": "fileExtension",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "contactName",
+            "columnName": "contactName",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "contactNumber",
+            "columnName": "contactNumber",
             "affinity": "TEXT",
             "notNull": false
           }
@@ -76,7 +106,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3ce90c088f99c2370ae5045425d0d086')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '336e55b7e7158916e96ba5a0b0f815f2')"
     ]
   }
 }

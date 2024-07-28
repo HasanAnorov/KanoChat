@@ -4,6 +4,7 @@ import androidx.room.TypeConverter
 import com.google.gson.reflect.TypeToken
 import com.ierusalem.androchat.core.utils.Json.gson
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 
 class Converters {
 
@@ -20,27 +21,15 @@ class Converters {
     }
 
     @TypeConverter
-    fun fromContactMessageEntity(contactMessageEntity: ChatMessageEntity.ContactMessageEntity): String {
-        val type = object : TypeToken<ChatMessageEntity.ContactMessageEntity>() {}.type
-        return gson.toJson(contactMessageEntity, type)
+    fun fromFileState(value: FileMessageState): String {
+        val type = object : TypeToken<FileMessageState>() {}.type
+        return gson.toJson(value, type)
     }
 
     @TypeConverter
-    fun toContactMessageEntity(contactMessageEntity: String): ChatMessageEntity.ContactMessageEntity {
-        val type = object : TypeToken<ChatMessageEntity.ContactMessageEntity>() {}.type
-        return gson.fromJson(contactMessageEntity, type)
-    }
-
-    @TypeConverter
-    fun fromFileMessageEntity(fileMessageEntity: ChatMessageEntity.FileMessage): String {
-        val type = object : TypeToken<ChatMessageEntity.FileMessage>() {}.type
-        return gson.toJson(fileMessageEntity, type)
-    }
-
-    @TypeConverter
-    fun toFileMessageEntity(fileMessageEntity: String): ChatMessageEntity.FileMessage {
-        val type = object : TypeToken<ChatMessageEntity.FileMessage>() {}.type
-        return gson.fromJson(fileMessageEntity, type)
+    fun toFileState(value: String): FileMessageState {
+        val type = object : TypeToken<FileMessageState>() {}.type
+        return gson.fromJson(value, type)
     }
 
 }

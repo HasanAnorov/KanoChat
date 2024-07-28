@@ -146,7 +146,8 @@ private fun PreviewLightFileItem() {
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
                     filePath = "file_path_uri",
-                    isFromYou = false
+                    isFromYou = false,
+                    messageId = 0L
                 ),
                 onFileItemClick = {}
             )
@@ -167,7 +168,8 @@ private fun PreviewDarkFileItem() {
                     fileSize = "16 Kb",
                     fileExtension = ".pdf",
                     filePath = "file_path_uri",
-                    isFromYou = true
+                    isFromYou = true,
+                    messageId = 0L
                 ),
                 onFileItemClick = {}
             )

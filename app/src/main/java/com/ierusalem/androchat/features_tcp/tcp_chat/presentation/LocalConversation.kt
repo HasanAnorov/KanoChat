@@ -287,7 +287,8 @@ private fun PreviewLocalChatItemBubble() {
             message = ChatMessage.TextMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 message = "Assalom alekum aka yaxshimisiz",
-                isFromYou = true
+                isFromYou = true,
+                messageId = 0L
             )
         )
     }
@@ -306,7 +307,8 @@ private fun PreviwLightFileItem() {
                 fileSize = "16 Kb",
                 fileExtension = ".pdf",
                 filePath = "file_path_uri",
-                isFromYou = true
+                isFromYou = true,
+                messageId = 0L
             ),
             onFileItemClick = {}
         )
@@ -325,7 +327,8 @@ private fun PreviewDarkFileItem() {
                 fileSize = "16 Kb",
                 fileExtension = ".pdf",
                 filePath = "file_path_uri",
-                isFromYou = true
+                isFromYou = true,
+                messageId = 0L
             ),
             onFileItemClick = {}
         )
