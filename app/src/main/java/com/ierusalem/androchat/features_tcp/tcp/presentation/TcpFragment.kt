@@ -63,12 +63,12 @@ import com.ierusalem.androchat.core.constants.Constants.getCurrentTime
 import com.ierusalem.androchat.core.ui.components.PermissionDialog
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.addLabelBeforeExtension
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.core.utils.getAudioFileDuration
 import com.ierusalem.androchat.core.utils.getExtensionFromFilename
 import com.ierusalem.androchat.core.utils.getFileNameFromUri
 import com.ierusalem.androchat.core.utils.getFileNameWithoutExtension
-import com.ierusalem.androchat.core.utils.getFileSizeInReadableFormat
 import com.ierusalem.androchat.core.utils.getMimeType
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.openAppSettings
@@ -183,13 +183,37 @@ class TcpFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         gson = Gson()
-        resourceDirectory = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")!!
+        resourceDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")!!
     }
 
     private val readContactsPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             viewModel.handleEvents(TcpScreenEvents.ReadContactPermissionChanged(isGranted))
         }
+
+    private fun  generateFileFromUri(uri: Uri): File{
+        val contentResolver = activity?.contentResolver!!
+
+        if (!resourceDirectory.exists()) {
+            resourceDirectory.mkdir()
+        }
+
+        val fileName = uri.getFileNameFromUri(contentResolver)
+        val fileNameWithLabel = fileName.addLabelBeforeExtension()
+        var file = File(resourceDirectory, fileNameWithLabel)
+        if (file.exists()) {
+            val fileNameWithoutExt = fileNameWithLabel.getFileNameWithoutExtension()
+            val uniqueFileName =
+                generateUniqueFileName(resourceDirectory.toString(), fileNameWithoutExt, file.extension)
+            file = File(uniqueFileName)
+        }
+
+        val inputStream = requireContext().contentResolver.openInputStream(uri)
+        val fileOutputStream = FileOutputStream(file)
+        inputStream?.copyTo(fileOutputStream)
+        fileOutputStream.close()
+        return file
+    }
 
     private val getFilesLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -200,30 +224,9 @@ class TcpFragment : Fragment() {
             }
 
             Activity.RESULT_OK -> {
-                val contentResolver = activity?.contentResolver!!
                 val intent: Intent = result.data!!
                 val uri = intent.data!!
-
-                if (!resourceDirectory.exists()) {
-                    resourceDirectory.mkdir()
-                }
-
-                val fileName = uri.getFileNameFromUri(contentResolver)
-                var file = File(resourceDirectory, fileName)
-                if (file.exists()) {
-                    val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
-                    val uniqueFileName =
-                        generateUniqueFileName(resourceDirectory.toString(), fileNameWithoutExt, file.extension)
-                    file = File(uniqueFileName)
-                }
-
-                val inputStream = requireContext().contentResolver.openInputStream(uri)
-                val fileOutputStream = FileOutputStream(file)
-                inputStream?.copyTo(fileOutputStream)
-                fileOutputStream.close()
-
-                log("file info, size - ${uri.getFileSizeInReadableFormat(contentResolver)} - file - $file")
-
+                val file = generateFileFromUri(uri)
 
                 when (viewModel.state.value.generalConnectionStatus) {
                     GeneralConnectionStatus.Idle -> {
@@ -261,6 +264,7 @@ class TcpFragment : Fragment() {
             }
         }
     }
+
 
 
     private fun showFileChooser() {
@@ -603,24 +607,7 @@ class TcpFragment : Fragment() {
                         GeneralConnectionStatus.ConnectedAsHost -> {
                             val fileMessages = mutableListOf<ChatMessage.FileMessage>()
                             navigation.medias.forEach { imageUri ->
-
-                                if (!resourceDirectory.exists()) {
-                                    resourceDirectory.mkdir()
-                                }
-
-                                val fileName = imageUri.getFileNameFromUri(requireContext().contentResolver)
-                                var file = File(resourceDirectory, fileName)
-                                if (file.exists()) {
-                                    val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
-                                    val uniqueFileName =
-                                        generateUniqueFileName(resourceDirectory.toString(), fileNameWithoutExt, file.extension)
-                                    file = File(uniqueFileName)
-                                }
-
-                                val inputStream = requireContext().contentResolver.openInputStream(imageUri)
-                                val fileOutputStream = FileOutputStream(file)
-                                inputStream?.copyTo(fileOutputStream)
-                                fileOutputStream.close()
+                                val file = generateFileFromUri(imageUri)
 
                                 val fileMessage = ChatMessage.FileMessage(
                                     formattedTime = getCurrentTime(),
@@ -854,7 +841,7 @@ class TcpFragment : Fragment() {
         log("receiving file ...")
 
         if (!resourceDirectory.exists()) {
-            resourceDirectory.mkdirs()
+            resourceDirectory.mkdir()
             log("Created directory: ${resourceDirectory.absolutePath}")
         }
 
@@ -940,7 +927,7 @@ class TcpFragment : Fragment() {
 
 
         if (!resourceDirectory.exists()) {
-            resourceDirectory.mkdirs()
+            resourceDirectory.mkdir()
             log("Created directory: ${resourceDirectory.absolutePath}")
         }
 

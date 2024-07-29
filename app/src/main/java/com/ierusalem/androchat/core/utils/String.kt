@@ -1,5 +1,7 @@
 package com.ierusalem.androchat.core.utils
 
+import com.ierusalem.androchat.core.constants.Constants.FILE_LABEL
+
 /**
  * returns empty string if file extension is not found
  */
@@ -20,3 +22,9 @@ fun String.getFileNameWithoutExtension(): String {
     }
 }
 
+fun String.addLabelBeforeExtension():String{
+    val fileNameWithoutExt = this.getFileNameWithoutExtension()
+    val fileExtension = this.getExtensionFromFilename()
+    val uniqueFileName = "$fileNameWithoutExt$FILE_LABEL.$fileExtension"
+    return uniqueFileName
+}

@@ -78,7 +78,7 @@ fun ContactItem(
                     modifier = Modifier
                         .padding(top = 4.dp, start = 4.dp),
                     text = contactNumber,
-                    style = MaterialTheme.typography.labelLarge.copy(color = MaterialTheme.colorScheme.onPrimary, textAlign = TextAlign.End,),
+                    style = MaterialTheme.typography.labelLarge.copy(color = MaterialTheme.colorScheme.onPrimary, textAlign = TextAlign.End),
                     onClick = {
                         onContactNumberClick(message)
                     }

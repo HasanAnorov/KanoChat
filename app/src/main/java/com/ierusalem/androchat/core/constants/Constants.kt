@@ -10,6 +10,8 @@ object Constants {
 
     const val DATA_STORE_NAME = "AppDataStore"
 
+    const val FILE_LABEL = "_fastchat"
+
     const val PREFERENCE_LANGUAGE = "device_language"
     const val PREFERENCE_THEME = "device_theme"
     const val PREFERENCE_USERNAME = "device_user_username"

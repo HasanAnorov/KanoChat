@@ -27,7 +27,6 @@ class AndroChatApp : Application() {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {
         super.onCreate()
-        log("onCreate: AndroChatApp")
 
         val isRunningOnEmulatorDetector = EmulatorDetector.isRunningOnEmulator()
         if (isRunningOnEmulatorDetector != null && isRunningOnEmulatorDetector) {
