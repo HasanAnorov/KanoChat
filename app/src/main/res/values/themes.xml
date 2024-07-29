@@ -1,8 +1,10 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Allows us to override platform level specific attributes in their
          respective values-vXX folder. -->
-    <style name="Platform.Theme.AndroChat" parent="Theme.AppCompat.DayNight"/>
+    <style name="Platform.Theme.AndroChat" parent="Theme.AppCompat.DayNight">
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+    </style>
 
     <!-- The actual theme we use. This varies for light theme (here),
          and values-night for dark theme. -->
@@ -10,11 +12,13 @@
         <item name="colorPrimary">@color/blue500</item>
         <item name="colorPrimaryDark">@color/blue800</item>
         <item name="colorAccent">@color/yellow700</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
 
     <style name="Theme.AndroChat.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
 
 </resources>

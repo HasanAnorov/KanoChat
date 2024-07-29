@@ -74,8 +74,6 @@ import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.core.utils.shortToast
-import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
-import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_tcp.server.ServerDefaults
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
 import com.ierusalem.androchat.features_tcp.server.wifidirect.Reason
@@ -93,6 +91,8 @@ import com.ierusalem.androchat.features_tcp.tcp.presentation.components.remember
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpView
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactListContent
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -608,30 +608,28 @@ class TcpFragment : Fragment() {
                                     resourceDirectory.mkdir()
                                 }
 
-                                val fileName = imageUri.getFileNameFromUri(contentResolver = requireContext().contentResolver)
+                                val fileName = imageUri.getFileNameFromUri(requireContext().contentResolver)
                                 var file = File(resourceDirectory, fileName)
                                 if (file.exists()) {
-                                    log("same file found in folder, generating unique name ...")
                                     val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
-                                    log("file name without ext - $fileNameWithoutExt")
                                     val uniqueFileName =
                                         generateUniqueFileName(resourceDirectory.toString(), fileNameWithoutExt, file.extension)
-                                    log("unique file name - $uniqueFileName")
                                     file = File(uniqueFileName)
-
-                                    val inputStream = requireContext().contentResolver.openInputStream(imageUri)
-                                    val fileOutputStream = FileOutputStream(file)
-                                    inputStream?.copyTo(fileOutputStream)
-                                    fileOutputStream.close()
                                 }
+
+                                val inputStream = requireContext().contentResolver.openInputStream(imageUri)
+                                val fileOutputStream = FileOutputStream(file)
+                                inputStream?.copyTo(fileOutputStream)
+                                fileOutputStream.close()
 
                                 val fileMessage = ChatMessage.FileMessage(
                                     formattedTime = getCurrentTime(),
-                                    isFromYou = true,
                                     filePath = file.path,
                                     fileName = file.name,
                                     fileSize = file.length().readableFileSize(),
                                     fileExtension = file.extension,
+                                    fileState = FileMessageState.Loading(0),
+                                    isFromYou = true,
                                     messageId = 0L
                                 )
                                 fileMessages.add(fileMessage)
@@ -868,7 +866,6 @@ class TcpFragment : Fragment() {
             //reading file name
             val filename = reader.readUTF()
             log("Expected file name - $filename")
-
 
             var bytes = 0
             var bytesForPercentage = 0L
