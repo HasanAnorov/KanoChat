@@ -230,8 +230,8 @@ fun LocalConversationUserInput(
                                     }
                                 )
 
-                                recordingView.setLockEnabled(true)
                                 recordingView.setRecordLockImageView(recordLockView)
+                                recordingView.setLockEnabled(true)
 
                                 // prevent recording under one Second (it's false by default)
                                 recordingView.setLessThanSecondAllowed(false)
@@ -243,7 +243,7 @@ fun LocalConversationUserInput(
                                 recordButton.setScaleUpTo(1.3f)
 
                                 // disable Sounds
-                                recordingView.setSoundEnabled(true)
+                                recordingView.setSoundEnabled(false)
 
                                 // auto cancelling recording after timeLimit (In millis)
                                 recordingView.setTimeLimit(1 * 60 * 1000) //1 minutes

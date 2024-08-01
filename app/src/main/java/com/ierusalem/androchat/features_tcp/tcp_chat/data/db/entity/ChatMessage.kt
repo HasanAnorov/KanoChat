@@ -39,8 +39,7 @@ sealed interface ChatMessage {
         val fileSize: String,
         val fileExtension: String,
         val fileState: FileMessageState = FileMessageState.Loading(0),
-        val isPlaying:Boolean = false,
-        val timing:Long = 0
+        val audioState: AudioState = AudioState.Idle
     ) : ChatMessage
 
     data class ContactMessage(
@@ -52,6 +51,12 @@ sealed interface ChatMessage {
         val contactNumber: String
     ) : ChatMessage
 
+}
+
+sealed interface AudioState{
+    data object Idle: AudioState
+    data class Playing(val timing: Long):AudioState
+    data class Paused(val currentPosition: Int): AudioState
 }
 
 

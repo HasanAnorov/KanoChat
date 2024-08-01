@@ -4,19 +4,16 @@ import android.content.Context
 import android.media.MediaPlayer
 import androidx.core.net.toUri
 import com.ierusalem.androchat.core.utils.log
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.launch
 import java.io.File
 
-class AndroidAudioPlayer(private val context: Context): AudioPlayer {
+class AndroidAudioPlayer(private val context: Context) : AudioPlayer {
 
-    private var mediaPlayer : MediaPlayer? = null
+    private var mediaPlayer: MediaPlayer? = null
     private var isPlaying = false
 
     val playTiming: Flow<Long> = flow {
@@ -32,13 +29,15 @@ class AndroidAudioPlayer(private val context: Context): AudioPlayer {
                 emit(currentTiming)
             }
         }
-    }.flowOn(Dispatchers.IO)
+    }.distinctUntilChangedBy { it }
+        .flowOn(Dispatchers.IO)
 
-    override fun playFile(file: File, onFinished: () -> Unit) {
+    override fun playAudioFile(file: File, onFinished: () -> Unit) {
         stop() // Ensure any existing media player is stopped before starting a new one
         isPlaying = true
-        mediaPlayer = MediaPlayer.create(context, file.toUri()).apply {
-            setOnPreparedListener { start() }
+        MediaPlayer.create(context, file.toUri()).apply {
+            mediaPlayer = this
+            start()
         }
         mediaPlayer?.setOnCompletionListener {
             log("finished")
@@ -47,9 +46,21 @@ class AndroidAudioPlayer(private val context: Context): AudioPlayer {
         }
     }
 
-    override fun pause() {
+    override fun resumeAudioFile(file: File, currentPosition: Int, onFinished: () -> Unit) {
+        isPlaying = true
+        mediaPlayer?.start()
+        mediaPlayer?.seekTo(currentPosition)
+        mediaPlayer?.setOnCompletionListener {
+            log("finished")
+            stop()
+            onFinished()
+        }
+    }
+
+    override fun pause(): Int? {
         isPlaying = false
         mediaPlayer?.pause()
+        return mediaPlayer?.currentPosition
     }
 
     override fun stop() {

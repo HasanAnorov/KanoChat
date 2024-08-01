@@ -27,7 +27,9 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.CircularProgressBar
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.millisecondsToTime
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.AudioState
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 
@@ -53,9 +55,9 @@ fun VoiceMessageItem(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                when (val state = message.fileState) {
+                when (message.fileState) {
                     is FileMessageState.Loading -> {
-                        CircularProgressBar(percentage = (state.percentage.toFloat() / 100))
+                        CircularProgressBar(percentage = (message.fileState.percentage.toFloat() / 100))
                         Column(
                             modifier = Modifier
                                 .padding(start = 8.dp)
@@ -82,20 +84,39 @@ fun VoiceMessageItem(
                             )
                         }
                     }
-
                     FileMessageState.Success -> {
+                        val audioState = message.audioState
+                        log("audio state - $audioState")
                         IconButton(
                             onClick = {
-                                if (message.isPlaying) onPauseClick() else onPlayClick()
+                                when (message.audioState) {
+                                    is AudioState.Playing -> {
+                                        onPauseClick()
+                                    }
+
+                                    else -> {
+                                        onPlayClick()
+                                    }
+                                }
                             }
                         ) {
-                            val icon =
-                                if (message.isPlaying) R.drawable.pause_circle_fill else R.drawable.play_circle_fill
-                            Icon(
-                                modifier = Modifier.size(42.dp),
-                                painter = painterResource(id = icon),
-                                contentDescription = null
-                            )
+                            when (message.audioState) {
+                                is AudioState.Playing -> {
+                                    Icon(
+                                        modifier = Modifier.size(42.dp),
+                                        painter = painterResource(id = R.drawable.pause_circle_fill),
+                                        contentDescription = null
+                                    )
+                                }
+
+                                else -> {
+                                    Icon(
+                                        modifier = Modifier.size(42.dp),
+                                        painter = painterResource(id = R.drawable.play_circle_fill),
+                                        contentDescription = null
+                                    )
+                                }
+                            }
                         }
                         Column(
                             modifier = Modifier
@@ -104,33 +125,69 @@ fun VoiceMessageItem(
                             horizontalAlignment = Alignment.Start,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            if (message.isPlaying){
-                                LinearProgressIndicator(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    progress = { message.timing.toFloat()/100 },
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    trackColor = MaterialTheme.colorScheme.onSurface.copy(0.1F),
-                                )
+                            when (message.audioState) {
+                                is AudioState.Paused -> {
+                                    val progress =
+                                        (message.audioState.currentPosition.toFloat() / message.duration)
+                                    log("current position - ${message.audioState.currentPosition}, duration - ${message.duration}, progress - $progress")
+                                    LinearProgressIndicator(
+                                        modifier = Modifier
+                                            .fillMaxWidth(),
+                                        progress = { progress },
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        trackColor = MaterialTheme.colorScheme.onSurface.copy(0.1F),
+                                    )
+                                }
+
+                                is AudioState.Playing -> {
+                                    LinearProgressIndicator(
+                                        modifier = Modifier
+                                            .fillMaxWidth(),
+                                        progress = { message.audioState.timing.toFloat() / 100 },
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        trackColor = MaterialTheme.colorScheme.onSurface.copy(0.1F),
+                                    )
+                                }
+
+                                AudioState.Idle -> {}
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Start
                             ) {
-                                if (message.isPlaying){
-                                    Text(
-                                        modifier = Modifier.padding(top = 4.dp),
-                                        text = (message.duration*message.timing/100).millisecondsToTime(),
-                                        color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
-                                        style = MaterialTheme.typography.titleSmall
-                                    )
-                                    Text(
-                                        modifier = Modifier.padding(top = 4.dp),
-                                        text = " / ",
-                                        color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
-                                        style = MaterialTheme.typography.titleSmall
-                                    )
+                                when (message.audioState) {
+                                    is AudioState.Paused -> {
+                                        Text(
+                                            modifier = Modifier.padding(top = 4.dp),
+                                            text = (message.audioState.currentPosition.toLong()).millisecondsToTime(),
+                                            color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                            style = MaterialTheme.typography.titleSmall
+                                        )
+                                        Text(
+                                            modifier = Modifier.padding(top = 4.dp),
+                                            text = " / ",
+                                            color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                            style = MaterialTheme.typography.titleSmall
+                                        )
+                                    }
+
+                                    is AudioState.Playing -> {
+                                        Text(
+                                            modifier = Modifier.padding(top = 4.dp),
+                                            text = ((message.duration * message.audioState.timing) / 100).millisecondsToTime(),
+                                            color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                            style = MaterialTheme.typography.titleSmall
+                                        )
+                                        Text(
+                                            modifier = Modifier.padding(top = 4.dp),
+                                            text = " / ",
+                                            color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                            style = MaterialTheme.typography.titleSmall
+                                        )
+                                    }
+
+                                    is AudioState.Idle -> {}
                                 }
                                 Text(
                                     modifier = Modifier.padding(top = 4.dp),
@@ -145,20 +202,23 @@ fun VoiceMessageItem(
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
-                        if (message.isPlaying) {
-                            IconButton(onClick = { onStopClick() }) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.close_circle),
-                                    contentDescription = null
-                                )
+                        when (message.audioState) {
+                            is AudioState.Paused, is AudioState.Playing -> {
+                                IconButton(onClick = { onStopClick() }) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.close_circle),
+                                        contentDescription = null
+                                    )
+                                }
                             }
+
+                            AudioState.Idle -> {}
                         }
                     }
-
                     FileMessageState.Failure -> {
                         Box(
                             modifier = Modifier
-                                .size(64.dp)
+                                .size(42.dp)
                                 .border(
                                     1.5.dp,
                                     MaterialTheme.colorScheme.tertiary,
@@ -170,7 +230,7 @@ fun VoiceMessageItem(
                             contentAlignment = Alignment.Center,
                             content = {
                                 Icon(
-                                    modifier = Modifier.size(32.dp),
+                                    modifier = Modifier.size(24.dp),
                                     painter = painterResource(id = R.drawable.file_failed),
                                     contentDescription = null
                                 )
@@ -188,20 +248,6 @@ fun VoiceMessageItem(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Start
                             ) {
-                                if (message.isPlaying){
-                                    Text(
-                                        modifier = Modifier.padding(top = 4.dp),
-                                        text = message.duration.millisecondsToTime(),
-                                        color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
-                                        style = MaterialTheme.typography.titleSmall
-                                    )
-                                    Text(
-                                        modifier = Modifier.padding(top = 4.dp),
-                                        text = " / ",
-                                        color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
-                                        style = MaterialTheme.typography.titleSmall
-                                    )
-                                }
                                 Text(
                                     modifier = Modifier.padding(top = 4.dp),
                                     text = message.duration.millisecondsToTime(),
@@ -237,9 +283,8 @@ private fun PreviewLightVoiceMessageItem() {
                     filePath = "file_path_uri",
                     isFromYou = false,
                     duration = 12000,
-                    isPlaying = true,
-                    timing = 19,
-                    fileState = FileMessageState.Success,
+                    audioState = AudioState.Paused(6000),
+                    fileState = FileMessageState.Failure,
                     messageId = 0L
                 ),
                 onPlayClick = {},

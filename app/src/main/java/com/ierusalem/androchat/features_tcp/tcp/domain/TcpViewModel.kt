@@ -48,6 +48,7 @@ import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.dao.MessagesDao
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.AudioState
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessageEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,6 +56,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -99,7 +101,9 @@ class TcpViewModel @Inject constructor(
 
     private fun startCollectingPlayTiming(messageId: Long) {
         viewModelScope.launch {
-            audioPlayer.playTiming.collect { timing ->
+            audioPlayer.playTiming
+                .distinctUntilChanged()
+                .collect { timing ->
                 log("timing - $timing")
                 updatePlayTiming(timing, messageId)
             }
@@ -449,14 +453,14 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun updateIsPlaying(isPlaying: Boolean, messageId: Long) {
+    private fun updateIsPlaying(audioState: AudioState, messageId: Long) {
         // Find the target message
         val targetMessage: ChatMessage.VoiceMessage? = state.value.messages
             .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
         // Check if targetMessage is not null
         targetMessage?.let {
             // Create a copy with the updated isPlaying value
-            val updatedMessage = it.copy(isPlaying = isPlaying)
+            val updatedMessage = it.copy(audioState = audioState)
             // Get the current list of messages
             val messages = state.value.messages
             // Find the index of the target message
@@ -480,8 +484,9 @@ class TcpViewModel @Inject constructor(
             .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
         // Check if targetMessage is not null
         targetMessage?.let {
+            val newAudioState = AudioState.Playing(timing)
             // Create a copy with the updated isPlaying value
-            val updatedMessage = it.copy(timing = timing)
+            val updatedMessage = it.copy(audioState = newAudioState)
             // Get the current list of messages
             val messages = state.value.messages
             // Find the index of the target message
@@ -501,15 +506,36 @@ class TcpViewModel @Inject constructor(
 
     private fun playAudioFile(voiceMessage: ChatMessage.VoiceMessage) {
         val audioFile = File(resourceDirectory, voiceMessage.fileName)
-        audioPlayer.playFile(audioFile) {
-            log("on finished in vm")
-            updateIsPlaying(false, voiceMessage.messageId)
+        when (voiceMessage.audioState) {
+            is AudioState.Playing -> {
+                val currentPosition = audioPlayer.pause()
+                currentPosition?.let {
+                    updateIsPlaying(AudioState.Paused(currentPosition), voiceMessage.messageId)
+                }
+            }
+
+            is AudioState.Paused -> {
+                log("starting resume on ${voiceMessage.audioState.currentPosition}")
+                startCollectingPlayTiming(voiceMessage.messageId)
+                audioPlayer.resumeAudioFile(audioFile, voiceMessage.audioState.currentPosition) {
+                    log("on finished in vm 1")
+                    updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
+                }
+            }
+
+            AudioState.Idle -> {
+                audioPlayer.playAudioFile(audioFile) {
+                    log("on finished in vm")
+                    updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
+                }
+                updateIsPlaying(AudioState.Playing(0L), voiceMessage.messageId)
+                startCollectingPlayTiming(voiceMessage.messageId)
+            }
         }
-        updateIsPlaying(true, voiceMessage.messageId)
-        startCollectingPlayTiming(voiceMessage.messageId)
     }
 
     @SuppressLint("MissingPermission")
+    @Suppress("DEPRECATION")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
             //todo - you did not use the parameter inside on play voice message
@@ -522,12 +548,15 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.OnPauseVoiceMessageClick -> {
-                updateIsPlaying(false, event.message.messageId)
-                audioPlayer.pause()
+                val currentPosition = audioPlayer.pause()
+                currentPosition?.let {
+                    updateIsPlaying(AudioState.Paused(currentPosition), event.message.messageId)
+                }
+                log("paused at - $currentPosition")
             }
 
             is TcpScreenEvents.OnStopVoiceMessageClick -> {
-                updateIsPlaying(false, event.message.messageId)
+                updateIsPlaying(AudioState.Idle, event.message.messageId)
                 audioPlayer.stop()
             }
 

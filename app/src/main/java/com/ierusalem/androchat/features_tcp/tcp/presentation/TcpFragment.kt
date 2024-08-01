@@ -933,7 +933,6 @@ class TcpFragment : Fragment() {
         }
     }
 
-
     private fun receiveVoiceMessage(reader: DataInputStream) {
         log("receiving file ...")
 
