@@ -24,6 +24,8 @@ sealed interface TcpScreenNavigation {
     data object OnReadContactsRequest: TcpScreenNavigation
     data object ShowFileChooserClick: TcpScreenNavigation
 
+    data object RequestRecordAudioPermission: TcpScreenNavigation
+
     data class OnFileItemClick(val message: ChatMessage.FileMessage): TcpScreenNavigation
     data class OnContactItemClick(val message: ChatMessage.ContactMessage): TcpScreenNavigation
     data class HandlePickingMultipleMedia(val medias: List<Uri>):TcpScreenNavigation

@@ -16,7 +16,10 @@ import java.util.UUID
 data class TcpScreenUiState(
 
     val contacts:Resource<List<ContactItem>> = Resource.Loading(),
+
     val isReadContactsGranted: Boolean = false,
+    val isRecordAudioGranted: Boolean = false,
+
     val shouldShowPermissionDialog: Boolean = false,
     val showBottomSheet: Boolean = false,
 
@@ -61,13 +64,8 @@ data class TcpScreenUiState(
     //error handling
     val hasDialogErrorOccurred: TcpScreenDialogErrors? = null,
 
-    //to disable user scroll enabling in view pager
+    //to disable view pager's horizontal scrolling
     val isRecording:Boolean = false,
-
-    //todo - for voice message, delegate this state to voice message item
-    val isAudioPlaying: Boolean = false,
-    val audioPlayTiming: Long = 0,
-
 )
 
 enum class LocalOnlyHotspotStatus(@StringRes val res: Int, @DrawableRes val icon: Int){
@@ -86,7 +84,7 @@ data class ContactItem(
 )
 
 @Immutable
-data class ContactsMessageItem(
+data class ContactMessageItem(
     val contactName: String,
     val contactNumber: String
 )

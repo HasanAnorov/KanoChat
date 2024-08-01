@@ -80,7 +80,7 @@ import com.ierusalem.androchat.features_tcp.server.wifidirect.Reason
 import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiDirectBroadcastReceiver
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.ClientConnectionStatus
-import com.ierusalem.androchat.features_tcp.tcp.domain.state.ContactsMessageItem
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.ContactMessageItem
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.HostConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.HotspotNetworkingStatus
@@ -99,6 +99,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
 import java.io.DataInputStream
@@ -189,6 +190,11 @@ class TcpFragment : Fragment() {
     private val readContactsPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             viewModel.handleEvents(TcpScreenEvents.ReadContactPermissionChanged(isGranted))
+        }
+
+    private val recordAudioPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()){ isGranted ->
+            viewModel.handleEvents(TcpScreenEvents.RecordAudioPermissionChanged(isGranted))
         }
 
     private fun  generateFileFromUri(uri: Uri): File{
@@ -598,6 +604,10 @@ class TcpFragment : Fragment() {
                 readContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
             }
 
+            TcpScreenNavigation.RequestRecordAudioPermission -> {
+                recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+
             is TcpScreenNavigation.HandlePickingMultipleMedia -> {
                 lifecycleScope.launch(Dispatchers.IO) {
                     when (viewModel.state.value.generalConnectionStatus) {
@@ -748,7 +758,7 @@ class TcpFragment : Fragment() {
                     } else {
                         log("Permissions not granted!")
                         locationPermissionRequest.launch(
-                            permissionGuard.requiredPermissions.toTypedArray()
+                            permissionGuard.requiredPermissionsForWifi.toTypedArray()
                         )
                     }
                 }
@@ -805,7 +815,7 @@ class TcpFragment : Fragment() {
                     } else {
                         log("Permissions not granted!")
                         locationPermissionRequest.launch(
-                            permissionGuard.requiredPermissions.toTypedArray()
+                            permissionGuard.requiredPermissionsForWifi.toTypedArray()
                         )
                     }
                 }
@@ -887,7 +897,9 @@ class TcpFragment : Fragment() {
                 isFromYou = false,
                 messageId = 0L
             )
-            val messageId = viewModel.insertMessage(fileMessage)
+            val messageId = runBlocking(Dispatchers.IO) {
+                viewModel.insertMessage(fileMessage)
+            }
 
             val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
             while (fileSize > 0
@@ -924,7 +936,6 @@ class TcpFragment : Fragment() {
 
     private fun receiveVoiceMessage(reader: DataInputStream) {
         log("receiving file ...")
-
 
         if (!resourceDirectory.exists()) {
             resourceDirectory.mkdir()
@@ -972,7 +983,9 @@ class TcpFragment : Fragment() {
             fileState = FileMessageState.Loading(0),
             messageId = 0L
         )
-        viewModel.insertMessage(voiceMessage)
+        lifecycleScope.launch {
+            viewModel.insertMessage(voiceMessage)
+        }
 
         val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
         while (fileSize > 0
@@ -1216,7 +1229,7 @@ class TcpFragment : Fragment() {
                                     val contactMessageItem =
                                         gson.fromJson(
                                             receivedMessage,
-                                            ContactsMessageItem::class.java
+                                            ContactMessageItem::class.java
                                         )
                                     val contactMessage = ChatMessage.ContactMessage(
                                         formattedTime = getCurrentTime(),
@@ -1406,14 +1419,16 @@ class TcpFragment : Fragment() {
                                 isFromYou = false,
                                 messageId = 0L
                             )
-                            viewModel.insertMessage(message)
+                            lifecycleScope.launch {
+                                viewModel.insertMessage(message)
+                            }
                         }
 
                         AppMessageType.CONTACT -> {
                             val receivedMessage = reader.readUTF()
                             log("client incoming contact message - $receivedMessage")
                             val contactMessageItem =
-                                gson.fromJson(receivedMessage, ContactsMessageItem::class.java)
+                                gson.fromJson(receivedMessage, ContactMessageItem::class.java)
                             val contactMessage = ChatMessage.ContactMessage(
                                 formattedTime = getCurrentTime(),
                                 contactName = contactMessageItem.contactName,
@@ -1421,7 +1436,9 @@ class TcpFragment : Fragment() {
                                 isFromYou = false,
                                 messageId = 0L
                             )
-                            viewModel.insertMessage(contactMessage)
+                            lifecycleScope.launch {
+                                viewModel.insertMessage(contactMessage)
+                            }
                         }
 
                         AppMessageType.FILE -> {
@@ -1506,7 +1523,7 @@ class TcpFragment : Fragment() {
         writer: DataOutputStream,
         contactMessage: ChatMessage.ContactMessage
     ) {
-        val contactsMessageItem = ContactsMessageItem(
+        val contactsMessageItem = ContactMessageItem(
             contactName = contactMessage.contactName,
             contactNumber = contactMessage.contactNumber
         )
@@ -1515,7 +1532,9 @@ class TcpFragment : Fragment() {
         try {
             writer.writeChar(contactMessage.messageType.identifier.code)
             writer.writeUTF(contactsStringForm)
-            viewModel.insertMessage(contactMessage)
+            lifecycleScope.launch {
+                viewModel.insertMessage(contactMessage)
+            }
         } catch (e: IOException) {
             e.printStackTrace()
             Log.d(
@@ -1543,7 +1562,9 @@ class TcpFragment : Fragment() {
         try {
             writer.writeChar(textMessage.messageType.identifier.code)
             writer.writeUTF(data)
-            viewModel.insertMessage(textMessage)
+            lifecycleScope.launch {
+                viewModel.insertMessage(textMessage)
+            }
         } catch (e: IOException) {
             e.printStackTrace()
             Log.d(
@@ -1609,7 +1630,9 @@ class TcpFragment : Fragment() {
                 }
 
                 is ChatMessage.VoiceMessage -> {
-
+                    lifecycleScope.launch {
+                        sendVoiceMessage(writer = connectedClientWriter, voiceMessage = message)
+                    }
                 }
 
                 is ChatMessage.ContactMessage -> {
@@ -1637,6 +1660,7 @@ class TcpFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         viewModel.checkReadContactsPermission()
+        viewModel.checkRecordAudioPermission()
     }
 
     //6-fragment lifecycle callback

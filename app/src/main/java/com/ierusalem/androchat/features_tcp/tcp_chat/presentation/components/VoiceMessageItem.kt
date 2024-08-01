@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.CircularProgressBar
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.millisecondsToTime
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
@@ -39,7 +38,6 @@ fun VoiceMessageItem(
     onPlayClick: () -> Unit,
     onPauseClick: () -> Unit,
     onStopClick: () -> Unit,
-    isPlaying: Boolean = false
 ) {
     val backgroundBubbleColor = if (message.isFromYou) {
         MaterialTheme.colorScheme.primary
@@ -57,23 +55,103 @@ fun VoiceMessageItem(
             ) {
                 when (val state = message.fileState) {
                     is FileMessageState.Loading -> {
-                        log("in file item progress - ${state.percentage}")
                         CircularProgressBar(percentage = (state.percentage.toFloat() / 100))
+                        Column(
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .weight(1F),
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(top = 4.dp),
+                                    text = message.duration.millisecondsToTime(),
+                                    color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
+                            Text(
+                                text = message.formattedTime,
+                                color = MaterialTheme.colorScheme.outline.copy(0.8F),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
 
                     FileMessageState.Success -> {
                         IconButton(
                             onClick = {
-                                if (isPlaying) onPauseClick() else onPlayClick()
+                                if (message.isPlaying) onPauseClick() else onPlayClick()
                             }
                         ) {
                             val icon =
-                                if (isPlaying) R.drawable.pause_circle_fill else R.drawable.play_circle_fill
+                                if (message.isPlaying) R.drawable.pause_circle_fill else R.drawable.play_circle_fill
                             Icon(
                                 modifier = Modifier.size(42.dp),
                                 painter = painterResource(id = icon),
                                 contentDescription = null
                             )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .weight(1F),
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            if (message.isPlaying){
+                                LinearProgressIndicator(
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
+                                    progress = { message.timing.toFloat()/100 },
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    trackColor = MaterialTheme.colorScheme.onSurface.copy(0.1F),
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                if (message.isPlaying){
+                                    Text(
+                                        modifier = Modifier.padding(top = 4.dp),
+                                        text = (message.duration*message.timing/100).millisecondsToTime(),
+                                        color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                    Text(
+                                        modifier = Modifier.padding(top = 4.dp),
+                                        text = " / ",
+                                        color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                }
+                                Text(
+                                    modifier = Modifier.padding(top = 4.dp),
+                                    text = message.duration.millisecondsToTime(),
+                                    color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
+                            Text(
+                                text = message.formattedTime,
+                                color = MaterialTheme.colorScheme.outline.copy(0.8F),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        if (message.isPlaying) {
+                            IconButton(onClick = { onStopClick() }) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.close_circle),
+                                    contentDescription = null
+                                )
+                            }
                         }
                     }
 
@@ -98,61 +176,45 @@ fun VoiceMessageItem(
                                 )
                             }
                         )
-                    }
-                }
-                Column(
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .weight(1F),
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    val customPadding = if (isPlaying) 0.dp else 16.dp
-                    LinearProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(end = customPadding),
-                        progress = { 0.7F },
-                        trackColor = MaterialTheme.colorScheme.tertiary,
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        if (isPlaying){
+                        Column(
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .weight(1F),
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                if (message.isPlaying){
+                                    Text(
+                                        modifier = Modifier.padding(top = 4.dp),
+                                        text = message.duration.millisecondsToTime(),
+                                        color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                    Text(
+                                        modifier = Modifier.padding(top = 4.dp),
+                                        text = " / ",
+                                        color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                }
+                                Text(
+                                    modifier = Modifier.padding(top = 4.dp),
+                                    text = message.duration.millisecondsToTime(),
+                                    color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
                             Text(
-                                modifier = Modifier.padding(top = 4.dp),
-                                text = message.duration.millisecondsToTime(),
-                                color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
-                                style = MaterialTheme.typography.titleSmall
-                            )
-                            Text(
-                                modifier = Modifier.padding(top = 4.dp),
-                                text = " / ",
-                                color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
-                                style = MaterialTheme.typography.titleSmall
+                                text = message.formattedTime,
+                                color = MaterialTheme.colorScheme.outline.copy(0.8F),
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
-                        Text(
-                            modifier = Modifier.padding(top = 4.dp),
-                            text = message.duration.millisecondsToTime(),
-                            color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
-                            style = MaterialTheme.typography.titleSmall
-                        )
-                    }
-                    Text(
-                        text = message.formattedTime,
-                        color = MaterialTheme.colorScheme.outline.copy(0.8F),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                if (isPlaying) {
-                    IconButton(onClick = { onStopClick() }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.close_circle),
-                            contentDescription = null
-                        )
                     }
                 }
             }
@@ -175,6 +237,8 @@ private fun PreviewLightVoiceMessageItem() {
                     filePath = "file_path_uri",
                     isFromYou = false,
                     duration = 12000,
+                    isPlaying = true,
+                    timing = 19,
                     fileState = FileMessageState.Success,
                     messageId = 0L
                 ),
@@ -200,14 +264,13 @@ private fun PreviewDarkVoiceMessageItem() {
                     fileExtension = ".pdf",
                     filePath = "file_path_uri",
                     isFromYou = false,
-                    duration = 12000,
+                    duration = 80,
                     fileState = FileMessageState.Success,
                     messageId = 0L
                 ),
                 onPlayClick = {},
                 onPauseClick = {},
                 onStopClick = {},
-                isPlaying = true,
             )
         }
     }

@@ -21,7 +21,12 @@ sealed interface TcpScreenEvents {
 
     //local conversation
     data class HandlePickingMultipleMedia(val medias:List<Uri>):TcpScreenEvents
+
+    data object RequestRecordAudioPermission: TcpScreenEvents
+
     data class ReadContactPermissionChanged(val isGranted: Boolean): TcpScreenEvents
+    data class RecordAudioPermissionChanged(val isGranted: Boolean): TcpScreenEvents
+
     data object ReadContactsRequest: TcpScreenEvents
     data object ReadContacts: TcpScreenEvents
     data object ShowFileChooserClick: TcpScreenEvents

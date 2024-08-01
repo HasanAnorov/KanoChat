@@ -1,5 +1,8 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.presentation
 
+import android.Manifest
+import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
@@ -75,16 +78,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.devlomi.record_view.OnRecordListener
 import com.devlomi.record_view.RecordButton
 import com.devlomi.record_view.RecordLockView
+import com.devlomi.record_view.RecordPermissionHandler
 import com.devlomi.record_view.RecordView
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralConnectionStatus
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenDialogErrors
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
+
 
 enum class LocalInputSelector {
     NONE,
@@ -149,14 +157,33 @@ fun LocalConversationUserInput(
                             .apply {
                                 val recordingView = findViewById<RecordView>(R.id.record_view)
                                 val recordButton = findViewById<RecordButton>(R.id.record_button)
-
-                                val isEnabled =
-                                    uiState.generalConnectionStatus != GeneralConnectionStatus.Idle
-                                recordButton.isEnabled = isEnabled
-
                                 val recordLockView = findViewById<RecordLockView>(R.id.record_lock)
                                 val recordLockCoverView =
                                     findViewById<ImageView>(R.id.record_lock_cover)
+                                log("permission  - ${uiState.isRecordAudioGranted} connection - ${uiState.generalConnectionStatus}")
+                                recordButton.isListenForRecord = uiState.isRecordAudioGranted
+                                recordButton.isListenForRecord =
+                                    uiState.generalConnectionStatus != GeneralConnectionStatus.Idle
+                                recordButton.setOnClickListener {
+                                    log("checking ui - ${uiState.isRecordAudioGranted}")
+                                    when {
+                                        !uiState.isRecordAudioGranted -> {
+                                            log("permission for audio recording not granted")
+                                            eventHandler(TcpScreenEvents.RequestRecordAudioPermission)
+                                        }
+
+                                        uiState.generalConnectionStatus == GeneralConnectionStatus.Idle -> {
+                                            log("no connections found to send voice message, show error dialog")
+                                            log("connection status - ${uiState.generalConnectionStatus}")
+                                            eventHandler(
+                                                TcpScreenEvents.OnDialogErrorOccurred(
+                                                    TcpScreenDialogErrors.PeerNotConnected
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+
                                 recordLockView.visibility = View.INVISIBLE
                                 recordButton.setRecordView(recordingView)
                                 recordingView.setOnRecordListener(
@@ -213,21 +240,19 @@ fun LocalConversationUserInput(
                                 recordingView.setRecordButtonGrowingAnimationEnabled(true)
 
                                 // change scale up value on Growing animation.
-                                recordButton.setScaleUpTo(1.5f)
+                                recordButton.setScaleUpTo(1.3f)
 
                                 // disable Sounds
                                 recordingView.setSoundEnabled(true)
 
                                 // auto cancelling recording after timeLimit (In millis)
-                                recordingView.setTimeLimit(5 * 60 * 1000) //5 minutes
+                                recordingView.setTimeLimit(1 * 60 * 1000) //1 minutes
 
                                 //set send icon
                                 recordButton.setSendIconResource(R.drawable.send)
                             }
                     },
-                    update = {
-
-                    }
+                    update = {}
                 )
                 if (!uiState.isRecording) {
                     UserInputText(

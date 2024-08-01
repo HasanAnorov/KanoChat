@@ -46,7 +46,6 @@ fun LocalMessageItem(
     onPlayVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
-    isVoiceMessagePlaying: Boolean,
 ) {
     val borderColor = if (msg.isFromYou) {
         MaterialTheme.colorScheme.primary
@@ -86,7 +85,6 @@ fun LocalMessageItem(
             onPlayVoiceMessageClick = { onPlayVoiceMessageClick(it) },
             onPauseVoiceMessageClick = { onPauseVoiceMessageClick(it) },
             onStopVoiceMessageClick = { onStopVoiceMessageClick(it) },
-            isVoiceMessagePlaying = isVoiceMessagePlaying
         )
     }
 }
@@ -102,7 +100,6 @@ fun AuthorAndTextMessage(
     onPlayVoiceMessageClick:(ChatMessage.VoiceMessage)-> Unit,
     onPauseVoiceMessageClick:(ChatMessage.VoiceMessage) -> Unit,
     onStopVoiceMessageClick:(ChatMessage.VoiceMessage) -> Unit,
-    isVoiceMessagePlaying: Boolean,
 ) {
     Column(modifier = modifier) {
         if (isLastMessageByAuthor) {
@@ -119,7 +116,6 @@ fun AuthorAndTextMessage(
                     onPlayClick = { onPlayVoiceMessageClick(msg) },
                     onPauseClick = { onPauseVoiceMessageClick(msg) },
                     onStopClick = { onStopVoiceMessageClick(msg) },
-                    isPlaying = isVoiceMessagePlaying
                 )
             }
 
@@ -200,7 +196,6 @@ private fun PreviewMessage() {
                 isFromYou = true,
                 messageId = 0L
             ),
-            isVoiceMessagePlaying = false,
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,
             onFileItemClick = {},

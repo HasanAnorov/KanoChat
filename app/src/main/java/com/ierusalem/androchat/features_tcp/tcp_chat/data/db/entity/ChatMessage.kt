@@ -38,7 +38,9 @@ sealed interface ChatMessage {
         val fileName: String,
         val fileSize: String,
         val fileExtension: String,
-        val fileState: FileMessageState = FileMessageState.Loading(0)
+        val fileState: FileMessageState = FileMessageState.Loading(0),
+        val isPlaying:Boolean = false,
+        val timing:Long = 0
     ) : ChatMessage
 
     data class ContactMessage(

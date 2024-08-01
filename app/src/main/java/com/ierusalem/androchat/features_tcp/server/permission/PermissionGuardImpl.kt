@@ -23,22 +23,31 @@ class PermissionGuardImpl(
         CONTACTS_READ_PERMISSIONS
     }
 
-    override val requiredPermissions: List<String> by
-    lazy(LazyThreadSafetyMode.NONE) {
+    override val requiredPermissionsForRecordingAudio: List<String>
+        get() = AUDIO_RECORDING_PERMISSIONS
+
+    override val requiredPermissionsForWifi: List<String> by lazy(LazyThreadSafetyMode.NONE) {
         // Always require these WiFi permissions
         ALWAYS_PERMISSIONS + WIFI_NEARBY_PERMISSIONS
     }
 
-    override suspend fun canAccessContacts(): Boolean  =
-        withContext(context = Dispatchers.Main){
+    override suspend fun canAccessContacts(): Boolean =
+        withContext(context = Dispatchers.Main) {
             return@withContext requiredPermissionsForContacts.all {
+                hasPermission(it)
+            }
+        }
+
+    override suspend fun canRecordAudio(): Boolean =
+        withContext(context = Dispatchers.Main) {
+            return@withContext requiredPermissionsForRecordingAudio.all {
                 hasPermission(it)
             }
         }
 
     override suspend fun canCreateNetwork(): Boolean =
         withContext(context = Dispatchers.Main) {
-            return@withContext requiredPermissions.all {
+            return@withContext requiredPermissionsForWifi.all {
                 hasPermission(it)
             }
         }
@@ -55,6 +64,10 @@ class PermissionGuardImpl(
 
         private val CONTACTS_READ_PERMISSIONS = listOf(
             Manifest.permission.READ_CONTACTS
+        )
+
+        private val AUDIO_RECORDING_PERMISSIONS = listOf(
+            Manifest.permission.RECORD_AUDIO
         )
 
         private val WIFI_NEARBY_PERMISSIONS =

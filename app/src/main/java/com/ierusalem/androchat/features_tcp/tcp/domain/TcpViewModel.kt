@@ -80,30 +80,13 @@ class TcpViewModel @Inject constructor(
 
     private var hotspotReservation: WifiManager.LocalOnlyHotspotReservation? = null
 
+    private val resourceDirectory =
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+
     init {
         initializeAuthorMe()
         initializeHotspotName()
         listenWifiConnections()
-        audioPlayer.onFinished {
-            resetAudioPlayerUi()
-        }
-        viewModelScope.launch(Dispatchers.IO) {
-            audioPlayer.playTiming.collect {
-                _state.update { state ->
-                    state.copy(
-                        audioPlayTiming = it.toLong()
-                    )
-                }
-            }
-        }
-    }
-
-    private fun resetAudioPlayerUi() {
-        _state.update {
-            it.copy(
-                isAudioPlaying = false
-            )
-        }
     }
 
     private fun updatePeerUserUniqueId(userUniqueId: String) {
@@ -114,7 +97,20 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun insertMessageToDb(isFromYou: Boolean, userId: String, message: ChatMessage):Long {
+    private fun startCollectingPlayTiming(messageId: Long) {
+        viewModelScope.launch {
+            audioPlayer.playTiming.collect { timing ->
+                log("timing - $timing")
+                updatePlayTiming(timing, messageId)
+            }
+        }
+    }
+
+    private suspend fun insertMessageToDb(
+        isFromYou: Boolean,
+        userId: String,
+        message: ChatMessage
+    ): Long {
         val messageEntity = when (message) {
             is ChatMessage.TextMessage -> {
                 ChatMessageEntity(
@@ -163,7 +159,6 @@ class TcpViewModel @Inject constructor(
         }
 
         return messagesDao.insertMessage(messageEntity)
-
     }
 
     fun loadChatHistory(userUniqueId: String) {
@@ -200,6 +195,16 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    fun checkRecordAudioPermission() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isRecordAudioGranted = permissionGuardImpl.canRecordAudio()
+                )
+            }
+        }
+    }
+
     fun updateShowPermissionRequestState(shouldBeShown: Boolean) {
         _state.update {
             it.copy(
@@ -217,7 +222,6 @@ class TcpViewModel @Inject constructor(
             }
         }
     }
-
 
     private fun initializeHotspotName() {
         viewModelScope.launch {
@@ -395,10 +399,8 @@ class TcpViewModel @Inject constructor(
         updateIsRecording(true)
         val currentAudioFileName =
             "${Constants.VOICE_MESSAGE_FILE_NAME}${getTimeInHours()}${Constants.AUDIO_EXTENSION}"
-        val downloadsDirectory =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
 
-        currentAudioFile = File(downloadsDirectory, currentAudioFileName).also {
+        currentAudioFile = File(resourceDirectory, currentAudioFileName).also {
             audioRecorder.startAudio(it)
         }
     }
@@ -418,7 +420,10 @@ class TcpViewModel @Inject constructor(
             messageId = 0L
         )
         when (state.value.generalConnectionStatus) {
-            GeneralConnectionStatus.Idle -> {}
+            GeneralConnectionStatus.Idle -> {
+                log("recording voice message on idle connection")
+            }
+
             GeneralConnectionStatus.ConnectedAsClient -> {
                 emitNavigation(TcpScreenNavigation.SendClientMessage(voiceMessage))
             }
@@ -431,7 +436,7 @@ class TcpViewModel @Inject constructor(
 
     private fun cancelRecording() {
         updateIsRecording(false)
-        finishRecording()
+        audioRecorder.stopAudio()
         val isDeleted = deleteFile()
         log("is cancelled audio deleted - $isDeleted")
     }
@@ -444,31 +449,85 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun updateIsPlaying(isPlaying: Boolean) {
-        _state.update {
-            it.copy(
-                isAudioPlaying = isPlaying
-            )
+    private fun updateIsPlaying(isPlaying: Boolean, messageId: Long) {
+        // Find the target message
+        val targetMessage: ChatMessage.VoiceMessage? = state.value.messages
+            .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
+        // Check if targetMessage is not null
+        targetMessage?.let {
+            // Create a copy with the updated isPlaying value
+            val updatedMessage = it.copy(isPlaying = isPlaying)
+            // Get the current list of messages
+            val messages = state.value.messages
+            // Find the index of the target message
+            val targetMessageIndex = messages.indexOf(targetMessage)
+            // Create a new list with the updated message
+            val newMessages = messages.toMutableList().apply {
+                set(targetMessageIndex, updatedMessage)
+            }
+            // Update the state with the new list of messages
+            _state.update { currentState ->
+                currentState.copy(
+                    messages = newMessages
+                )
+            }
         }
     }
 
+    private fun updatePlayTiming(timing: Long, messageId: Long) {
+        // Find the target message
+        val targetMessage: ChatMessage.VoiceMessage? = state.value.messages
+            .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
+        // Check if targetMessage is not null
+        targetMessage?.let {
+            // Create a copy with the updated isPlaying value
+            val updatedMessage = it.copy(timing = timing)
+            // Get the current list of messages
+            val messages = state.value.messages
+            // Find the index of the target message
+            val targetMessageIndex = messages.indexOf(targetMessage)
+            // Create a new list with the updated message
+            val newMessages = messages.toMutableList().apply {
+                set(targetMessageIndex, updatedMessage)
+            }
+            // Update the state with the new list of messages
+            _state.update { currentState ->
+                currentState.copy(
+                    messages = newMessages
+                )
+            }
+        }
+    }
+
+    private fun playAudioFile(voiceMessage: ChatMessage.VoiceMessage) {
+        val audioFile = File(resourceDirectory, voiceMessage.fileName)
+        audioPlayer.playFile(audioFile) {
+            log("on finished in vm")
+            updateIsPlaying(false, voiceMessage.messageId)
+        }
+        updateIsPlaying(true, voiceMessage.messageId)
+        startCollectingPlayTiming(voiceMessage.messageId)
+    }
 
     @SuppressLint("MissingPermission")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
             //todo - you did not use the parameter inside on play voice message
             is TcpScreenEvents.OnPlayVoiceMessageClick -> {
-                updateIsPlaying(true)
-                audioPlayer.playFile(currentAudioFile)
+                playAudioFile(event.message)
+            }
+
+            TcpScreenEvents.RequestRecordAudioPermission -> {
+                emitNavigation(TcpScreenNavigation.RequestRecordAudioPermission)
             }
 
             is TcpScreenEvents.OnPauseVoiceMessageClick -> {
-                updateIsPlaying(false)
+                updateIsPlaying(false, event.message.messageId)
                 audioPlayer.pause()
             }
 
             is TcpScreenEvents.OnStopVoiceMessageClick -> {
-                updateIsPlaying(false)
+                updateIsPlaying(false, event.message.messageId)
                 audioPlayer.stop()
             }
 
@@ -539,6 +598,19 @@ class TcpViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         isReadContactsGranted = event.isGranted
+                    )
+                }
+            }
+
+            is TcpScreenEvents.RecordAudioPermissionChanged -> {
+                log("message - ${event.isGranted}")
+                if (!event.isGranted) {
+                    //updateShowPermissionRequestState(true)
+                    log("show dialog")
+                }
+                _state.update {
+                    it.copy(
+                        isRecordAudioGranted = event.isGranted
                     )
                 }
             }
@@ -989,7 +1061,10 @@ class TcpViewModel @Inject constructor(
             is ChatMessage.FileMessage -> {
                 viewModelScope.launch(Dispatchers.IO) {
                     val newFileState = message.fileState
-                    messagesDao.updateFileMessage(messageId = message.messageId, newFileState = newFileState)
+                    messagesDao.updateFileMessage(
+                        messageId = message.messageId,
+                        newFileState = newFileState
+                    )
                 }
             }
 
@@ -999,7 +1074,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun insertMessage(message: ChatMessage):Long {
+    suspend fun insertMessage(message: ChatMessage): Long {
         return insertMessageToDb(
             isFromYou = message.isFromYou,
             userId = state.value.peerUserUniqueId,

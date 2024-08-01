@@ -15,7 +15,7 @@ interface MessagesDao {
     fun isUserExist(userUniqueId: String): Boolean
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertMessage(message: ChatMessageEntity): Long
+    suspend fun insertMessage(message: ChatMessageEntity): Long
 
     @Query("UPDATE messages SET fileState = :newFileState WHERE id = :messageId")
     suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState)
