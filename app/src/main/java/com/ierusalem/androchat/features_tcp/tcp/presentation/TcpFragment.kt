@@ -16,7 +16,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Looper
-import android.text.format.Formatter
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -92,6 +91,7 @@ import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEven
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpView
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactListContent
 import dagger.hilt.android.AndroidEntryPoint
@@ -184,7 +184,8 @@ class TcpFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         gson = Gson()
-        resourceDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")!!
+        resourceDirectory =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")!!
     }
 
     private val readContactsPermissionLauncher =
@@ -193,11 +194,11 @@ class TcpFragment : Fragment() {
         }
 
     private val recordAudioPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()){ isGranted ->
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             viewModel.handleEvents(TcpScreenEvents.RecordAudioPermissionChanged(isGranted))
         }
 
-    private fun  generateFileFromUri(uri: Uri): File{
+    private fun generateFileFromUri(uri: Uri): File {
         val contentResolver = activity?.contentResolver!!
 
         if (!resourceDirectory.exists()) {
@@ -210,7 +211,11 @@ class TcpFragment : Fragment() {
         if (file.exists()) {
             val fileNameWithoutExt = fileNameWithLabel.getFileNameWithoutExtension()
             val uniqueFileName =
-                generateUniqueFileName(resourceDirectory.toString(), fileNameWithoutExt, file.extension)
+                generateUniqueFileName(
+                    resourceDirectory.toString(),
+                    fileNameWithoutExt,
+                    file.extension
+                )
             file = File(uniqueFileName)
         }
 
@@ -240,37 +245,61 @@ class TcpFragment : Fragment() {
                     }
 
                     GeneralConnectionStatus.ConnectedAsClient -> {
-                        val fileMessage = ChatMessage.FileMessage(
+//                        val fileMessage = ChatMessage.FileMessage(
+//                            formattedTime = getCurrentTime(),
+//                            filePath = file.path,
+//                            fileName = file.name,
+//                            fileSize = file.length().readableFileSize(),
+//                            fileExtension = file.extension,
+//                            fileState = FileMessageState.Loading(0),
+//                            isFromYou = true,
+//                            messageId = 0L
+//                        )
+                        val fileMessageEntity = ChatMessageEntity(
+                            type = AppMessageType.FILE,
                             formattedTime = getCurrentTime(),
+                            isFromYou = true,
+                            userId = viewModel.state.value.peerUserUniqueId,
+
                             filePath = file.path,
+                            fileState = FileMessageState.Loading(0),
                             fileName = file.name,
                             fileSize = file.length().readableFileSize(),
                             fileExtension = file.extension,
-                            fileState = FileMessageState.Loading(0),
-                            isFromYou = true,
-                            messageId = 0L
                         )
-                        sendClientMessage(fileMessage)
+                        sendClientMessage(fileMessageEntity)
                     }
 
                     GeneralConnectionStatus.ConnectedAsHost -> {
-                        val fileMessage = ChatMessage.FileMessage(
+//                        val fileMessage = ChatMessage.FileMessage(
+//                            formattedTime = getCurrentTime(),
+//                            filePath = file.path,
+//                            fileName = file.name,
+//                            fileSize = file.length().readableFileSize(),
+//                            fileExtension = file.extension,
+//                            fileState = FileMessageState.Loading(0),
+//                            isFromYou = true,
+//                            messageId = 0L
+//                        )
+
+                        val fileMessageEntity = ChatMessageEntity(
+                            type = AppMessageType.FILE,
                             formattedTime = getCurrentTime(),
+                            isFromYou = true,
+                            userId = viewModel.state.value.peerUserUniqueId,
+
                             filePath = file.path,
+                            fileState = FileMessageState.Loading(0),
                             fileName = file.name,
                             fileSize = file.length().readableFileSize(),
                             fileExtension = file.extension,
-                            fileState = FileMessageState.Loading(0),
-                            isFromYou = true,
-                            messageId = 0L
                         )
-                        sendHostMessage(fileMessage)
+                        sendHostMessage(fileMessageEntity)
                     }
                 }
             }
         }
     }
-
 
 
     private fun showFileChooser() {
@@ -280,7 +309,8 @@ class TcpFragment : Fragment() {
             .setAction(Intent.ACTION_GET_CONTENT)
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
-        intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        intent.flags =
+            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 
         try {
             getFilesLauncher.launch(intent)
@@ -374,15 +404,24 @@ class TcpFragment : Fragment() {
                                                             )
                                                         )
                                                         selectedContacts.forEach { contact ->
-                                                            val contactMessage =
-                                                                ChatMessage.ContactMessage(
+//                                                            val contactMessage = ChatMessage.ContactMessage(
+//                                                                    formattedTime = getCurrentTime(),
+//                                                                    isFromYou = true,
+//                                                                    contactName = contact.contactName,
+//                                                                    contactNumber = contact.phoneNumber,
+//                                                                    messageId = 0L
+//                                                                )
+                                                            val contactMessageEntity =
+                                                                ChatMessageEntity(
+                                                                    type = AppMessageType.CONTACT,
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
+                                                                    userId = viewModel.state.value.peerUserUniqueId,
+
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
-                                                                    messageId = 0L
                                                                 )
-                                                            sendClientMessage(contactMessage)
+                                                            sendClientMessage(contactMessageEntity)
                                                             delay(300)
                                                         }
                                                     }
@@ -396,15 +435,25 @@ class TcpFragment : Fragment() {
                                                             )
                                                         )
                                                         selectedContacts.forEach { contact ->
-                                                            val contactMessage =
-                                                                ChatMessage.ContactMessage(
+//                                                            val contactMessage =
+//                                                                ChatMessage.ContactMessage(
+//                                                                    formattedTime = getCurrentTime(),
+//                                                                    isFromYou = true,
+//                                                                    contactName = contact.contactName,
+//                                                                    contactNumber = contact.phoneNumber,
+//                                                                    messageId = 0L
+//                                                                )
+                                                            val contactMessageEntity =
+                                                                ChatMessageEntity(
+                                                                    type = AppMessageType.CONTACT,
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
+                                                                    userId = viewModel.state.value.peerUserUniqueId,
+
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
-                                                                    messageId = 0L
                                                                 )
-                                                            sendHostMessage(contactMessage)
+                                                            sendHostMessage(contactMessageEntity)
                                                             delay(300)
                                                         }
                                                     }
@@ -614,22 +663,35 @@ class TcpFragment : Fragment() {
                         GeneralConnectionStatus.Idle -> {
                             //todo - show error for idling
                         }
+
                         GeneralConnectionStatus.ConnectedAsHost -> {
-                            val fileMessages = mutableListOf<ChatMessage.FileMessage>()
+                            val fileMessages = mutableListOf<ChatMessageEntity>()
                             navigation.medias.forEach { imageUri ->
                                 val file = generateFileFromUri(imageUri)
 
-                                val fileMessage = ChatMessage.FileMessage(
+//                                val fileMessage = ChatMessage.FileMessage(
+//                                    formattedTime = getCurrentTime(),
+//                                    filePath = file.path,
+//                                    fileName = file.name,
+//                                    fileSize = file.length().readableFileSize(),
+//                                    fileExtension = file.extension,
+//                                    fileState = FileMessageState.Loading(0),
+//                                    isFromYou = true,
+//                                    messageId = 0L
+//                                )
+                                val fileMessageEntity = ChatMessageEntity(
+                                    type = AppMessageType.FILE,
                                     formattedTime = getCurrentTime(),
-                                    filePath = file.path,
+                                    isFromYou = true,
+                                    userId = viewModel.state.value.peerUserUniqueId,
+
+                                    fileState = FileMessageState.Loading(0),
                                     fileName = file.name,
                                     fileSize = file.length().readableFileSize(),
                                     fileExtension = file.extension,
-                                    fileState = FileMessageState.Loading(0),
-                                    isFromYou = true,
-                                    messageId = 0L
+                                    filePath = file.path,
                                 )
-                                fileMessages.add(fileMessage)
+                                fileMessages.add(fileMessageEntity)
                             }
                             sendFileMessages(
                                 writer = connectedClientWriter,
@@ -638,40 +700,58 @@ class TcpFragment : Fragment() {
                         }
 
                         GeneralConnectionStatus.ConnectedAsClient -> {
-                            val fileMessages = mutableListOf<ChatMessage.FileMessage>()
+                            val fileMessages = mutableListOf<ChatMessageEntity>()
                             navigation.medias.forEach { imageUri ->
 
                                 if (!resourceDirectory.exists()) {
                                     resourceDirectory.mkdir()
                                 }
 
-                                val fileName = imageUri.getFileNameFromUri(contentResolver = requireContext().contentResolver)
+                                val fileName =
+                                    imageUri.getFileNameFromUri(contentResolver = requireContext().contentResolver)
                                 var file = File(resourceDirectory, fileName)
                                 if (file.exists()) {
                                     log("same file found in folder, generating unique name ...")
                                     val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
                                     log("file name without ext - $fileNameWithoutExt")
                                     val uniqueFileName =
-                                        generateUniqueFileName(resourceDirectory.toString(), fileNameWithoutExt, file.extension)
+                                        generateUniqueFileName(
+                                            resourceDirectory.toString(),
+                                            fileNameWithoutExt,
+                                            file.extension
+                                        )
                                     log("unique file name - $uniqueFileName")
                                     file = File(uniqueFileName)
                                 }
 
-                                val inputStream = requireContext().contentResolver.openInputStream(imageUri)
+                                val inputStream =
+                                    requireContext().contentResolver.openInputStream(imageUri)
                                 val fileOutputStream = FileOutputStream(file)
                                 inputStream?.copyTo(fileOutputStream)
                                 fileOutputStream.close()
 
-                                val fileMessage = ChatMessage.FileMessage(
+//                                val fileMessage = ChatMessage.FileMessage(
+//                                    formattedTime = getCurrentTime(),
+//                                    isFromYou = true,
+//                                    filePath = file.path,
+//                                    fileName = file.name,
+//                                    fileSize = file.length().readableFileSize(),
+//                                    fileExtension = file.extension,
+//                                    messageId = 0L
+//                                )
+                                val fileMessageEntity = ChatMessageEntity(
+                                    type = AppMessageType.FILE,
                                     formattedTime = getCurrentTime(),
                                     isFromYou = true,
-                                    filePath = file.path,
+                                    userId = viewModel.state.value.peerUserUniqueId,
+
+                                    fileState = FileMessageState.Loading(0),
                                     fileName = file.name,
                                     fileSize = file.length().readableFileSize(),
                                     fileExtension = file.extension,
-                                    messageId = 0L
+                                    filePath = file.path,
                                 )
-                                fileMessages.add(fileMessage)
+                                fileMessages.add(fileMessageEntity)
                             }
                             sendFileMessages(writer = clientWriter, messages = fileMessages)
                         }
@@ -887,18 +967,31 @@ class TcpFragment : Fragment() {
             // Create FileOutputStream to write the received file
             val fileOutputStream = FileOutputStream(file)
 
-            val fileMessage = ChatMessage.FileMessage(
+//            val fileMessage = ChatMessage.FileMessage(
+//                formattedTime = getCurrentTime(),
+//                filePath = file.path,
+//                fileName = file.name,
+//                fileSize = fileSize.readableFileSize(),
+//                fileExtension = filename.getExtensionFromFilename(),
+//                fileState = FileMessageState.Loading(0),
+//                isFromYou = false,
+//                messageId = 0L
+//            )
+            val fileMessageEntity = ChatMessageEntity(
+                type = AppMessageType.FILE,
                 formattedTime = getCurrentTime(),
-                filePath = file.path,
+                isFromYou = false,
+                userId = viewModel.state.value.peerUserUniqueId,
+
+                fileState = FileMessageState.Loading(0),
                 fileName = file.name,
                 fileSize = fileSize.readableFileSize(),
-                fileExtension = filename.getExtensionFromFilename(),
-                fileState = FileMessageState.Loading(0),
-                isFromYou = false,
-                messageId = 0L
+                fileExtension = file.extension,
+                filePath = file.path,
             )
+
             val messageId = runBlocking(Dispatchers.IO) {
-                viewModel.insertMessage(fileMessage)
+                viewModel.insertMessage(fileMessageEntity)
             }
 
             val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
@@ -918,18 +1011,23 @@ class TcpFragment : Fragment() {
                     (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
                 val tempPercentage =
                     ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+
                 if (percentage != tempPercentage) {
                     log("progress - $percentage")
                     val newState = FileMessageState.Loading(percentage)
-                    val newFileMessage = fileMessage.copy(fileState = newState, messageId = messageId)
+                    val newFileMessage =
+                        fileMessageEntity.copy(fileState = newState, id = messageId)
                     viewModel.updatePercentageOfReceivingFile(newFileMessage)
                 }
             }
+
             fileOutputStream.close()
-            val newState = FileMessageState.Success
-            val newFileMessage = fileMessage.copy(fileState = newState, messageId = messageId)
-            viewModel.updatePercentageOfReceivingFile(newFileMessage)
             log("file received successfully")
+
+            val newState = FileMessageState.Success
+            val newFileMessage = fileMessageEntity.copy(fileState = newState, id = messageId)
+
+            viewModel.updatePercentageOfReceivingFile(newFileMessage)
         }
     }
 
@@ -968,22 +1066,26 @@ class TcpFragment : Fragment() {
         var fileSize: Long = reader.readLong() // read file size
         val fileSizeForPercentage = fileSize
 
-        val voiceMessage = ChatMessage.VoiceMessage(
+//        val voiceMessage = ChatMessage.VoiceMessage(
+//            formattedTime = getCurrentTime(),
+//            voiceFileName = fileNameForUi,
+//            duration = file.getAudioFileDuration(),
+//            isFromYou = false,
+//            fileState = FileMessageState.Loading(0),
+//            messageId = 0L
+//        )
+
+        val voiceMessageEntity = ChatMessageEntity(
+            type = AppMessageType.VOICE,
             formattedTime = getCurrentTime(),
-            filePath = Uri.fromFile(file).toString(),
-            fileName = fileNameForUi,
-            fileSize = Formatter.formatShortFileSize(
-                requireContext(),
-                fileSize
-            ),
-            fileExtension = filename.getExtensionFromFilename(),
-            duration = file.getAudioFileDuration(),
             isFromYou = false,
+            userId = viewModel.state.value.peerUserUniqueId,
+            voiceMessageFileName = file.name,
+            voiceMessageAudioFileDuration = file.getAudioFileDuration(),
             fileState = FileMessageState.Loading(0),
-            messageId = 0L
         )
         lifecycleScope.launch {
-            viewModel.insertMessage(voiceMessage)
+            viewModel.insertMessage(voiceMessageEntity)
         }
 
         val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
@@ -1006,20 +1108,20 @@ class TcpFragment : Fragment() {
             if (percentage != tempPercentage) {
                 log("progress - $percentage")
                 val newState = FileMessageState.Loading(percentage)
-                val newVoiceMessage = voiceMessage.copy(fileState = newState)
+                val newVoiceMessage = voiceMessageEntity.copy(fileState = newState)
                 viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
             }
         }
         fileOutputStream.close()
         val newState = FileMessageState.Success
-        val newVoiceMessage = voiceMessage.copy(fileState = newState)
+        val newVoiceMessage = voiceMessageEntity.copy(fileState = newState)
         viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
         log("file received successfully")
     }
 
     private suspend fun sendVoiceMessage(
         writer: DataOutputStream,
-        voiceMessage: ChatMessage.VoiceMessage
+        voiceMessage: ChatMessageEntity
     ) {
         log("sending voice message ...")
         viewModel.insertMessage(voiceMessage)
@@ -1030,18 +1132,20 @@ class TcpFragment : Fragment() {
                 val type = AppMessageType.VOICE.identifier.code
                 writer.writeChar(type)
 
+                val file = File(resourceDirectory, voiceMessage.voiceMessageFileName!!)
+
                 //sending file name
-                writer.writeUTF(voiceMessage.fileName)
+                writer.writeUTF(voiceMessage.voiceMessageFileName)
 
                 //todo optimize this later
-                val uri = Uri.parse(voiceMessage.filePath)
-                val inputStream =
-                    requireContext().contentResolver.openInputStream(uri)
-                val filePathToSave = context?.cacheDir
-                val file = File(filePathToSave, voiceMessage.fileName)
-                val fileOutputStream = FileOutputStream(file)
-                inputStream?.copyTo(fileOutputStream)
-                fileOutputStream.close()
+                //val uri = Uri.parse(voiceMessage.filePath)
+//                val inputStream =
+//                    requireContext().contentResolver.openInputStream(uri)
+//                val filePathToSave = context?.cacheDir
+//                val file = File(filePathToSave, voiceMessage.voiceFileName)
+//                val fileOutputStream = FileOutputStream(file)
+//                inputStream?.copyTo(fileOutputStream)
+//                fileOutputStream.close()
 
                 //write length
                 val fileSizeForPercentage = file.length()
@@ -1101,7 +1205,7 @@ class TcpFragment : Fragment() {
 
     private suspend fun sendFileMessages(
         writer: DataOutputStream,
-        messages: List<ChatMessage.FileMessage>
+        messages: List<ChatMessageEntity>
     ) {
         log("sending file , writer is - $writer ...")
         withContext(Dispatchers.IO) {
@@ -1117,7 +1221,7 @@ class TcpFragment : Fragment() {
             messages.forEach { fileMessage ->
 //                try {
 
-                val file = File(resourceDirectory, fileMessage.fileName)
+                val file = File(resourceDirectory, fileMessage.fileName!!)
                 log("sending file info: file size - ${file.length()} - ${file.name}")
 
 
@@ -1151,7 +1255,8 @@ class TcpFragment : Fragment() {
                         withContext(Dispatchers.Main) {
                             log("progress - $percentage")
                             val newState = FileMessageState.Loading(percentage)
-                            val newFileMessage = fileMessage.copy(fileState = newState, messageId = messageId)
+                            val newFileMessage =
+                                fileMessage.copy(fileState = newState, id = messageId)
                             viewModel.updatePercentageOfReceivingFile(newFileMessage)
                         }
                     }
@@ -1163,7 +1268,8 @@ class TcpFragment : Fragment() {
                 withContext(Dispatchers.Main) {
                     log("file sent successfully")
                     val newState = FileMessageState.Success
-                    val newFileMessage = fileMessage.copy(fileState = newState, messageId = messageId)
+                    val newFileMessage =
+                        fileMessage.copy(fileState = newState, id = messageId)
                     viewModel.updatePercentageOfReceivingFile(newFileMessage)
                 }
 //                } catch (exception: IOException) {
@@ -1191,76 +1297,93 @@ class TcpFragment : Fragment() {
 
         withContext(Dispatchers.IO) {
 //            try {
-                serverSocket = ServerSocket(serverPort)
-                log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
-                if (serverSocket.isBound) {
-                    viewModel.updateHostConnectionStatus(HostConnectionStatus.Created)
-                    viewModel.updateConnectionsCount(true)
-                }
-                while (!serverSocket.isClosed) {
-                    connectedClientSocketOnServer = serverSocket.accept()
-                    connectedClientWriter =
-                        DataOutputStream(connectedClientSocketOnServer.getOutputStream())
-                    //here we sending the unique device id to the client
-                    initializeUser(connectedClientWriter)
-                    log("New client : $connectedClientSocketOnServer ")
-                    viewModel.updateConnectionsCount(true)
+            serverSocket = ServerSocket(serverPort)
+            log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
+            if (serverSocket.isBound) {
+                viewModel.updateHostConnectionStatus(HostConnectionStatus.Created)
+                viewModel.updateConnectionsCount(true)
+            }
+            while (!serverSocket.isClosed) {
+                connectedClientSocketOnServer = serverSocket.accept()
+                connectedClientWriter =
+                    DataOutputStream(connectedClientSocketOnServer.getOutputStream())
+                //here we sending the unique device id to the client
+                initializeUser(connectedClientWriter)
+                log("New client : $connectedClientSocketOnServer ")
+                viewModel.updateConnectionsCount(true)
 
-                    while (!connectedClientSocketOnServer.isClosed) {
-                        val reader =
-                            DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
+                while (!connectedClientSocketOnServer.isClosed) {
+                    val reader =
+                        DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
 
 //                        try {
-                            val dataType = AppMessageType.fromChar(reader.readChar())
+                    val dataType = AppMessageType.fromChar(reader.readChar())
 
-                            when (dataType) {
-                                AppMessageType.INITIAL -> {
-                                    setupUserData(reader)
-                                }
+                    when (dataType) {
+                        AppMessageType.INITIAL -> {
+                            setupUserData(reader)
+                        }
 
-                                AppMessageType.VOICE -> {
-                                    receiveVoiceMessage(reader)
-                                }
+                        AppMessageType.VOICE -> {
+                            receiveVoiceMessage(reader)
+                        }
 
-                                AppMessageType.CONTACT -> {
-                                    val receivedMessage = reader.readUTF()
-                                    log("host incoming contact message - $receivedMessage")
-                                    val contactMessageItem =
-                                        gson.fromJson(
-                                            receivedMessage,
-                                            ContactMessageItem::class.java
-                                        )
-                                    val contactMessage = ChatMessage.ContactMessage(
-                                        formattedTime = getCurrentTime(),
-                                        contactName = contactMessageItem.contactName,
-                                        contactNumber = contactMessageItem.contactNumber,
-                                        isFromYou = false,
-                                        messageId = 0L
-                                    )
-                                    viewModel.insertMessage(contactMessage)
-                                }
+                        AppMessageType.CONTACT -> {
+                            val receivedMessage = reader.readUTF()
+                            log("host incoming contact message - $receivedMessage")
+                            val contactMessageItem =
+                                gson.fromJson(
+                                    receivedMessage,
+                                    ContactMessageItem::class.java
+                                )
+//                            val contactMessage = ChatMessage.ContactMessage(
+//                                formattedTime = getCurrentTime(),
+//                                contactName = contactMessageItem.contactName,
+//                                contactNumber = contactMessageItem.contactNumber,
+//                                isFromYou = false,
+//                                messageId = 0L
+//                            )
+                            val contactMessageEntity = ChatMessageEntity(
+                                type = AppMessageType.CONTACT,
+                                formattedTime = getCurrentTime(),
+                                isFromYou = false,
+                                userId = viewModel.state.value.peerUserUniqueId,
+                                contactName = contactMessageItem.contactName,
+                                contactNumber = contactMessageItem.contactNumber
+                            )
+                            viewModel.insertMessage(contactMessageEntity)
+                        }
 
-                                AppMessageType.TEXT -> {
-                                    val receivedMessage = reader.readUTF()
-                                    log("host incoming message - $receivedMessage")
+                        AppMessageType.TEXT -> {
+                            val receivedMessage = reader.readUTF()
+                            log("host incoming message - $receivedMessage")
 
-                                    val message = ChatMessage.TextMessage(
-                                        formattedTime = getCurrentTime(),
-                                        message = receivedMessage.toString(),
-                                        isFromYou = false,
-                                        messageId = 0L
-                                    )
-                                    viewModel.insertMessage(message)
-                                }
+//                            val message = ChatMessage.TextMessage(
+//                                formattedTime = getCurrentTime(),
+//                                message = receivedMessage.toString(),
+//                                isFromYou = false,
+//                                messageId = 0L
+//                            )
 
-                                AppMessageType.FILE -> {
-                                    receiveFile(reader = reader)
-                                }
+                            val textMessageEntity = ChatMessageEntity(
+                                type = AppMessageType.TEXT,
+                                formattedTime = getCurrentTime(),
+                                isFromYou = false,
+                                userId = viewModel.state.value.peerUserUniqueId,
+                                text = receivedMessage.toString()
+                            )
 
-                                AppMessageType.UNKNOWN -> {
-                                    //currently not handled
-                                }
-                            }
+                            viewModel.insertMessage(textMessageEntity)
+                        }
+
+                        AppMessageType.FILE -> {
+                            receiveFile(reader = reader)
+                        }
+
+                        AppMessageType.UNKNOWN -> {
+                            //currently not handled
+                        }
+                    }
 //                        } catch (e: EOFException) {
 //                            e.printStackTrace()
 //                            //if the IP address of the host could not be determined.
@@ -1317,8 +1440,8 @@ class TcpFragment : Fragment() {
 //                                e.printStackTrace()
 //                            }
 //                        }
-                    }
                 }
+            }
 //            } catch (e: IOException) {
 //                e.printStackTrace()
 //                serverSocket.close()
@@ -1396,56 +1519,71 @@ class TcpFragment : Fragment() {
                 val reader = DataInputStream(BufferedInputStream(clientSocket.getInputStream()))
 
 //                try {
-                    val dataType = AppMessageType.fromChar(reader.readChar())
-                    log("incoming message type - $dataType")
+                val dataType = AppMessageType.fromChar(reader.readChar())
+                log("incoming message type - $dataType")
 
-                    when (dataType) {
-                        AppMessageType.INITIAL -> {
-                            setupUserData(reader)
-                        }
-
-                        AppMessageType.VOICE -> {
-
-                        }
-
-                        AppMessageType.TEXT -> {
-                            val receivedMessage = reader.readUTF()
-                            log("host incoming message - $receivedMessage")
-
-                            val message = ChatMessage.TextMessage(
-                                formattedTime = getCurrentTime(),
-                                message = receivedMessage.toString(),
-                                isFromYou = false,
-                                messageId = 0L
-                            )
-                            lifecycleScope.launch {
-                                viewModel.insertMessage(message)
-                            }
-                        }
-
-                        AppMessageType.CONTACT -> {
-                            val receivedMessage = reader.readUTF()
-                            log("client incoming contact message - $receivedMessage")
-                            val contactMessageItem =
-                                gson.fromJson(receivedMessage, ContactMessageItem::class.java)
-                            val contactMessage = ChatMessage.ContactMessage(
-                                formattedTime = getCurrentTime(),
-                                contactName = contactMessageItem.contactName,
-                                contactNumber = contactMessageItem.contactNumber,
-                                isFromYou = false,
-                                messageId = 0L
-                            )
-                            lifecycleScope.launch {
-                                viewModel.insertMessage(contactMessage)
-                            }
-                        }
-
-                        AppMessageType.FILE -> {
-                            receiveFile(reader = reader)
-                        }
-
-                        AppMessageType.UNKNOWN -> {}
+                when (dataType) {
+                    AppMessageType.INITIAL -> {
+                        setupUserData(reader)
                     }
+
+                    AppMessageType.VOICE -> {
+
+                    }
+
+                    AppMessageType.TEXT -> {
+                        val receivedMessage = reader.readUTF()
+                        log("host incoming message - $receivedMessage")
+
+//                        val message = ChatMessage.TextMessage(
+//                            formattedTime = getCurrentTime(),
+//                            message = receivedMessage.toString(),
+//                            isFromYou = false,
+//                            messageId = 0L
+//                        )
+                        val textMessageEntity = ChatMessageEntity(
+                            type = AppMessageType.TEXT,
+                            formattedTime = getCurrentTime(),
+                            isFromYou = false,
+                            userId = viewModel.state.value.peerUserUniqueId,
+                            text = receivedMessage.toString()
+                        )
+                        lifecycleScope.launch {
+                            viewModel.insertMessage(textMessageEntity)
+                        }
+                    }
+
+                    AppMessageType.CONTACT -> {
+                        val receivedMessage = reader.readUTF()
+                        log("client incoming contact message - $receivedMessage")
+                        val contactMessageItem =
+                            gson.fromJson(receivedMessage, ContactMessageItem::class.java)
+//                        val contactMessage = ChatMessage.ContactMessage(
+//                            formattedTime = getCurrentTime(),
+//                            contactName = contactMessageItem.contactName,
+//                            contactNumber = contactMessageItem.contactNumber,
+//                            isFromYou = false,
+//                            messageId = 0L
+//                        )
+                        val contactMessageEntity = ChatMessageEntity(
+                            type = AppMessageType.CONTACT,
+                            formattedTime = getCurrentTime(),
+                            isFromYou = false,
+                            userId = viewModel.state.value.peerUserUniqueId,
+                            contactName = contactMessageItem.contactName,
+                            contactNumber = contactMessageItem.contactNumber
+                        )
+                        lifecycleScope.launch {
+                            viewModel.insertMessage(contactMessageEntity)
+                        }
+                    }
+
+                    AppMessageType.FILE -> {
+                        receiveFile(reader = reader)
+                    }
+
+                    AppMessageType.UNKNOWN -> {}
+                }
 //                } catch (e: EOFException) {
 //                    e.printStackTrace()
 //                    //if the IP address of the host could not be determined.
@@ -1520,16 +1658,17 @@ class TcpFragment : Fragment() {
 
     private fun sendContactMessage(
         writer: DataOutputStream,
-        contactMessage: ChatMessage.ContactMessage
+        contactMessage: ChatMessageEntity
     ) {
         val contactsMessageItem = ContactMessageItem(
-            contactName = contactMessage.contactName,
-            contactNumber = contactMessage.contactNumber
+            contactName = contactMessage.contactName!!,
+            contactNumber = contactMessage.contactNumber!!
         )
+
         val contactsStringForm = gson.toJson(contactsMessageItem)
 
         try {
-            writer.writeChar(contactMessage.messageType.identifier.code)
+            writer.writeChar(contactMessage.type.identifier.code)
             writer.writeUTF(contactsStringForm)
             lifecycleScope.launch {
                 viewModel.insertMessage(contactMessage)
@@ -1553,13 +1692,13 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun sendTextMessage(writer: DataOutputStream, textMessage: ChatMessage.TextMessage) {
+    private fun sendTextMessage(writer: DataOutputStream, textMessage: ChatMessageEntity) {
         log("sending text message from client - $textMessage")
 
-        val data = textMessage.message
+        val data = textMessage.text
 
         try {
-            writer.writeChar(textMessage.messageType.identifier.code)
+            writer.writeChar(textMessage.type.identifier.code)
             writer.writeUTF(data)
             lifecycleScope.launch {
                 viewModel.insertMessage(textMessage)
@@ -1583,34 +1722,38 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun sendClientMessage(message: ChatMessage) {
+    private fun sendClientMessage(message: ChatMessageEntity) {
         if (!clientSocket.isClosed) {
-            when (message) {
-                is ChatMessage.TextMessage -> {
+            when (message.type) {
+                AppMessageType.TEXT -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         sendTextMessage(writer = clientWriter, textMessage = message)
                     }
                 }
 
-                is ChatMessage.VoiceMessage -> {
+                AppMessageType.VOICE -> {
                     lifecycleScope.launch {
                         sendVoiceMessage(writer = clientWriter, voiceMessage = message)
                     }
                 }
 
-                is ChatMessage.ContactMessage -> {
+                AppMessageType.CONTACT -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         sendContactMessage(writer = clientWriter, contactMessage = message)
                     }
                 }
 
-                is ChatMessage.FileMessage -> {
+                AppMessageType.FILE -> {
                     lifecycleScope.launch {
                         sendFileMessages(
                             writer = clientWriter,
                             messages = listOf(message),
                         )
                     }
+                }
+
+                else -> {
+                    /** Just ignore */
                 }
             }
         } else {
@@ -1619,34 +1762,37 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun sendHostMessage(message: ChatMessage) {
+    private fun sendHostMessage(message: ChatMessageEntity) {
         if (!connectedClientSocketOnServer.isClosed) {
-            when (message) {
-                is ChatMessage.TextMessage -> {
+            when (message.type) {
+                AppMessageType.TEXT -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         sendTextMessage(writer = connectedClientWriter, textMessage = message)
                     }
                 }
 
-                is ChatMessage.VoiceMessage -> {
+                AppMessageType.VOICE -> {
                     lifecycleScope.launch {
                         sendVoiceMessage(writer = connectedClientWriter, voiceMessage = message)
                     }
                 }
 
-                is ChatMessage.ContactMessage -> {
+                AppMessageType.CONTACT -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         sendContactMessage(writer = connectedClientWriter, contactMessage = message)
                     }
                 }
 
-                is ChatMessage.FileMessage -> {
+                AppMessageType.FILE -> {
                     lifecycleScope.launch {
                         sendFileMessages(
                             writer = connectedClientWriter,
                             messages = listOf(message),
                         )
                     }
+                }
+                else -> {
+                    /** Just ignore */
                 }
             }
         } else {

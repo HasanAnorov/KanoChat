@@ -277,10 +277,7 @@ private fun PreviewLightVoiceMessageItem() {
                 modifier = Modifier,
                 message = ChatMessage.VoiceMessage(
                     formattedTime = "12:12:12, jul 12 2034",
-                    fileName = "SamsungElectronics Dubai Global Version home.edition.com",
-                    fileSize = "16 Kb",
-                    fileExtension = ".pdf",
-                    filePath = "file_path_uri",
+                    voiceFileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     isFromYou = false,
                     duration = 12000,
                     audioState = AudioState.Paused(6000),
@@ -304,10 +301,7 @@ private fun PreviewDarkVoiceMessageItem() {
                 modifier = Modifier,
                 message = ChatMessage.VoiceMessage(
                     formattedTime = "12:12:12, jul 12 2034",
-                    fileName = "SamsungElectronics Dubai Global Version home.edition.com",
-                    fileSize = "16 Kb",
-                    fileExtension = ".pdf",
-                    filePath = "file_path_uri",
+                    voiceFileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     isFromYou = false,
                     duration = 80,
                     fileState = FileMessageState.Success,

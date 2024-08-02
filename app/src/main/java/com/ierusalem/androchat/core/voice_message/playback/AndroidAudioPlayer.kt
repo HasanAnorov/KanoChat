@@ -17,7 +17,7 @@ class AndroidAudioPlayer(private val context: Context) : AudioPlayer {
     private var isPlaying = false
 
     val playTiming: Flow<Long> = flow {
-        while (isPlaying) {
+        while (isPlaying && mediaPlayer?.isPlaying == true) {
             mediaPlayer?.let {
                 val currentPosition = it.currentPosition
                 val duration = it.duration

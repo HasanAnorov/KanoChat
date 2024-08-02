@@ -4,6 +4,7 @@ import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenErrors
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessageEntity
 
 sealed interface TcpScreenNavigation {
     data object OnNavIconClick : TcpScreenNavigation
@@ -14,8 +15,8 @@ sealed interface TcpScreenNavigation {
     data object OnStopHotspotNetworking : TcpScreenNavigation
     data object OnStopP2PDiscovery : TcpScreenNavigation
     data class OnCreateServerClick(val portNumber: Int) : TcpScreenNavigation
-    data class SendClientMessage(val message: ChatMessage) : TcpScreenNavigation
-    data class SendHostMessage(val message: ChatMessage) : TcpScreenNavigation
+    data class SendClientMessage(val message: ChatMessageEntity) : TcpScreenNavigation
+    data class SendHostMessage(val message: ChatMessageEntity) : TcpScreenNavigation
     data class OnConnectToWifiClick(val wifiP2pDevice: WifiP2pDevice) : TcpScreenNavigation
     data class OnErrorsOccurred(val tcpScreenErrors: TcpScreenErrors) : TcpScreenNavigation
     data class OnConnectToServerClick(val serverIpAddress: String, val portNumber: Int) :

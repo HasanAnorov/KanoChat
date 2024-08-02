@@ -34,10 +34,7 @@ sealed interface ChatMessage {
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.VOICE,
         val duration: Long,
-        val filePath: String,
-        val fileName: String,
-        val fileSize: String,
-        val fileExtension: String,
+        val voiceFileName: String,
         val fileState: FileMessageState = FileMessageState.Loading(0),
         val audioState: AudioState = AudioState.Idle
     ) : ChatMessage

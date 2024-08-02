@@ -12,7 +12,6 @@ import android.os.Environment
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.util.Log
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.core.app.AppMessageType
@@ -104,65 +103,10 @@ class TcpViewModel @Inject constructor(
             audioPlayer.playTiming
                 .distinctUntilChanged()
                 .collect { timing ->
-                log("timing - $timing")
-                updatePlayTiming(timing, messageId)
-            }
+                    log("timing - $timing")
+                    updatePlayTiming(timing, messageId)
+                }
         }
-    }
-
-    private suspend fun insertMessageToDb(
-        isFromYou: Boolean,
-        userId: String,
-        message: ChatMessage
-    ): Long {
-        val messageEntity = when (message) {
-            is ChatMessage.TextMessage -> {
-                ChatMessageEntity(
-                    type = AppMessageType.TEXT,
-                    isFromYou = isFromYou,
-                    userId = userId,
-                    formattedTime = message.formattedTime,
-                    text = message.message
-                )
-            }
-
-            is ChatMessage.VoiceMessage -> {
-                ChatMessageEntity(
-                    type = AppMessageType.VOICE,
-                    voiceMessageName = message.filePath,
-                    userId = userId,
-                    isFromYou = isFromYou,
-                    formattedTime = message.formattedTime
-                )
-            }
-
-            is ChatMessage.FileMessage -> {
-                ChatMessageEntity(
-                    type = AppMessageType.FILE,
-                    userId = userId,
-                    isFromYou = isFromYou,
-                    formattedTime = message.formattedTime,
-                    fileName = message.fileName,
-                    fileSize = message.fileSize,
-                    filePath = message.filePath,
-                    fileExtension = message.fileExtension,
-                    fileState = message.fileState
-                )
-            }
-
-            is ChatMessage.ContactMessage -> {
-                ChatMessageEntity(
-                    type = AppMessageType.CONTACT,
-                    userId = userId,
-                    isFromYou = isFromYou,
-                    formattedTime = message.formattedTime,
-                    contactName = message.contactName,
-                    contactNumber = message.contactNumber,
-                )
-            }
-        }
-
-        return messagesDao.insertMessage(messageEntity)
     }
 
     fun loadChatHistory(userUniqueId: String) {
@@ -413,15 +357,21 @@ class TcpViewModel @Inject constructor(
         updateIsRecording(false)
         audioRecorder.stopAudio()
         currentAudioFile
-        val voiceMessage = ChatMessage.VoiceMessage(
+//        val voiceMessage = ChatMessage.VoiceMessage(
+//            formattedTime = getCurrentTime(),
+//            isFromYou = true,
+//            voiceFileName = currentAudioFile.name,
+//            duration = currentAudioFile.getAudioFileDuration(),
+//            messageId = 0L
+//        )
+        val voiceMessageEntity = ChatMessageEntity(
+            type = AppMessageType.VOICE,
             formattedTime = getCurrentTime(),
             isFromYou = true,
-            filePath = currentAudioFile.toUri().toString(),
-            fileName = currentAudioFile.name,
-            fileSize = currentAudioFile.length().toString(),
-            fileExtension = currentAudioFile.extension,
-            duration = currentAudioFile.getAudioFileDuration(),
-            messageId = 0L
+            userId = state.value.peerUserUniqueId,
+
+            voiceMessageFileName = currentAudioFile.name,
+            voiceMessageAudioFileDuration = currentAudioFile.getAudioFileDuration(),
         )
         when (state.value.generalConnectionStatus) {
             GeneralConnectionStatus.Idle -> {
@@ -429,11 +379,11 @@ class TcpViewModel @Inject constructor(
             }
 
             GeneralConnectionStatus.ConnectedAsClient -> {
-                emitNavigation(TcpScreenNavigation.SendClientMessage(voiceMessage))
+                emitNavigation(TcpScreenNavigation.SendClientMessage(voiceMessageEntity))
             }
 
             GeneralConnectionStatus.ConnectedAsHost -> {
-                emitNavigation(TcpScreenNavigation.SendHostMessage(voiceMessage))
+                emitNavigation(TcpScreenNavigation.SendHostMessage(voiceMessageEntity))
             }
         }
     }
@@ -458,16 +408,18 @@ class TcpViewModel @Inject constructor(
         val targetMessage: ChatMessage.VoiceMessage? = state.value.messages
             .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
         // Check if targetMessage is not null
-        targetMessage?.let {
+        targetMessage?.let { message ->
             // Create a copy with the updated isPlaying value
-            val updatedMessage = it.copy(audioState = audioState)
-            // Get the current list of messages
-            val messages = state.value.messages
-            // Find the index of the target message
-            val targetMessageIndex = messages.indexOf(targetMessage)
+            val updatedMessage = message.copy(audioState = audioState)
             // Create a new list with the updated message
-            val newMessages = messages.toMutableList().apply {
-                set(targetMessageIndex, updatedMessage)
+            val newMessages = state.value.messages.map { msg ->
+                if (msg.messageId == messageId && msg.messageType == AppMessageType.VOICE) {
+                    updatedMessage
+                } else if (msg.messageType == AppMessageType.VOICE) {
+                    (msg as ChatMessage.VoiceMessage).copy(audioState = AudioState.Idle)
+                } else {
+                    msg
+                }
             }
             // Update the state with the new list of messages
             _state.update { currentState ->
@@ -505,7 +457,7 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun playAudioFile(voiceMessage: ChatMessage.VoiceMessage) {
-        val audioFile = File(resourceDirectory, voiceMessage.fileName)
+        val audioFile = File(resourceDirectory, voiceMessage.voiceFileName)
         when (voiceMessage.audioState) {
             is AudioState.Playing -> {
                 val currentPosition = audioPlayer.pause()
@@ -726,11 +678,19 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.SendMessageRequest -> {
-                val message = ChatMessage.TextMessage(
-                    message = event.message,
+//                val message = ChatMessage.TextMessage(
+//                    message = event.message,
+//                    formattedTime = getCurrentTime(),
+//                    isFromYou = true,
+//                    messageId = 0L
+//                )
+
+                val textMessageEntity = ChatMessageEntity(
+                    type = AppMessageType.TEXT,
                     formattedTime = getCurrentTime(),
                     isFromYou = true,
-                    messageId = 0L
+                    userId = state.value.peerUserUniqueId,
+                    text = event.message
                 )
 
                 //todo - think about this later
@@ -746,11 +706,11 @@ class TcpViewModel @Inject constructor(
                     }
 
                     GeneralConnectionStatus.ConnectedAsClient -> {
-                        emitNavigation(TcpScreenNavigation.SendClientMessage(message))
+                        emitNavigation(TcpScreenNavigation.SendClientMessage(textMessageEntity))
                     }
 
                     GeneralConnectionStatus.ConnectedAsHost -> {
-                        emitNavigation(TcpScreenNavigation.SendHostMessage(message))
+                        emitNavigation(TcpScreenNavigation.SendHostMessage(textMessageEntity))
                     }
                 }
             }
@@ -1084,31 +1044,26 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updatePercentageOfReceivingFile(message: ChatMessage) {
-        when (message) {
+    fun updatePercentageOfReceivingFile(message: ChatMessageEntity) {
+        when (message.type) {
             //todo - this should be same for voice message
-            is ChatMessage.FileMessage -> {
+            AppMessageType.FILE -> {
                 viewModelScope.launch(Dispatchers.IO) {
-                    val newFileState = message.fileState
                     messagesDao.updateFileMessage(
-                        messageId = message.messageId,
-                        newFileState = newFileState
+                        messageId = message.id,
+                        newFileState = message.fileState
                     )
                 }
             }
 
-            is ChatMessage.VoiceMessage -> {}
+            AppMessageType.VOICE -> {}
 
             else -> return
         }
     }
 
-    suspend fun insertMessage(message: ChatMessage): Long {
-        return insertMessageToDb(
-            isFromYou = message.isFromYou,
-            userId = state.value.peerUserUniqueId,
-            message = message
-        )
+    suspend fun insertMessage(messageEntity: ChatMessageEntity): Long {
+        return messagesDao.insertMessage(messageEntity)
     }
 
     fun updateConnectionsCount(shouldIncrease: Boolean) {

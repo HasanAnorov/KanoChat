@@ -5,7 +5,6 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.utils.getAudioFileDuration
-import com.ierusalem.androchat.core.utils.readableFileSize
 import java.io.File
 
 @Entity(tableName = "messages")
@@ -18,7 +17,8 @@ data class ChatMessageEntity(
     //text message specific parameters
     val text: String? = null,
     //voice message specific parameters
-    val voiceMessageName: String? = null,
+    val voiceMessageFileName: String? = null,
+    val voiceMessageAudioFileDuration: Long? = null,
     //file message specific parameters
     val fileState: FileMessageState = FileMessageState.Loading(0),
     val filePath: String? = null,
@@ -45,17 +45,15 @@ data class ChatMessageEntity(
             }
 
             AppMessageType.VOICE -> {
-                voiceMessageName?.let {
-                    val voiceMessageAudioFile = File(voiceMessageName)
+                voiceMessageFileName?.let {
+//                    val voiceMessageAudioFile = File(voiceMessageFileName)
                     ChatMessage.VoiceMessage(
                         messageType = type,
                         isFromYou = isFromYou,
                         formattedTime = formattedTime,
-                        filePath = voiceMessageAudioFile.path,
-                        fileName = voiceMessageAudioFile.name,
-                        fileSize = voiceMessageAudioFile.length().readableFileSize(),
-                        fileExtension = voiceMessageAudioFile.extension,
-                        duration = voiceMessageAudioFile.getAudioFileDuration(),
+                        voiceFileName = voiceMessageFileName,
+//                        duration = voiceMessageAudioFile.getAudioFileDuration(),
+                        duration = voiceMessageAudioFileDuration!!,
                         fileState = FileMessageState.Success,
                         messageId = id
                     )
@@ -63,7 +61,6 @@ data class ChatMessageEntity(
             }
 
             AppMessageType.FILE -> {
-
                 ChatMessage.FileMessage(
                     isFromYou = isFromYou,
                     formattedTime = formattedTime,

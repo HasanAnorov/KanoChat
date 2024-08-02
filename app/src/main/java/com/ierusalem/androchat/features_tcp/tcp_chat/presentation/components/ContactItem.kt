@@ -90,7 +90,7 @@ fun ContactItem(
                     .fillMaxWidth(),
                 text = message.formattedTime,
                 textAlign = TextAlign.End,
-                color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                color = MaterialTheme.colorScheme.outline.copy(0.8F),
                 style = MaterialTheme.typography.labelSmall
             )
         }
