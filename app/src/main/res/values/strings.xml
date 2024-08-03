@@ -128,6 +128,15 @@
     <string name="server_address">Server Address</string>
     <string name="connected_devices_will_display_here">Connected devices will display here</string>
     <string name="connections_are_not_established_yet">Connections are not established yet!</string>
+    <string name="ready_to_record_voice_message">Permission granted! Click the mic to record a voice message</string>
+    <string name="record_audio_denied">You permanently declined microphone permission. \nYou can go to the app settings to grant it.</string>
+    <string name="record_audio_permission_request">This app needs access to your microphone. Please grant it!</string>
+    <string name="nearby_wifi_devices_denied">You permanently declined nearby wifi devices permission. \nYou can go to the app settings to grant it.</string>
+    <string name="nearby_wifi_devices_permission_request">This app needs access to your nearby wifi devices. Please grant it!</string>
+    <string name="coarse_location_denied">You permanently declined coarse location permission. \nYou can go to the app settings to grant it.</string>
+    <string name="coarse_location_permission_request">This app needs access to your coarse location. Please grant it!</string>
+    <string name="fine_location_denied">You permanently declined fine location permission. \nYou can go to the app settings to grant it.</string>
+    <string name="fine_location_permission_request">This app needs access to your fine location. Please grant it!</string>
 
     <!-- Local conversations strings-->
     <string name="local_connections">%d connections</string>
@@ -177,7 +186,7 @@
     <string name="contacts_lowercase">contacts</string>
     <string name="OK">@android:string/ok</string>
     <string name="permission_required">Permission Required</string>
-    <string name="contacts_denied">It seems you permanently declined read-contacts permission. \nYou can go to the app settings to grant it.</string>
+    <string name="contacts_denied">You permanently declined read-contacts permission. \nYou can go to the app settings to grant it.</string>
     <string name="contacts_permission_request">This app needs access to your contacts to share! Please grant it!</string>
 
     <!-- Empty screen strings-->

@@ -124,6 +124,15 @@
     <string name="server_address">Адрес сервера</string>
     <string name="connected_devices_will_display_here">Здесь будут отображаться подключенные устройства</string>
     <string name="connections_are_not_established_yet">Подключения еще не установлены!</string>
+    <string name="ready_to_record_voice_message">Разрешение предоставлено! Нажмите на микрофон, чтобы записать голосовое сообщение</string>
+    <string name="record_audio_denied">Вы навсегда отклонили разрешение на использование микрофона. \nВы можете перейти в настройки приложения, чтобы предоставить его.</string>
+    <string name="record_audio_permission_request">Этому приложению необходим доступ к вашему микрофону. Пожалуйста, даруйте это!</string>
+    <string name="nearby_wifi_devices_denied">Вы навсегда отклонили разрешение на доступ к близлежащим устройствам Wi-Fi. \nВы можете перейти в настройки приложения, чтобы предоставить его.</string>
+    <string name="nearby_wifi_devices_permission_request">Этому приложению требуется доступ к близлежащим устройствам Wi-Fi. Пожалуйста, предоставьте его!</string>
+    <string name="coarse_location_denied">Вы навсегда отклонили разрешение на доступ к приблизительному местоположению. \nВы можете перейти в настройки приложения, чтобы предоставить его.</string>
+    <string name="coarse_location_permission_request">Этому приложению требуется доступ к приблизительному местоположению. Пожалуйста, предоставьте его!</string>
+    <string name="fine_location_denied">Вы навсегда отклонили разрешение на доступ к точному местоположению. \nВы можете перейти в настройки приложения, чтобы предоставить его.</string>
+    <string name="fine_location_permission_request">Этому приложению требуется доступ к точному местоположению. Пожалуйста, предоставьте его!</string>
 
     <!-- Local conversations strings-->
     <string name="local_connections">%d соединений</string>
@@ -173,7 +182,7 @@
     <string name="contacts_lowercase">контакты</string>
     <string name="OK">Хорошо</string>
     <string name="permission_required">Требуется разрешение</string>
-    <string name="contacts_denied">Кажется, вы навсегда отклонили разрешение на чтение контактов. \Вы можете перейти в настройки приложения, чтобы предоставить его.</string>
+    <string name="contacts_denied">Вы навсегда отклонили разрешение на чтение контактов. \Вы можете перейти в настройки приложения, чтобы предоставить его.</string>
     <string name="contacts_permission_request">Чтобы поделиться этим приложением, необходим доступ к вашим контактам! Пожалуйста, даруйте это!</string>
 
     <!-- Empty screen strings-->

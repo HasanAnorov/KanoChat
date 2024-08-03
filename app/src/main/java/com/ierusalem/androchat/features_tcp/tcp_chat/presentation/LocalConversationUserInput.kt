@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -63,6 +64,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
@@ -118,6 +120,7 @@ fun LocalConversationUserInput(
 ) {
     var currentInputSelector by rememberSaveable { mutableStateOf(LocalInputSelector.NONE) }
     val dismissKeyboard = { currentInputSelector = LocalInputSelector.NONE }
+    val context = LocalContext.current
 
     // Intercept back navigation if there's a InputSelector visible
     if (currentInputSelector != LocalInputSelector.NONE) {
@@ -139,18 +142,6 @@ fun LocalConversationUserInput(
         }
     )
 
-    val recordAudioPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            if (isGranted) {
-                log("granted")
-            } else {
-                log("show error dialog")
-            }
-        }
-    )
-
-
     Surface(
         tonalElevation = 2.dp,
         contentColor = MaterialTheme.colorScheme.secondary
@@ -161,30 +152,26 @@ fun LocalConversationUserInput(
                     modifier = Modifier
                         .fillMaxWidth(),
                     factory = { context ->
-
                         val isPermissionGranted = ContextCompat.checkSelfPermission(
                             context,
                             Manifest.permission.RECORD_AUDIO
                         ) == PERMISSION_GRANTED
 
                         val parent = FrameLayout(context)
-                        LayoutInflater.from(context).inflate(R.layout.recording_view, parent, false)
+                        LayoutInflater
+                            .from(context)
+                            .inflate(R.layout.recording_view, parent, false)
                             .apply {
                                 val recordingView = findViewById<RecordView>(R.id.record_view)
                                 val recordButton = findViewById<RecordButton>(R.id.record_button)
                                 val recordLockView = findViewById<RecordLockView>(R.id.record_lock)
                                 val recordLockCoverView =
                                     findViewById<ImageView>(R.id.record_lock_cover)
-                                //log("permission  - ${uiState.isRecordAudioGranted} connection - ${uiState.generalConnectionStatus}")
                                 recordButton.isListenForRecord = isPermissionGranted
-                                recordButton.isListenForRecord =
-                                    uiState.generalConnectionStatus != GeneralConnectionStatus.Idle
                                 recordButton.setOnClickListener {
-                                    log("checking ui - ${uiState.isRecordAudioGranted}")
                                     when {
                                         !isPermissionGranted -> {
-                                            log("permission for audio recording not granted")
-                                            recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                            eventHandler.invoke(TcpScreenEvents.RequestRecordAudioPermission)
                                         }
 
                                         uiState.generalConnectionStatus == GeneralConnectionStatus.Idle -> {

@@ -1,5 +1,6 @@
 package com.ierusalem.androchat.features_tcp.tcp.domain
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.database.Cursor
@@ -12,6 +13,7 @@ import android.os.Environment
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.util.Log
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.core.app.AppMessageType
@@ -79,6 +81,8 @@ class TcpViewModel @Inject constructor(
     private val _state: MutableStateFlow<TcpScreenUiState> = MutableStateFlow(TcpScreenUiState())
     val state: StateFlow<TcpScreenUiState> = _state.asStateFlow()
 
+    val visiblePermissionDialogQueue = mutableStateListOf<String>()
+
     private var hotspotReservation: WifiManager.LocalOnlyHotspotReservation? = null
 
     private val resourceDirectory =
@@ -87,6 +91,33 @@ class TcpViewModel @Inject constructor(
     init {
         initializeHotspotName()
         listenWifiConnections()
+    }
+
+    fun dismissPermissionDialog() {
+        log("dismissPermissionDialog")
+        visiblePermissionDialogQueue.forEach {
+            log("visible permission - $it")
+        }
+        visiblePermissionDialogQueue.removeFirst()
+    }
+
+    fun onPermissionResult(
+        permission: String,
+        isGranted: Boolean
+    ) {
+        if (!isGranted && !visiblePermissionDialogQueue.contains(permission)) {
+            log("adding permission to dialog queue - $permission")
+            visiblePermissionDialogQueue.add(permission)
+        }
+        when(permission){
+            Manifest.permission.READ_CONTACTS -> {
+                _state.update {
+                    it.copy(
+                        isReadContactsGranted = isGranted
+                    )
+                }
+            }
+        }
     }
 
     private fun updatePeerUserUniqueId(userUniqueId: String) {
@@ -135,24 +166,6 @@ class TcpViewModel @Inject constructor(
                     isReadContactsGranted = permissionGuardImpl.canAccessContacts()
                 )
             }
-        }
-    }
-
-    fun checkRecordAudioPermission() {
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    isRecordAudioGranted = permissionGuardImpl.canRecordAudio()
-                )
-            }
-        }
-    }
-
-    fun updateShowPermissionRequestState(shouldBeShown: Boolean) {
-        _state.update {
-            it.copy(
-                shouldShowPermissionDialog = shouldBeShown
-            )
         }
     }
 
@@ -350,7 +363,9 @@ class TcpViewModel @Inject constructor(
 
         when (state.value.generalConnectionStatus) {
             GeneralConnectionStatus.Idle -> {
-                log("this should not be called, but recording voice message on idle connection")
+                log("recording voice message on idle connection")
+                cancelRecording()
+                updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
             }
 
             GeneralConnectionStatus.ConnectedAsClient -> {
@@ -539,32 +554,8 @@ class TcpViewModel @Inject constructor(
                 updateHasErrorOccurredDialog(event.error)
             }
 
-            TcpScreenEvents.ReadContactsRequest -> {
-                emitNavigation(TcpScreenNavigation.OnReadContactsRequest)
-            }
-
-            is TcpScreenEvents.ReadContactPermissionChanged -> {
-                if (!event.isGranted) {
-                    updateShowPermissionRequestState(true)
-                }
-                _state.update {
-                    it.copy(
-                        isReadContactsGranted = event.isGranted
-                    )
-                }
-            }
-
-            is TcpScreenEvents.RecordAudioPermissionChanged -> {
-                log("message - ${event.isGranted}")
-                if (!event.isGranted) {
-                    //updateShowPermissionRequestState(true)
-                    log("show dialog")
-                }
-                _state.update {
-                    it.copy(
-                        isRecordAudioGranted = event.isGranted
-                    )
-                }
+            TcpScreenEvents.RequestReadContactsPermission -> {
+                emitNavigation(TcpScreenNavigation.RequestReadContactsPermission)
             }
 
             TcpScreenEvents.DiscoverLocalOnlyHotSpotClick -> {

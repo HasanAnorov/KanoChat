@@ -13,9 +13,7 @@ data class TcpScreenUiState(
     val contacts: Resource<List<ContactItem>> = Resource.Loading(),
 
     val isReadContactsGranted: Boolean = false,
-    val isRecordAudioGranted: Boolean = false,
 
-    val shouldShowPermissionDialog: Boolean = false,
     val showBottomSheet: Boolean = false,
 
     //general state

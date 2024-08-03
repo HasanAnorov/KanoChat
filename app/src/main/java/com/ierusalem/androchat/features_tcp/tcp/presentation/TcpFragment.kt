@@ -53,7 +53,12 @@ import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.constants.Constants.SOCKET_DEFAULT_BUFFER_SIZE
 import com.ierusalem.androchat.core.constants.Constants.getCurrentTime
+import com.ierusalem.androchat.core.ui.components.CoarseLocationPermissionTextProvider
+import com.ierusalem.androchat.core.ui.components.FineLocationPermissionTextProvider
+import com.ierusalem.androchat.core.ui.components.NearbyWifiDevicesPermissionTextProvider
 import com.ierusalem.androchat.core.ui.components.PermissionDialog
+import com.ierusalem.androchat.core.ui.components.ReadContactsPermissionTextProvider
+import com.ierusalem.androchat.core.ui.components.RecordAudioPermissionTextProvider
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
@@ -151,6 +156,12 @@ class TcpFragment : Fragment() {
 
             else -> {
                 // No location access granted.
+                permissions.forEach{permission ->
+                    viewModel.onPermissionResult(
+                        permission = permission.key,
+                        isGranted = permission.value
+                    )
+                }
             }
         }
     }
@@ -168,12 +179,15 @@ class TcpFragment : Fragment() {
 
     private val readContactsPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            viewModel.handleEvents(TcpScreenEvents.ReadContactPermissionChanged(isGranted))
+            viewModel.onPermissionResult(Manifest.permission.READ_CONTACTS, isGranted)
         }
 
     private val recordAudioPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            viewModel.handleEvents(TcpScreenEvents.RecordAudioPermissionChanged(isGranted))
+            viewModel.onPermissionResult(Manifest.permission.RECORD_AUDIO, isGranted)
+            if(isGranted){
+                Toast.makeText(requireContext(), R.string.ready_to_record_voice_message, Toast.LENGTH_SHORT).show()
+            }
         }
 
     private val getFilesLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
@@ -327,6 +341,7 @@ class TcpFragment : Fragment() {
 
         return ComposeView(requireContext()).apply {
             setContent {
+                val visiblePermissionDialogQueue = viewModel.visiblePermissionDialogQueue
 
                 val scope = rememberCoroutineScope()
                 val allTabs = rememberTcpAllTabs()
@@ -447,19 +462,63 @@ class TcpFragment : Fragment() {
                             }
                         )
                     }
-                    if (uiState.shouldShowPermissionDialog) {
+                    visiblePermissionDialogQueue.reversed().forEach { permission ->
                         PermissionDialog(
+                            permissionTextProvider = when(permission){
+                                Manifest.permission.READ_CONTACTS -> {
+                                    ReadContactsPermissionTextProvider()
+                                }
+                                Manifest.permission.RECORD_AUDIO ->{
+                                    RecordAudioPermissionTextProvider()
+                                }
+                                Manifest.permission.NEARBY_WIFI_DEVICES ->{
+                                    NearbyWifiDevicesPermissionTextProvider()
+                                }
+                                Manifest.permission.ACCESS_FINE_LOCATION ->{
+                                    FineLocationPermissionTextProvider()
+                                }
+                                Manifest.permission.ACCESS_COARSE_LOCATION ->{
+                                    CoarseLocationPermissionTextProvider()
+                                }
+                                else -> return@forEach
+                            },
                             isPermanentlyDeclined = !shouldShowRequestPermissionRationale(
-                                Manifest.permission.READ_CONTACTS
+                                permission
                             ),
-                            onDismiss = { viewModel.updateShowPermissionRequestState(false) },
+                            onDismiss = viewModel::dismissPermissionDialog,
                             onOkClick = {
-                                readContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
-                                viewModel.updateShowPermissionRequestState(false)
+                                when(permission){
+                                    Manifest.permission.READ_CONTACTS -> {
+                                        viewModel.dismissPermissionDialog()
+                                        readContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+                                    }
+                                    Manifest.permission.RECORD_AUDIO ->{
+                                        viewModel.dismissPermissionDialog()
+                                        recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                    }
+                                    Manifest.permission.NEARBY_WIFI_DEVICES ->{
+                                        viewModel.dismissPermissionDialog()
+                                        locationPermissionRequest.launch(
+                                            permissionGuard.requiredPermissionsForWifi.toTypedArray()
+                                        )
+                                    }
+                                    Manifest.permission.ACCESS_FINE_LOCATION ->{
+                                        viewModel.dismissPermissionDialog()
+                                        locationPermissionRequest.launch(
+                                            permissionGuard.requiredPermissionsForWifi.toTypedArray()
+                                        )
+                                    }
+                                    Manifest.permission.ACCESS_COARSE_LOCATION ->{
+                                        viewModel.dismissPermissionDialog()
+                                        locationPermissionRequest.launch(
+                                            permissionGuard.requiredPermissionsForWifi.toTypedArray()
+                                        )
+                                    }
+                                }
                             },
                             onGoToAppSettingsClick = {
                                 openAppSettings()
-                                viewModel.updateShowPermissionRequestState(false)
+                                viewModel.dismissPermissionDialog()
                             }
                         )
                     }
@@ -674,7 +733,7 @@ class TcpFragment : Fragment() {
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
 
-            TcpScreenNavigation.OnReadContactsRequest -> {
+            TcpScreenNavigation.RequestReadContactsPermission -> {
                 readContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
             }
 
@@ -1576,7 +1635,6 @@ class TcpFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         viewModel.checkReadContactsPermission()
-        viewModel.checkRecordAudioPermission()
     }
 
     //6-fragment lifecycle callback

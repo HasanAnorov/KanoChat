@@ -16,31 +16,27 @@ sealed interface TcpScreenEvents {
     data class OnPortNumberChanged(val portNumber: String) : TcpScreenEvents
     data class OnHotspotNameChanged(val hotspotName: String) : TcpScreenEvents
     data class OnConnectToWifiClick(val wifiDevice: WifiP2pDevice) : TcpScreenEvents
-    data class SendMessageRequest(val message:String): TcpScreenEvents
-    data class OnDialogErrorOccurred(val error: TcpScreenDialogErrors?): TcpScreenEvents
+    data class SendMessageRequest(val message: String) : TcpScreenEvents
+    data class OnDialogErrorOccurred(val error: TcpScreenDialogErrors?) : TcpScreenEvents
 
-    //local conversation
-    data class HandlePickingMultipleMedia(val medias:List<Uri>):TcpScreenEvents
+    data class HandlePickingMultipleMedia(val medias: List<Uri>) : TcpScreenEvents
 
-    data object RequestRecordAudioPermission: TcpScreenEvents
+    data object RequestRecordAudioPermission : TcpScreenEvents
+    data object RequestReadContactsPermission : TcpScreenEvents
 
-    data class ReadContactPermissionChanged(val isGranted: Boolean): TcpScreenEvents
-    data class RecordAudioPermissionChanged(val isGranted: Boolean): TcpScreenEvents
+    data object ReadContacts : TcpScreenEvents
+    data object ShowFileChooserClick : TcpScreenEvents
 
-    data object ReadContactsRequest: TcpScreenEvents
-    data object ReadContacts: TcpScreenEvents
-    data object ShowFileChooserClick: TcpScreenEvents
-    data class UpdateBottomSheetState(val shouldBeShown:Boolean): TcpScreenEvents
+    data class UpdateBottomSheetState(val shouldBeShown: Boolean) : TcpScreenEvents
 
-    data class OnFileItemClick(val message: ChatMessage.FileMessage): TcpScreenEvents
-    data class OnContactItemClick(val message: ChatMessage.ContactMessage): TcpScreenEvents
+    data class OnFileItemClick(val message: ChatMessage.FileMessage) : TcpScreenEvents
+    data class OnContactItemClick(val message: ChatMessage.ContactMessage) : TcpScreenEvents
 
-    //voice messages
-    data object OnVoiceRecordStart: TcpScreenEvents
-    data object OnVoiceRecordFinished: TcpScreenEvents
-    data object OnVoiceRecordCancelled: TcpScreenEvents
+    data object OnVoiceRecordStart : TcpScreenEvents
+    data object OnVoiceRecordFinished : TcpScreenEvents
+    data object OnVoiceRecordCancelled : TcpScreenEvents
 
-    data class OnPlayVoiceMessageClick(val message: ChatMessage.VoiceMessage): TcpScreenEvents
-    data class OnPauseVoiceMessageClick(val message: ChatMessage.VoiceMessage): TcpScreenEvents
-    data class OnStopVoiceMessageClick(val message: ChatMessage.VoiceMessage): TcpScreenEvents
+    data class OnPlayVoiceMessageClick(val message: ChatMessage.VoiceMessage) : TcpScreenEvents
+    data class OnPauseVoiceMessageClick(val message: ChatMessage.VoiceMessage) : TcpScreenEvents
+    data class OnStopVoiceMessageClick(val message: ChatMessage.VoiceMessage) : TcpScreenEvents
 }

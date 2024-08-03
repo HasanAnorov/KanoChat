@@ -22,9 +22,9 @@ sealed interface TcpScreenNavigation {
     data class OnConnectToServerClick(val serverIpAddress: String, val portNumber: Int) :
         TcpScreenNavigation
 
-    data object OnReadContactsRequest: TcpScreenNavigation
     data object ShowFileChooserClick: TcpScreenNavigation
 
+    data object RequestReadContactsPermission: TcpScreenNavigation
     data object RequestRecordAudioPermission: TcpScreenNavigation
 
     data class OnFileItemClick(val message: ChatMessage.FileMessage): TcpScreenNavigation
