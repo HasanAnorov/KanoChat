@@ -52,7 +52,35 @@ fun FileMessageItem(
                 when (val state = message.fileState) {
                     is FileMessageState.Loading -> {
                         log("in file item progress - ${state.percentage}")
-                        CircularProgressBar(percentage = (state.percentage.toFloat() / 100))
+                        if(state.percentage == 100){
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .border(
+                                        1.5.dp,
+                                        MaterialTheme.colorScheme.tertiary,
+                                        CircleShape
+                                    )
+                                    .clip(CircleShape)
+                                    .clickable(
+                                        onClick = {
+                                            onFileItemClick(message)
+                                        }
+                                    )
+                                    .background(MaterialTheme.colorScheme.background)
+                                    .align(Alignment.Top),
+                                contentAlignment = Alignment.Center,
+                                content = {
+                                    Icon(
+                                        modifier = Modifier.size(28.dp),
+                                        painter = painterResource(id = R.drawable.file_text),
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                        }else{
+                            CircularProgressBar(percentage = (state.percentage.toFloat() / 100))
+                        }
                     }
 
                     FileMessageState.Success -> {

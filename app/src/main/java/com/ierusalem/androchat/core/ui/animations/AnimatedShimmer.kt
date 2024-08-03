@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,9 +29,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 
 @Composable
-fun AnimatedShimmer() {
+fun AnimatedShimmer(backGroundColor: Color = Color.Transparent) {
     val shimmerColors = listOf(
         Color.LightGray.copy(alpha = 0.6f),
         Color.LightGray.copy(alpha = 0.2f),
@@ -57,13 +59,14 @@ fun AnimatedShimmer() {
         end = Offset(x = translateAnim.value, y = translateAnim.value)
     )
 
-    ShimmerGridItem(brush = brush)
+    ShimmerGridItem(brush = brush, backGroundColor = backGroundColor)
 }
 
 @Composable
-fun ShimmerGridItem(brush: Brush) {
+fun ShimmerGridItem(brush: Brush, backGroundColor:Color) {
     Row(
         modifier = Modifier
+            .background(backGroundColor)
             .fillMaxWidth()
             .padding(start = 12.dp, end = 8.dp)
             .padding(vertical = 8.dp),
@@ -106,20 +109,24 @@ fun ShimmerGridItemPreview() {
                 Color.LightGray.copy(alpha = 0.2f),
                 Color.LightGray.copy(alpha = 0.6f),
             )
-        )
+        ),
+        backGroundColor = MaterialTheme.colorScheme.surface
     )
 }
 
 @Composable
 @Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES)
 fun ShimmerGridItemDarkPreview() {
-    ShimmerGridItem(
-        brush = Brush.linearGradient(
-            listOf(
-                Color.LightGray.copy(alpha = 0.6f),
-                Color.LightGray.copy(alpha = 0.2f),
-                Color.LightGray.copy(alpha = 0.6f),
-            )
+    AndroChatTheme(isDarkTheme = true) {
+        ShimmerGridItem(
+            brush = Brush.linearGradient(
+                listOf(
+                    Color.LightGray.copy(alpha = 0.6f),
+                    Color.LightGray.copy(alpha = 0.2f),
+                    Color.LightGray.copy(alpha = 0.6f),
+                )
+            ),
+            backGroundColor = MaterialTheme.colorScheme.surface
         )
-    )
+    }
 }

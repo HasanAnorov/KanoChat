@@ -2,7 +2,6 @@ package com.ierusalem.androchat.features_tcp.tcp_chat.presentation
 
 import android.Manifest
 import android.content.pm.PackageManager.PERMISSION_GRANTED
-import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
@@ -78,12 +77,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.devlomi.record_view.OnRecordListener
 import com.devlomi.record_view.RecordButton
 import com.devlomi.record_view.RecordLockView
-import com.devlomi.record_view.RecordPermissionHandler
 import com.devlomi.record_view.RecordView
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
@@ -142,6 +139,18 @@ fun LocalConversationUserInput(
         }
     )
 
+    val recordAudioPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                log("granted")
+            } else {
+                log("show error dialog")
+            }
+        }
+    )
+
+
     Surface(
         tonalElevation = 2.dp,
         contentColor = MaterialTheme.colorScheme.secondary
@@ -152,6 +161,12 @@ fun LocalConversationUserInput(
                     modifier = Modifier
                         .fillMaxWidth(),
                     factory = { context ->
+
+                        val isPermissionGranted = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO
+                        ) == PERMISSION_GRANTED
+
                         val parent = FrameLayout(context)
                         LayoutInflater.from(context).inflate(R.layout.recording_view, parent, false)
                             .apply {
@@ -160,16 +175,16 @@ fun LocalConversationUserInput(
                                 val recordLockView = findViewById<RecordLockView>(R.id.record_lock)
                                 val recordLockCoverView =
                                     findViewById<ImageView>(R.id.record_lock_cover)
-                                log("permission  - ${uiState.isRecordAudioGranted} connection - ${uiState.generalConnectionStatus}")
-                                recordButton.isListenForRecord = uiState.isRecordAudioGranted
+                                //log("permission  - ${uiState.isRecordAudioGranted} connection - ${uiState.generalConnectionStatus}")
+                                recordButton.isListenForRecord = isPermissionGranted
                                 recordButton.isListenForRecord =
                                     uiState.generalConnectionStatus != GeneralConnectionStatus.Idle
                                 recordButton.setOnClickListener {
                                     log("checking ui - ${uiState.isRecordAudioGranted}")
                                     when {
-                                        !uiState.isRecordAudioGranted -> {
+                                        !isPermissionGranted -> {
                                             log("permission for audio recording not granted")
-                                            eventHandler(TcpScreenEvents.RequestRecordAudioPermission)
+                                            recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                                         }
 
                                         uiState.generalConnectionStatus == GeneralConnectionStatus.Idle -> {

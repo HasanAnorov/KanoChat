@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.core.utils.log
 
 @Composable
 fun CircularProgressBar(
@@ -38,7 +37,6 @@ fun CircularProgressBar(
     animationDuration: Int = 1000,
     animDelay: Int = 0
 ) {
-    log("circular progress bar - $percentage")
     var animationPlayed by rememberSaveable {
         mutableStateOf(false)
     }
