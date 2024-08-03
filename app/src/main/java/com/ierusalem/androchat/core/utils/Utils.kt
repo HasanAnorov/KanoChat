@@ -2,7 +2,9 @@ package com.ierusalem.androchat.core.utils
 
 import android.util.Log
 import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.constants.Constants.generateUniqueFileName
 import com.ierusalem.androchat.features_tcp.server.IP_ADDRESS_REGEX
+import java.io.File
 import java.util.Random
 
 //Logs message in debug mode
@@ -31,4 +33,23 @@ fun generateRandomPassword(length: Int = 8): String {
     return (1..length)
         .map { characters[random.nextInt(characters.length)] }
         .joinToString("")
+}
+
+fun getFileByName(fileName: String, resourceDirectory: File): File {
+    if (!resourceDirectory.exists()) {
+        resourceDirectory.mkdir()
+        log("Directory not found: created directory: ${resourceDirectory.absolutePath}")
+    }
+
+    var file = File(resourceDirectory, fileName)
+    if (file.exists()) {
+        log("same file found in folder, generating unique name ...")
+        val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
+        val fileExtension = fileNameWithoutExt.getExtensionFromFilename()
+        val uniqueFileName =
+            generateUniqueFileName(resourceDirectory.toString(), fileNameWithoutExt, fileExtension)
+        log("unique file name - $uniqueFileName")
+        file = File(uniqueFileName)
+    }
+    return file
 }

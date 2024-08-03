@@ -85,7 +85,6 @@ class TcpViewModel @Inject constructor(
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
 
     init {
-        initializeAuthorMe()
         initializeHotspotName()
         listenWifiConnections()
     }
@@ -100,7 +99,8 @@ class TcpViewModel @Inject constructor(
 
     private fun startCollectingPlayTiming(messageId: Long) {
         viewModelScope.launch {
-            audioPlayer.playTiming
+            audioPlayer
+                .playTiming
                 .distinctUntilChanged()
                 .collect { timing ->
                     log("timing - $timing")
@@ -113,20 +113,15 @@ class TcpViewModel @Inject constructor(
         updatePeerUserUniqueId(userUniqueId)
         viewModelScope.launch(Dispatchers.IO) {
             messagesDao.getUserMessagesById(userUniqueId).collect { messages ->
-                val newMessages = messages.mapNotNull {
-                    it.toChatMessage()
-                }
-                _state.update {
-                    it.copy(
-                        messages = newMessages
+                _state.update { uiState ->
+                    uiState.copy(
+                        messages = messages.mapNotNull {
+                            it.toChatMessage()
+                        }
                     )
                 }
             }
         }
-    }
-
-    fun checkForUserExistence(userUniqueId: String): Boolean {
-        return messagesDao.isUserExist(userUniqueId)
     }
 
     suspend fun getUniqueDeviceId(): String {
@@ -161,23 +156,13 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun initializeAuthorMe() {
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    authorMe = dataStorePreferenceRepository.getUsername.first()
-                )
-            }
-        }
-    }
-
     private fun initializeHotspotName() {
         viewModelScope.launch {
-            val saveHotspotName = dataStorePreferenceRepository.getHotspotName.first()
+            val savedHotspotName = dataStorePreferenceRepository.getHotspotName.first()
             _state.update {
                 it.copy(
-                    isValidHotSpotName = isValidHotspotName(saveHotspotName),
-                    hotspotName = saveHotspotName
+                    isValidHotSpotName = isValidHotspotName(savedHotspotName),
+                    hotspotName = savedHotspotName
                 )
             }
         }
@@ -236,15 +221,11 @@ class TcpViewModel @Inject constructor(
                 }
             }
             cursor.close()
-            loadContacts(contacts)
-        }
-    }
-
-    private fun loadContacts(contacts: List<ContactItem>) {
-        _state.update {
-            it.copy(
-                contacts = Resource.Success(contacts)
-            )
+            _state.update {
+                it.copy(
+                    contacts = Resource.Success(contacts)
+                )
+            }
         }
     }
 
@@ -315,6 +296,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    //todo - add 4 case - local only hotspot, others are added hotspot, p2p, wifi
     private fun handleWifiDisableCase() {
         when (state.value.generalNetworkingStatus) {
             GeneralNetworkingStatus.Idle -> {
@@ -356,26 +338,19 @@ class TcpViewModel @Inject constructor(
     private fun finishRecording() {
         updateIsRecording(false)
         audioRecorder.stopAudio()
-        currentAudioFile
-//        val voiceMessage = ChatMessage.VoiceMessage(
-//            formattedTime = getCurrentTime(),
-//            isFromYou = true,
-//            voiceFileName = currentAudioFile.name,
-//            duration = currentAudioFile.getAudioFileDuration(),
-//            messageId = 0L
-//        )
+
         val voiceMessageEntity = ChatMessageEntity(
             type = AppMessageType.VOICE,
             formattedTime = getCurrentTime(),
             isFromYou = true,
             userId = state.value.peerUserUniqueId,
-
             voiceMessageFileName = currentAudioFile.name,
             voiceMessageAudioFileDuration = currentAudioFile.getAudioFileDuration(),
         )
+
         when (state.value.generalConnectionStatus) {
             GeneralConnectionStatus.Idle -> {
-                log("recording voice message on idle connection")
+                log("this should not be called, but recording voice message on idle connection")
             }
 
             GeneralConnectionStatus.ConnectedAsClient -> {
@@ -391,15 +366,11 @@ class TcpViewModel @Inject constructor(
     private fun cancelRecording() {
         updateIsRecording(false)
         audioRecorder.stopAudio()
-        val isDeleted = deleteFile()
-        log("is cancelled audio deleted - $isDeleted")
-    }
-
-    private fun deleteFile(): Boolean {
-        return if (currentAudioFile.exists()) {
-            currentAudioFile.delete()
+        if (currentAudioFile.exists()) {
+            val isDeleted = currentAudioFile.delete()
+            log("is cancelled audio deleted - $isDeleted")
         } else {
-            false
+            log("file does not exist but cancel record called")
         }
     }
 
@@ -606,6 +577,7 @@ class TcpViewModel @Inject constructor(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     wifiManager.startLocalOnlyHotspot(
                         object : LocalOnlyHotspotCallback() {
+                            @SuppressLint("MissingPermission")
                             override fun onStarted(reservation: WifiManager.LocalOnlyHotspotReservation?) {
                                 super.onStarted(reservation)
                                 hotspotReservation = reservation
@@ -1046,8 +1018,7 @@ class TcpViewModel @Inject constructor(
 
     fun updatePercentageOfReceivingFile(message: ChatMessageEntity) {
         when (message.type) {
-            //todo - this should be same for voice message
-            AppMessageType.FILE -> {
+            AppMessageType.FILE, AppMessageType.VOICE -> {
                 viewModelScope.launch(Dispatchers.IO) {
                     messagesDao.updateFileMessage(
                         messageId = message.id,
@@ -1055,8 +1026,6 @@ class TcpViewModel @Inject constructor(
                     )
                 }
             }
-
-            AppMessageType.VOICE -> {}
 
             else -> return
         }

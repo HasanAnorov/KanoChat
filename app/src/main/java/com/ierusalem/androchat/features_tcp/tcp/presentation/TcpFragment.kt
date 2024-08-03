@@ -3,7 +3,6 @@ package com.ierusalem.androchat.features_tcp.tcp.presentation
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -12,7 +11,6 @@ import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
-import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Looper
@@ -23,7 +21,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -45,7 +42,6 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -55,22 +51,19 @@ import com.google.gson.Gson
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.constants.Constants
-import com.ierusalem.androchat.core.constants.Constants.FILE_PROVIDER_AUTHORITY
 import com.ierusalem.androchat.core.constants.Constants.SOCKET_DEFAULT_BUFFER_SIZE
-import com.ierusalem.androchat.core.constants.Constants.generateUniqueFileName
 import com.ierusalem.androchat.core.constants.Constants.getCurrentTime
 import com.ierusalem.androchat.core.ui.components.PermissionDialog
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.core.utils.addLabelBeforeExtension
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
+import com.ierusalem.androchat.core.utils.generateFileFromUri
 import com.ierusalem.androchat.core.utils.getAudioFileDuration
-import com.ierusalem.androchat.core.utils.getExtensionFromFilename
-import com.ierusalem.androchat.core.utils.getFileNameFromUri
-import com.ierusalem.androchat.core.utils.getFileNameWithoutExtension
-import com.ierusalem.androchat.core.utils.getMimeType
+import com.ierusalem.androchat.core.utils.getFileByName
 import com.ierusalem.androchat.core.utils.log
+import com.ierusalem.androchat.core.utils.makeCall
 import com.ierusalem.androchat.core.utils.openAppSettings
+import com.ierusalem.androchat.core.utils.openFile
 import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.core.utils.shortToast
 import com.ierusalem.androchat.features_tcp.server.ServerDefaults
@@ -90,12 +83,10 @@ import com.ierusalem.androchat.features_tcp.tcp.presentation.components.remember
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenNavigation
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpView
-import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactListContent
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -139,7 +130,6 @@ class TcpFragment : Fragment() {
     private lateinit var clientSocket: Socket
     private lateinit var clientWriter: DataOutputStream
 
-
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -165,27 +155,15 @@ class TcpFragment : Fragment() {
         }
     }
 
-    //todo - here handle connected devices
-    private val peerListListener = WifiP2pManager.PeerListListener { peerList ->
-        val peers = viewModel.state.value.availableWifiNetworks
-        val refreshedPeers = peerList.deviceList
-        if (refreshedPeers != peers) {
-            viewModel.handleAvailableWifiListChange(refreshedPeers.toList())
-        }
-        if (peers.isEmpty()) {
-            log("No devices found")
-            return@PeerListListener
-        }
-    }
-
     private lateinit var resourceDirectory: File
 
     //1-fragment lifecycle callback
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         gson = Gson()
-        resourceDirectory =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")!!
+        resourceDirectory = Environment.getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}"
+        )!!
     }
 
     private val readContactsPermissionLauncher =
@@ -198,34 +176,6 @@ class TcpFragment : Fragment() {
             viewModel.handleEvents(TcpScreenEvents.RecordAudioPermissionChanged(isGranted))
         }
 
-    private fun generateFileFromUri(uri: Uri): File {
-        val contentResolver = activity?.contentResolver!!
-
-        if (!resourceDirectory.exists()) {
-            resourceDirectory.mkdir()
-        }
-
-        val fileName = uri.getFileNameFromUri(contentResolver)
-        val fileNameWithLabel = fileName.addLabelBeforeExtension()
-        var file = File(resourceDirectory, fileNameWithLabel)
-        if (file.exists()) {
-            val fileNameWithoutExt = fileNameWithLabel.getFileNameWithoutExtension()
-            val uniqueFileName =
-                generateUniqueFileName(
-                    resourceDirectory.toString(),
-                    fileNameWithoutExt,
-                    file.extension
-                )
-            file = File(uniqueFileName)
-        }
-
-        val inputStream = requireContext().contentResolver.openInputStream(uri)
-        val fileOutputStream = FileOutputStream(file)
-        inputStream?.copyTo(fileOutputStream)
-        fileOutputStream.close()
-        return file
-    }
-
     private val getFilesLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -237,7 +187,20 @@ class TcpFragment : Fragment() {
             Activity.RESULT_OK -> {
                 val intent: Intent = result.data!!
                 val uri = intent.data!!
-                val file = generateFileFromUri(uri)
+                val file = generateFileFromUri(uri, resourceDirectory)
+
+                val fileMessageEntity = ChatMessageEntity(
+                    type = AppMessageType.FILE,
+                    formattedTime = getCurrentTime(),
+                    isFromYou = true,
+                    userId = viewModel.state.value.peerUserUniqueId,
+
+                    filePath = file.path,
+                    fileState = FileMessageState.Loading(0),
+                    fileName = file.name,
+                    fileSize = file.length().readableFileSize(),
+                    fileExtension = file.extension,
+                )
 
                 when (viewModel.state.value.generalConnectionStatus) {
                     GeneralConnectionStatus.Idle -> {
@@ -245,55 +208,10 @@ class TcpFragment : Fragment() {
                     }
 
                     GeneralConnectionStatus.ConnectedAsClient -> {
-//                        val fileMessage = ChatMessage.FileMessage(
-//                            formattedTime = getCurrentTime(),
-//                            filePath = file.path,
-//                            fileName = file.name,
-//                            fileSize = file.length().readableFileSize(),
-//                            fileExtension = file.extension,
-//                            fileState = FileMessageState.Loading(0),
-//                            isFromYou = true,
-//                            messageId = 0L
-//                        )
-                        val fileMessageEntity = ChatMessageEntity(
-                            type = AppMessageType.FILE,
-                            formattedTime = getCurrentTime(),
-                            isFromYou = true,
-                            userId = viewModel.state.value.peerUserUniqueId,
-
-                            filePath = file.path,
-                            fileState = FileMessageState.Loading(0),
-                            fileName = file.name,
-                            fileSize = file.length().readableFileSize(),
-                            fileExtension = file.extension,
-                        )
                         sendClientMessage(fileMessageEntity)
                     }
 
                     GeneralConnectionStatus.ConnectedAsHost -> {
-//                        val fileMessage = ChatMessage.FileMessage(
-//                            formattedTime = getCurrentTime(),
-//                            filePath = file.path,
-//                            fileName = file.name,
-//                            fileSize = file.length().readableFileSize(),
-//                            fileExtension = file.extension,
-//                            fileState = FileMessageState.Loading(0),
-//                            isFromYou = true,
-//                            messageId = 0L
-//                        )
-
-                        val fileMessageEntity = ChatMessageEntity(
-                            type = AppMessageType.FILE,
-                            formattedTime = getCurrentTime(),
-                            isFromYou = true,
-                            userId = viewModel.state.value.peerUserUniqueId,
-
-                            filePath = file.path,
-                            fileState = FileMessageState.Loading(0),
-                            fileName = file.name,
-                            fileSize = file.length().readableFileSize(),
-                            fileExtension = file.extension,
-                        )
                         sendHostMessage(fileMessageEntity)
                     }
                 }
@@ -301,9 +219,7 @@ class TcpFragment : Fragment() {
         }
     }
 
-
     private fun showFileChooser() {
-
         val intent = Intent()
             .setType("*/*")
             .setAction(Intent.ACTION_GET_CONTENT)
@@ -324,12 +240,74 @@ class TcpFragment : Fragment() {
         }
     }
 
+    private fun handlePickingMultipleMedia(medias: List<Uri>) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            when (viewModel.state.value.generalConnectionStatus) {
+                GeneralConnectionStatus.Idle -> {
+                    viewModel.updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
+                }
+
+                GeneralConnectionStatus.ConnectedAsHost -> {
+                    val fileMessages = mutableListOf<ChatMessageEntity>()
+                    medias.forEach { imageUri ->
+                        val file = generateFileFromUri(imageUri, resourceDirectory)
+
+                        val fileMessageEntity = ChatMessageEntity(
+                            type = AppMessageType.FILE,
+                            formattedTime = getCurrentTime(),
+                            isFromYou = true,
+                            userId = viewModel.state.value.peerUserUniqueId,
+
+                            fileState = FileMessageState.Loading(0),
+                            fileName = file.name,
+                            fileSize = file.length().readableFileSize(),
+                            fileExtension = file.extension,
+                            filePath = file.path,
+                        )
+                        fileMessages.add(fileMessageEntity)
+                    }
+                    lifecycleScope.launch {
+                        sendFileMessages(
+                            writer = connectedClientWriter,
+                            messages = fileMessages
+                        )
+                    }
+                }
+
+                GeneralConnectionStatus.ConnectedAsClient -> {
+                    val fileMessages = mutableListOf<ChatMessageEntity>()
+                    medias.forEach { imageUri ->
+                        val file = generateFileFromUri(imageUri, resourceDirectory)
+                        val fileMessageEntity = ChatMessageEntity(
+                            type = AppMessageType.FILE,
+                            formattedTime = getCurrentTime(),
+                            isFromYou = true,
+                            userId = viewModel.state.value.peerUserUniqueId,
+
+                            fileState = FileMessageState.Loading(0),
+                            fileName = file.name,
+                            fileSize = file.length().readableFileSize(),
+                            fileExtension = file.extension,
+                            filePath = file.path,
+                        )
+                        fileMessages.add(fileMessageEntity)
+                    }
+                    lifecycleScope.launch {
+                        sendFileMessages(
+                            writer = clientWriter,
+                            messages = fileMessages
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     //2-fragment lifecycle callback
     @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-
         permissionGuard = PermissionGuardImpl(requireContext())
         wifiP2PManager =
             requireContext().getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
@@ -404,13 +382,6 @@ class TcpFragment : Fragment() {
                                                             )
                                                         )
                                                         selectedContacts.forEach { contact ->
-//                                                            val contactMessage = ChatMessage.ContactMessage(
-//                                                                    formattedTime = getCurrentTime(),
-//                                                                    isFromYou = true,
-//                                                                    contactName = contact.contactName,
-//                                                                    contactNumber = contact.phoneNumber,
-//                                                                    messageId = 0L
-//                                                                )
                                                             val contactMessageEntity =
                                                                 ChatMessageEntity(
                                                                     type = AppMessageType.CONTACT,
@@ -435,14 +406,6 @@ class TcpFragment : Fragment() {
                                                             )
                                                         )
                                                         selectedContacts.forEach { contact ->
-//                                                            val contactMessage =
-//                                                                ChatMessage.ContactMessage(
-//                                                                    formattedTime = getCurrentTime(),
-//                                                                    isFromYou = true,
-//                                                                    contactName = contact.contactName,
-//                                                                    contactNumber = contact.phoneNumber,
-//                                                                    messageId = 0L
-//                                                                )
                                                             val contactMessageEntity =
                                                                 ChatMessageEntity(
                                                                     type = AppMessageType.CONTACT,
@@ -515,7 +478,6 @@ class TcpFragment : Fragment() {
     }
 
     //3-fragment lifecycle callback
-    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.screenNavigation.executeWithLifecycle(
@@ -554,8 +516,7 @@ class TcpFragment : Fragment() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
-    @Suppress("MissingPermission")
+    @SuppressLint("MissingPermission")
     private fun createGroup() {
         viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.LaunchingHotspot)
         val config = getConfiguration()
@@ -605,6 +566,45 @@ class TcpFragment : Fragment() {
             .setGroupOperatingBand(band).build()
     }
 
+    @SuppressLint("MissingPermission")
+    private fun connectToWifi(wifiP2pDevice: WifiP2pDevice) {
+        log("connectToWifi: $wifiP2pDevice ")
+        val config = WifiP2pConfig().apply {
+            deviceAddress = wifiP2pDevice.deviceAddress
+            wps.setup = WpsInfo.PBC
+        }
+        val listener = object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                // WiFiDirectBroadcastReceiver notifies us. Ignore for now
+                log("success: connected to wifi - ${wifiP2pDevice.deviceAddress}")
+            }
+
+            override fun onFailure(reason: Int) {
+                log("failure: failure on wifi connection ")
+                viewModel.emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.FailedToConnectToWifiDevice))
+            }
+        }
+        wifiP2PManager.connect(channel, config, listener)
+    }
+
+    private fun startHotspotNetworking() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            if (permissionGuard.canCreateNetwork()) {
+                if (ServerDefaults.canUseCustomConfig()) {
+                    createGroup()
+                } else {
+                    //fixme clarify error
+                    viewModel.updateHasErrorOccurredDialog(TcpScreenDialogErrors.AndroidVersion10RequiredForGroupNetworking)
+                }
+            } else {
+                log("Permissions not granted!")
+                locationPermissionRequest.launch(
+                    permissionGuard.requiredPermissionsForWifi.toTypedArray()
+                )
+            }
+        }
+    }
+
     private fun stopHotspotNetworking() {
         //close socket only when serverSocket is initialized
         if (::serverSocket.isInitialized) {
@@ -628,6 +628,33 @@ class TcpFragment : Fragment() {
         wifiP2PManager.removeGroup(channel, listener)
     }
 
+    @SuppressLint("MissingPermission")
+    private fun discoverP2PConnection() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            if (permissionGuard.canCreateNetwork()) {
+                val listener = object : WifiP2pManager.ActionListener {
+                    override fun onSuccess() {
+                        log("onSuccess: discover ")
+                        viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
+                    }
+
+                    override fun onFailure(reason: Int) {
+                        // Code for when the discovery initiation fails goes here.
+                        // Alert the user that something went wrong.
+                        log("onFailure: discover $reason ")
+                        viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Failure)
+                    }
+                }
+                wifiP2PManager.discoverPeers(channel, listener)
+            } else {
+                log("Permissions not granted!")
+                locationPermissionRequest.launch(
+                    permissionGuard.requiredPermissionsForWifi.toTypedArray()
+                )
+            }
+        }
+    }
+
     private fun stopPeerDiscovery() {
         val listener = object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
@@ -644,8 +671,6 @@ class TcpFragment : Fragment() {
         wifiP2PManager.stopPeerDiscovery(channel, listener)
     }
 
-
-    @SuppressLint("MissingPermission")
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
 
@@ -658,145 +683,22 @@ class TcpFragment : Fragment() {
             }
 
             is TcpScreenNavigation.HandlePickingMultipleMedia -> {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    when (viewModel.state.value.generalConnectionStatus) {
-                        GeneralConnectionStatus.Idle -> {
-                            //todo - show error for idling
-                        }
-
-                        GeneralConnectionStatus.ConnectedAsHost -> {
-                            val fileMessages = mutableListOf<ChatMessageEntity>()
-                            navigation.medias.forEach { imageUri ->
-                                val file = generateFileFromUri(imageUri)
-
-//                                val fileMessage = ChatMessage.FileMessage(
-//                                    formattedTime = getCurrentTime(),
-//                                    filePath = file.path,
-//                                    fileName = file.name,
-//                                    fileSize = file.length().readableFileSize(),
-//                                    fileExtension = file.extension,
-//                                    fileState = FileMessageState.Loading(0),
-//                                    isFromYou = true,
-//                                    messageId = 0L
-//                                )
-                                val fileMessageEntity = ChatMessageEntity(
-                                    type = AppMessageType.FILE,
-                                    formattedTime = getCurrentTime(),
-                                    isFromYou = true,
-                                    userId = viewModel.state.value.peerUserUniqueId,
-
-                                    fileState = FileMessageState.Loading(0),
-                                    fileName = file.name,
-                                    fileSize = file.length().readableFileSize(),
-                                    fileExtension = file.extension,
-                                    filePath = file.path,
-                                )
-                                fileMessages.add(fileMessageEntity)
-                            }
-                            sendFileMessages(
-                                writer = connectedClientWriter,
-                                messages = fileMessages
-                            )
-                        }
-
-                        GeneralConnectionStatus.ConnectedAsClient -> {
-                            val fileMessages = mutableListOf<ChatMessageEntity>()
-                            navigation.medias.forEach { imageUri ->
-
-                                if (!resourceDirectory.exists()) {
-                                    resourceDirectory.mkdir()
-                                }
-
-                                val fileName =
-                                    imageUri.getFileNameFromUri(contentResolver = requireContext().contentResolver)
-                                var file = File(resourceDirectory, fileName)
-                                if (file.exists()) {
-                                    log("same file found in folder, generating unique name ...")
-                                    val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
-                                    log("file name without ext - $fileNameWithoutExt")
-                                    val uniqueFileName =
-                                        generateUniqueFileName(
-                                            resourceDirectory.toString(),
-                                            fileNameWithoutExt,
-                                            file.extension
-                                        )
-                                    log("unique file name - $uniqueFileName")
-                                    file = File(uniqueFileName)
-                                }
-
-                                val inputStream =
-                                    requireContext().contentResolver.openInputStream(imageUri)
-                                val fileOutputStream = FileOutputStream(file)
-                                inputStream?.copyTo(fileOutputStream)
-                                fileOutputStream.close()
-
-//                                val fileMessage = ChatMessage.FileMessage(
-//                                    formattedTime = getCurrentTime(),
-//                                    isFromYou = true,
-//                                    filePath = file.path,
-//                                    fileName = file.name,
-//                                    fileSize = file.length().readableFileSize(),
-//                                    fileExtension = file.extension,
-//                                    messageId = 0L
-//                                )
-                                val fileMessageEntity = ChatMessageEntity(
-                                    type = AppMessageType.FILE,
-                                    formattedTime = getCurrentTime(),
-                                    isFromYou = true,
-                                    userId = viewModel.state.value.peerUserUniqueId,
-
-                                    fileState = FileMessageState.Loading(0),
-                                    fileName = file.name,
-                                    fileSize = file.length().readableFileSize(),
-                                    fileExtension = file.extension,
-                                    filePath = file.path,
-                                )
-                                fileMessages.add(fileMessageEntity)
-                            }
-                            sendFileMessages(writer = clientWriter, messages = fileMessages)
-                        }
-                    }
-                }
+                handlePickingMultipleMedia(navigation.medias)
             }
 
             is TcpScreenNavigation.OnContactItemClick -> {
-                val intent = Intent(Intent.ACTION_DIAL)
-                intent.setData(Uri.parse("tel:${navigation.message.contactNumber}"))
-                startActivity(intent)
+                makeCall(phoneNumber = navigation.message.contactNumber)
             }
 
             is TcpScreenNavigation.OnFileItemClick -> {
-                try {
-                    val file = File(
-                        resourceDirectory,
-                        navigation.message.fileName
-                    )
-                    val uri: Uri = FileProvider.getUriForFile(
-                        requireContext(),
-                        FILE_PROVIDER_AUTHORITY,
-                        file
-                    )
-                    //todo optimize this later
-                    val uriX = Uri.parse(navigation.message.filePath)
-                    val mimeType = uriX.getMimeType(requireContext())
-                    log("on file open - $mimeType - $uri - $uriX")
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        setDataAndType(uri, mimeType)
-                        addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        putExtra(Intent.EXTRA_TEXT, getString(R.string.open_with))
-                    }
-                    startActivity(intent)
-                } catch (e: ActivityNotFoundException) {
-                    // no Activity to handle this kind of files
-                    shortToast(getString(R.string.no_application_found_to_open_this_file))
-                    log("can not open a file !")
-                    e.printStackTrace()
-                }
+                openFile(
+                    fileName = navigation.message.fileName,
+                    resourceDirectory = resourceDirectory
+                )
             }
 
-            TcpScreenNavigation.OnNavIconClick -> {
-                findNavController().popBackStack()
+            is TcpScreenNavigation.OnErrorsOccurred -> {
+                shortToast(getString(navigation.tcpScreenErrors.errorMessage))
             }
 
             TcpScreenNavigation.OnStopHotspotNetworking -> {
@@ -811,6 +713,14 @@ class TcpFragment : Fragment() {
                 handleWifiDisabledCase()
             }
 
+            TcpScreenNavigation.OnStartHotspotNetworking -> {
+                startHotspotNetworking()
+            }
+
+            TcpScreenNavigation.OnNavIconClick -> {
+                findNavController().popBackStack()
+            }
+
             TcpScreenNavigation.OnSettingsClick -> {
                 findNavController().navigate(R.id.action_tcpFragment_to_settingsFragment)
             }
@@ -820,32 +730,13 @@ class TcpFragment : Fragment() {
             }
 
             is TcpScreenNavigation.OnCreateServerClick -> {
-                log("create Server - " + viewModel.state.value.groupOwnerAddress)
-                CoroutineScope(Dispatchers.Default).launch {
+                lifecycleScope.launch(Dispatchers.IO) {
                     createServer(serverPort = navigation.portNumber)
                 }
             }
 
-            //fixme clarify error
-            TcpScreenNavigation.OnStartHotspotNetworking -> {
-                lifecycleScope.launch {
-                    if (permissionGuard.canCreateNetwork()) {
-                        if (ServerDefaults.canUseCustomConfig()) {
-                            createGroup()
-                        } else {
-                            viewModel.updateHasErrorOccurredDialog(TcpScreenDialogErrors.AndroidVersion10RequiredForGroupNetworking)
-                        }
-                    } else {
-                        log("Permissions not granted!")
-                        locationPermissionRequest.launch(
-                            permissionGuard.requiredPermissionsForWifi.toTypedArray()
-                        )
-                    }
-                }
-            }
-
             is TcpScreenNavigation.OnConnectToServerClick -> {
-                CoroutineScope(Dispatchers.IO).launch {
+                lifecycleScope.launch(Dispatchers.IO) {
                     connectToServer(
                         serverIpAddress = navigation.serverIpAddress,
                         serverPort = navigation.portNumber
@@ -857,132 +748,64 @@ class TcpFragment : Fragment() {
                 connectToWifi(navigation.wifiP2pDevice)
             }
 
-            is TcpScreenNavigation.OnErrorsOccurred -> {
-                Toast.makeText(
-                    requireContext(), navigation.tcpScreenErrors.errorMessage, Toast.LENGTH_SHORT
-                ).show()
-            }
-
             is TcpScreenNavigation.SendHostMessage -> {
-                CoroutineScope(Dispatchers.IO).launch {
+                lifecycleScope.launch(Dispatchers.IO) {
                     sendHostMessage(navigation.message)
                 }
             }
 
             is TcpScreenNavigation.SendClientMessage -> {
-                CoroutineScope(Dispatchers.IO).launch {
+                lifecycleScope.launch(Dispatchers.IO) {
                     sendClientMessage(navigation.message)
                 }
             }
 
             TcpScreenNavigation.OnDiscoverP2PClick -> {
-                lifecycleScope.launch {
-                    if (permissionGuard.canCreateNetwork()) {
-                        val listener = object : WifiP2pManager.ActionListener {
-                            override fun onSuccess() {
-                                log("onSuccess: discover ")
-                                viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
-                            }
-
-                            override fun onFailure(reason: Int) {
-                                // Code for when the discovery initiation fails goes here.
-                                // Alert the user that something went wrong.
-                                log("onFailure: discover $reason ")
-                                viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Failure)
-                            }
-                        }
-                        wifiP2PManager.discoverPeers(channel, listener)
-                    } else {
-                        log("Permissions not granted!")
-                        locationPermissionRequest.launch(
-                            permissionGuard.requiredPermissionsForWifi.toTypedArray()
-                        )
-                    }
-                }
+                discoverP2PConnection()
             }
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private fun connectToWifi(wifiP2pDevice: WifiP2pDevice) {
-        log("connectToWifi: $wifiP2pDevice ")
-        val config = WifiP2pConfig().apply {
-            deviceAddress = wifiP2pDevice.deviceAddress
-            wps.setup = WpsInfo.PBC
-        }
-        wifiP2PManager.connect(
-            channel,
-            config,
-            object : WifiP2pManager.ActionListener {
-                override fun onSuccess() {
-                    // WiFiDirectBroadcastReceiver notifies us. Ignore for now
-                    log("success: connected to wifi - ${wifiP2pDevice.deviceAddress}")
-                }
+    /** Socket Receiving Functions*/
 
-                override fun onFailure(reason: Int) {
-                    log("failure: failure on wifi connection ")
-                    viewModel.emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.FailedToConnectToWifiDevice))
-                }
-            }
-        )
-    }
-
+    /**
+     * 1. type
+     * 2. file count
+     * 3. file name
+     * 4. file length
+     * */
     private fun receiveFile(reader: DataInputStream) {
         log("receiving file ...")
 
-        if (!resourceDirectory.exists()) {
-            resourceDirectory.mkdir()
-            log("Created directory: ${resourceDirectory.absolutePath}")
-        }
-
+        //reading file count
         val fileCount = reader.readInt()
         log("file count - $fileCount")
-        for (i in 0 until fileCount) {
-            log("file order - $i")
 
+        for (i in 0 until fileCount) {
             //reading file name
             val filename = reader.readUTF()
             log("Expected file name - $filename")
 
-            var bytes = 0
-            var bytesForPercentage = 0L
-
             // Read the expected file size
             var fileSize: Long = reader.readLong() // read file size
-            val fileSizeForPercentage = fileSize
             log("file size - $fileSize")
 
-            // Check if a file with the same name already exists, generate unique name if necessary
-            var file = File(resourceDirectory, filename)
-            if (file.exists()) {
-                log("same file found in folder, generating unique name ...")
-                val fileName = filename.getFileNameWithoutExtension()
-                val fileExtension = filename.getExtensionFromFilename()
-                val uniqueFileName =
-                    generateUniqueFileName(resourceDirectory.toString(), fileName, fileExtension)
-                log("unique file name - $uniqueFileName")
-                file = File(uniqueFileName)
-            }
+            var bytes = 0
+            var bytesForPercentage = 0L
+            val fileSizeForPercentage = fileSize
+
+            // Create File object
+            val file = getFileByName(fileName = filename, resourceDirectory = resourceDirectory)
 
             // Create FileOutputStream to write the received file
             val fileOutputStream = FileOutputStream(file)
 
-//            val fileMessage = ChatMessage.FileMessage(
-//                formattedTime = getCurrentTime(),
-//                filePath = file.path,
-//                fileName = file.name,
-//                fileSize = fileSize.readableFileSize(),
-//                fileExtension = filename.getExtensionFromFilename(),
-//                fileState = FileMessageState.Loading(0),
-//                isFromYou = false,
-//                messageId = 0L
-//            )
             val fileMessageEntity = ChatMessageEntity(
                 type = AppMessageType.FILE,
                 formattedTime = getCurrentTime(),
                 isFromYou = false,
                 userId = viewModel.state.value.peerUserUniqueId,
-
+                //file specific fields
                 fileState = FileMessageState.Loading(0),
                 fileName = file.name,
                 fileSize = fileSize.readableFileSize(),
@@ -1034,28 +857,11 @@ class TcpFragment : Fragment() {
     private fun receiveVoiceMessage(reader: DataInputStream) {
         log("receiving file ...")
 
-        if (!resourceDirectory.exists()) {
-            resourceDirectory.mkdir()
-            log("Created directory: ${resourceDirectory.absolutePath}")
-        }
-
         //reading file name
-        val filename = reader.readUTF()
-        var fileNameForUi = filename
-        log("Expected file name - $filename")
+        val fileName = reader.readUTF()
 
-        // Check if a file with the same name already exists, generate unique name if necessary
-        var file = File(resourceDirectory, filename)
-        if (file.exists()) {
-            log("same file found in folder, generating unique name ...")
-            val fileName = filename.getFileNameWithoutExtension()
-            val fileExtension = filename.getExtensionFromFilename()
-            val uniqueFileName =
-                generateUniqueFileName(resourceDirectory.toString(), fileName, fileExtension)
-            fileNameForUi = Uri.parse(uniqueFileName).lastPathSegment
-            log("unique file name - $uniqueFileName")
-            file = File(uniqueFileName)
-        }
+        //Create File object
+        val file = getFileByName(fileName = fileName, resourceDirectory = resourceDirectory)
 
         var bytes = 0
         var bytesForPercentage = 0L
@@ -1066,24 +872,17 @@ class TcpFragment : Fragment() {
         var fileSize: Long = reader.readLong() // read file size
         val fileSizeForPercentage = fileSize
 
-//        val voiceMessage = ChatMessage.VoiceMessage(
-//            formattedTime = getCurrentTime(),
-//            voiceFileName = fileNameForUi,
-//            duration = file.getAudioFileDuration(),
-//            isFromYou = false,
-//            fileState = FileMessageState.Loading(0),
-//            messageId = 0L
-//        )
-
         val voiceMessageEntity = ChatMessageEntity(
             type = AppMessageType.VOICE,
             formattedTime = getCurrentTime(),
             isFromYou = false,
             userId = viewModel.state.value.peerUserUniqueId,
+            //message specific fields
             voiceMessageFileName = file.name,
             voiceMessageAudioFileDuration = file.getAudioFileDuration(),
             fileState = FileMessageState.Loading(0),
         )
+
         lifecycleScope.launch {
             viewModel.insertMessage(voiceMessageEntity)
         }
@@ -1113,277 +912,112 @@ class TcpFragment : Fragment() {
             }
         }
         fileOutputStream.close()
+        log("file received successfully")
+
         val newState = FileMessageState.Success
         val newVoiceMessage = voiceMessageEntity.copy(fileState = newState)
         viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
-        log("file received successfully")
     }
 
-    private suspend fun sendVoiceMessage(
-        writer: DataOutputStream,
-        voiceMessage: ChatMessageEntity
-    ) {
-        log("sending voice message ...")
-        viewModel.insertMessage(voiceMessage)
+    private fun receiveTextMessage(reader: DataInputStream) {
+        val receivedMessage = reader.readUTF()
+        log("host incoming text message - $receivedMessage")
 
-        try {
-            withContext(Dispatchers.IO) {
-                //sending file type
-                val type = AppMessageType.VOICE.identifier.code
-                writer.writeChar(type)
-
-                val file = File(resourceDirectory, voiceMessage.voiceMessageFileName!!)
-
-                //sending file name
-                writer.writeUTF(voiceMessage.voiceMessageFileName)
-
-                //todo optimize this later
-                //val uri = Uri.parse(voiceMessage.filePath)
-//                val inputStream =
-//                    requireContext().contentResolver.openInputStream(uri)
-//                val filePathToSave = context?.cacheDir
-//                val file = File(filePathToSave, voiceMessage.voiceFileName)
-//                val fileOutputStream = FileOutputStream(file)
-//                inputStream?.copyTo(fileOutputStream)
-//                fileOutputStream.close()
-
-                //write length
-                val fileSizeForPercentage = file.length()
-                writer.writeLong(file.length())
-                log("sending file length - ${file.length()}")
-
-                var bytes: Int
-                var bytesForPercentage = 0L
-                val fileInputStream = FileInputStream(file)
-
-                // Here we  break file into chunks
-                val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
-                while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
-                    // Send the file to Server Socket
-                    writer.write(buffer, 0, bytes)
-                    writer.flush()
-
-                    bytesForPercentage += bytes.toLong()
-                    val percentage =
-                        (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-                    val tempPercentage =
-                        ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
-                    if (percentage != tempPercentage) {
-                        withContext(Dispatchers.Main) {
-                            log("progress - $percentage")
-                            val newState = FileMessageState.Loading(percentage)
-                            val newVoiceMessage = voiceMessage.copy(fileState = newState)
-                            viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
-                        }
-                    }
-                }
-                // close the file here
-                fileInputStream.close()
-                withContext(Dispatchers.Main) {
-                    log("file sent successfully")
-                    val newState = FileMessageState.Success
-                    val newVoiceMessage = voiceMessage.copy(fileState = newState)
-                    viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
-                }
-            }
-        } catch (exception: IOException) {
-            withContext(Dispatchers.Main) {
-                log("file sent failed")
-                val newState = FileMessageState.Failure
-                val newVoiceMessage = voiceMessage.copy(fileState = newState)
-                viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
-            }
-        } catch (error: Exception) {
-            withContext(Dispatchers.Main) {
-                log("file sent failed")
-                val newState = FileMessageState.Failure
-                val newVoiceMessage = voiceMessage.copy(fileState = newState)
-                viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
-            }
+        val textMessageEntity = ChatMessageEntity(
+            type = AppMessageType.TEXT,
+            formattedTime = getCurrentTime(),
+            isFromYou = false,
+            userId = viewModel.state.value.peerUserUniqueId,
+            text = receivedMessage.toString()
+        )
+        lifecycleScope.launch(Dispatchers.IO) {
+            viewModel.insertMessage(textMessageEntity)
         }
     }
 
-    private suspend fun sendFileMessages(
-        writer: DataOutputStream,
-        messages: List<ChatMessageEntity>
-    ) {
-        log("sending file , writer is - $writer ...")
-        withContext(Dispatchers.IO) {
+    private fun receiveContactMessage(reader: DataInputStream) {
+        val receivedMessage = reader.readUTF()
+        log("host incoming contact message - $receivedMessage")
 
-            //sending file type
-            val type = AppMessageType.FILE.identifier.code
-            writer.writeChar(type)
+        val contactMessageItem =
+            gson.fromJson(
+                receivedMessage,
+                ContactMessageItem::class.java
+            )
 
-            //sending file count
-            writer.writeInt(messages.size)
-            log("messages size - ${messages.size}")
-
-            messages.forEach { fileMessage ->
-//                try {
-
-                val file = File(resourceDirectory, fileMessage.fileName!!)
-                log("sending file info: file size - ${file.length()} - ${file.name}")
-
-
-                val messageId = viewModel.insertMessage(fileMessage)
-
-                //sending file name
-                writer.writeUTF(fileMessage.fileName)
-
-                //write length
-                val fileSizeForPercentage = file.length()
-                writer.writeLong(file.length())
-                log("sending file length - ${file.length()}")
-
-                var bytes: Int
-                var bytesForPercentage = 0L
-                val fileInputStream = FileInputStream(file)
-
-                // Here we  break file into chunks
-                val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
-                while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
-                    // Send the file to Server Socket
-                    writer.write(buffer, 0, bytes)
-                    writer.flush()
-
-                    bytesForPercentage += bytes.toLong()
-                    val percentage =
-                        (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-                    val tempPercentage =
-                        ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
-                    if (percentage != tempPercentage) {
-                        withContext(Dispatchers.Main) {
-                            log("progress - $percentage")
-                            val newState = FileMessageState.Loading(percentage)
-                            val newFileMessage =
-                                fileMessage.copy(fileState = newState, id = messageId)
-                            viewModel.updatePercentageOfReceivingFile(newFileMessage)
-                        }
-                    }
-                }
-
-                // close the file here
-                fileInputStream.close()
-
-                withContext(Dispatchers.Main) {
-                    log("file sent successfully")
-                    val newState = FileMessageState.Success
-                    val newFileMessage =
-                        fileMessage.copy(fileState = newState, id = messageId)
-                    viewModel.updatePercentageOfReceivingFile(newFileMessage)
-                }
-//                } catch (exception: IOException) {
-//                    exception.printStackTrace()
-//                    withContext(Dispatchers.Main) {
-//                        log("file sent failed")
-//                        val newState = FileMessageState.Failure
-//                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
-//                    }
-//                } catch (error: Exception) {
-//                    error.printStackTrace()
-//                    withContext(Dispatchers.Main) {
-//                        log("file sent failed")
-//                        val newState = FileMessageState.Failure
-//                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
-//                    }
-//                }
-            }
+        val contactMessageEntity = ChatMessageEntity(
+            type = AppMessageType.CONTACT,
+            formattedTime = getCurrentTime(),
+            isFromYou = false,
+            userId = viewModel.state.value.peerUserUniqueId,
+            contactName = contactMessageItem.contactName,
+            contactNumber = contactMessageItem.contactNumber
+        )
+        lifecycleScope.launch(Dispatchers.IO) {
+            viewModel.insertMessage(contactMessageEntity)
         }
     }
 
-    private suspend fun createServer(serverPort: Int) {
-        log("creating server ...")
+    /**Socket connection setup*/
+
+    private fun createServer(serverPort: Int) {
+        log("group address - ${viewModel.state.value.groupOwnerAddress} \ncreating server ...")
         viewModel.updateHostConnectionStatus(HostConnectionStatus.Creating)
 
-        withContext(Dispatchers.IO) {
 //            try {
-            serverSocket = ServerSocket(serverPort)
-            log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
-            if (serverSocket.isBound) {
-                viewModel.updateHostConnectionStatus(HostConnectionStatus.Created)
-                viewModel.updateConnectionsCount(true)
-            }
-            while (!serverSocket.isClosed) {
-                connectedClientSocketOnServer = serverSocket.accept()
-                connectedClientWriter =
-                    DataOutputStream(connectedClientSocketOnServer.getOutputStream())
-                //here we sending the unique device id to the client
-                initializeUser(connectedClientWriter)
-                log("New client : $connectedClientSocketOnServer ")
-                viewModel.updateConnectionsCount(true)
+        serverSocket = ServerSocket(serverPort)
+        log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
+        if (serverSocket.isBound) {
+            viewModel.updateHostConnectionStatus(HostConnectionStatus.Created)
+            viewModel.updateConnectionsCount(true)
+        }
+        while (!serverSocket.isClosed) {
+            connectedClientSocketOnServer = serverSocket.accept()
+            connectedClientWriter =
+                DataOutputStream(connectedClientSocketOnServer.getOutputStream())
+            //here we sending the unique device id to the client
+            initializeUser(writer = connectedClientWriter)
+            log("New client : $connectedClientSocketOnServer ")
+            viewModel.updateConnectionsCount(true)
 
-                while (!connectedClientSocketOnServer.isClosed) {
-                    val reader =
-                        DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
+            while (!connectedClientSocketOnServer.isClosed) {
+                val reader =
+                    DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
 
 //                        try {
-                    val dataType = AppMessageType.fromChar(reader.readChar())
+                val messageType = AppMessageType.fromChar(reader.readChar())
 
-                    when (dataType) {
-                        AppMessageType.INITIAL -> {
-                            setupUserData(reader)
-                        }
+                when (messageType) {
+                    AppMessageType.INITIAL -> {
+                        setupUserData(reader)
+                    }
 
-                        AppMessageType.VOICE -> {
-                            receiveVoiceMessage(reader)
-                        }
-
-                        AppMessageType.CONTACT -> {
-                            val receivedMessage = reader.readUTF()
-                            log("host incoming contact message - $receivedMessage")
-                            val contactMessageItem =
-                                gson.fromJson(
-                                    receivedMessage,
-                                    ContactMessageItem::class.java
-                                )
-//                            val contactMessage = ChatMessage.ContactMessage(
-//                                formattedTime = getCurrentTime(),
-//                                contactName = contactMessageItem.contactName,
-//                                contactNumber = contactMessageItem.contactNumber,
-//                                isFromYou = false,
-//                                messageId = 0L
-//                            )
-                            val contactMessageEntity = ChatMessageEntity(
-                                type = AppMessageType.CONTACT,
-                                formattedTime = getCurrentTime(),
-                                isFromYou = false,
-                                userId = viewModel.state.value.peerUserUniqueId,
-                                contactName = contactMessageItem.contactName,
-                                contactNumber = contactMessageItem.contactNumber
-                            )
-                            viewModel.insertMessage(contactMessageEntity)
-                        }
-
-                        AppMessageType.TEXT -> {
-                            val receivedMessage = reader.readUTF()
-                            log("host incoming message - $receivedMessage")
-
-//                            val message = ChatMessage.TextMessage(
-//                                formattedTime = getCurrentTime(),
-//                                message = receivedMessage.toString(),
-//                                isFromYou = false,
-//                                messageId = 0L
-//                            )
-
-                            val textMessageEntity = ChatMessageEntity(
-                                type = AppMessageType.TEXT,
-                                formattedTime = getCurrentTime(),
-                                isFromYou = false,
-                                userId = viewModel.state.value.peerUserUniqueId,
-                                text = receivedMessage.toString()
-                            )
-
-                            viewModel.insertMessage(textMessageEntity)
-                        }
-
-                        AppMessageType.FILE -> {
-                            receiveFile(reader = reader)
-                        }
-
-                        AppMessageType.UNKNOWN -> {
-                            //currently not handled
+                    AppMessageType.VOICE -> {
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            receiveVoiceMessage(reader = reader)
                         }
                     }
+
+                    AppMessageType.CONTACT -> {
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            receiveContactMessage(reader = reader)
+                        }
+                    }
+
+                    AppMessageType.TEXT -> {
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            receiveTextMessage(reader = reader)
+                        }
+                    }
+
+                    AppMessageType.FILE -> {
+                        receiveFile(reader = reader)
+                    }
+
+                    AppMessageType.UNKNOWN -> {
+                        /**Ignore case*/
+                    }
+                }
 //                        } catch (e: EOFException) {
 //                            e.printStackTrace()
 //                            //if the IP address of the host could not be determined.
@@ -1440,8 +1074,8 @@ class TcpFragment : Fragment() {
 //                                e.printStackTrace()
 //                            }
 //                        }
-                }
             }
+        }
 //            } catch (e: IOException) {
 //                e.printStackTrace()
 //                serverSocket.close()
@@ -1464,55 +1098,23 @@ class TcpFragment : Fragment() {
 //                //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
 //                log("createServer: IllegalArgumentException ")
 //            }
-        }
-    }
-
-    private fun initializeUser(writer: DataOutputStream) {
-        val type = AppMessageType.INITIAL.identifier.code
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                writer.writeChar(type)
-                writer.writeUTF(viewModel.getUniqueDeviceId())
-            } catch (e: IOException) {
-                e.printStackTrace()
-                Log.d(
-                    "ahi3646",
-                    "sendMessage server: dataOutputStream is closed io exception "
-                )
-                viewModel.handleEvents(
-                    TcpScreenEvents.OnDialogErrorOccurred(
-                        TcpScreenDialogErrors.IOException
-                    )
-                )
-                try {
-                    writer.close()
-                } catch (ex: IOException) {
-                    ex.printStackTrace()
-                }
-            }
-        }
-    }
-
-    private fun setupUserData(reader: DataInputStream) {
-        val uniqueDeviceId = reader.readUTF()
-        log("unique device id - $uniqueDeviceId")
-        val isUserExist = viewModel.checkForUserExistence(uniqueDeviceId)
-        log("isUserExist - $isUserExist")
-        viewModel.loadChatHistory(uniqueDeviceId)
     }
 
     private fun connectToServer(serverIpAddress: String, serverPort: Int) {
         log("connecting to server - $serverIpAddress:$serverPort")
         try {
-            //create client
+            //create client socket
             clientSocket = Socket(serverIpAddress, serverPort)
             clientWriter = DataOutputStream(clientSocket.getOutputStream())
-            initializeUser(clientWriter)
             log("client writer initialized - $clientWriter")
+
+            lifecycleScope.launch(Dispatchers.IO) {
+                initializeUser(clientWriter)
+                log("user initialized ")
+            }
 
             viewModel.updateClientConnectionStatus(ClientConnectionStatus.Connected)
             viewModel.updateConnectionsCount(true)
-            log("client socket - $clientSocket")
 
             //received outcome messages here
             while (!clientSocket.isClosed) {
@@ -1524,57 +1126,26 @@ class TcpFragment : Fragment() {
 
                 when (dataType) {
                     AppMessageType.INITIAL -> {
-                        setupUserData(reader)
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            setupUserData(reader = reader)
+                        }
                     }
 
                     AppMessageType.VOICE -> {
-
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            receiveVoiceMessage(reader = reader)
+                        }
                     }
 
                     AppMessageType.TEXT -> {
-                        val receivedMessage = reader.readUTF()
-                        log("host incoming message - $receivedMessage")
-
-//                        val message = ChatMessage.TextMessage(
-//                            formattedTime = getCurrentTime(),
-//                            message = receivedMessage.toString(),
-//                            isFromYou = false,
-//                            messageId = 0L
-//                        )
-                        val textMessageEntity = ChatMessageEntity(
-                            type = AppMessageType.TEXT,
-                            formattedTime = getCurrentTime(),
-                            isFromYou = false,
-                            userId = viewModel.state.value.peerUserUniqueId,
-                            text = receivedMessage.toString()
-                        )
-                        lifecycleScope.launch {
-                            viewModel.insertMessage(textMessageEntity)
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            receiveTextMessage(reader = reader)
                         }
                     }
 
                     AppMessageType.CONTACT -> {
-                        val receivedMessage = reader.readUTF()
-                        log("client incoming contact message - $receivedMessage")
-                        val contactMessageItem =
-                            gson.fromJson(receivedMessage, ContactMessageItem::class.java)
-//                        val contactMessage = ChatMessage.ContactMessage(
-//                            formattedTime = getCurrentTime(),
-//                            contactName = contactMessageItem.contactName,
-//                            contactNumber = contactMessageItem.contactNumber,
-//                            isFromYou = false,
-//                            messageId = 0L
-//                        )
-                        val contactMessageEntity = ChatMessageEntity(
-                            type = AppMessageType.CONTACT,
-                            formattedTime = getCurrentTime(),
-                            isFromYou = false,
-                            userId = viewModel.state.value.peerUserUniqueId,
-                            contactName = contactMessageItem.contactName,
-                            contactNumber = contactMessageItem.contactNumber
-                        )
-                        lifecycleScope.launch {
-                            viewModel.insertMessage(contactMessageEntity)
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            receiveContactMessage(reader = reader)
                         }
                     }
 
@@ -1582,7 +1153,9 @@ class TcpFragment : Fragment() {
                         receiveFile(reader = reader)
                     }
 
-                    AppMessageType.UNKNOWN -> {}
+                    AppMessageType.UNKNOWN -> {
+                        /**Ignore case*/
+                    }
                 }
 //                } catch (e: EOFException) {
 //                    e.printStackTrace()
@@ -1656,23 +1229,14 @@ class TcpFragment : Fragment() {
 
     }
 
-    private fun sendContactMessage(
-        writer: DataOutputStream,
-        contactMessage: ChatMessageEntity
-    ) {
-        val contactsMessageItem = ContactMessageItem(
-            contactName = contactMessage.contactName!!,
-            contactNumber = contactMessage.contactNumber!!
-        )
+    /** Socket User Initializing Functions*/
 
-        val contactsStringForm = gson.toJson(contactsMessageItem)
-
+    private fun initializeUser(writer: DataOutputStream) {
+        val userUniqueId = runBlocking(Dispatchers.IO) { viewModel.getUniqueDeviceId() }
+        val type = AppMessageType.INITIAL.identifier.code
         try {
-            writer.writeChar(contactMessage.type.identifier.code)
-            writer.writeUTF(contactsStringForm)
-            lifecycleScope.launch {
-                viewModel.insertMessage(contactMessage)
-            }
+            writer.writeChar(type)
+            writer.writeUTF(userUniqueId)
         } catch (e: IOException) {
             e.printStackTrace()
             Log.d(
@@ -1692,35 +1256,13 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun sendTextMessage(writer: DataOutputStream, textMessage: ChatMessageEntity) {
-        log("sending text message from client - $textMessage")
-
-        val data = textMessage.text
-
-        try {
-            writer.writeChar(textMessage.type.identifier.code)
-            writer.writeUTF(data)
-            lifecycleScope.launch {
-                viewModel.insertMessage(textMessage)
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Log.d(
-                "ahi3646",
-                "sendMessage server: dataOutputStream is closed io exception "
-            )
-            viewModel.handleEvents(
-                TcpScreenEvents.OnDialogErrorOccurred(
-                    TcpScreenDialogErrors.IOException
-                )
-            )
-            try {
-                writer.close()
-            } catch (ex: IOException) {
-                ex.printStackTrace()
-            }
-        }
+    private fun setupUserData(reader: DataInputStream) {
+        val uniqueDeviceId = reader.readUTF()
+        log("unique device id - $uniqueDeviceId")
+        viewModel.loadChatHistory(uniqueDeviceId)
     }
+
+    /**Socket Sending Functions*/
 
     private fun sendClientMessage(message: ChatMessageEntity) {
         if (!clientSocket.isClosed) {
@@ -1732,7 +1274,7 @@ class TcpFragment : Fragment() {
                 }
 
                 AppMessageType.VOICE -> {
-                    lifecycleScope.launch {
+                    lifecycleScope.launch(Dispatchers.IO) {
                         sendVoiceMessage(writer = clientWriter, voiceMessage = message)
                     }
                 }
@@ -1745,10 +1287,7 @@ class TcpFragment : Fragment() {
 
                 AppMessageType.FILE -> {
                     lifecycleScope.launch {
-                        sendFileMessages(
-                            writer = clientWriter,
-                            messages = listOf(message),
-                        )
+                        sendFileMessages(writer = clientWriter, messages = listOf(message))
                     }
                 }
 
@@ -1785,12 +1324,10 @@ class TcpFragment : Fragment() {
 
                 AppMessageType.FILE -> {
                     lifecycleScope.launch {
-                        sendFileMessages(
-                            writer = connectedClientWriter,
-                            messages = listOf(message),
-                        )
+                        sendFileMessages(writer = connectedClientWriter, messages = listOf(message))
                     }
                 }
+
                 else -> {
                     /** Just ignore */
                 }
@@ -1798,6 +1335,240 @@ class TcpFragment : Fragment() {
         } else {
             log("send host message: client socket is closed ")
             viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
+        }
+    }
+
+    /**Socket Sending Functions*/
+
+    private fun sendTextMessage(
+        writer: DataOutputStream,
+        textMessage: ChatMessageEntity
+    ) {
+        log("sending text message from client - $textMessage")
+        try {
+            writer.writeChar(textMessage.type.identifier.code)
+            writer.writeUTF(textMessage.text)
+            lifecycleScope.launch {
+                viewModel.insertMessage(textMessage)
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Log.d(
+                "ahi3646",
+                "sendMessage server: dataOutputStream is closed io exception "
+            )
+            viewModel.handleEvents(
+                TcpScreenEvents.OnDialogErrorOccurred(
+                    TcpScreenDialogErrors.IOException
+                )
+            )
+            try {
+                writer.close()
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+            }
+        }
+    }
+
+    private fun sendVoiceMessage(
+        writer: DataOutputStream,
+        voiceMessage: ChatMessageEntity
+    ) {
+        log("sending voice message ...")
+        try {
+            //sending file type
+            val type = AppMessageType.VOICE.identifier.code
+            writer.writeChar(type)
+
+            //Create File object
+            val file = File(resourceDirectory, voiceMessage.voiceMessageFileName!!)
+
+            //sending file name
+            writer.writeUTF(voiceMessage.voiceMessageFileName)
+
+            //write length
+            val fileSizeForPercentage = file.length()
+            writer.writeLong(file.length())
+            log("sending file length - ${file.length()}")
+
+            var bytes: Int
+            var bytesForPercentage = 0L
+            val fileInputStream = FileInputStream(file)
+
+            // Here we  break file into chunks
+            val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+            while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
+                // Send the file to Server Socket
+                writer.write(buffer, 0, bytes)
+                writer.flush()
+
+                bytesForPercentage += bytes.toLong()
+                val percentage =
+                    (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                val tempPercentage =
+                    ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+                if (percentage != tempPercentage) {
+                    log("progress - $percentage")
+                    val newState = FileMessageState.Loading(percentage)
+                    val newVoiceMessage = voiceMessage.copy(fileState = newState)
+                    viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
+                }
+            }
+            // close the file here
+            fileInputStream.close()
+            log("file sent successfully")
+
+            //insert db only when succeeded
+            lifecycleScope.launch {
+                viewModel.insertMessage(voiceMessage)
+            }
+
+            val newState = FileMessageState.Success
+            val newVoiceMessage = voiceMessage.copy(fileState = newState)
+            viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
+        } catch (exception: IOException) {
+            log("file sent failed")
+            val newState = FileMessageState.Failure
+            val newVoiceMessage = voiceMessage.copy(fileState = newState)
+            viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
+        } catch (error: Exception) {
+            log("file sent failed")
+            val newState = FileMessageState.Failure
+            val newVoiceMessage = voiceMessage.copy(fileState = newState)
+            viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
+        }
+    }
+
+    private fun sendContactMessage(
+        writer: DataOutputStream,
+        contactMessage: ChatMessageEntity
+    ) {
+        val contactsMessageItem = ContactMessageItem(
+            contactName = contactMessage.contactName!!,
+            contactNumber = contactMessage.contactNumber!!
+        )
+        val contactsStringForm = gson.toJson(contactsMessageItem)
+
+        try {
+            writer.writeChar(contactMessage.type.identifier.code)
+            writer.writeUTF(contactsStringForm)
+            lifecycleScope.launch {
+                viewModel.insertMessage(contactMessage)
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Log.d(
+                "ahi3646",
+                "sendMessage server: dataOutputStream is closed io exception "
+            )
+            viewModel.handleEvents(
+                TcpScreenEvents.OnDialogErrorOccurred(
+                    TcpScreenDialogErrors.IOException
+                )
+            )
+            try {
+                writer.close()
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * 1. type
+     * 2. file count
+     * 3. file name
+     * 4. file length
+     * */
+    private suspend fun sendFileMessages(
+        writer: DataOutputStream,
+        messages: List<ChatMessageEntity>
+    ) {
+        log("sending file ...")
+
+        withContext(Dispatchers.IO) {
+//                try {
+
+            //sending file type
+            val type = AppMessageType.FILE.identifier.code
+            writer.writeChar(type)
+
+            //sending file count
+            writer.writeInt(messages.size)
+            log("messages size - ${messages.size}")
+
+            messages.forEach { fileMessage ->
+
+                //todo-check for duplication
+                val file = File(resourceDirectory, fileMessage.fileName!!)
+                log("sending file info: file size - ${file.length()} - ${file.name}")
+
+                val messageId = viewModel.insertMessage(fileMessage)
+                log("message id - $messageId")
+
+                //sending file name
+                writer.writeUTF(fileMessage.fileName)
+                log("sending file name - ${fileMessage.fileName}")
+
+                //write length
+                val fileSizeForPercentage = file.length()
+                writer.writeLong(file.length())
+                log("sending file length - ${file.length()}")
+
+                var bytes: Int
+                var bytesForPercentage = 0L
+                val fileInputStream = FileInputStream(file)
+
+                // Here we  break file into chunks
+                val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+                while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
+                    // Send the file to Server Socket
+                    writer.write(buffer, 0, bytes)
+                    writer.flush()
+
+                    bytesForPercentage += bytes.toLong()
+                    val percentage =
+                        (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                    val tempPercentage =
+                        ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+                    if (percentage != tempPercentage) {
+                        withContext(Dispatchers.Main) {
+                            log("progress - $percentage")
+                            val newState = FileMessageState.Loading(percentage)
+                            val newFileMessage =
+                                fileMessage.copy(fileState = newState, id = messageId)
+                            viewModel.updatePercentageOfReceivingFile(newFileMessage)
+                        }
+                    }
+                }
+
+                // close the file here
+                fileInputStream.close()
+
+                withContext(Dispatchers.Main) {
+                    log("file sent successfully")
+                    val newState = FileMessageState.Success
+                    val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
+                    viewModel.updatePercentageOfReceivingFile(newFileMessage)
+                    log("file sent successfully")
+                }
+
+//                } catch (exception: IOException) {
+//                    exception.printStackTrace()
+//                    withContext(Dispatchers.Main) {
+//                        log("file sent failed")
+//                        val newState = FileMessageState.Failure
+//                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+//                    }
+//                } catch (error: Exception) {
+//                    error.printStackTrace()
+//                    withContext(Dispatchers.Main) {
+//                        log("file sent failed")
+//                        val newState = FileMessageState.Failure
+//                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+//                    }
+//                }
+            }
         }
     }
 
@@ -1811,6 +1582,18 @@ class TcpFragment : Fragment() {
     //6-fragment lifecycle callback
     override fun onResume() {
         super.onResume()
+        //todo - here handle connected devices
+        val peerListListener = WifiP2pManager.PeerListListener { peerList ->
+            val peers = viewModel.state.value.availableWifiNetworks
+            val refreshedPeers = peerList.deviceList
+            if (refreshedPeers != peers) {
+                viewModel.handleAvailableWifiListChange(refreshedPeers.toList())
+            }
+            if (peers.isEmpty()) {
+                log("No devices found")
+                return@PeerListListener
+            }
+        }
         receiver = WiFiDirectBroadcastReceiver(
             wifiP2pManager = wifiP2PManager,
             channel = channel,

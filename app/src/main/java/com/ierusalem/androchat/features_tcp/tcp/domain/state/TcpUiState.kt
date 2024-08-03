@@ -1,21 +1,16 @@
 package com.ierusalem.androchat.features_tcp.tcp.domain.state
 
 import android.net.wifi.p2p.WifiP2pDevice
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
-import androidx.compose.runtime.Immutable
-import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
-import java.util.UUID
 
 data class TcpScreenUiState(
 
-    val contacts:Resource<List<ContactItem>> = Resource.Loading(),
+    val contacts: Resource<List<ContactItem>> = Resource.Loading(),
 
     val isReadContactsGranted: Boolean = false,
     val isRecordAudioGranted: Boolean = false,
@@ -25,7 +20,6 @@ data class TcpScreenUiState(
 
     //general state
     val isWifiOn: Boolean = false,
-    val authorMe: String = Constants.UNKNOWN_USER,
     val peerUserUniqueId: String = "",
     val hotspotName: String = Constants.UNKNOWN_HOTSPOT_NAME,
     val isValidHotSpotName: Boolean = isValidHotspotName(hotspotName),
@@ -35,7 +29,7 @@ data class TcpScreenUiState(
     val groupOwnerAddress: String = "",
     val isValidGroupOwnerAddress: Boolean = isValidIpAddress(groupOwnerAddress),
 
-    val localOnlyHotspotStatus:LocalOnlyHotspotStatus = LocalOnlyHotspotStatus.Idle,
+    val localOnlyHotspotStatus: LocalOnlyHotspotStatus = LocalOnlyHotspotStatus.Idle,
 
     //general networking state
     val generalNetworkingStatus: GeneralNetworkingStatus = GeneralNetworkingStatus.Idle,
@@ -54,40 +48,16 @@ data class TcpScreenUiState(
     //chat room
     val messages: List<ChatMessage> = emptyList(),
     //but Erkin aka said, chat should be between only two people
-    //todo maybe you should use connectedWifiNetworks.size here !!!
+    //todo - maybe you should use connectedWifiNetworks.size here !
     val connectionsCount: Int = 0,
 
     //this wifi address used for connecting to server by clients, don't use this for host side
-    val connectedWifiAddress: String ="Not created",
+    val connectedWifiAddress: String = "Not created",
     val isValidConnectedWifiAddress: Boolean = isValidIpAddress(connectedWifiAddress),
 
-    //error handling
+    //error handling with dialogs
     val hasDialogErrorOccurred: TcpScreenDialogErrors? = null,
 
     //to disable view pager's horizontal scrolling
-    val isRecording:Boolean = false,
+    val isRecording: Boolean = false,
 )
-
-enum class LocalOnlyHotspotStatus(@StringRes val res: Int, @DrawableRes val icon: Int){
-    Idle(R.string.start_local_only_hotspot, R.drawable.wifi),
-    LaunchingHotspot(R.string.launching_hotspot, R.drawable.wifi),
-    HotspotRunning(R.string.stop_local_only_hotspot, R.drawable.wifi),
-    Failure(R.string.couldn_t_launch_hotspot, R.drawable.error_prompt)
-}
-
-@Immutable
-data class ContactItem(
-    val contactName:String,
-    val phoneNumber:String,
-    val isSelected: Boolean,
-    val id: String = UUID.randomUUID().toString(),
-)
-
-@Immutable
-data class ContactMessageItem(
-    val contactName: String,
-    val contactNumber: String
-)
-
-
-

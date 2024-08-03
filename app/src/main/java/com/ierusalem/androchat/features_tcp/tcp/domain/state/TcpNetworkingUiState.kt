@@ -6,6 +6,8 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralNetworkingStatus.HotspotDiscovery
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralNetworkingStatus.Idle
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralNetworkingStatus.P2PDiscovery
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.HotspotNetworkingStatus.HotspotRunning
+import com.ierusalem.androchat.features_tcp.tcp.domain.state.HotspotNetworkingStatus.LaunchingHotspot
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.P2PNetworkingStatus.Discovering
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.P2PNetworkingStatus.Failure
 
@@ -23,7 +25,7 @@ enum class GeneralNetworkingStatus(@StringRes val status: Int) {
 
 /**
  * Indicates the state of P2P networking
- * @property Idle peet networking has not started yet
+ * @property Idle peer networking has not started yet
  * @property Discovering peer networking has started and continues to discover wifi networks
  * @property Failure peer networking failed to start
  */
@@ -44,5 +46,19 @@ enum class HotspotNetworkingStatus(@StringRes val res: Int, @DrawableRes val ico
     Idle(R.string.group_networking, R.drawable.wifi),
     LaunchingHotspot(R.string.launching_hotspot, R.drawable.wifi),
     HotspotRunning(R.string.stop_group_networking, R.drawable.wifi),
+    Failure(R.string.couldn_t_launch_hotspot, R.drawable.error_prompt)
+}
+
+/**
+ * Indicates the state of local-only hotspot networking
+ * @property Idle networking has not started yet
+ * @property LaunchingHotspot local-only hotspot has starting its job
+ * @property HotspotRunning local-only hotspot has fully started and is running
+ * @property Failure local-only hotspot failed to start
+ */
+enum class LocalOnlyHotspotStatus(@StringRes val res: Int, @DrawableRes val icon: Int){
+    Idle(R.string.start_local_only_hotspot, R.drawable.wifi),
+    LaunchingHotspot(R.string.launching_hotspot, R.drawable.wifi),
+    HotspotRunning(R.string.stop_local_only_hotspot, R.drawable.wifi),
     Failure(R.string.couldn_t_launch_hotspot, R.drawable.error_prompt)
 }
