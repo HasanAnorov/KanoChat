@@ -31,6 +31,11 @@ enum class TcpScreenDialogErrors(
     @StringRes val message: Int,
     @DrawableRes val icon: Int
 ) {
+    LocalOnlyHotspotNotSupported(
+        R.string.android_version_8_required,
+        R.string.android_version_8_required_for_local_only_hotspot,
+        R.drawable.info
+    ),
     NO_NETWORK_FOR_CONNECTION(
         R.string.please_connect_to_network,
         R.string.you_should_be_on_network_to_connect_to_server,

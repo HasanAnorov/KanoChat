@@ -11,6 +11,7 @@ import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Looper
@@ -21,6 +22,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -770,20 +772,28 @@ class TcpFragment : Fragment() {
                 shortToast(getString(navigation.tcpScreenErrors.errorMessage))
             }
 
-            TcpScreenNavigation.OnStopHotspotNetworking -> {
-                stopHotspotNetworking()
-            }
-
-            TcpScreenNavigation.OnStopP2PDiscovery -> {
-                stopPeerDiscovery()
+            TcpScreenNavigation.ShowFileChooserClick -> {
+                showFileChooser()
             }
 
             TcpScreenNavigation.WifiDisabledCase -> {
                 handleWifiDisabledCase()
             }
 
+            TcpScreenNavigation.OnDiscoverP2PClick -> {
+                discoverP2PConnection()
+            }
+
+            TcpScreenNavigation.OnStopP2PDiscovery -> {
+                stopPeerDiscovery()
+            }
+
             TcpScreenNavigation.OnStartHotspotNetworking -> {
                 startHotspotNetworking()
+            }
+
+            TcpScreenNavigation.OnStopHotspotNetworking -> {
+                stopHotspotNetworking()
             }
 
             TcpScreenNavigation.OnNavIconClick -> {
@@ -792,10 +802,6 @@ class TcpFragment : Fragment() {
 
             TcpScreenNavigation.OnSettingsClick -> {
                 findNavController().navigate(R.id.action_tcpFragment_to_settingsFragment)
-            }
-
-            TcpScreenNavigation.ShowFileChooserClick -> {
-                showFileChooser()
             }
 
             is TcpScreenNavigation.OnCreateServerClick -> {
@@ -827,10 +833,6 @@ class TcpFragment : Fragment() {
                 lifecycleScope.launch(Dispatchers.IO) {
                     sendClientMessage(navigation.message)
                 }
-            }
-
-            TcpScreenNavigation.OnDiscoverP2PClick -> {
-                discoverP2PConnection()
             }
         }
     }
@@ -1039,6 +1041,7 @@ class TcpFragment : Fragment() {
     /**Socket connection setup*/
 
     private fun createServer(serverPort: Int) {
+        log("creating server ...")
         log("group address - ${viewModel.state.value.groupOwnerAddress} \ncreating server ...")
         viewModel.updateHostConnectionStatus(HostConnectionStatus.Creating)
 

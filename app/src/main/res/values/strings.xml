@@ -213,5 +213,7 @@
     <string name="current_connected_wifi_server_ip_address_is_not_a_valid">Current connected wifi server ip address is not a valid</string>
     <string name="please_connect_to_network">Please connect to the network!</string>
     <string name="you_should_be_on_network_to_connect_to_server">You should be connected to the network to create or connect to the server</string>
+    <string name="android_version_8_required">Android Version 8+ required!</string>
+    <string name="android_version_8_required_for_local_only_hotspot">Your device\'s android version is below 8. Upgrade android version to use Local-Only Hotspot</string>
 
 </resources>

@@ -537,25 +537,12 @@ class TcpViewModel @Inject constructor(
             }
             wifiManager.startLocalOnlyHotspot(callback, null)
         } else {
-            //todo show error message local-only hotspot is available only from android 8
-        }
-    }
-
-    private fun validateConfigurationsByNetworkType() {
-        //well these cases should be checked only for hotspot network connection
-        if (!state.value.isValidPortNumber) {
-            Log.d("ahi3646", "handleEvents: invalid port number ")
-            emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidPortNumber))
-            return
-        }
-
-        if (!state.value.isValidConnectedWifiAddress) {
-            Log.d(
-                "ahi3646",
-                "handleEvents: invalid ip address - ${state.value.connectedWifiAddress} "
-            )
-            emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidWiFiServerIpAddress))
-            return
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.LocalOnlyHotspotNotSupported)
+            _state.update {
+                it.copy(
+                    localOnlyHotspotStatus = LocalOnlyHotspotStatus.Failure
+                )
+            }
         }
     }
 
