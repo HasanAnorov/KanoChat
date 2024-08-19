@@ -238,7 +238,7 @@ fun ConnectionsContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = state.groupOwnerAddress,
+                        text = state.connectedServerAddress.asString(),
                         modifier = Modifier.baselineHeight(24.dp),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onBackground

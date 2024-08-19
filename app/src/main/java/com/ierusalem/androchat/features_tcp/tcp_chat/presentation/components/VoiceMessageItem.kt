@@ -85,8 +85,6 @@ fun VoiceMessageItem(
                         }
                     }
                     FileMessageState.Success -> {
-                        val audioState = message.audioState
-                        log("audio state - $audioState")
                         IconButton(
                             onClick = {
                                 when (message.audioState) {

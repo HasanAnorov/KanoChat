@@ -1,8 +1,10 @@
 package com.ierusalem.androchat.features_tcp.tcp.domain.state
 
 import android.net.wifi.p2p.WifiP2pDevice
+import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.utils.Resource
+import com.ierusalem.androchat.core.utils.UiText
 import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
@@ -26,6 +28,8 @@ data class TcpScreenUiState(
     val isValidPortNumber: Boolean = isValidPortNumber(portNumber),
     val groupOwnerAddress: String = "",
     val isValidGroupOwnerAddress: Boolean = isValidIpAddress(groupOwnerAddress),
+
+    val connectedServerAddress : UiText = UiText.StringResource(R.string.not_connected),
 
     val localOnlyHotspotStatus: LocalOnlyHotspotStatus = LocalOnlyHotspotStatus.Idle,
 

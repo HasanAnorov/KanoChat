@@ -8,15 +8,23 @@ import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenDialogErro
 sealed interface TcpScreenEvents {
     data object OnNavIconClick : TcpScreenEvents
     data object OnSettingIconClick : TcpScreenEvents
+
     data object CreateServerClick : TcpScreenEvents
     data object ConnectToServerClick : TcpScreenEvents
+
     data object DiscoverP2PClick : TcpScreenEvents
+
     data object DiscoverHotSpotClick : TcpScreenEvents
+
     data object DiscoverLocalOnlyHotSpotClick : TcpScreenEvents
+
     data class OnPortNumberChanged(val portNumber: String) : TcpScreenEvents
     data class OnHotspotNameChanged(val hotspotName: String) : TcpScreenEvents
+
     data class OnConnectToWifiClick(val wifiDevice: WifiP2pDevice) : TcpScreenEvents
+
     data class SendMessageRequest(val message: String) : TcpScreenEvents
+
     data class OnDialogErrorOccurred(val error: TcpScreenDialogErrors?) : TcpScreenEvents
 
     data class HandlePickingMultipleMedia(val medias: List<Uri>) : TcpScreenEvents

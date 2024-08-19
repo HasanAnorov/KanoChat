@@ -26,6 +26,7 @@ import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.utils.Resource
+import com.ierusalem.androchat.core.utils.UiText
 import com.ierusalem.androchat.core.utils.getAudioFileDuration
 import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidIpAddress
@@ -109,7 +110,7 @@ class TcpViewModel @Inject constructor(
             log("adding permission to dialog queue - $permission")
             visiblePermissionDialogQueue.add(permission)
         }
-        when(permission){
+        when (permission) {
             Manifest.permission.READ_CONTACTS -> {
                 _state.update {
                     it.copy(
@@ -246,7 +247,8 @@ class TcpViewModel @Inject constructor(
         _state.update {
             it.copy(
                 isValidConnectedWifiAddress = isValidIpAddress(address),
-                connectedWifiAddress = address
+                connectedWifiAddress = address,
+                connectedServerAddress = UiText.DynamicString(address)
             )
         }
     }
@@ -262,20 +264,16 @@ class TcpViewModel @Inject constructor(
                 //unhandled event
             }
 
-            is WiFiNetworkEvent.UpdateClientAddress -> {
-                _state.update {
-                    it.copy(
-                        connectedWifiAddress = networkEvent.clientAddress
-                    )
-                }
-            }
-
             WiFiNetworkEvent.ThisDeviceChanged -> {
                 /**
                  * Broadcast intent action indicating that this device details have changed.
                  * An extra EXTRA_WIFI_P2P_DEVICE provides this device details
                  * */
                 //unhandled event
+            }
+
+            is WiFiNetworkEvent.UpdateClientAddress -> {
+                updateConnectedWifiAddress(address = networkEvent.clientAddress)
             }
 
             is WiFiNetworkEvent.ConnectionStatusChanged -> {
@@ -291,7 +289,8 @@ class TcpViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         groupOwnerAddress = networkEvent.groupOwnerAddress,
-                        isValidGroupOwnerAddress = isValidIpAddress(networkEvent.groupOwnerAddress)
+                        isValidGroupOwnerAddress = isValidIpAddress(networkEvent.groupOwnerAddress),
+                        connectedServerAddress = UiText.DynamicString(networkEvent.groupOwnerAddress)
                     )
                 }
             }
@@ -325,6 +324,7 @@ class TcpViewModel @Inject constructor(
                 emitNavigation(TcpScreenNavigation.WifiDisabledCase)
                 updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Idle)
             }
+
         }
     }
 
@@ -472,8 +472,93 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    private suspend fun canCreateLocalOnlyHotspotNetwork() {
+        if (permissionGuardImpl.canCreateLocalOnlyHotSpotNetwork()) {
+            startLocalOnlyHotspot()
+        } else {
+            permissionGuardImpl.requiredPermissionsForLocalOnlyHotSpot.forEach {
+                if (!visiblePermissionDialogQueue.contains(it)) {
+                    visiblePermissionDialogQueue.add(it)
+                }
+            }
+        }
+    }
+
     @SuppressLint("MissingPermission")
     @Suppress("DEPRECATION")
+    private fun startLocalOnlyHotspot() {
+
+        _state.update {
+            it.copy(
+                localOnlyHotspotStatus = LocalOnlyHotspotStatus.LaunchingHotspot
+            )
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val callback = object : LocalOnlyHotspotCallback() {
+                override fun onStarted(reservation: WifiManager.LocalOnlyHotspotReservation?) {
+                    super.onStarted(reservation)
+                    hotspotReservation = reservation
+                    val config: WifiConfiguration? = reservation?.wifiConfiguration
+
+                    log("SSID: ${config?.SSID}, Password: ${config?.preSharedKey}")
+                    log("HttpProxy: ${config?.httpProxy}  HiddenSSID: ${config?.hiddenSSID}")
+                    log("Local Only Hotspot Started".uppercase())
+                    val ip = connectivityObserver.getWifiServerIpAddress()
+                    log("wifi ip local-only is : $ip")
+
+                    handleNetworkEvents(WiFiNetworkEvent.UpdateGroupOwnerAddress(ip))
+                    _state.update {
+                        it.copy(
+                            localOnlyHotspotStatus = LocalOnlyHotspotStatus.HotspotRunning
+                        )
+                    }
+                }
+
+                override fun onStopped() {
+                    super.onStopped()
+                    log("Local Only Hotspot Stopped".uppercase())
+                    _state.update {
+                        it.copy(
+                            localOnlyHotspotStatus = LocalOnlyHotspotStatus.Idle
+                        )
+                    }
+                }
+
+                override fun onFailed(reason: Int) {
+                    super.onFailed(reason)
+                    log("Local Only Hotspot Failed".uppercase())
+                    _state.update {
+                        it.copy(
+                            localOnlyHotspotStatus = LocalOnlyHotspotStatus.Failure
+                        )
+                    }
+                }
+            }
+            wifiManager.startLocalOnlyHotspot(callback, null)
+        } else {
+            //todo show error message local-only hotspot is available only from android 8
+        }
+    }
+
+    private fun validateConfigurationsByNetworkType() {
+        //well these cases should be checked only for hotspot network connection
+        if (!state.value.isValidPortNumber) {
+            Log.d("ahi3646", "handleEvents: invalid port number ")
+            emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidPortNumber))
+            return
+        }
+
+        if (!state.value.isValidConnectedWifiAddress) {
+            Log.d(
+                "ahi3646",
+                "handleEvents: invalid ip address - ${state.value.connectedWifiAddress} "
+            )
+            emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidWiFiServerIpAddress))
+            return
+        }
+    }
+
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
             //todo - you did not use the parameter inside on play voice message
@@ -559,56 +644,8 @@ class TcpViewModel @Inject constructor(
             }
 
             TcpScreenEvents.DiscoverLocalOnlyHotSpotClick -> {
-                _state.update {
-                    it.copy(
-                        localOnlyHotspotStatus = LocalOnlyHotspotStatus.LaunchingHotspot
-                    )
-                }
-                //todo add else case later
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    wifiManager.startLocalOnlyHotspot(
-                        object : LocalOnlyHotspotCallback() {
-                            @SuppressLint("MissingPermission")
-                            override fun onStarted(reservation: WifiManager.LocalOnlyHotspotReservation?) {
-                                super.onStarted(reservation)
-                                hotspotReservation = reservation
-                                val config: WifiConfiguration? = reservation?.wifiConfiguration
-
-                                log("SSID: ${config?.SSID}, Password: ${config?.preSharedKey}")
-                                log("HttpProxy: ${config?.httpProxy}  HiddenSSID: ${config?.hiddenSSID}")
-                                log("Local Only Hotspot Started".uppercase())
-                                val ip = connectivityObserver.getWifiServerIpAddress()
-                                log("wifi ip local-only is : $ip")
-
-                                handleNetworkEvents(WiFiNetworkEvent.UpdateGroupOwnerAddress(ip))
-                                _state.update {
-                                    it.copy(
-                                        localOnlyHotspotStatus = LocalOnlyHotspotStatus.HotspotRunning
-                                    )
-                                }
-                            }
-
-                            override fun onStopped() {
-                                super.onStopped()
-                                log("Local Only Hotspot Stopped".uppercase())
-                                _state.update {
-                                    it.copy(
-                                        localOnlyHotspotStatus = LocalOnlyHotspotStatus.Idle
-                                    )
-                                }
-                            }
-
-                            override fun onFailed(reason: Int) {
-                                super.onFailed(reason)
-                                log("Local Only Hotspot Failed".uppercase())
-                                _state.update {
-                                    it.copy(
-                                        localOnlyHotspotStatus = LocalOnlyHotspotStatus.Failure
-                                    )
-                                }
-                            }
-                        }, null
-                    )
+                viewModelScope.launch(Dispatchers.IO) {
+                    canCreateLocalOnlyHotspotNetwork()
                 }
             }
 
@@ -641,12 +678,6 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.SendMessageRequest -> {
-//                val message = ChatMessage.TextMessage(
-//                    message = event.message,
-//                    formattedTime = getCurrentTime(),
-//                    isFromYou = true,
-//                    messageId = 0L
-//                )
 
                 val textMessageEntity = ChatMessageEntity(
                     type = AppMessageType.TEXT,
@@ -757,13 +788,21 @@ class TcpViewModel @Inject constructor(
 
             TcpScreenEvents.ConnectToServerClick -> {
 
-                showWifiErrorIfNotEnabled()
+                if (!state.value.isWifiOn) {
+                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
+                    return
+                }
+                if (state.value.generalNetworkingStatus == GeneralNetworkingStatus.Idle) {
+                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.NO_NETWORK_FOR_CONNECTION)
+                    return
+                }
 
                 if (!state.value.isValidPortNumber) {
                     Log.d("ahi3646", "handleEvents: invalid port number ")
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidPortNumber))
                     return
                 }
+
                 if (!state.value.isValidConnectedWifiAddress) {
                     Log.d(
                         "ahi3646",
@@ -772,6 +811,8 @@ class TcpViewModel @Inject constructor(
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidWiFiServerIpAddress))
                     return
                 }
+
+                //validateConfigurationsByNetworkType()
 
                 when (state.value.clientConnectionStatus) {
                     ClientConnectionStatus.Idle -> {
@@ -960,6 +1001,13 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    private fun showErrorIfNetworkExists() {
+        if (state.value.generalNetworkingStatus == GeneralNetworkingStatus.Idle) {
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.NO_NETWORK_FOR_CONNECTION)
+            return
+        }
+    }
+
     private fun showErrorIfOtherNetworkingIsRunning(launchingNetworkStatus: GeneralNetworkingStatus): Boolean {
         return when (launchingNetworkStatus) {
             GeneralNetworkingStatus.Idle -> {
@@ -1009,11 +1057,22 @@ class TcpViewModel @Inject constructor(
 
     fun updatePercentageOfReceivingFile(message: ChatMessageEntity) {
         when (message.type) {
-            AppMessageType.FILE, AppMessageType.VOICE -> {
+            AppMessageType.FILE -> {
                 viewModelScope.launch(Dispatchers.IO) {
                     messagesDao.updateFileMessage(
                         messageId = message.id,
                         newFileState = message.fileState
+                    )
+                }
+            }
+
+            AppMessageType.VOICE -> {
+                log("updating voice message - $message")
+                viewModelScope.launch(Dispatchers.IO) {
+                    messagesDao.updateVoiceFileMessage(
+                        messageId = message.id,
+                        newFileState = message.fileState,
+                        newDuration = message.voiceMessageAudioFileDuration
                     )
                 }
             }
@@ -1024,6 +1083,19 @@ class TcpViewModel @Inject constructor(
 
     suspend fun insertMessage(messageEntity: ChatMessageEntity): Long {
         return messagesDao.insertMessage(messageEntity)
+    }
+
+    fun updateConnectedDevices(device: WifiP2pDevice) {
+        val connectedDevices = state.value.connectedWifiNetworks.toMutableList().apply {
+            if (!contains(device)) {
+                add(device)
+            }
+        }
+        _state.update {
+            it.copy(
+                connectedWifiNetworks = connectedDevices
+            )
+        }
     }
 
     fun updateConnectionsCount(shouldIncrease: Boolean) {

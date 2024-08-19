@@ -3,8 +3,7 @@ package com.ierusalem.androchat.features_tcp.tcp.domain.state
 import androidx.annotation.StringRes
 import com.ierusalem.androchat.R
 
-//todo add comment
-
+//todo add comment and remove role from and remove role from general connection status
 enum class GeneralConnectionStatus(@StringRes val status: Int, @StringRes val role: Int) {
     Idle(R.string.not_running, R.string.not_defined),
     ConnectedAsHost(R.string.connected_as_host, R.string.owner),

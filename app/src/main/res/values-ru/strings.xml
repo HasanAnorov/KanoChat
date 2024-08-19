@@ -207,5 +207,7 @@
     <string name="not_defined">Не определен</string>
     <string name="no_peer_to_chat">Нет собеседника для общения!</string>
     <string name="current_connected_wifi_server_ip_address_is_not_a_valid">Текущий IP-адрес подключенного Wi-Fi-сервера недействителен.</string>
+    <string name="please_connect_to_network">Пожалуйста, подключитесь к сети!</string>
+    <string name="you_should_be_on_network_to_connect_to_server">Для создания или подключения к серверу вам необходимо подключиться к сети.</string>
 
 </resources>

@@ -211,5 +211,7 @@
     <string name="not_defined">Not defined</string>
     <string name="no_peer_to_chat">No peer to chat!</string>
     <string name="current_connected_wifi_server_ip_address_is_not_a_valid">Current connected wifi server ip address is not a valid</string>
+    <string name="please_connect_to_network">Please connect to the network!</string>
+    <string name="you_should_be_on_network_to_connect_to_server">You should be connected to the network to create or connect to the server</string>
 
 </resources>

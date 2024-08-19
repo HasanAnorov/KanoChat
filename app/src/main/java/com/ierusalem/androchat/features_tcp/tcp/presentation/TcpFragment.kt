@@ -156,7 +156,7 @@ class TcpFragment : Fragment() {
 
             else -> {
                 // No location access granted.
-                permissions.forEach{permission ->
+                permissions.forEach { permission ->
                     viewModel.onPermissionResult(
                         permission = permission.key,
                         isGranted = permission.value
@@ -185,8 +185,12 @@ class TcpFragment : Fragment() {
     private val recordAudioPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             viewModel.onPermissionResult(Manifest.permission.RECORD_AUDIO, isGranted)
-            if(isGranted){
-                Toast.makeText(requireContext(), R.string.ready_to_record_voice_message, Toast.LENGTH_SHORT).show()
+            if (isGranted) {
+                Toast.makeText(
+                    requireContext(),
+                    R.string.ready_to_record_voice_message,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
@@ -464,22 +468,27 @@ class TcpFragment : Fragment() {
                     }
                     visiblePermissionDialogQueue.reversed().forEach { permission ->
                         PermissionDialog(
-                            permissionTextProvider = when(permission){
+                            permissionTextProvider = when (permission) {
                                 Manifest.permission.READ_CONTACTS -> {
                                     ReadContactsPermissionTextProvider()
                                 }
-                                Manifest.permission.RECORD_AUDIO ->{
+
+                                Manifest.permission.RECORD_AUDIO -> {
                                     RecordAudioPermissionTextProvider()
                                 }
-                                Manifest.permission.NEARBY_WIFI_DEVICES ->{
+
+                                Manifest.permission.NEARBY_WIFI_DEVICES -> {
                                     NearbyWifiDevicesPermissionTextProvider()
                                 }
-                                Manifest.permission.ACCESS_FINE_LOCATION ->{
+
+                                Manifest.permission.ACCESS_FINE_LOCATION -> {
                                     FineLocationPermissionTextProvider()
                                 }
-                                Manifest.permission.ACCESS_COARSE_LOCATION ->{
+
+                                Manifest.permission.ACCESS_COARSE_LOCATION -> {
                                     CoarseLocationPermissionTextProvider()
                                 }
+
                                 else -> return@forEach
                             },
                             isPermanentlyDeclined = !shouldShowRequestPermissionRationale(
@@ -487,28 +496,32 @@ class TcpFragment : Fragment() {
                             ),
                             onDismiss = viewModel::dismissPermissionDialog,
                             onOkClick = {
-                                when(permission){
+                                when (permission) {
                                     Manifest.permission.READ_CONTACTS -> {
                                         viewModel.dismissPermissionDialog()
                                         readContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
                                     }
-                                    Manifest.permission.RECORD_AUDIO ->{
+
+                                    Manifest.permission.RECORD_AUDIO -> {
                                         viewModel.dismissPermissionDialog()
                                         recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                                     }
-                                    Manifest.permission.NEARBY_WIFI_DEVICES ->{
+
+                                    Manifest.permission.NEARBY_WIFI_DEVICES -> {
                                         viewModel.dismissPermissionDialog()
                                         locationPermissionRequest.launch(
                                             permissionGuard.requiredPermissionsForWifi.toTypedArray()
                                         )
                                     }
-                                    Manifest.permission.ACCESS_FINE_LOCATION ->{
+
+                                    Manifest.permission.ACCESS_FINE_LOCATION -> {
                                         viewModel.dismissPermissionDialog()
                                         locationPermissionRequest.launch(
                                             permissionGuard.requiredPermissionsForWifi.toTypedArray()
                                         )
                                     }
-                                    Manifest.permission.ACCESS_COARSE_LOCATION ->{
+
+                                    Manifest.permission.ACCESS_COARSE_LOCATION -> {
                                         viewModel.dismissPermissionDialog()
                                         locationPermissionRequest.launch(
                                             permissionGuard.requiredPermissionsForWifi.toTypedArray()
@@ -594,14 +607,10 @@ class TcpFragment : Fragment() {
         }
         if (config != null) {
             log("Creating group with configuration")
-            wifiP2PManager.createGroup(
-                channel, getConfiguration(), listener
-            )
+            wifiP2PManager.createGroup(channel, getConfiguration(), listener)
         } else {
             log("Creating group without custom configuration")
-            wifiP2PManager.createGroup(
-                channel, listener
-            )
+            wifiP2PManager.createGroup(channel, listener)
         }
     }
 
@@ -636,6 +645,7 @@ class TcpFragment : Fragment() {
             override fun onSuccess() {
                 // WiFiDirectBroadcastReceiver notifies us. Ignore for now
                 log("success: connected to wifi - ${wifiP2pDevice.deviceAddress}")
+                viewModel.updateConnectedDevices(wifiP2pDevice)
             }
 
             override fun onFailure(reason: Int) {
@@ -914,22 +924,25 @@ class TcpFragment : Fragment() {
     }
 
     private fun receiveVoiceMessage(reader: DataInputStream) {
-        log("receiving file ...")
+        log("receiving voice file ...")
 
         //reading file name
         val fileName = reader.readUTF()
+        log("Expected voice file name - $fileName")
+
+        // Read the expected file size
+        var fileSize: Long = reader.readLong() // read file size
+        log("voice file size - $fileSize")
+
+        var bytes = 0
+        var bytesForPercentage = 0L
+        val fileSizeForPercentage = fileSize
 
         //Create File object
         val file = getFileByName(fileName = fileName, resourceDirectory = resourceDirectory)
 
-        var bytes = 0
-        var bytesForPercentage = 0L
         // Create FileOutputStream to write the received file
         val fileOutputStream = FileOutputStream(file)
-
-        // Read the expected file size
-        var fileSize: Long = reader.readLong() // read file size
-        val fileSizeForPercentage = fileSize
 
         val voiceMessageEntity = ChatMessageEntity(
             type = AppMessageType.VOICE,
@@ -937,12 +950,12 @@ class TcpFragment : Fragment() {
             isFromYou = false,
             userId = viewModel.state.value.peerUserUniqueId,
             //message specific fields
+            fileState = FileMessageState.Loading(0),
             voiceMessageFileName = file.name,
             voiceMessageAudioFileDuration = file.getAudioFileDuration(),
-            fileState = FileMessageState.Loading(0),
         )
 
-        lifecycleScope.launch {
+        val messageId = runBlocking(Dispatchers.IO) {
             viewModel.insertMessage(voiceMessageEntity)
         }
 
@@ -963,18 +976,24 @@ class TcpFragment : Fragment() {
                 (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
             val tempPercentage =
                 ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+
             if (percentage != tempPercentage) {
                 log("progress - $percentage")
                 val newState = FileMessageState.Loading(percentage)
-                val newVoiceMessage = voiceMessageEntity.copy(fileState = newState)
+                val newVoiceMessage = voiceMessageEntity.copy(fileState = newState, id = messageId)
                 viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
             }
         }
+
         fileOutputStream.close()
-        log("file received successfully")
+        log("voice file received successfully")
 
         val newState = FileMessageState.Success
-        val newVoiceMessage = voiceMessageEntity.copy(fileState = newState)
+        val newVoiceMessage = voiceMessageEntity.copy(
+            fileState = newState,
+            voiceMessageAudioFileDuration = file.getAudioFileDuration(),
+            id = messageId
+        )
         viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
     }
 
@@ -1429,29 +1448,32 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun sendVoiceMessage(
+    private suspend fun sendVoiceMessage(
         writer: DataOutputStream,
         voiceMessage: ChatMessageEntity
     ) {
         log("sending voice message ...")
-        try {
+        withContext(Dispatchers.IO) {
+//        try {
             //sending file type
-            val type = AppMessageType.VOICE.identifier.code
+            val type = voiceMessage.type.identifier.code
             writer.writeChar(type)
-
-            //Create File object
-            val file = File(resourceDirectory, voiceMessage.voiceMessageFileName!!)
 
             //sending file name
             writer.writeUTF(voiceMessage.voiceMessageFileName)
+            log("sending voice file name - ${voiceMessage.voiceMessageFileName}")
+
+            //Create File object
+            val file = File(resourceDirectory, voiceMessage.voiceMessageFileName!!)
+            val messageId = viewModel.insertMessage(voiceMessage)
 
             //write length
-            val fileSizeForPercentage = file.length()
             writer.writeLong(file.length())
-            log("sending file length - ${file.length()}")
+            log("sending voice file length - ${file.length()}")
 
             var bytes: Int
             var bytesForPercentage = 0L
+            val fileSizeForPercentage = file.length()
             val fileInputStream = FileInputStream(file)
 
             // Here we  break file into chunks
@@ -1467,34 +1489,35 @@ class TcpFragment : Fragment() {
                 val tempPercentage =
                     ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
                 if (percentage != tempPercentage) {
-                    log("progress - $percentage")
-                    val newState = FileMessageState.Loading(percentage)
-                    val newVoiceMessage = voiceMessage.copy(fileState = newState)
-                    viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
+                    withContext(Dispatchers.Main) {
+                        log("progress - $percentage")
+                        val newState = FileMessageState.Loading(percentage)
+                        val newVoiceMessage =
+                            voiceMessage.copy(fileState = newState, id = messageId)
+                        viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
+                    }
                 }
             }
             // close the file here
             fileInputStream.close()
-            log("file sent successfully")
 
-            //insert db only when succeeded
-            lifecycleScope.launch {
-                viewModel.insertMessage(voiceMessage)
+            withContext(Dispatchers.Main) {
+                val newState = FileMessageState.Success
+                val newVoiceMessage = voiceMessage.copy(fileState = newState, id = messageId)
+                viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
+                log("file sent successfully")
             }
-
-            val newState = FileMessageState.Success
-            val newVoiceMessage = voiceMessage.copy(fileState = newState)
-            viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
-        } catch (exception: IOException) {
-            log("file sent failed")
-            val newState = FileMessageState.Failure
-            val newVoiceMessage = voiceMessage.copy(fileState = newState)
-            viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
-        } catch (error: Exception) {
-            log("file sent failed")
-            val newState = FileMessageState.Failure
-            val newVoiceMessage = voiceMessage.copy(fileState = newState)
-            viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
+//        } catch (exception: IOException) {
+//            log("file sent failed")
+//            val newState = FileMessageState.Failure
+//            val newVoiceMessage = voiceMessage.copy(fileState = newState)
+//            viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
+//        } catch (error: Exception) {
+//            log("file sent failed")
+//            val newState = FileMessageState.Failure
+//            val newVoiceMessage = voiceMessage.copy(fileState = newState)
+//            viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
+//        }
         }
     }
 
@@ -1605,7 +1628,6 @@ class TcpFragment : Fragment() {
                 fileInputStream.close()
 
                 withContext(Dispatchers.Main) {
-                    log("file sent successfully")
                     val newState = FileMessageState.Success
                     val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
                     viewModel.updatePercentageOfReceivingFile(newFileMessage)

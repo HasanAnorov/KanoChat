@@ -7,6 +7,7 @@ import androidx.room.Query
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 import kotlinx.coroutines.flow.Flow
+import kotlin.time.Duration
 
 @Dao
 interface MessagesDao {
@@ -19,6 +20,13 @@ interface MessagesDao {
 
     @Query("UPDATE messages SET fileState = :newFileState WHERE id = :messageId")
     suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState)
+
+    @Query("UPDATE messages SET fileState = :newFileState, voiceMessageAudioFileDuration = :newDuration WHERE id = :messageId")
+    suspend fun updateVoiceFileMessage(
+        messageId: Long,
+        newFileState: FileMessageState,
+        newDuration: Long?
+    )
 
     @Query("SELECT * FROM messages where id = :messageId")
     fun getMessageById(messageId: Long): Flow<ChatMessageEntity>

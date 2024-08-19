@@ -23,6 +23,7 @@ enum class TcpScreenErrors(@StringRes val errorMessage: Int) {
     InvalidPortNumber(R.string.try_to_use_another_port_number_current_port_is_already_in_use_or_invalid),
     InvalidWiFiServerIpAddress(R.string.current_connected_wifi_server_ip_address_is_not_a_valid),
     FailedToConnectToWifiDevice(R.string.couldn_t_connect_to_chosen_wifi_device),
+//    InvalidHostAddress(R.string.try_to_reconnect_to_the_server_again_current_address_is_invalid),
 }
 
 enum class TcpScreenDialogErrors(
@@ -30,6 +31,11 @@ enum class TcpScreenDialogErrors(
     @StringRes val message: Int,
     @DrawableRes val icon: Int
 ) {
+    NO_NETWORK_FOR_CONNECTION(
+        R.string.please_connect_to_network,
+        R.string.you_should_be_on_network_to_connect_to_server,
+        R.drawable.wifi_off
+    ),
     EOException(
         R.string.network_error_occurred,
         R.string.your_network_connection_was_interrupted_check_your_connection_and_try_again,

@@ -23,6 +23,9 @@ class PermissionGuardImpl(
         CONTACTS_READ_PERMISSIONS
     }
 
+    override val requiredPermissionsForLocalOnlyHotSpot: List<String>
+        get() = WIFI_NEARBY_PERMISSIONS
+
     override val requiredPermissionsForRecordingAudio: List<String>
         get() = AUDIO_RECORDING_PERMISSIONS
 
@@ -37,6 +40,14 @@ class PermissionGuardImpl(
                 hasPermission(it)
             }
         }
+
+    override suspend fun canCreateLocalOnlyHotSpotNetwork(): Boolean =
+        withContext(context = Dispatchers.Main) {
+            return@withContext requiredPermissionsForLocalOnlyHotSpot.all {
+                hasPermission(it)
+            }
+        }
+
 
     override suspend fun canRecordAudio(): Boolean =
         withContext(context = Dispatchers.Main) {
@@ -74,8 +85,8 @@ class PermissionGuardImpl(
             // On API < 33, we require location permission
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                 listOf(
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
                     Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
                 )
             } else {
                 // On API >= 33, we can use the new NEARBY_WIFI_DEVICES permission
