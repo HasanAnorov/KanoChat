@@ -215,5 +215,8 @@
     <string name="you_should_be_on_network_to_connect_to_server">You should be connected to the network to create or connect to the server</string>
     <string name="android_version_8_required">Android Version 8+ required!</string>
     <string name="android_version_8_required_for_local_only_hotspot">Your device\'s android version is below 8. Upgrade android version to use Local-Only Hotspot</string>
+    <string name="local_only_hotspot_is_running">The Local Only Hostpot is running</string>
+    <string name="local_only_group_networking_is_running">Local Only Group Networking is running</string>
+    <string name="local_only_group_networking_is_running_cancel_it_to_create_peer_networking">Group Networking is running, cancel it to create other netowrking!</string>
 
 </resources>

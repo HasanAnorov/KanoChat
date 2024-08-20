@@ -311,7 +311,7 @@ class TcpViewModel @Inject constructor(
     //todo - add 4 case - local only hotspot, others are added hotspot, p2p, wifi
     private fun handleWifiDisableCase() {
         when (state.value.generalNetworkingStatus) {
-            GeneralNetworkingStatus.Idle -> {
+            GeneralNetworkingStatus.Idle, GeneralNetworkingStatus.LocalOnlyHotspot -> {
                 //ignore case, nothing has done
             }
 
@@ -472,13 +472,15 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private suspend fun canCreateLocalOnlyHotspotNetwork() {
-        if (permissionGuardImpl.canCreateLocalOnlyHotSpotNetwork()) {
-            startLocalOnlyHotspot()
-        } else {
-            permissionGuardImpl.requiredPermissionsForLocalOnlyHotSpot.forEach {
-                if (!visiblePermissionDialogQueue.contains(it)) {
-                    visiblePermissionDialogQueue.add(it)
+    private fun createLocalOnlyHotspotNetwork() {
+        viewModelScope.launch {
+            if (permissionGuardImpl.canCreateLocalOnlyHotSpotNetwork()) {
+                startLocalOnlyHotspot()
+            } else {
+                permissionGuardImpl.requiredPermissionsForLocalOnlyHotSpot.forEach {
+                    if (!visiblePermissionDialogQueue.contains(it)) {
+                        visiblePermissionDialogQueue.add(it)
+                    }
                 }
             }
         }
@@ -488,11 +490,7 @@ class TcpViewModel @Inject constructor(
     @Suppress("DEPRECATION")
     private fun startLocalOnlyHotspot() {
 
-        _state.update {
-            it.copy(
-                localOnlyHotspotStatus = LocalOnlyHotspotStatus.LaunchingHotspot
-            )
-        }
+        updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.LaunchingLocalOnlyHotspot)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val callback = object : LocalOnlyHotspotCallback() {
@@ -508,41 +506,26 @@ class TcpViewModel @Inject constructor(
                     log("wifi ip local-only is : $ip")
 
                     handleNetworkEvents(WiFiNetworkEvent.UpdateGroupOwnerAddress(ip))
-                    _state.update {
-                        it.copy(
-                            localOnlyHotspotStatus = LocalOnlyHotspotStatus.HotspotRunning
-                        )
-                    }
+
+                    updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.LocalOnlyHotspotRunning)
                 }
 
                 override fun onStopped() {
                     super.onStopped()
                     log("Local Only Hotspot Stopped".uppercase())
-                    _state.update {
-                        it.copy(
-                            localOnlyHotspotStatus = LocalOnlyHotspotStatus.Idle
-                        )
-                    }
+                    updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
                 }
 
                 override fun onFailed(reason: Int) {
                     super.onFailed(reason)
                     log("Local Only Hotspot Failed".uppercase())
-                    _state.update {
-                        it.copy(
-                            localOnlyHotspotStatus = LocalOnlyHotspotStatus.Failure
-                        )
-                    }
+                    updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Failure)
                 }
             }
             wifiManager.startLocalOnlyHotspot(callback, null)
         } else {
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.LocalOnlyHotspotNotSupported)
-            _state.update {
-                it.copy(
-                    localOnlyHotspotStatus = LocalOnlyHotspotStatus.Failure
-                )
-            }
+            updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Failure)
         }
     }
 
@@ -622,17 +605,33 @@ class TcpViewModel @Inject constructor(
                 emitNavigation(TcpScreenNavigation.OnSettingsClick)
             }
 
-            is TcpScreenEvents.OnDialogErrorOccurred -> {
-                updateHasErrorOccurredDialog(event.error)
-            }
-
             TcpScreenEvents.RequestReadContactsPermission -> {
                 emitNavigation(TcpScreenNavigation.RequestReadContactsPermission)
             }
 
+            is TcpScreenEvents.OnDialogErrorOccurred -> {
+                updateHasErrorOccurredDialog(event.error)
+            }
+
             TcpScreenEvents.DiscoverLocalOnlyHotSpotClick -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    canCreateLocalOnlyHotspotNetwork()
+                when (state.value.localOnlyHotspotNetworkingStatus) {
+                    LocalOnlyHotspotStatus.Idle -> {
+                        createLocalOnlyHotspotNetwork()
+                    }
+
+                    LocalOnlyHotspotStatus.LaunchingLocalOnlyHotspot -> {
+                        //ignore for now
+                    }
+
+                    LocalOnlyHotspotStatus.LocalOnlyHotspotRunning -> {
+                        //stop local-only hotspot
+                        hotspotReservation?.close()
+                        updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
+                    }
+
+                    LocalOnlyHotspotStatus.Failure -> {
+                        createLocalOnlyHotspotNetwork()
+                    }
                 }
             }
 
@@ -942,11 +941,35 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun clearPeersList() {
-        _state.update {
-            it.copy(
-                availableWifiNetworks = emptyList()
-            )
+    fun updateLocalOnlyHotspotStatus(status: LocalOnlyHotspotStatus) {
+        when (status) {
+            LocalOnlyHotspotStatus.Idle -> {
+                _state.update {
+                    it.copy(
+                        localOnlyHotspotNetworkingStatus = status,
+                        generalNetworkingStatus = GeneralNetworkingStatus.Idle
+                    )
+                }
+            }
+
+            LocalOnlyHotspotStatus.LaunchingLocalOnlyHotspot,
+            LocalOnlyHotspotStatus.LocalOnlyHotspotRunning -> {
+                _state.update {
+                    it.copy(
+                        localOnlyHotspotNetworkingStatus = status,
+                        generalNetworkingStatus = GeneralNetworkingStatus.LocalOnlyHotspot,
+                    )
+                }
+            }
+
+            LocalOnlyHotspotStatus.Failure -> {
+                _state.update {
+                    it.copy(
+                        localOnlyHotspotNetworkingStatus = status,
+                        generalNetworkingStatus = GeneralNetworkingStatus.Idle
+                    )
+                }
+            }
         }
     }
 
@@ -981,6 +1004,14 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    fun clearPeersList() {
+        _state.update {
+            it.copy(
+                availableWifiNetworks = emptyList()
+            )
+        }
+    }
+
     private fun showWifiErrorIfNotEnabled() {
         if (!state.value.isWifiOn) {
             emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
@@ -988,13 +1019,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun showErrorIfNetworkExists() {
-        if (state.value.generalNetworkingStatus == GeneralNetworkingStatus.Idle) {
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.NO_NETWORK_FOR_CONNECTION)
-            return
-        }
-    }
-
+    //todo fix string that don't' use other networking instead of p2p network
     private fun showErrorIfOtherNetworkingIsRunning(launchingNetworkStatus: GeneralNetworkingStatus): Boolean {
         return when (launchingNetworkStatus) {
             GeneralNetworkingStatus.Idle -> {
@@ -1027,6 +1052,21 @@ class TcpViewModel @Inject constructor(
                     P2PNetworkingStatus.Discovering -> {
                         //show error here
                         updateHasErrorOccurredDialog(TcpScreenDialogErrors.AlreadyP2PNetworkingRunning)
+                        return true
+                    }
+                }
+            }
+
+            GeneralNetworkingStatus.LocalOnlyHotspot -> {
+                when (state.value.localOnlyHotspotNetworkingStatus) {
+                    LocalOnlyHotspotStatus.Idle, LocalOnlyHotspotStatus.Failure -> {
+                        //ignore case
+                        false
+                    }
+
+                    LocalOnlyHotspotStatus.LocalOnlyHotspotRunning, LocalOnlyHotspotStatus.LaunchingLocalOnlyHotspot -> {
+                        //show error here
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.AlreadyLocalOnlyHotspotNetworkingRunning)
                         return true
                     }
                 }

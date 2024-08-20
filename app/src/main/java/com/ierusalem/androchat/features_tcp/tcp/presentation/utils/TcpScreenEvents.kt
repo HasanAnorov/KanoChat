@@ -13,9 +13,7 @@ sealed interface TcpScreenEvents {
     data object ConnectToServerClick : TcpScreenEvents
 
     data object DiscoverP2PClick : TcpScreenEvents
-
     data object DiscoverHotSpotClick : TcpScreenEvents
-
     data object DiscoverLocalOnlyHotSpotClick : TcpScreenEvents
 
     data class OnPortNumberChanged(val portNumber: String) : TcpScreenEvents

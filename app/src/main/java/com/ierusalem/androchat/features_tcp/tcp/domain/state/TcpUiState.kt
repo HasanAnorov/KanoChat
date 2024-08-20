@@ -31,10 +31,9 @@ data class TcpScreenUiState(
 
     val connectedServerAddress : UiText = UiText.StringResource(R.string.not_connected),
 
-    val localOnlyHotspotStatus: LocalOnlyHotspotStatus = LocalOnlyHotspotStatus.Idle,
-
     //general networking state
     val generalNetworkingStatus: GeneralNetworkingStatus = GeneralNetworkingStatus.Idle,
+    val localOnlyHotspotNetworkingStatus: LocalOnlyHotspotStatus = LocalOnlyHotspotStatus.Idle,
     val hotspotNetworkingStatus: HotspotNetworkingStatus = HotspotNetworkingStatus.Idle,
     val p2pNetworkingStatus: P2PNetworkingStatus = P2PNetworkingStatus.Idle,
 

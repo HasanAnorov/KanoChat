@@ -90,13 +90,13 @@ fun NetworkingContent(
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    text = stringResource(id = state.localOnlyHotspotStatus.res),
+                                    text = stringResource(id = state.localOnlyHotspotNetworkingStatus.res),
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Icon(
                                     modifier = Modifier.padding(start = 8.dp),
-                                    painter = painterResource(id = state.localOnlyHotspotStatus.icon),
+                                    painter = painterResource(id = state.localOnlyHotspotNetworkingStatus.icon),
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onErrorContainer
                                 )

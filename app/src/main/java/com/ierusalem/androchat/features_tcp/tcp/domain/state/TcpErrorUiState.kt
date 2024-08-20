@@ -23,7 +23,7 @@ enum class TcpScreenErrors(@StringRes val errorMessage: Int) {
     InvalidPortNumber(R.string.try_to_use_another_port_number_current_port_is_already_in_use_or_invalid),
     InvalidWiFiServerIpAddress(R.string.current_connected_wifi_server_ip_address_is_not_a_valid),
     FailedToConnectToWifiDevice(R.string.couldn_t_connect_to_chosen_wifi_device),
-//    InvalidHostAddress(R.string.try_to_reconnect_to_the_server_again_current_address_is_invalid),
+    InvalidHostAddress(R.string.try_to_reconnect_to_the_server_again_current_address_is_invalid),
 }
 
 enum class TcpScreenDialogErrors(
@@ -74,6 +74,11 @@ enum class TcpScreenDialogErrors(
     AlreadyHotspotNetworkingRunning(
         R.string.group_networking_is_running,
         R.string.group_networking_is_running_cancel_it_to_create_peer_networking,
+        R.drawable.info
+    ),
+    AlreadyLocalOnlyHotspotNetworkingRunning(
+        R.string.local_only_group_networking_is_running,
+        R.string.local_only_group_networking_is_running_cancel_it_to_create_peer_networking,
         R.drawable.info
     ),
     AndroidVersion10RequiredForGroupNetworking(
