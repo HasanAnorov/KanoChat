@@ -193,10 +193,8 @@
     <string name="couldn_t_connect_to_server">Не удалось подключиться к серверу</string>
     <string name="launching_hotspot">Запускаем точку доступа…</string>
     <string name="couldn_t_launch_hotspot">Не удалось запустить точку доступа</string>
-    <string name="peer_networking_is_running_cancel_it_to_create_group_networking">Одноранговая сеть запущена. Отмените ее, чтобы создать групповую сеть!</string>
     <string name="peer_networking_is_running">Одноранговая сеть работает</string>
     <string name="group_networking_is_running">Групповая сеть работает</string>
-    <string name="group_networking_is_running_cancel_it_to_create_peer_networking">Групповая сеть запущена. Отмените ее, чтобы создать одноранговую сеть.</string>
     <string name="stop_peer_networking">Остановить одноранговую сеть</string>
     <string name="stop_group_networking">Остановить групповую сеть</string>
     <string name="your_device_does_not_support_group_networking">Ваше устройство не поддерживает групповую сеть</string>
@@ -209,5 +207,8 @@
     <string name="current_connected_wifi_server_ip_address_is_not_a_valid">Текущий IP-адрес подключенного Wi-Fi-сервера недействителен.</string>
     <string name="please_connect_to_network">Пожалуйста, подключитесь к сети!</string>
     <string name="you_should_be_on_network_to_connect_to_server">Для создания или подключения к серверу вам необходимо подключиться к сети.</string>
+    <string name="android_version_8_required">Требуется Android версии 8+!</string>
+    <string name="android_version_8_required_for_local_only_hotspot">Версия Android вашего устройства ниже 8. Обновите версию Android, чтобы использовать Local-Only Hotspot</string>
+    <string name="local_only_group_networking_is_running">Работает только локальная групповая сеть</string>
 
 </resources>

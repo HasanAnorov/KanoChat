@@ -22,7 +22,7 @@ enum class GeneralNetworkingStatus(@StringRes val status: Int) {
     Idle(R.string.not_running),
     HotspotDiscovery(R.string.group_networking_is_running),
     P2PDiscovery(R.string.peer_networking_is_running),
-    LocalOnlyHotspot(R.string.local_only_hotspot_is_running)
+    LocalOnlyHotspot(R.string.local_only_group_networking_is_running)
 }
 
 /**

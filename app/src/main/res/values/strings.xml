@@ -197,10 +197,8 @@
     <string name="couldn_t_connect_to_server">Could not connect to server</string>
     <string name="launching_hotspot">Launching hotspot …</string>
     <string name="couldn_t_launch_hotspot">Could not launch hotspot</string>
-    <string name="peer_networking_is_running_cancel_it_to_create_group_networking">Peer Networking is running, cancel it to create Group Networking!</string>
     <string name="peer_networking_is_running">Peer Networking is running</string>
     <string name="group_networking_is_running">Group Networking is running</string>
-    <string name="group_networking_is_running_cancel_it_to_create_peer_networking">Group Networking is running, cancel it to create Peer Networking</string>
     <string name="stop_peer_networking">Stop Peer Networking</string>
     <string name="stop_group_networking">Stop Group Networking</string>
     <string name="your_device_does_not_support_group_networking">Your device does not support group networking</string>
@@ -214,9 +212,9 @@
     <string name="please_connect_to_network">Please connect to the network!</string>
     <string name="you_should_be_on_network_to_connect_to_server">You should be connected to the network to create or connect to the server</string>
     <string name="android_version_8_required">Android Version 8+ required!</string>
-    <string name="android_version_8_required_for_local_only_hotspot">Your device\'s android version is below 8. Upgrade android version to use Local-Only Hotspot</string>
-    <string name="local_only_hotspot_is_running">The Local Only Hostpot is running</string>
+    <string name="android_version_8_required_for_local_only_hotspot">Your device\'s the Android version is below 8. Upgrade android version to use Local-Only Hotspot</string>
     <string name="local_only_group_networking_is_running">Local Only Group Networking is running</string>
-    <string name="local_only_group_networking_is_running_cancel_it_to_create_peer_networking">Group Networking is running, cancel it to create other netowrking!</string>
+    <string name="other_networking_is_running">Other Network is running!</string>
+    <string name="other_networking_is_running_cancel_it_to_create_peer_networking">Stop current network to launch new network!</string>
 
 </resources>

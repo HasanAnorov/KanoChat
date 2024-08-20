@@ -22,6 +22,8 @@ sealed interface TcpScreenNavigation {
     data class OnConnectToServerClick(val serverIpAddress: String, val portNumber: Int) :
         TcpScreenNavigation
 
+    data object WifiEnableRequest: TcpScreenNavigation
+
     data object ShowFileChooserClick: TcpScreenNavigation
 
     data object RequestReadContactsPermission: TcpScreenNavigation

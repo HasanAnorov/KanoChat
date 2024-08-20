@@ -640,7 +640,7 @@ class TcpViewModel @Inject constructor(
 
                 when (state.value.hotspotNetworkingStatus) {
                     HotspotNetworkingStatus.Idle -> {
-                        if (showErrorIfOtherNetworkingIsRunning(GeneralNetworkingStatus.HotspotDiscovery)) {
+                        if(hasOtherNetworkingIsRunning()){
                             return
                         }
                         emitNavigation(TcpScreenNavigation.OnStartHotspotNetworking)
@@ -655,7 +655,7 @@ class TcpViewModel @Inject constructor(
                     }
 
                     HotspotNetworkingStatus.Failure -> {
-                        if (showErrorIfOtherNetworkingIsRunning(GeneralNetworkingStatus.HotspotDiscovery)) {
+                        if(hasOtherNetworkingIsRunning()){
                             return
                         }
                         emitNavigation(TcpScreenNavigation.OnStartHotspotNetworking)
@@ -709,7 +709,7 @@ class TcpViewModel @Inject constructor(
 
                 when (state.value.p2pNetworkingStatus) {
                     P2PNetworkingStatus.Idle -> {
-                        if (showErrorIfOtherNetworkingIsRunning(GeneralNetworkingStatus.P2PDiscovery)) {
+                        if(hasOtherNetworkingIsRunning()){
                             return
                         }
                         emitNavigation(TcpScreenNavigation.OnDiscoverP2PClick)
@@ -720,8 +720,10 @@ class TcpViewModel @Inject constructor(
                     }
 
                     P2PNetworkingStatus.Failure -> {
+                        if(hasOtherNetworkingIsRunning()){
+                            return
+                        }
                         emitNavigation(TcpScreenNavigation.OnDiscoverP2PClick)
-                        updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
                     }
                 }
             }
@@ -1014,64 +1016,29 @@ class TcpViewModel @Inject constructor(
 
     private fun showWifiErrorIfNotEnabled() {
         if (!state.value.isWifiOn) {
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Use alternative approach
+                emitNavigation(TcpScreenNavigation.WifiEnableRequest)
+            } else {
+                // Fallback for older Android versions
+                wifiManager.isWifiEnabled = true // or false
+            }
+
             emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
             return
         }
     }
 
-    //todo fix string that don't' use other networking instead of p2p network
-    private fun showErrorIfOtherNetworkingIsRunning(launchingNetworkStatus: GeneralNetworkingStatus): Boolean {
-        return when (launchingNetworkStatus) {
-            GeneralNetworkingStatus.Idle -> {
-                //ready to launch any networking, just ignore
-                false
-            }
-
-            GeneralNetworkingStatus.P2PDiscovery -> {
-                when (state.value.hotspotNetworkingStatus) {
-                    HotspotNetworkingStatus.Idle, HotspotNetworkingStatus.Failure -> {
-                        //ignore case
-                        false
-                    }
-
-                    HotspotNetworkingStatus.HotspotRunning, HotspotNetworkingStatus.LaunchingHotspot -> {
-                        //show error here
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.AlreadyHotspotNetworkingRunning)
-                        return true
-                    }
-                }
-            }
-
-            GeneralNetworkingStatus.HotspotDiscovery -> {
-                when (state.value.p2pNetworkingStatus) {
-                    P2PNetworkingStatus.Idle, P2PNetworkingStatus.Failure -> {
-                        //ignore case
-                        false
-                    }
-
-                    P2PNetworkingStatus.Discovering -> {
-                        //show error here
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.AlreadyP2PNetworkingRunning)
-                        return true
-                    }
-                }
-            }
-
-            GeneralNetworkingStatus.LocalOnlyHotspot -> {
-                when (state.value.localOnlyHotspotNetworkingStatus) {
-                    LocalOnlyHotspotStatus.Idle, LocalOnlyHotspotStatus.Failure -> {
-                        //ignore case
-                        false
-                    }
-
-                    LocalOnlyHotspotStatus.LocalOnlyHotspotRunning, LocalOnlyHotspotStatus.LaunchingLocalOnlyHotspot -> {
-                        //show error here
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.AlreadyLocalOnlyHotspotNetworkingRunning)
-                        return true
-                    }
-                }
-            }
-        }
+    /**
+     * Shows error if other network is running
+     * @return true if other network is running, false otherwise
+     */
+    private fun hasOtherNetworkingIsRunning(): Boolean {
+        if (state.value.generalNetworkingStatus != GeneralNetworkingStatus.Idle) {
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.OtherNetworkingIsRunning)
+            return true
+        } else return false
     }
 
     fun updateHasErrorOccurredDialog(dialog: TcpScreenDialogErrors?) {

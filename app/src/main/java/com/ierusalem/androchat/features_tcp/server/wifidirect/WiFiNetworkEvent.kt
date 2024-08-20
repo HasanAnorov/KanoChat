@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralConnectionStatus
 
-@Stable
 @Immutable
 sealed interface WiFiNetworkEvent {
     data class UpdateGroupOwnerAddress(val groupOwnerAddress: String): WiFiNetworkEvent

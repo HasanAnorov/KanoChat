@@ -11,10 +11,10 @@ import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
-import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Looper
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -22,7 +22,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -701,6 +700,7 @@ class TcpFragment : Fragment() {
 
     @SuppressLint("MissingPermission")
     private fun discoverP2PConnection() {
+        viewModel.updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
         lifecycleScope.launch(Dispatchers.IO) {
             if (permissionGuard.canCreateNetwork()) {
                 val listener = object : WifiP2pManager.ActionListener {
@@ -744,6 +744,11 @@ class TcpFragment : Fragment() {
 
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
+
+            TcpScreenNavigation.WifiEnableRequest -> {
+                val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
+                startActivity(intent)
+            }
 
             TcpScreenNavigation.RequestReadContactsPermission -> {
                 readContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)

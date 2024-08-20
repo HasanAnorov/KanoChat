@@ -66,19 +66,9 @@ enum class TcpScreenDialogErrors(
         R.string.could_not_establish_connection_with_your_partner_please_try_to_reconnect_and_try_again,
         R.drawable.info
     ),
-    AlreadyP2PNetworkingRunning(
-        R.string.peer_networking_is_running,
-        R.string.peer_networking_is_running_cancel_it_to_create_group_networking,
-        R.drawable.info
-    ),
-    AlreadyHotspotNetworkingRunning(
-        R.string.group_networking_is_running,
-        R.string.group_networking_is_running_cancel_it_to_create_peer_networking,
-        R.drawable.info
-    ),
-    AlreadyLocalOnlyHotspotNetworkingRunning(
-        R.string.local_only_group_networking_is_running,
-        R.string.local_only_group_networking_is_running_cancel_it_to_create_peer_networking,
+    OtherNetworkingIsRunning(
+        R.string.other_networking_is_running,
+        R.string.other_networking_is_running_cancel_it_to_create_peer_networking,
         R.drawable.info
     ),
     AndroidVersion10RequiredForGroupNetworking(
