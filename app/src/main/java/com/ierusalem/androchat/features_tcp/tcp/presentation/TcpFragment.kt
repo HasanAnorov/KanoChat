@@ -92,6 +92,7 @@ import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpView
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactListContent
+import com.ierusalem.androchat.features_tcp.tcp_networking.components.ActionRequestDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -346,6 +347,7 @@ class TcpFragment : Fragment() {
 
         return ComposeView(requireContext()).apply {
             setContent {
+                val visibleActionDialogQueue = viewModel.visibleActionDialogQueue
                 val visiblePermissionDialogQueue = viewModel.visiblePermissionDialogQueue
 
                 val scope = rememberCoroutineScope()
@@ -467,6 +469,19 @@ class TcpFragment : Fragment() {
                             }
                         )
                     }
+
+                    visibleActionDialogQueue.forEach { actionDialog ->
+                        ActionRequestDialog(
+                            onDismissRequest = actionDialog.onNegativeButtonClick,
+                            onConfirmation = actionDialog.onPositiveButtonClick,
+                            dialogTitle = actionDialog.dialogTitle,
+                            dialogText = actionDialog.dialogMessage,
+                            icon = actionDialog.icon,
+                            positiveButtonRes = actionDialog.positiveButtonText,
+                            negativeButtonRes = actionDialog.negativeButtonText
+                        )
+                    }
+
                     visiblePermissionDialogQueue.reversed().forEach { permission ->
                         PermissionDialog(
                             permissionTextProvider = when (permission) {

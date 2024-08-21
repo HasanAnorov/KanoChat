@@ -2,7 +2,6 @@ package com.ierusalem.androchat.core.utils
 
 import com.ierusalem.androchat.core.constants.Constants
 
-
 class FieldValidator {
 
     fun validateUsername(login: String): ValidationResult {

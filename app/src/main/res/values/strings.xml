@@ -216,5 +216,9 @@
     <string name="local_only_group_networking_is_running">Local Only Group Networking is running</string>
     <string name="other_networking_is_running">Other Network is running!</string>
     <string name="other_networking_is_running_cancel_it_to_create_peer_networking">Stop current network to launch new network!</string>
+    <string name="enable">Enable</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="wifi_not_enabled">Wifi not enabled</string>
+    <string name="wifi_not_enabled_message">Wifi should be enabled to perform this action</string>
 
 </resources>

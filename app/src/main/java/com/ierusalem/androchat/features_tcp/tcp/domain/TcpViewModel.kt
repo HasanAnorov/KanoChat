@@ -13,9 +13,13 @@ import android.os.Environment
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.util.Log
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.core.constants.Constants
@@ -83,6 +87,7 @@ class TcpViewModel @Inject constructor(
     val state: StateFlow<TcpScreenUiState> = _state.asStateFlow()
 
     val visiblePermissionDialogQueue = mutableStateListOf<String>()
+    val visibleActionDialogQueue = mutableStateListOf<VisibleActionDialogs>()
 
     private var hotspotReservation: WifiManager.LocalOnlyHotspotReservation? = null
 
@@ -636,11 +641,14 @@ class TcpViewModel @Inject constructor(
             }
 
             TcpScreenEvents.DiscoverHotSpotClick -> {
-                showWifiErrorIfNotEnabled()
+                if (!state.value.isWifiOn){
+                    showWifiNotEnabledDialog()
+                    return
+                }
 
                 when (state.value.hotspotNetworkingStatus) {
                     HotspotNetworkingStatus.Idle -> {
-                        if(hasOtherNetworkingIsRunning()){
+                        if (hasOtherNetworkingIsRunning()) {
                             return
                         }
                         emitNavigation(TcpScreenNavigation.OnStartHotspotNetworking)
@@ -655,7 +663,7 @@ class TcpViewModel @Inject constructor(
                     }
 
                     HotspotNetworkingStatus.Failure -> {
-                        if(hasOtherNetworkingIsRunning()){
+                        if (hasOtherNetworkingIsRunning()) {
                             return
                         }
                         emitNavigation(TcpScreenNavigation.OnStartHotspotNetworking)
@@ -705,11 +713,14 @@ class TcpViewModel @Inject constructor(
             }
 
             TcpScreenEvents.DiscoverP2PClick -> {
-                showWifiErrorIfNotEnabled()
+                if (!state.value.isWifiOn){
+                    showWifiNotEnabledDialog()
+                    return
+                }
 
                 when (state.value.p2pNetworkingStatus) {
                     P2PNetworkingStatus.Idle -> {
-                        if(hasOtherNetworkingIsRunning()){
+                        if (hasOtherNetworkingIsRunning()) {
                             return
                         }
                         emitNavigation(TcpScreenNavigation.OnDiscoverP2PClick)
@@ -720,7 +731,7 @@ class TcpViewModel @Inject constructor(
                     }
 
                     P2PNetworkingStatus.Failure -> {
-                        if(hasOtherNetworkingIsRunning()){
+                        if (hasOtherNetworkingIsRunning()) {
                             return
                         }
                         emitNavigation(TcpScreenNavigation.OnDiscoverP2PClick)
@@ -729,7 +740,6 @@ class TcpViewModel @Inject constructor(
             }
 
             TcpScreenEvents.CreateServerClick -> {
-                showWifiErrorIfNotEnabled()
 
                 if (!state.value.isValidPortNumber) {
                     Log.d("ahi3646", "handleEvents: invalid port number ")
@@ -1014,20 +1024,26 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun showWifiErrorIfNotEnabled() {
-        if (!state.value.isWifiOn) {
+    @Suppress("DEPRECATION")
+    private fun showWifiNotEnabledDialog() {
+        val wifiNotEnabledDialog = VisibleActionDialogs.WifiEnableRequest(
+            onPositiveButtonClick = {
+                visibleActionDialogQueue.removeFirst()
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // Use alternative approach
-                emitNavigation(TcpScreenNavigation.WifiEnableRequest)
-            } else {
-                // Fallback for older Android versions
-                wifiManager.isWifiEnabled = true // or false
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    // Use alternative approach
+                    emitNavigation(TcpScreenNavigation.WifiEnableRequest)
+                } else {
+                    // Fallback for older Android versions
+                    wifiManager.isWifiEnabled = true
+                }
+            },
+            onNegativeButtonClick = {
+                visibleActionDialogQueue.removeFirst()
             }
 
-            emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
-            return
-        }
+        )
+        visibleActionDialogQueue.add(wifiNotEnabledDialog)
     }
 
     /**
@@ -1116,4 +1132,25 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+}
+
+sealed interface VisibleActionDialogs {
+
+    val dialogTitle: Int
+    val dialogMessage: Int
+    val icon: ImageVector
+    val positiveButtonText: Int
+    val negativeButtonText: Int
+    val onPositiveButtonClick: () -> Unit
+    val onNegativeButtonClick: () -> Unit
+
+    data class WifiEnableRequest(
+        override val dialogTitle: Int = R.string.wifi_not_enabled,
+        override val dialogMessage: Int = R.string.wifi_not_enabled_message,
+        override val icon: ImageVector = Icons.Default.WifiOff,
+        override val positiveButtonText: Int = R.string.enable,
+        override val negativeButtonText: Int = R.string.dismiss,
+        override val onPositiveButtonClick: () -> Unit = {},
+        override val onNegativeButtonClick: () -> Unit = {}
+    ) : VisibleActionDialogs
 }
