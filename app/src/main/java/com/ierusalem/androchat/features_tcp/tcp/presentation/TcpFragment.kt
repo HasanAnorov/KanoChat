@@ -51,6 +51,7 @@ import androidx.navigation.fragment.findNavController
 import com.google.gson.Gson
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
+import com.ierusalem.androchat.core.app.BroadcastFrequency
 import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.constants.Constants.SOCKET_DEFAULT_BUFFER_SIZE
 import com.ierusalem.androchat.core.constants.Constants.getCurrentTime
@@ -608,7 +609,9 @@ class TcpFragment : Fragment() {
     @SuppressLint("MissingPermission", "NewApi")
     private fun createGroup() {
         viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.LaunchingHotspot)
-        val config = getConfiguration()
+        val config = getConfiguration(
+            viewModel.state.value.networkBand
+        )
         val listener = object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 log("New network created")
@@ -622,16 +625,17 @@ class TcpFragment : Fragment() {
                 viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Failure)
             }
         }
+
         if (config != null) {
             log("Creating group with configuration")
-            wifiP2PManager.createGroup(channel, getConfiguration(), listener)
+            wifiP2PManager.createGroup(channel, config, listener)
         } else {
             log("Creating group without custom configuration")
             wifiP2PManager.createGroup(channel, listener)
         }
     }
 
-    private fun getConfiguration(): WifiP2pConfig? {
+    private fun getConfiguration(networkBand:BroadcastFrequency): WifiP2pConfig? {
         if (!ServerDefaults.canUseCustomConfig()) {
             return null
         }
@@ -645,10 +649,20 @@ class TcpFragment : Fragment() {
         val passwd = "12345678"
 
         //here you have to return preferred wifi band like 2,4hz or 5hz
-        //val band = getPreferredBand()
-        val band = WifiP2pConfig.GROUP_OWNER_BAND_2GHZ
-        return WifiP2pConfig.Builder().setNetworkName(ssid).setPassphrase(passwd)
-            .setGroupOperatingBand(band).build()
+        val band = when(networkBand){
+            BroadcastFrequency.FREQUENCY_2_4_GHZ -> {
+                WifiP2pConfig.GROUP_OWNER_BAND_2GHZ
+            }
+            BroadcastFrequency.FREQUENCY_5_GHZ -> {
+                WifiP2pConfig.GROUP_OWNER_BAND_5GHZ
+            }
+        }
+        return WifiP2pConfig
+            .Builder()
+            .setNetworkName(ssid)
+            .setPassphrase(passwd)
+            .setGroupOperatingBand(band)
+            .build()
     }
 
     @SuppressLint("MissingPermission")
@@ -704,7 +718,11 @@ class TcpFragment : Fragment() {
             override fun onSuccess() {
                 log("Wifi P2P Channel is removed")
                 viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Idle)
-                viewModel.handleNetworkEvents(WiFiNetworkEvent.ConnectionStatusChanged(GeneralConnectionStatus.Idle))
+                viewModel.handleNetworkEvents(
+                    WiFiNetworkEvent.ConnectionStatusChanged(
+                        GeneralConnectionStatus.Idle
+                    )
+                )
                 viewModel.handleNetworkEvents(WiFiNetworkEvent.UpdateGroupOwnerAddress("Not connected"))
             }
 

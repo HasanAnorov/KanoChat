@@ -1,6 +1,8 @@
 package com.ierusalem.androchat.features.settings.presentation
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,12 +22,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.ShapeDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
@@ -37,9 +42,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.app.BroadcastFrequency
 import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
 import com.ierusalem.androchat.core.ui.components.LanguageDialog
 import com.ierusalem.androchat.core.ui.components.ThemeSwitcher
@@ -100,6 +107,13 @@ fun SettingsScreen(
                     eventHandler = eventHandler,
                     uiState = uiState
                 )
+                BroadFrequencyUi(
+                    modifier = Modifier.padding(top = 16.dp),
+                    uiState = uiState,
+                    onCheckedChange = {
+                        eventHandler(SettingsScreenEvents.OnBroadcastFrequencyChange(it))
+                    }
+                )
                 LogoutUi()
             }
         )
@@ -147,6 +161,48 @@ fun LogoutUi() {
 }
 
 @Composable
+fun BroadFrequencyUi(
+    modifier: Modifier = Modifier,
+    uiState: SettingsState,
+    onCheckedChange: (BroadcastFrequency) -> Unit
+) {
+    Column(
+        modifier = modifier
+            .padding(horizontal = 16.dp)
+            .padding(top = 10.dp)
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(R.string.broadcast_frequency),
+            color = MaterialTheme.colorScheme.onBackground,
+            style = MaterialTheme.typography.titleMedium,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        BroadcastItem(
+            title = R.string._2_4_hz,
+            description = R.string._2_4_hz_desc,
+            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            isChecked = uiState.selectedBroadcastFrequency == BroadcastFrequency.FREQUENCY_2_4_GHZ,
+            onCheckedChange = {
+                onCheckedChange(BroadcastFrequency.FREQUENCY_2_4_GHZ)
+            }
+        )
+        Spacer(modifier = Modifier.height(1.dp))
+        BroadcastItem(
+            title = R.string._5_hz,
+            description = R.string._5_hz_desc,
+            shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp),
+            isChecked = uiState.selectedBroadcastFrequency == BroadcastFrequency.FREQUENCY_5_GHZ,
+            onCheckedChange = {
+                onCheckedChange(BroadcastFrequency.FREQUENCY_5_GHZ)
+            }
+        )
+    }
+}
+
+@Composable
 fun GeneralOptionsUI(eventHandler: (SettingsScreenEvents) -> Unit, uiState: SettingsState) {
     Column(
         modifier = Modifier
@@ -154,9 +210,12 @@ fun GeneralOptionsUI(eventHandler: (SettingsScreenEvents) -> Unit, uiState: Sett
             .padding(top = 10.dp)
     ) {
         Text(
+            modifier = Modifier.fillMaxWidth(),
             text = stringResource(R.string.general),
             color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.titleMedium,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1
         )
         Spacer(modifier = Modifier.height(8.dp))
         GeneralSettingsItem(
@@ -344,6 +403,74 @@ fun GeneralSettingsItemX(
             }
         }
     )
+}
+
+@Composable
+fun BroadcastItem(
+    modifier: Modifier = Modifier,
+    @StringRes title: Int,
+    @StringRes description: Int,
+    shape: RoundedCornerShape = RoundedCornerShape(0.dp),
+    isChecked: Boolean = false,
+    onCheckedChange: () -> Unit = { }
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange() },
+        shape = shape,
+        elevation = CardDefaults.cardElevation(0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        content = {
+            Row(
+                modifier = modifier.padding(end = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(
+                    checked = isChecked,
+                    onCheckedChange = { onCheckedChange() },
+                    modifier = Modifier
+                        .padding(2.dp),
+                    colors = CheckboxDefaults.colors(
+                        checkmarkColor = Color.White
+                    ),
+                )
+                Column {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(title),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.titleMedium,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = stringResource(description),
+                        color = MaterialTheme.colorScheme.outline,
+                        style = MaterialTheme.typography.labelSmall,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 2
+                    )
+                }
+            }
+        },
+        onClick = onCheckedChange,
+    )
+}
+
+@Preview
+@Composable
+private fun Preview_BroadcastItem() {
+    AndroChatTheme {
+        Surface {
+            BroadcastItem(
+                title = R.string._2_4_hz,
+                description = R.string._2_4_hz_desc
+            )
+        }
+    }
 }
 
 @Preview

@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
+import com.ierusalem.androchat.core.app.BroadcastFrequency
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.constants.Constants.getCurrentTime
@@ -95,8 +96,25 @@ class TcpViewModel @Inject constructor(
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
 
     init {
+        initBroadcastFrequency()
         initializeHotspotName()
         listenWifiConnections()
+    }
+
+    private fun initBroadcastFrequency() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val savedBroadcastFrequency = dataStorePreferenceRepository.getBroadcastFrequency.first()
+            val broadcastFrequency = try {
+                BroadcastFrequency.valueOf(savedBroadcastFrequency)
+            } catch (e: IllegalArgumentException) {
+                BroadcastFrequency.FREQUENCY_2_4_GHZ
+            }
+            _state.update { settingsState ->
+                settingsState.copy(
+                    networkBand = broadcastFrequency
+                )
+            }
+        }
     }
 
     fun dismissPermissionDialog() {

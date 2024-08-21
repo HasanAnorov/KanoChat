@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.core.app.AppLanguage
+import com.ierusalem.androchat.core.app.BroadcastFrequency
 import com.ierusalem.androchat.core.constants.Constants.getLanguageCode
 import com.ierusalem.androchat.core.constants.Constants.getLanguageFromCode
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
@@ -13,6 +14,7 @@ import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.features.settings.presentation.SettingsScreenEvents
 import com.ierusalem.androchat.features.settings.presentation.SettingsScreenNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -42,6 +44,22 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun initBroadcastFrequency() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val savedBroadcastFrequency = dataStorePreferenceRepository.getBroadcastFrequency.first()
+            val broadcastFrequency = try {
+                BroadcastFrequency.valueOf(savedBroadcastFrequency)
+            } catch (e: IllegalArgumentException) {
+                BroadcastFrequency.FREQUENCY_2_4_GHZ
+            }
+            _state.update { settingsState ->
+                settingsState.copy(
+                    selectedBroadcastFrequency = broadcastFrequency
+                )
+            }
+        }
+    }
+
     private fun changeLanguage(language: AppLanguage) {
         viewModelScope.launch {
             dataStorePreferenceRepository.setLanguage(getLanguageCode(language))
@@ -55,6 +73,18 @@ class SettingsViewModel @Inject constructor(
 
     fun handleEvents(event: SettingsScreenEvents) {
         when (event) {
+
+            is SettingsScreenEvents.OnBroadcastFrequencyChange -> {
+                viewModelScope.launch {
+                    dataStorePreferenceRepository.setBroadcastFrequency(event.broadcastFrequency)
+                    _state.update {
+                        it.copy(
+                            selectedBroadcastFrequency = event.broadcastFrequency
+                        )
+                    }
+                }
+            }
+
             SettingsScreenEvents.OnThemeChange -> {
                 viewModelScope.launch {
                     dataStorePreferenceRepository.setTheme(!state.value.appTheme)
@@ -102,5 +132,6 @@ data class SettingsState(
         AppLanguage.Russian,
     ),
     val selectedLanguage: AppLanguage = languagesList.first{it.isSelected},
-    val appTheme: Boolean = false
+    val appTheme: Boolean = false,
+    val selectedBroadcastFrequency: BroadcastFrequency = BroadcastFrequency.FREQUENCY_2_4_GHZ
 )

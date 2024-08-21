@@ -84,6 +84,11 @@
     <string name="cancel">Отмена</string>
     <string name="save">Сохранить</string>
     <string name="confirm">Подтверждать</string>
+    <string name="broadcast_frequency">Частота вещания</string>
+    <string name="_2_4_hz">2.4 ГГц</string>
+    <string name="_2_4_hz_desc">Медленнее, но совместимо с каждым устройством</string>
+    <string name="_5_hz">5 ГГц</string>
+    <string name="_5_hz_desc">Быстрее, но совместимо не со всеми устройствами</string>
 
     <!-- Local connection strings-->
     <string name="local_connection">Локальное соединение</string>

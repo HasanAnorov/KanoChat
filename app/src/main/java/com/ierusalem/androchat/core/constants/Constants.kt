@@ -13,6 +13,7 @@ object Constants {
     const val FILE_LABEL = "_chat"
 
     const val PREFERENCE_LANGUAGE = "device_language"
+    const val PREFERENCE_BROADCAST_FREQUENCY = "device_broadcast_frequency"
     const val PREFERENCE_THEME = "device_theme"
     const val PREFERENCE_USERNAME = "device_user_username"
     const val PREFERENCE_HOTSPOT_NAME = "device_hotspot_name"
@@ -39,6 +40,7 @@ object Constants {
     private const val RUSSIAN_LOCALE = "ru"
 
     const val DEFAULT_THEME = false
+    const val DEFAULT_BROADCAST_FREQUENCY = "FREQUENCY_2_4_GHZ"
     const val DEFAULT_LOCALE = RUSSIAN_LOCALE
 
     const val CHARACTERS_SET_FOR_RAND0M_PASSWORD_GENERATION =

@@ -88,6 +88,11 @@
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="confirm">Confirm</string>
+    <string name="broadcast_frequency">Broadcast Frequency</string>
+    <string name="_2_4_hz">2.4 GHz</string>
+    <string name="_2_4_hz_desc">Slower but compatible with every device</string>
+    <string name="_5_hz">5 GHz</string>
+    <string name="_5_hz_desc">Faster but not compatible with every device</string>
 
     <!-- Local connection strings-->
     <string name="local_connection">Local connection</string>
@@ -220,5 +225,6 @@
     <string name="dismiss">Dismiss</string>
     <string name="wifi_not_enabled">Wifi not enabled</string>
     <string name="wifi_not_enabled_message">Wifi should be enabled to perform this action</string>
+
 
 </resources>

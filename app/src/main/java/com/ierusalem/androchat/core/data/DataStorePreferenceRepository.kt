@@ -7,7 +7,9 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.ierusalem.androchat.core.app.BroadcastFrequency
 import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.utils.log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -17,12 +19,14 @@ class DataStorePreferenceRepository(context: Context) {
     private val dataStore: DataStore<Preferences> = context.dataStore
     private val defaultLanguage = Constants.DEFAULT_LOCALE
     private val defaultTheme = Constants.DEFAULT_THEME
+    private val defaultBroadcastFrequency = Constants.DEFAULT_BROADCAST_FREQUENCY
     private val defaultUsername = Constants.UNKNOWN_USER
     private val defaultHotspotName = Constants.DEFAULT_HOTSPOT_NAME
     private val defaultUniqueDeviceId = ""
 
     companion object {
         val PREF_LANGUAGE = stringPreferencesKey(name = Constants.PREFERENCE_LANGUAGE)
+        val PREF_BROADCAST_FREQUENCY = stringPreferencesKey(name = Constants.PREFERENCE_BROADCAST_FREQUENCY)
         val PREF_THEME = booleanPreferencesKey(name = Constants.PREFERENCE_THEME)
         val PREF_USERNAME = stringPreferencesKey(name = Constants.PREFERENCE_USERNAME)
         val PREF_HOTSPOT_NAME = stringPreferencesKey(name = Constants.PREFERENCE_HOTSPOT_NAME)
@@ -96,6 +100,18 @@ class DataStorePreferenceRepository(context: Context) {
     val getUsername: Flow<String> = dataStore.data
         .map { preferences ->
             preferences[PREF_USERNAME] ?: defaultUsername
+        }
+
+    suspend fun setBroadcastFrequency(frequency: BroadcastFrequency) {
+        log("broadcast frequency - ${frequency.name}")
+        dataStore.edit { preferences ->
+            preferences[PREF_BROADCAST_FREQUENCY] = frequency.name
+        }
+    }
+
+    val getBroadcastFrequency: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PREF_BROADCAST_FREQUENCY] ?: defaultBroadcastFrequency
         }
 
 }

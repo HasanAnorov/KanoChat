@@ -23,6 +23,7 @@ class SettingsFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         viewModel.initLanguageAndTheme()
+        viewModel.initBroadcastFrequency()
     }
 
     override fun onCreateView(

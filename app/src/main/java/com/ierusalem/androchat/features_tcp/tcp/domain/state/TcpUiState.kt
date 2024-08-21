@@ -2,6 +2,7 @@ package com.ierusalem.androchat.features_tcp.tcp.domain.state
 
 import android.net.wifi.p2p.WifiP2pDevice
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.app.BroadcastFrequency
 import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
@@ -13,7 +14,6 @@ import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 data class TcpScreenUiState(
 
     val contacts: Resource<List<ContactItem>> = Resource.Loading(),
-
     val isReadContactsGranted: Boolean = false,
 
     val showBottomSheet: Boolean = false,
@@ -61,4 +61,6 @@ data class TcpScreenUiState(
 
     //to disable view pager's horizontal scrolling
     val isRecording: Boolean = false,
+
+    val networkBand: BroadcastFrequency = BroadcastFrequency.FREQUENCY_2_4_GHZ
 )
