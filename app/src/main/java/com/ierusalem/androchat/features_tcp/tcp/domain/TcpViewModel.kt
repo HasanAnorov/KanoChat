@@ -34,6 +34,7 @@ import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
 import com.ierusalem.androchat.core.utils.getAudioFileDuration
 import com.ierusalem.androchat.core.utils.isValidHotspotName
+import com.ierusalem.androchat.core.utils.isValidHotspotPassword
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.core.utils.log
@@ -98,6 +99,7 @@ class TcpViewModel @Inject constructor(
     init {
         initBroadcastFrequency()
         initializeHotspotName()
+        initializeHotspotPassword()
         listenWifiConnections()
     }
 
@@ -188,6 +190,18 @@ class TcpViewModel @Inject constructor(
             _state.update {
                 it.copy(
                     isReadContactsGranted = permissionGuardImpl.canAccessContacts()
+                )
+            }
+        }
+    }
+
+    private fun initializeHotspotPassword() {
+        viewModelScope.launch {
+            val savedHotspotPassword = dataStorePreferenceRepository.getHotspotPassword.first()
+            _state.update {
+                it.copy(
+                    isValidHotSpotPassword = isValidHotspotPassword(savedHotspotPassword),
+                    hotspotPassword = savedHotspotPassword
                 )
             }
         }
@@ -860,6 +874,18 @@ class TcpViewModel @Inject constructor(
                             )
                         )
                     }
+                }
+            }
+
+            is TcpScreenEvents.OnHotspotPasswordChanged -> {
+                viewModelScope.launch {
+                    dataStorePreferenceRepository.setHotSpotPassword(event.hotspotPassword)
+                }
+                _state.update {
+                    it.copy(
+                        isValidHotSpotPassword = isValidHotspotPassword(event.hotspotPassword),
+                        hotspotPassword = event.hotspotPassword.trim()
+                    )
                 }
             }
 

@@ -18,6 +18,7 @@ sealed interface TcpScreenEvents {
 
     data class OnPortNumberChanged(val portNumber: String) : TcpScreenEvents
     data class OnHotspotNameChanged(val hotspotName: String) : TcpScreenEvents
+    data class OnHotspotPasswordChanged(val hotspotPassword: String) : TcpScreenEvents
 
     data class OnConnectToWifiClick(val wifiDevice: WifiP2pDevice) : TcpScreenEvents
 

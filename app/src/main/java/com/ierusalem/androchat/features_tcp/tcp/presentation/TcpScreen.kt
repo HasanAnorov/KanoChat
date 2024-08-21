@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Scaffold
@@ -35,9 +36,10 @@ fun TcpScreen(
     onTabChanged: (TcpView) -> Unit
 ) {
     Scaffold(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .imePadding()
     ) { pv ->
-
         if (state.hasDialogErrorOccurred != null) {
             NetworkErrorDialog(
                 onDismissRequest = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },

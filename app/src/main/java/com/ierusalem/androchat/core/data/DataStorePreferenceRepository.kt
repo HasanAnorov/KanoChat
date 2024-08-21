@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.ierusalem.androchat.core.app.BroadcastFrequency
 import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.utils.generateRandomPassword
 import com.ierusalem.androchat.core.utils.log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -30,6 +31,7 @@ class DataStorePreferenceRepository(context: Context) {
         val PREF_THEME = booleanPreferencesKey(name = Constants.PREFERENCE_THEME)
         val PREF_USERNAME = stringPreferencesKey(name = Constants.PREFERENCE_USERNAME)
         val PREF_HOTSPOT_NAME = stringPreferencesKey(name = Constants.PREFERENCE_HOTSPOT_NAME)
+        val PREF_HOTSPOT_PASSWORD = stringPreferencesKey(name = Constants.PREFERENCE_HOTSPOT_PASSWORD)
 
         val PREF_UNIQUE_DEVICE_ID = stringPreferencesKey(name = Constants.PREFERENCE_UNIQUE_DEVICE_ID)
 
@@ -67,6 +69,17 @@ class DataStorePreferenceRepository(context: Context) {
     val getHotspotName: Flow<String> = dataStore.data
         .map { preferences ->
             preferences[PREF_HOTSPOT_NAME] ?: defaultHotspotName
+        }
+
+    suspend fun setHotSpotPassword(hotspotPassword: String) {
+        dataStore.edit { preferences ->
+            preferences[PREF_HOTSPOT_PASSWORD] = hotspotPassword
+        }
+    }
+
+    val getHotspotPassword: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PREF_HOTSPOT_PASSWORD] ?: generateRandomPassword(8)
         }
 
     suspend fun setTheme(isSystemInDarkMode: Boolean) {

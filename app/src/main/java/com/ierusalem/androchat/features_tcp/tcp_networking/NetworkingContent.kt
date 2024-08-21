@@ -207,6 +207,61 @@ fun NetworkingContent(
                             }
                         },
                         keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Next,
+                            keyboardType = KeyboardType.Text
+                        ),
+                        shape = RoundedCornerShape(size = 12.dp),
+                        singleLine = true,
+                    )
+                }
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp), color = MaterialTheme.colorScheme.background)
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 10.dp)
+                        .padding(bottom = 16.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.hotspot_password),
+                        fontFamily = MontserratFontFamily,
+                        modifier = Modifier.baselineHeight(20.dp),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    TextField(
+                        modifier = Modifier
+                            .height(IntrinsicSize.Max)
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        value = state.hotspotPassword,
+                        textStyle = MaterialTheme.typography.titleMedium,
+                        colors = TextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        onValueChange = {
+                            eventHandler(TcpScreenEvents.OnHotspotPasswordChanged(it))
+                        },
+                        placeholder = {
+                            Text(text = stringResource(R.string.enter_hotspot_password))
+                        },
+                        trailingIcon = {
+                            if (state.isValidHotSpotPassword) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.check_circle),
+                                    contentDescription = null,
+                                    tint = Color(0xFF35C47C)
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.error_sign),
+                                    contentDescription = null,
+                                    tint = Color.Red
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
                             imeAction = ImeAction.Done,
                             keyboardType = KeyboardType.Text
                         ),

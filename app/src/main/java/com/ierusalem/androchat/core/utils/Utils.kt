@@ -7,12 +7,10 @@ import com.ierusalem.androchat.features_tcp.server.IP_ADDRESS_REGEX
 import java.io.File
 import java.util.Random
 
-//Logs message in debug mode
 fun log(message: String) {
     Log.d("ahi3646", message)
 }
 
-//Checks if port number is valid
 fun isValidPortNumber(portNumber: String): Boolean {
     return portNumber.isNotEmpty() && portNumber.toInt() in Constants.MAX_PORT_NUMBER downTo Constants.MIN_PORT_NUMBER
 }
@@ -25,7 +23,10 @@ fun isValidHotspotName(hotspotName: String): Boolean {
     return hotspotName.isNotEmpty() && hotspotName.length <= Constants.MAX_HOTSPOT_NAME_LENGTH && hotspotName.length >= Constants.MIN_HOTSPOT_NAME_LENGTH
 }
 
-//generates random password for group connection
+fun isValidHotspotPassword(hotspotPassword: String): Boolean {
+    return hotspotPassword.isNotEmpty() && hotspotPassword.length <= Constants.MAX_HOTSPOT_PASSWORD_LENGTH && hotspotPassword.length >= Constants.MIN_HOTSPOT_PASSWORD_LENGTH
+}
+
 fun generateRandomPassword(length: Int = 8): String {
     val random = Random()
     val characters = Constants.CHARACTERS_SET_FOR_RAND0M_PASSWORD_GENERATION

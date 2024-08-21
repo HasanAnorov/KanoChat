@@ -17,9 +17,9 @@ object Constants {
     const val PREFERENCE_THEME = "device_theme"
     const val PREFERENCE_USERNAME = "device_user_username"
     const val PREFERENCE_HOTSPOT_NAME = "device_hotspot_name"
+    const val PREFERENCE_HOTSPOT_PASSWORD = "device_hotspot_password"
     const val PREFERENCE_UNIQUE_DEVICE_ID = "device_unique_id"
 
-    //todo - may be this should be linked to unique identifiers like ANDROID ID
     const val UNKNOWN_USER = "Unknown User"
     const val UNKNOWN_HOTSPOT_NAME = "TEMP-HOTSPOT"
 
@@ -32,6 +32,9 @@ object Constants {
 
     const val MAX_HOTSPOT_NAME_LENGTH = 32
     const val MIN_HOTSPOT_NAME_LENGTH = 5
+
+    const val MAX_HOTSPOT_PASSWORD_LENGTH = 16
+    const val MIN_HOTSPOT_PASSWORD_LENGTH = 8
 
     const val DEFAULT_PORT_NUMBER = "9002"
     const val DEFAULT_HOTSPOT_NAME = "DIRECT-ANDRO"

@@ -609,9 +609,7 @@ class TcpFragment : Fragment() {
     @SuppressLint("MissingPermission", "NewApi")
     private fun createGroup() {
         viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.LaunchingHotspot)
-        val config = getConfiguration(
-            viewModel.state.value.networkBand
-        )
+        val config = getConfiguration()
         val listener = object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 log("New network created")
@@ -635,7 +633,7 @@ class TcpFragment : Fragment() {
         }
     }
 
-    private fun getConfiguration(networkBand:BroadcastFrequency): WifiP2pConfig? {
+    private fun getConfiguration(): WifiP2pConfig? {
         if (!ServerDefaults.canUseCustomConfig()) {
             return null
         }
@@ -644,11 +642,11 @@ class TcpFragment : Fragment() {
             //here you have to return preferred ssid from data store or preference helper
             viewModel.state.value.hotspotName
         )
-        //todo i will use manual password here
-        //val passwd = generateRandomPassword(8)
-        val passwd = "12345678"
+
+        val password = viewModel.state.value.hotspotPassword
 
         //here you have to return preferred wifi band like 2,4hz or 5hz
+        val networkBand = viewModel.state.value.networkBand
         val band = when(networkBand){
             BroadcastFrequency.FREQUENCY_2_4_GHZ -> {
                 WifiP2pConfig.GROUP_OWNER_BAND_2GHZ
@@ -660,7 +658,7 @@ class TcpFragment : Fragment() {
         return WifiP2pConfig
             .Builder()
             .setNetworkName(ssid)
-            .setPassphrase(passwd)
+            .setPassphrase(password)
             .setGroupOperatingBand(band)
             .build()
     }

@@ -6,7 +6,9 @@ import com.ierusalem.androchat.core.app.BroadcastFrequency
 import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
+import com.ierusalem.androchat.core.utils.generateRandomPassword
 import com.ierusalem.androchat.core.utils.isValidHotspotName
+import com.ierusalem.androchat.core.utils.isValidHotspotPassword
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
@@ -23,6 +25,8 @@ data class TcpScreenUiState(
     val peerUserUniqueId: String = "",
     val hotspotName: String = Constants.UNKNOWN_HOTSPOT_NAME,
     val isValidHotSpotName: Boolean = isValidHotspotName(hotspotName),
+    val hotspotPassword: String = generateRandomPassword(length = 8),
+    val isValidHotSpotPassword: Boolean = isValidHotspotPassword(hotspotPassword),
 
     val portNumber: String = Constants.DEFAULT_PORT_NUMBER,
     val isValidPortNumber: Boolean = isValidPortNumber(portNumber),

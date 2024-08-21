@@ -180,6 +180,8 @@
     <string name="networking_status">Статус сети:</string>
     <string name="stop_local_only_hotspot">Остановить локальную точку доступа</string>
     <string name="enter_hotspot_name">Введите название точки доступа</string>
+    <string name="hotspot_password">Пароль точки доступа</string>
+    <string name="enter_hotspot_password">Введите пароль точки доступа</string>
 
     <!-- Contact sharing string-->
     <string name="share">Делиться</string>
