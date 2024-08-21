@@ -76,6 +76,7 @@ import com.ierusalem.androchat.features_tcp.server.ServerDefaults
 import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
 import com.ierusalem.androchat.features_tcp.server.wifidirect.Reason
 import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiDirectBroadcastReceiver
+import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.ClientConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.ContactMessageItem
@@ -604,7 +605,7 @@ class TcpFragment : Fragment() {
         }
     }
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "NewApi")
     private fun createGroup() {
         viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.LaunchingHotspot)
         val config = getConfiguration()
@@ -703,6 +704,8 @@ class TcpFragment : Fragment() {
             override fun onSuccess() {
                 log("Wifi P2P Channel is removed")
                 viewModel.updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Idle)
+                viewModel.handleNetworkEvents(WiFiNetworkEvent.ConnectionStatusChanged(GeneralConnectionStatus.Idle))
+                viewModel.handleNetworkEvents(WiFiNetworkEvent.UpdateGroupOwnerAddress("Not connected"))
             }
 
             override fun onFailure(reason: Int) {

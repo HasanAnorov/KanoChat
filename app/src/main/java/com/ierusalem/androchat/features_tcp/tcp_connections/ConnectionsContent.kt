@@ -219,12 +219,6 @@ fun ConnectionsContent(
                     state = state.generalConnectionStatus.status
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.background, thickness = 1.dp)
-                StatusProperty(
-                    modifier = Modifier.padding(horizontal = 10.dp),
-                    status = stringResource(R.string.role),
-                    state = state.generalNetworkingStatus.status
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.background, thickness = 1.dp)
                 Column(
                     modifier = Modifier
                         .padding(horizontal = 10.dp)

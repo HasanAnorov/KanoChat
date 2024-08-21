@@ -210,5 +210,11 @@
     <string name="android_version_8_required">Требуется Android версии 8+!</string>
     <string name="android_version_8_required_for_local_only_hotspot">Версия Android вашего устройства ниже 8. Обновите версию Android, чтобы использовать Local-Only Hotspot</string>
     <string name="local_only_group_networking_is_running">Работает только локальная групповая сеть</string>
+    <string name="other_networking_is_running">Другая сеть работает!</string>
+    <string name="other_networking_is_running_cancel_it_to_create_peer_networking">Остановите текущую сеть, чтобы запустить новую!</string>
+    <string name="enable">Включить</string>
+    <string name="dismiss">Отклонить</string>
+    <string name="wifi_not_enabled">Wi-Fi не включен</string>
+    <string name="wifi_not_enabled_message">Wi-Fi должен быть включен для выполнения этого действия</string>
 
 </resources>

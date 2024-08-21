@@ -313,11 +313,10 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    //todo - add 4 case - local only hotspot, others are added hotspot, p2p, wifi
     private fun handleWifiDisableCase() {
         when (state.value.generalNetworkingStatus) {
             GeneralNetworkingStatus.Idle, GeneralNetworkingStatus.LocalOnlyHotspot -> {
-                //ignore case, nothing has done
+                //ignore case
             }
 
             GeneralNetworkingStatus.P2PDiscovery -> {
@@ -534,6 +533,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    @SuppressLint("NewApi")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
             //todo - you did not use the parameter inside on play voice message
@@ -621,6 +621,9 @@ class TcpViewModel @Inject constructor(
             TcpScreenEvents.DiscoverLocalOnlyHotSpotClick -> {
                 when (state.value.localOnlyHotspotNetworkingStatus) {
                     LocalOnlyHotspotStatus.Idle -> {
+                        if (hasOtherNetworkingIsRunning()) {
+                            return
+                        }
                         createLocalOnlyHotspotNetwork()
                     }
 

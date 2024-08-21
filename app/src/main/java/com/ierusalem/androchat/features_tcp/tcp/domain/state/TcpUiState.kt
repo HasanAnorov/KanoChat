@@ -26,7 +26,7 @@ data class TcpScreenUiState(
 
     val portNumber: String = Constants.DEFAULT_PORT_NUMBER,
     val isValidPortNumber: Boolean = isValidPortNumber(portNumber),
-    val groupOwnerAddress: String = "",
+    val groupOwnerAddress: String = "Not connected",
     val isValidGroupOwnerAddress: Boolean = isValidIpAddress(groupOwnerAddress),
 
     val connectedServerAddress : UiText = UiText.StringResource(R.string.not_connected),
