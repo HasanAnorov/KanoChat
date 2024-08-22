@@ -33,7 +33,7 @@ class HomeViewModel @Inject constructor(
                 ConnectivityObserver.Status.Available -> {
                     _state.update {
                         it.copy(
-                            connectivityStatus = UiText.StringResource(R.string.connected)
+                            connectivityStatus = UiText.StringResource(R.string.app_name)
                         )
                     }
                 }

@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -26,12 +27,12 @@ import com.ierusalem.androchat.features.conversation.presentation.components.mes
 fun ContactItem(
     modifier: Modifier = Modifier,
     message: ChatMessage.ContactMessage,
-    onContactNumberClick:(ChatMessage.ContactMessage) -> Unit
+    onContactNumberClick: (ChatMessage.ContactMessage) -> Unit
 ) {
     val backgroundBubbleColor = if (message.isFromYou) {
-        MaterialTheme.colorScheme.primary
-    } else {
         MaterialTheme.colorScheme.surfaceVariant
+    } else {
+        MaterialTheme.colorScheme.inverseOnSurface
     }
     val contactNumber = messageFormatter(
         text = message.contactNumber,
@@ -65,7 +66,10 @@ fun ContactItem(
                     style = MaterialTheme.typography.labelSmall
                 )
             }
-            Row(horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     modifier = Modifier
                         .padding(top = 4.dp),
@@ -78,7 +82,11 @@ fun ContactItem(
                     modifier = Modifier
                         .padding(top = 4.dp, start = 4.dp),
                     text = contactNumber,
-                    style = MaterialTheme.typography.labelLarge.copy(color = MaterialTheme.colorScheme.onPrimary, textAlign = TextAlign.End),
+                    style = MaterialTheme.typography.labelLarge
+                        .copy(
+                            color = Color.Blue.copy(0.9F),
+                            textAlign = TextAlign.End
+                        ),
                     onClick = {
                         onContactNumberClick(message)
                     }
@@ -125,6 +133,42 @@ private fun PreviewDarkContactItem() {
                 contactNumber = "93 337 36 46",
                 contactName = "Anorov Hasan",
                 isFromYou = true,
+                messageId = 0L,
+                peerUsername = "Khasan"
+            ),
+            onContactNumberClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewLightContactItemPeer() {
+    AndroChatTheme {
+        ContactItem(
+            message = ChatMessage.ContactMessage(
+                formattedTime = "12:12:12, jul 12 2034",
+                contactNumber = "93 337 36 46",
+                contactName = "Anorov Hasan",
+                isFromYou = false,
+                messageId = 0L,
+                peerUsername = "Khasan"
+            ),
+            onContactNumberClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewDarkContactItemPeer() {
+    AndroChatTheme(isDarkTheme = true) {
+        ContactItem(
+            message = ChatMessage.ContactMessage(
+                formattedTime = "12:12:12, jul 12 2034",
+                contactNumber = "93 337 36 46",
+                contactName = "Anorov Hasan",
+                isFromYou = false,
                 messageId = 0L,
                 peerUsername = "Khasan"
             ),

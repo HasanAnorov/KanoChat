@@ -41,10 +41,10 @@
     <string name="twitter">Twitter</string>
 
     <!-- App Bar status strings-->
-    <string name="connected">AndroChat</string>
-    <string name="connectivity_loosing">Потеря соединения</string>
-    <string name="connectivity_lost">Потерянное соединение</string>
-    <string name="connectivity_unavailable">Недоступен</string>
+    <string name="connected">Connected</string>
+    <string name="connectivity_loosing">Losing Connection</string>
+    <string name="connectivity_lost">Lost Connection</string>
+    <string name="connectivity_unavailable">Unavailable</string>
 
     <!-- Accessibility descriptions -->
     <string name="emoji_selector_desc">Emoji selector</string>
@@ -144,7 +144,6 @@
     <string name="fine_location_permission_request">This app needs access to your fine location. Please grant it!</string>
 
     <!-- Local conversations strings-->
-    <string name="local_connections">%d connections</string>
     <string name="chat_room">Chat Room</string>
 
     <!-- TcpScreen Errors strings-->

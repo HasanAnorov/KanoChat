@@ -6,6 +6,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -69,7 +71,7 @@ fun CircularProgressBar(
             }
             Text(
                 text = (currentPercentage.value * number).toInt().toString() + "%",
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = fontSize,
                 fontWeight = FontWeight.Bold
             )
@@ -81,9 +83,11 @@ fun CircularProgressBar(
 @Composable
 private fun PreviewLightCircularProgressBar() {
     AndroChatTheme {
-        CircularProgressBar(
-            percentage = 1F,
-        )
+        Surface {
+            CircularProgressBar(
+                percentage = 1F,
+            )
+        }
     }
 }
 
@@ -91,9 +95,11 @@ private fun PreviewLightCircularProgressBar() {
 @Composable
 private fun PreviewDarkCircularProgressBar() {
     AndroChatTheme(isDarkTheme = true) {
-        CircularProgressBar(
-            percentage = 0.8F,
-            number = 100
-        )
+        Surface {
+            CircularProgressBar(
+                percentage = 0.8F,
+                number = 100
+            )
+        }
     }
 }

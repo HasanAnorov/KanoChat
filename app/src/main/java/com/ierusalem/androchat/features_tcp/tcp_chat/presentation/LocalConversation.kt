@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -77,8 +78,8 @@ fun LocalConversationContent(
                 contentAlignment = Alignment.Center
             ) {
                 ChannelNameBar(
-                    channelName = uiState.connectedServerAddress.asString(),
-                    channelMembers = uiState.connectionsCount,
+                    channelName = uiState.peerUniqueName,
+                    isOnline = true,
                 )
             }
             HorizontalDivider(
@@ -89,7 +90,7 @@ fun LocalConversationContent(
         Column(
             modifier = Modifier
                 .weight(1F)
-                .background(MaterialTheme.colorScheme.surfaceDim.copy(0.2F)),
+                .background(MaterialTheme.colorScheme.surfaceDim.copy(0.12F)),
             content = {
                 Messages(
                     messages = uiState.messages.reversed(),
@@ -142,7 +143,7 @@ fun LocalConversationContent(
 @Composable
 fun ChannelNameBar(
     channelName: String,
-    channelMembers: Int,
+    isOnline: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var functionalityNotAvailablePopupShown by remember { mutableStateOf(false) }
@@ -166,11 +167,12 @@ fun ChannelNameBar(
                 text = channelName,
                 style = MaterialTheme.typography.titleMedium
             )
+
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text = stringResource(R.string.local_connections, channelMembers),
+                text = if(isOnline) stringResource(id = R.string.connected) else stringResource(id = R.string.not_connected),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if(isOnline) Color(0xFF35C47C) else Color.Red
             )
         }
         // Search icon
@@ -216,7 +218,7 @@ fun Messages(
                 val nextAuthor = messages.getOrNull(index + 1)?.isFromYou
                 val isFirstMessageByAuthor = prevAuthor != message.isFromYou
                 val isLastMessageByAuthor = nextAuthor != message.isFromYou
-                LocalMessageItem(
+                TextMessageItem(
                     msg = message,
                     isFirstMessageByAuthor = isFirstMessageByAuthor,
                     isLastMessageByAuthor = isLastMessageByAuthor,
@@ -259,13 +261,13 @@ fun Messages(
 private val ChatBubbleShape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
 
 @Composable
-fun LocalMessageItem(
+fun TextMessageItem(
     message: ChatMessage.TextMessage
 ) {
     val backgroundBubbleColor = if (message.isFromYou) {
-        MaterialTheme.colorScheme.primary
-    } else {
         MaterialTheme.colorScheme.surfaceVariant
+    } else {
+        MaterialTheme.colorScheme.inverseOnSurface
     }
     Surface(
         color = backgroundBubbleColor,
@@ -279,11 +281,59 @@ fun LocalMessageItem(
 @Composable
 private fun PreviewLocalChatItemBubble() {
     AndroChatTheme {
-        LocalMessageItem(
+        TextMessageItem(
             message = ChatMessage.TextMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 message = "Assalom alekum aka yaxshimisiz",
                 isFromYou = true,
+                messageId = 0L,
+                peerUsername = "Khasan"
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewLocalChatItemBubblePeer() {
+    AndroChatTheme {
+        TextMessageItem(
+            message = ChatMessage.TextMessage(
+                formattedTime = "12:12:12, jul 12 2034",
+                message = "Assalom alekum aka yaxshimisiz",
+                isFromYou = false,
+                messageId = 0L,
+                peerUsername = "Khasan"
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewLocalChatItemBubbleDark() {
+    AndroChatTheme(isDarkTheme = true) {
+        TextMessageItem(
+            message = ChatMessage.TextMessage(
+                formattedTime = "12:12:12, jul 12 2034",
+                message = "Assalom alekum aka yaxshimisiz",
+                isFromYou = true,
+                messageId = 0L,
+                peerUsername = "Khasan"
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewLocalChatItemBubbleDarkPeer() {
+    AndroChatTheme(isDarkTheme = true) {
+        TextMessageItem(
+            message = ChatMessage.TextMessage(
+                formattedTime = "12:12:12, jul 12 2034",
+                message = "Assalom alekum aka yaxshimisiz",
+                isFromYou = false,
                 messageId = 0L,
                 peerUsername = "Khasan"
             )
@@ -349,10 +399,12 @@ fun ConversationPreview() {
 @Composable
 fun ChannelBarPrev() {
     AndroChatTheme {
-        ChannelNameBar(
-            channelName = "composers",
-            channelMembers = 52
-        )
+        Surface {
+            ChannelNameBar(
+                channelName = "composers",
+                isOnline = true
+            )
+        }
     }
 }
 

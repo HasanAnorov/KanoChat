@@ -36,9 +36,9 @@ fun FileMessageItem(
     onFileItemClick: (ChatMessage.FileMessage) -> Unit,
 ) {
     val backgroundBubbleColor = if (message.isFromYou) {
-        MaterialTheme.colorScheme.primary
-    } else {
         MaterialTheme.colorScheme.surfaceVariant
+    } else {
+        MaterialTheme.colorScheme.inverseOnSurface
     }
     Surface(
         color = backgroundBubbleColor,
@@ -163,7 +163,7 @@ fun FileMessageItem(
 
 @Preview
 @Composable
-private fun PreviewLightFileItem() {
+private fun PreviewLightFileItemPeer() {
     AndroChatTheme {
         Surface {
             FileMessageItem(
@@ -198,6 +198,53 @@ private fun PreviewDarkFileItem() {
                     fileExtension = ".pdf",
                     filePath = "file_path_uri",
                     isFromYou = true,
+                    messageId = 0L,
+                    peerUsername = "Khasan"
+                ),
+                onFileItemClick = {}
+            )
+        }
+    }
+}
+
+
+@Preview
+@Composable
+private fun PreviewLightFileItem() {
+    AndroChatTheme {
+        Surface {
+            FileMessageItem(
+                modifier = Modifier,
+                message = ChatMessage.FileMessage(
+                    formattedTime = "12:12:12, jul 12 2034",
+                    fileName = "SamsungElectronics Dubai Global Version home.edition.com",
+                    fileSize = "16 Kb",
+                    fileExtension = ".pdf",
+                    filePath = "file_path_uri",
+                    isFromYou = true,
+                    messageId = 0L,
+                    peerUsername = "Khasan"
+                ),
+                onFileItemClick = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewDarkFileItemPeer() {
+    AndroChatTheme(isDarkTheme = true) {
+        Surface {
+            FileMessageItem(
+                modifier = Modifier,
+                message = ChatMessage.FileMessage(
+                    formattedTime = "12:12:12, jul 12 2034",
+                    fileName = "SamsungElectronics Dubai Global Version home.edition.com",
+                    fileSize = "16 Kb",
+                    fileExtension = ".pdf",
+                    filePath = "file_path_uri",
+                    isFromYou = false,
                     messageId = 0L,
                     peerUsername = "Khasan"
                 ),

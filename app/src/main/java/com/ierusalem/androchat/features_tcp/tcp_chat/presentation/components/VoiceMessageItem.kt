@@ -42,9 +42,9 @@ fun VoiceMessageItem(
     onStopClick: () -> Unit,
 ) {
     val backgroundBubbleColor = if (message.isFromYou) {
-        MaterialTheme.colorScheme.primary
-    } else {
         MaterialTheme.colorScheme.surfaceVariant
+    } else {
+        MaterialTheme.colorScheme.inverseOnSurface
     }
     Surface(
         color = backgroundBubbleColor,
@@ -268,7 +268,7 @@ fun VoiceMessageItem(
 
 @Preview
 @Composable
-private fun PreviewLightVoiceMessageItem() {
+private fun PreviewLightVoiceMessageItemPeer() {
     AndroChatTheme {
         Surface {
             VoiceMessageItem(
@@ -293,7 +293,7 @@ private fun PreviewLightVoiceMessageItem() {
 
 @Preview
 @Composable
-private fun PreviewDarkVoiceMessageItem() {
+private fun PreviewDarkVoiceMessageItemPeer() {
     AndroChatTheme(isDarkTheme = true) {
         Surface {
             VoiceMessageItem(
@@ -302,6 +302,55 @@ private fun PreviewDarkVoiceMessageItem() {
                     formattedTime = "12:12:12, jul 12 2034",
                     voiceFileName = "SamsungElectronics Dubai Global Version home.edition.com",
                     isFromYou = false,
+                    duration = 80,
+                    fileState = FileMessageState.Success,
+                    messageId = 0L,
+                    peerUsername = "Khasan"
+                ),
+                onPlayClick = {},
+                onPauseClick = {},
+                onStopClick = {},
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewLightVoiceMessageItem() {
+    AndroChatTheme {
+        Surface {
+            VoiceMessageItem(
+                modifier = Modifier,
+                message = ChatMessage.VoiceMessage(
+                    formattedTime = "12:12:12, jul 12 2034",
+                    voiceFileName = "SamsungElectronics Dubai Global Version home.edition.com",
+                    isFromYou = true,
+                    duration = 12000,
+                    audioState = AudioState.Paused(6000),
+                    fileState = FileMessageState.Failure,
+                    messageId = 0L,
+                    peerUsername = "Khasan"
+                ),
+                onPlayClick = {},
+                onPauseClick = {},
+                onStopClick = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewDarkVoiceMessageItem() {
+    AndroChatTheme(isDarkTheme = true) {
+        Surface {
+            VoiceMessageItem(
+                modifier = Modifier,
+                message = ChatMessage.VoiceMessage(
+                    formattedTime = "12:12:12, jul 12 2034",
+                    voiceFileName = "SamsungElectronics Dubai Global Version home.edition.com",
+                    isFromYou = true,
                     duration = 80,
                     fileState = FileMessageState.Success,
                     messageId = 0L,
