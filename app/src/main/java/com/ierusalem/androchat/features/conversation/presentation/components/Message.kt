@@ -25,19 +25,18 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features.conversation.presentation.ChatItemBubble
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
 
 @Composable
 fun MessageItem(
     onAuthorClick: (String) -> Unit,
-    msg: Message,
-    isUserMe: Boolean,
+    message: ChatMessage.TextMessage,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean
 ) {
-    val borderColor = if (isUserMe) {
+    val borderColor = if (message.isFromYou) {
         MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.tertiary
@@ -51,7 +50,7 @@ fun MessageItem(
                 modifier = Modifier
                     .clickable(
                         onClick = {
-//                            onAuthorClick(msg.author)
+                            //onAuthorClick(msg.author)
                         }
                     )
                     .padding(horizontal = 16.dp)
@@ -60,7 +59,7 @@ fun MessageItem(
                     .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape)
                     .clip(CircleShape)
                     .align(Alignment.Top),
-//                painter = painterResource(id = msg.authorImage),
+                //painter = painterResource(id = msg.authorImage),
                 painter = painterResource(id = R.drawable.be_doer),
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
@@ -70,8 +69,7 @@ fun MessageItem(
             Spacer(modifier = Modifier.width(74.dp))
         }
         AuthorAndTextMessage(
-            msg = msg,
-            isUserMe = isUserMe,
+            message = message,
             isFirstMessageByAuthor = isFirstMessageByAuthor,
             isLastMessageByAuthor = isLastMessageByAuthor,
             authorClicked = onAuthorClick,
@@ -84,8 +82,7 @@ fun MessageItem(
 
 @Composable
 fun AuthorAndTextMessage(
-    msg: Message,
-    isUserMe: Boolean,
+    message: ChatMessage.TextMessage,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
     authorClicked: (String) -> Unit,
@@ -93,9 +90,13 @@ fun AuthorAndTextMessage(
 ) {
     Column(modifier = modifier) {
         if (isLastMessageByAuthor) {
-            AuthorNameTimestamp(msg)
+            AuthorNameTimestamp(message)
         }
-        ChatItemBubble(msg, isUserMe, authorClicked = authorClicked)
+
+        ChatItemBubble(
+            message,
+            authorClicked = authorClicked
+        )
         if (isFirstMessageByAuthor) {
             // Last bubble before next author
             Spacer(modifier = Modifier.height(8.dp))
@@ -108,14 +109,12 @@ fun AuthorAndTextMessage(
 
 @Composable
 private fun AuthorNameTimestamp(
-//    msg: Message
-    msg: Message
+    message: ChatMessage.TextMessage
 ) {
     // Combine author and timestamp for a11y.
     Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
-//            text = msg.author,
-            text = msg.username,
+            text = "message.username",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .alignBy(LastBaseline)
@@ -123,8 +122,7 @@ private fun AuthorNameTimestamp(
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-//            text = msg.timestamp,
-            text = msg.formattedTime,
+            text = message.formattedTime,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.alignBy(LastBaseline),
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -138,14 +136,15 @@ private fun PreviewMessage() {
     AndroChatTheme {
         MessageItem(
             onAuthorClick = {},
-            msg = Message(
-                text = "Hello it is a text",
+            message = ChatMessage.TextMessage(
+                message =("Hello it is a text"),
                 formattedTime = "12:32",
-                username = "Hasan"
+                isFromYou = false,
+                messageId = 23431241,
+                peerUsername = "Khasan"
             ),
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,
-            isUserMe = true
         )
     }
 }

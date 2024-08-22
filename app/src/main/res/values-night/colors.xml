@@ -16,7 +16,9 @@
   -->
 
 <resources>
-    <!-- Logo -->
-    <color name="yellow_logo">@color/yellow400</color>
-    <color name="blue_logo">@color/blue300</color>
+
+    <color name="colorPrimary">@color/blue500</color>
+    <color name="colorPrimaryDark">@color/blue800</color>
+    <color name="colorAccent">@color/yellow700</color>
+
 </resources>

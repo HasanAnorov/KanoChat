@@ -13,9 +13,12 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.fragment.findNavController
+import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.executeWithLifecycle
+import com.ierusalem.androchat.features.conversation.domain.ConversationNavigation
 import com.ierusalem.androchat.features.conversation.domain.ConversationViewModel
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.utils.Constants
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -31,15 +34,10 @@ class ConversationFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        arguments?.getString(Constants.USERNAME_REGISTER_TO_HOME)?.let {username ->
+        arguments?.getString(Constants.USERNAME_REGISTER_TO_HOME)?.let { username ->
             Log.d("ahi3646", "onAttach: $username ")
             viewModel.connectToChat(username)
         }
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-        viewModel.disconnect()
     }
 
     override fun onCreateView(
@@ -60,14 +58,20 @@ class ConversationFragment : Fragment() {
         }
     }
 
-//    override fun onStart() {
-//        super.onStart()
-//        viewModel.connectToChat()
-//    }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel.screenNavigation.executeWithLifecycle(
+            lifecycle = viewLifecycleOwner.lifecycle,
+            action = ::executeNavigation
+        )
+    }
 
-//    override fun onStop() {
-//        super.onStop()
-//        viewModel.disconnect()
-//    }
+    private fun executeNavigation(navigation: ConversationNavigation) {
+        when (navigation) {
+            ConversationNavigation.OnNavIconClick -> {
+                findNavController().popBackStack()
+            }
+        }
+    }
 
 }

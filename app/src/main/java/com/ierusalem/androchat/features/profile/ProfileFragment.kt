@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,10 +43,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.findNavController
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.ui.components.AndroChatAppBar
-import com.ierusalem.androchat.ui.components.FunctionalityNotAvailablePopup
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
+import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 
 class ProfileFragment : Fragment() {
 
@@ -77,7 +79,10 @@ class ProfileFragment : Fragment() {
                     AndroChatAppBar(
                         // Reset the minimum bounds that are passed to the root of a compose tree
                         modifier = Modifier.wrapContentSize(),
-                        onNavIconPressed = {  },
+                        onNavIconPressed = {
+                            findNavController().popBackStack()
+                        },
+                        navIcon = Icons.AutoMirrored.Filled.ArrowBack,
                         title = { },
                         actions = {
                             // More icon

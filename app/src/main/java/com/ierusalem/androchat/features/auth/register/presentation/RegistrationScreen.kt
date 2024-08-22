@@ -26,10 +26,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.ui.components.CommonPasswordTextField
+import com.ierusalem.androchat.core.ui.components.CommonTextFieldWithError
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features.auth.register.domain.RegistrationScreenState
-import com.ierusalem.androchat.ui.components.CommonPasswordTextField
-import com.ierusalem.androchat.ui.components.CommonTextFieldWithError
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
 
 @Composable
 fun RegistrationScreen(
@@ -61,26 +61,6 @@ fun RegistrationScreen(
                 text = stringResource(R.string.register_to_continue),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground
-            )
-
-            CommonTextFieldWithError(
-                modifier = Modifier
-                    .padding(top = 16.dp)
-                    .padding(horizontal = 16.dp),
-                placeHolder = stringResource(R.string.firstname),
-                value = state.firstname,
-                errorMessage = state.firstnameError,
-                onTextChanged = { intentReducer(RegistrationFormEvents.FirstNameChanged(it)) }
-            )
-
-            CommonTextFieldWithError(
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .padding(horizontal = 16.dp),
-                placeHolder = stringResource(R.string.lastname),
-                value = state.lastname,
-                errorMessage = state.lastnameError,
-                onTextChanged = { intentReducer(RegistrationFormEvents.LastNameChanged(it)) }
             )
 
             CommonTextFieldWithError(
@@ -178,7 +158,7 @@ fun RegistrationScreen(
     )
 }
 
-@Preview
+@Preview(locale = "uz")
 @Composable
 fun LoginScreen_Preview_Light() {
     AndroChatTheme {
@@ -189,7 +169,7 @@ fun LoginScreen_Preview_Light() {
     }
 }
 
-@Preview
+@Preview(locale = "uz")
 @Composable
 fun LoginScreen_Preview_Dark() {
     AndroChatTheme(isDarkTheme = true) {

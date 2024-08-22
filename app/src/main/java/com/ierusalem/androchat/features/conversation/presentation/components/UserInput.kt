@@ -107,13 +107,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.ui.components.FunctionalityNotAvailablePopup
+import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
+import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.delay
 
-enum class InputSelector {
+private enum class InputSelector {
     NONE,
     MAP,
     DM,
@@ -122,7 +122,7 @@ enum class InputSelector {
     PICTURE
 }
 
-enum class EmojiStickerSelector {
+private enum class EmojiStickerSelector {
     EMOJI,
     STICKER
 }
@@ -391,7 +391,7 @@ var SemanticsPropertyReceiver.keyboardShownProperty by KeyboardShownKey
 
 @ExperimentalFoundationApi
 @Composable
-private fun UserInputText(
+fun UserInputText(
     keyboardType: KeyboardType = KeyboardType.Text,
     onTextChanged: (TextFieldValue) -> Unit,
     textFieldValue: TextFieldValue,

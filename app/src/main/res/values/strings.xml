@@ -2,21 +2,36 @@
 
 <resources>
 
-    <string name="app_name" translatable="false">AndroChat</string>
+    <!-- Extras-->
+    <string name="_1024_65000" translatable="false"><![CDATA[1024< ... < 65000]]></string>
+
+    <!-- App Name-->
+    <string name="app_name" translatable="false">FastChat</string>
+
+    <!-- Temp strings-->
     <string name="functionality_not_available">Functionality not available!</string>
     <string name="close">CLOSE</string>
-    <string name="navigation_drawer_open">Open navigation drawer</string>
 
+    <!-- Home strings-->
+    <string name="all">All</string>
+    <string name="contacts">Contacts</string>
+    <string name="groups">Groups</string>
+
+    <!-- Conversation strings-->
     <string name="jumpBottom">Jump to bottom</string>
     <string name="send">Send</string>
     <string name="author_me">you</string>
-    <string name="now">8:30 PM</string>
     <string name="members">%d members</string>
     <string name="textfield_hint">Message #composers</string>
     <string name="swipe_to_cancel_recording">&#x25C0; Swipe to cancel</string>
     <string name="emojis_label">Emojis</string>
     <string name="stickers_label">Stickers</string>
+    <string name="open_with">Open with</string>
+    <string name="please_install_a_file_manager">PLease install a file manager!</string>
+    <string name="no_application_found_to_open_this_file">No application found to open this file</string>
+    <string name="give_permission">Give Permission!</string>
 
+    <!-- Profile strings-->
     <string name="message">Message</string>
     <string name="edit_profile">Edit Profile</string>
     <string name="profile_error">There was an error loading the profile</string>
@@ -25,11 +40,13 @@
     <string name="timezone">Timezone</string>
     <string name="twitter">Twitter</string>
 
-    <!--Extra-->
-    <string name="today">Today</string>
+    <!-- App Bar status strings-->
+    <string name="connected">Connected</string>
+    <string name="connectivity_loosing">Losing Connection</string>
+    <string name="connectivity_lost">Lost Connection</string>
+    <string name="connectivity_unavailable">Unavailable</string>
 
     <!-- Accessibility descriptions -->
-
     <string name="emoji_selector_desc">Emoji selector</string>
     <string name="emoji_selector_bt_desc">Show Emoji selector</string>
     <string name="dm_desc">Direct Message</string>
@@ -38,26 +55,178 @@
     <string name="videochat_desc">Start videochat</string>
     <string name="textfield_desc">Text input</string>
     <string name="not_available">Functionality currently not available</string>
-    <string name="attached_image">Attached image</string>
     <string name="search">Search</string>
     <string name="info">Information</string>
     <string name="more_options">More options</string>
     <string name="touch_and_hold_to_record">Touch and hold to record</string>
     <string name="record_message">Record voice message</string>
+
+    <!-- Auth strings-->
     <string name="log_in">Log In</string>
     <string name="have_an_account">Have an account?</string>
     <string name="register">Register</string>
     <string name="password_confirmation">Password Confirmation</string>
     <string name="password">Password</string>
     <string name="username">Username</string>
-    <string name="lastname">Lastname</string>
-    <string name="firstname">Firstname</string>
     <string name="register_to_continue">Register to continue</string>
     <string name="welcome">Welcome</string>
     <string name="don_t_have_an_account">Don\'t have an account?</string>
     <string name="login">Login</string>
     <string name="log_in_to_continue">Log in to continue</string>
     <string name="welcome_back">Welcome \nBack</string>
+
+    <!-- Settings strings-->
     <string name="settings">Settings</string>
+    <string name="english">English</string>
+    <string name="russian">Russian</string>
+    <string name="language">Language</string>
+    <string name="app_theme">App Theme</string>
+    <string name="general">General</string>
+    <string name="logout">Logout</string>
+    <string name="invite_a_friend">Invite a friend</string>
+    <string name="select_app_language">Select app language</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="confirm">Confirm</string>
+    <string name="broadcast_frequency">Broadcast Frequency</string>
+    <string name="_2_4_hz">2.4 GHz</string>
+    <string name="_2_4_hz_desc">Slower but compatible with every device</string>
+    <string name="_5_hz">5 GHz</string>
+    <string name="_5_hz_desc">Faster but not compatible with every device</string>
+
+    <!-- Local connection strings-->
+    <string name="local_connection">Local connection</string>
+
+    <!-- Nearby Connection strings-->
+    <string name="nearby_connection">Nearby Connection</string>
+    <string name="connections">Connections</string>
+    <string name="create_a_server">Create a server</string>
+    <string name="creating_a_server">Creating a server</string>
+    <string name="server_created_waiting_for_clients">Server created, waiting for clients …</string>
+    <string name="connecting_to_server">Connecting to server</string>
+    <string name="connected_to_a_server">Connected to a server</string>
+    <string name="discover_wifi">Discover Wifi</string>
+    <string name="discovering_wifi">Discovering WiFi</string>
+    <string name="discovering_not_started">Couldn\'t discover wifi networks,\n try again!</string>
+    <string name="available_wifi_networks">Available Wifi Networks</string>
+    <string name="click_discover_button_to_search_for_available_wifi_networks">Click Discover Button to search for available wifi networks!</string>
+    <string name="something_went_wrong_while_discovering_wifi_networks">Something went wrong while discovering wifi networks!</string>
+    <string name="wifi_status">"Wifi Status: "</string>
+    <string name="proxy_port">Proxy Port</string>
+
+    <!-- Instructions strings-->
+    <string name="instructions">Instructions</string>
+
+    <!-- Connections strings-->
+    <string name="client">Client</string>
+    <string name="owner">Owner</string>
+    <string name="waiting_for_connection">Waiting for connection …</string>
+    <string name="not_running">Not Running</string>
+    <string name="connection_connected">Connected</string>
+    <string name="not_connected">Not Connected</string>
+    <string name="wifi_enabled">WiFi enabled</string>
+    <string name="wifi_disabled">WiFi disabled</string>
+    <string name="connect">Connect</string>
+    <string name="connections_details">Connections Details</string>
+    <string name="connection_status">"Connection Status: "</string>
+    <string name="role">"Role: "</string>
+    <string name="server_address">Server Address</string>
+    <string name="connected_devices_will_display_here">Connected devices will display here</string>
+    <string name="connections_are_not_established_yet">Connections are not established yet!</string>
+    <string name="ready_to_record_voice_message">Permission granted! Click the mic to record a voice message</string>
+    <string name="record_audio_denied">You permanently declined microphone permission. \nYou can go to the app settings to grant it.</string>
+    <string name="record_audio_permission_request">This app needs access to your microphone. Please grant it!</string>
+    <string name="nearby_wifi_devices_denied">You permanently declined nearby wifi devices permission. \nYou can go to the app settings to grant it.</string>
+    <string name="nearby_wifi_devices_permission_request">This app needs access to your nearby wifi devices. Please grant it!</string>
+    <string name="coarse_location_denied">You permanently declined coarse location permission. \nYou can go to the app settings to grant it.</string>
+    <string name="coarse_location_permission_request">This app needs access to your coarse location. Please grant it!</string>
+    <string name="fine_location_denied">You permanently declined fine location permission. \nYou can go to the app settings to grant it.</string>
+    <string name="fine_location_permission_request">This app needs access to your fine location. Please grant it!</string>
+
+    <!-- Local conversations strings-->
+    <string name="chat_room">Chat Room</string>
+
+    <!-- TcpScreen Errors strings-->
+    <string name="couldn_t_connect_to_chosen_wifi_device">Couldn\'t connect to chosen wifi device!</string>
+    <string name="wifi_should_be_enabled_to_perform_this_action">Wifi should be enabled to perform this action!</string>
+    <string name="already_discovering_wifi_networks">Already Discovering Wifi Networks!</string>
+    <string name="try_to_use_another_port_number_current_port_is_already_in_use_or_invalid">Try to use another port number, current port is already in use or invalid!</string>
+    <string name="try_to_reconnect_to_the_server_again_current_address_is_invalid">Try to reconnect to the server again, current address is invalid!</string>
+
+    <!--    TcpScreenDialog Errors strings-->
+    <string name="network_error_occurred">Network Error Occurred</string>
+    <string name="your_network_connection_was_interrupted_check_your_connection_and_try_again">Network connection with your peer has been interrupted. Check your connection and try again.</string>
+    <string name="close_lowercase">Close</string>
+    <string name="incoming_messages_are_not_in_utf_8_format_the_data_do_not_represent_a_valid_modified_utf_8_encoding_of_a_string">Incoming messages are not in UTF-8 format, the data do not represent a valid modified UTF-8 encoding of a string</string>
+    <string name="the_ip_address_of_the_host_could_not_be_determined">The IP address of the host could not be determined</string>
+    <string name="invalid_host_ip_address">Invalid Host Ip Address</string>
+    <string name="you_are_not_the_owner">You are not the owner</string>
+    <string name="you_connected_as_client_thus_you_can_t_create_a_server">You connected as client, thus you can\'t create a server</string>
+    <string name="you_are_not_the_client">You are not the client</string>
+    <string name="you_connected_as_a_host_for_this_server_thus_you_can_t_be_a_client">You connected as a host for this server, thus you can\'t be a client</string>
+    <string name="no_wifi_connection">No WiFi connection</string>
+    <string name="you_need_to_connect_to_a_wifi_network_to_create_or_connect_to_a_server">You need to connect to a wifi network to create or connect to a server</string>
+    <string name="could_not_establish_connection_with_your_partner_please_try_to_reconnect_and_try_again">Could not establish connection with your partner, please try to reconnect and try again!</string>
+    <string name="no_one_to_chat">No one to chat</string>
+    <string name="you_have_existing_messages_with_your_partner_and_if_you_close_the_this_window_messages_will_not_be_saved">You have existing messages with your partner and if you close the this window messages will not be saved</string>
+    <string name="message_are_not_saved">The messages are not saved</string>
+    <string name="you_have_established_connection_with_your_partner_if_you_close_this_window_the_connection_will_not_be_saved">You have established a connection with your partner, if you close this window the connection will not be saved</string>
+    <string name="the_connection_will_not_be_saved">The connection will not be saved</string>
+    <string name="don_t_ask_me_again">Don\'t ask me again</string>
+
+    <!-- Networking strings-->
+    <string name="networking">Networking</string>
+    <string name="start_local_only_hotspot">Start Local Only Hotspot</string>
+    <string name="group_networking">Group Networking</string>
+    <string name="peer_networking">Peer Networking</string>
+    <string name="hotspot_name">Hotspot Name</string>
+    <string name="networking_status">Networking Status:</string>
+    <string name="stop_local_only_hotspot">Stop Local-Only Hotspot</string>
+    <string name="enter_hotspot_name">Enter hotspot name</string>
+    <string name="hotspot_password">Hotspot Password</string>
+    <string name="enter_hotspot_password">Enter hotspot password</string>
+
+    <!-- Contact sharing string-->
+    <string name="share">Share</string>
+    <string name="contact">contact</string>
+    <string name="contacts_lowercase">contacts</string>
+    <string name="OK">@android:string/ok</string>
+    <string name="permission_required">Permission Required</string>
+    <string name="contacts_denied">You permanently declined read-contacts permission. \nYou can go to the app settings to grant it.</string>
+    <string name="contacts_permission_request">This app needs access to your contacts to share! Please grant it!</string>
+
+    <!-- Empty screen strings-->
+    <string name="no_data_found">No data found!</string>
+
+    <!-- Dialog Errors strings-->
+    <string name="couldn_t_create_a_server">Could not create a server</string>
+    <string name="couldn_t_connect_to_server">Could not connect to server</string>
+    <string name="launching_hotspot">Launching hotspot …</string>
+    <string name="couldn_t_launch_hotspot">Could not launch hotspot</string>
+    <string name="peer_networking_is_running">Peer Networking is running</string>
+    <string name="group_networking_is_running">Group Networking is running</string>
+    <string name="stop_peer_networking">Stop Peer Networking</string>
+    <string name="stop_group_networking">Stop Group Networking</string>
+    <string name="your_device_does_not_support_group_networking">Your device does not support group networking</string>
+    <string name="at_least_android_10_is_required_for_group_networking">At least Android 10 is required for group networking</string>
+    <string name="there_is_no_online_peers_to_chat">There is no online peers to chat!</string>
+    <string name="connected_as_host">Connected as a host</string>
+    <string name="connected_as_client">Connected as a client</string>
+    <string name="not_defined">Not defined</string>
+    <string name="no_peer_to_chat">No peer to chat!</string>
+    <string name="current_connected_wifi_server_ip_address_is_not_a_valid">Current connected wifi server ip address is not a valid</string>
+    <string name="please_connect_to_network">Please connect to the network!</string>
+    <string name="you_should_be_on_network_to_connect_to_server">You should be connected to the network to create or connect to the server</string>
+    <string name="android_version_8_required">Android Version 8+ required!</string>
+    <string name="android_version_8_required_for_local_only_hotspot">Your device\'s the Android version is below 8. Upgrade android version to use Local-Only Hotspot</string>
+    <string name="local_only_group_networking_is_running">Local Only Group Networking is running</string>
+    <string name="other_networking_is_running">Other Network is running!</string>
+    <string name="other_networking_is_running_cancel_it_to_create_peer_networking">Stop current network to launch new network!</string>
+    <string name="enable">Enable</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="wifi_not_enabled">Wifi not enabled</string>
+    <string name="wifi_not_enabled_message">Wifi should be enabled to perform this action</string>
+
+
 
 </resources>

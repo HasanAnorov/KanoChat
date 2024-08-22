@@ -3,12 +3,13 @@ package com.ierusalem.androchat.features.auth.register.domain
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ierusalem.androchat.utils.FieldValidator
+import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
+import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
+import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
+import com.ierusalem.androchat.core.ui.navigation.emitNavigation
+import com.ierusalem.androchat.core.utils.FieldValidator
 import com.ierusalem.androchat.features.auth.register.presentation.RegistrationFormEvents
 import com.ierusalem.androchat.features.auth.register.presentation.RegistrationNavigation
-import com.ierusalem.androchat.ui.navigation.DefaultNavigationEventDelegate
-import com.ierusalem.androchat.ui.navigation.NavigationEventDelegate
-import com.ierusalem.androchat.ui.navigation.emitNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +19,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RegistrationViewModel @Inject constructor(
-    private val validator: FieldValidator
+    private val validator: FieldValidator,
+    private val dataStorePreferenceRepository: DataStorePreferenceRepository
 ) : ViewModel(),
     NavigationEventDelegate<RegistrationNavigation> by DefaultNavigationEventDelegate() {
 
@@ -29,21 +31,6 @@ class RegistrationViewModel @Inject constructor(
 
     fun handleEvents(event: RegistrationFormEvents) {
         when (event) {
-            is RegistrationFormEvents.FirstNameChanged -> {
-                _state.update {
-                    it.copy(
-                        firstname = event.firstName
-                    )
-                }
-            }
-
-            is RegistrationFormEvents.LastNameChanged -> {
-                _state.update {
-                    it.copy(
-                        lastname = event.lastName
-                    )
-                }
-            }
 
             is RegistrationFormEvents.UsernameChanged -> {
                 _state.update {
@@ -87,16 +74,12 @@ class RegistrationViewModel @Inject constructor(
 
     private fun registerUser() {
         Log.d("ahi3646", "registerUser: ")
-        val firstNameResult = validator.validateFirstName(state.value.firstname)
-        val lastNameResult = validator.validateLastName(state.value.lastname)
         val usernameResult = validator.validateUsername(state.value.username)
         val passwordResult = validator.validatePassword(state.value.password)
         val repeatedPasswordResult =
             validator.validateRepeatedPassword(state.value.password, state.value.repeatedPassword)
 
         val hasError = listOf(
-            firstNameResult,
-            lastNameResult,
             usernameResult,
             passwordResult,
             repeatedPasswordResult
@@ -107,8 +90,6 @@ class RegistrationViewModel @Inject constructor(
         if (hasError) {
             _state.update {
                 it.copy(
-                    firstnameError = firstNameResult.errorMessage,
-                    lastnameError = lastNameResult.errorMessage,
                     usernameError = usernameResult.errorMessage,
                     passwordError = passwordResult.errorMessage,
                     repeatedPasswordError = repeatedPasswordResult.errorMessage,
@@ -118,24 +99,21 @@ class RegistrationViewModel @Inject constructor(
         }
         _state.update {
             it.copy(
-                firstnameError = null,
-                lastnameError = null,
                 usernameError = null,
                 passwordError = null,
                 repeatedPasswordError = null,
             )
         }
+
+        //save username in data store and navigate
         viewModelScope.launch {
+            dataStorePreferenceRepository.setUsername(state.value.username)
             emitNavigation(RegistrationNavigation.ToHome(state.value.username))
         }
     }
 }
 
 data class RegistrationScreenState(
-    val firstname: String = "",
-    val firstnameError: String? = null,
-    val lastname: String = "",
-    val lastnameError: String? = null,
     val username: String = "",
     val usernameError: String? = null,
     val password: String = "",

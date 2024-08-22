@@ -54,7 +54,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.features.auth.register.domain.model.Message
+import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
+import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features.conversation.domain.ConversationEvents
 import com.ierusalem.androchat.features.conversation.domain.ConversationState
 import com.ierusalem.androchat.features.conversation.presentation.components.ConversationUiState
@@ -63,9 +66,6 @@ import com.ierusalem.androchat.features.conversation.presentation.components.Mes
 import com.ierusalem.androchat.features.conversation.presentation.components.SymbolAnnotationType
 import com.ierusalem.androchat.features.conversation.presentation.components.UserInput
 import com.ierusalem.androchat.features.conversation.presentation.components.messageFormatter
-import com.ierusalem.androchat.ui.components.AndroChatAppBar
-import com.ierusalem.androchat.ui.components.FunctionalityNotAvailablePopup
-import com.ierusalem.androchat.ui.theme.AndroChatTheme
 import kotlinx.coroutines.launch
 
 /**
@@ -196,16 +196,19 @@ fun ChannelNameBar(
 
 const val ConversationTestTag = "ConversationTestTag"
 
+/**
+ * Some parameters have been changed, try not to affect general parameters to fix it
+ * */
+
 @Composable
 fun Messages(
-    messages: List<Message>,
+    messages: List<ChatMessage>,
     navigateToProfile: (String) -> Unit,
     scrollState: LazyListState,
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
-        val authorMe = "Hasan"
         LazyColumn(
             reverseLayout = true,
             state = scrollState,
@@ -217,17 +220,23 @@ fun Messages(
                 Spacer(modifier = Modifier.height(32.dp))
             }
             itemsIndexed(messages) { index, message ->
-                val prevAuthor = messages.getOrNull(index - 1)?.username
-                val nextAuthor = messages.getOrNull(index + 1)?.username
-                val isFirstMessageByAuthor = prevAuthor != message.username
-                val isLastMessageByAuthor = nextAuthor != message.username
-                MessageItem(
-                    onAuthorClick = { userId -> navigateToProfile(userId) },
-                    msg = message,
-                    isUserMe = message.username == authorMe,
-                    isFirstMessageByAuthor = isFirstMessageByAuthor,
-                    isLastMessageByAuthor = isLastMessageByAuthor
-                )
+                when (message) {
+                    is ChatMessage.TextMessage -> {
+                        val prevAuthor = messages.getOrNull(index - 1)?.isFromYou
+                        val nextAuthor = messages.getOrNull(index + 1)?.isFromYou
+                        val isFirstMessageByAuthor = prevAuthor != message.isFromYou
+                        val isLastMessageByAuthor = nextAuthor != message.isFromYou
+                        MessageItem(
+                            onAuthorClick = { userId -> navigateToProfile(userId) },
+                            message = message,
+                            isFirstMessageByAuthor = isFirstMessageByAuthor,
+                            isLastMessageByAuthor = isLastMessageByAuthor
+                        )
+                    }
+                    is ChatMessage.VoiceMessage -> {}
+                    is ChatMessage.FileMessage -> {}
+                    is ChatMessage.ContactMessage -> {}
+                }
             }
         }
         // Jump to bottom button shows up when user scrolls past a threshold.
@@ -290,12 +299,11 @@ private val ChatBubbleShape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
 
 @Composable
 fun ChatItemBubble(
-    message: Message,
-    isUserMe: Boolean,
+    message: ChatMessage.TextMessage,
     authorClicked: (String) -> Unit
 ) {
 
-    val backgroundBubbleColor = if (isUserMe) {
+    val backgroundBubbleColor = if (message.isFromYou) {
         MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.surfaceVariant
@@ -308,7 +316,7 @@ fun ChatItemBubble(
         ) {
             ClickableMessage(
                 message = message,
-                isUserMe = isUserMe,
+                isUserMe = message.isFromYou,
                 authorClicked = authorClicked
             )
         }
@@ -332,14 +340,14 @@ fun ChatItemBubble(
 
 @Composable
 fun ClickableMessage(
-    message: Message,
+    message: ChatMessage.TextMessage,
     isUserMe: Boolean,
     authorClicked: (String) -> Unit
 ) {
     val uriHandler = LocalUriHandler.current
 
     val styledMessage = messageFormatter(
-        text = message.text,
+        text = message.message,
         primary = isUserMe
     )
 

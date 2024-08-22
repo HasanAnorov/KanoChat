@@ -1,9 +1,9 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
-    kotlin("kapt")
-    id("com.google.dagger.hilt.android")
-    id("org.jetbrains.kotlin.plugin.serialization")
+    alias(libs.plugins.hiltAndroid)
+    alias(libs.plugins.devtoolsKsp)
+    alias(libs.plugins.pluginSerialization)
 }
 
 android {
@@ -23,11 +23,6 @@ android {
         }
     }
 
-    // Allow references to generated code
-    kapt {
-        correctErrorTypes = true
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -41,19 +36,23 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
     kotlinOptions {
         jvmTarget = "1.8"
     }
     buildFeatures {
-        compose = true
         viewBinding = true
+        compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/INDEX.LIST"
         }
     }
 }
@@ -78,6 +77,7 @@ dependencies {
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.appcompat)
+    implementation(libs.firebase.crashlytics.buildtools)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -86,18 +86,29 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    //datastore used for preferences
+    implementation (libs.androidx.datastore.preferences)
+
     //hilt
-    implementation("com.google.dagger:hilt-android:2.48.1")
-    kapt("com.google.dagger:hilt-android-compiler:2.48.1")
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
 
     //kotlin json serializer
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation(libs.kotlinx.serialization.json)
 
-    // Ktor
-    implementation ("io.ktor:ktor-client-core:1.6.3")
-    implementation ("io.ktor:ktor-client-cio:1.6.3")
-    implementation ("io.ktor:ktor-client-serialization:1.6.3")
-    implementation ("io.ktor:ktor-client-websockets:1.6.3")
-    implementation ("io.ktor:ktor-client-logging:1.6.3")
-    implementation ("ch.qos.logback:logback-classic:1.2.6")
+    //recording view
+    implementation(libs.recordview)
+
+    //gson
+    implementation (libs.converter.gson)
+
+    //image loading - coil
+    implementation(libs.coil.compose)
+
+    // room
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    implementation (libs.kotlin.reflect)
+
 }
