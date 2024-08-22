@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -32,6 +31,8 @@ import com.ierusalem.androchat.core.utils.millisecondsToTime
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.AudioState
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.ChatBubbleShapeEnd
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.ChatBubbleShapeStart
 
 @Composable
 fun VoiceMessageItem(
@@ -48,7 +49,7 @@ fun VoiceMessageItem(
     }
     Surface(
         color = backgroundBubbleColor,
-        shape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+        shape = if (message.isFromYou) ChatBubbleShapeEnd else ChatBubbleShapeStart,
     ) {
         Column(modifier.padding(8.dp)) {
             Row(

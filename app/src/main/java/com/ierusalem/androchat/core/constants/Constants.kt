@@ -39,7 +39,7 @@ object Constants {
     const val MIN_HOTSPOT_PASSWORD_LENGTH = 8
 
     const val DEFAULT_PORT_NUMBER = "9002"
-    const val DEFAULT_HOTSPOT_NAME = "DIRECT-ANDRO"
+    const val DEFAULT_HOTSPOT_NAME = "FAST-CHAT"
 
     private const val ENGLISH_LOCALE = "en"
     private const val RUSSIAN_LOCALE = "ru"
@@ -105,7 +105,8 @@ object Constants {
 
         val monthDate = SimpleDateFormat("MMM", Locale.getDefault())
         val currentShortMontName = monthDate.format(calendar.time)
-        val currentTime = "$currentHour:$currentMinute:$currentSecond, $currentShortMontName $currentDate $currentYear"
+        val currentTime =
+            "$currentHour:$currentMinute:$currentSecond, $currentShortMontName $currentDate $currentYear"
 
         return currentTime
     }

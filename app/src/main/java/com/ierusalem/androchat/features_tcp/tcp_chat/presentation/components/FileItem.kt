@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -26,8 +25,10 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.CircularProgressBar
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.log
-import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.ChatBubbleShapeEnd
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.ChatBubbleShapeStart
 
 @Composable
 fun FileMessageItem(
@@ -42,7 +43,7 @@ fun FileMessageItem(
     }
     Surface(
         color = backgroundBubbleColor,
-        shape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+        shape = if (message.isFromYou) ChatBubbleShapeEnd else ChatBubbleShapeStart,
     ) {
         Column(modifier.padding(8.dp)) {
             Row(

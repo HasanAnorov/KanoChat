@@ -1,5 +1,6 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.presentation
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,7 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.res.stringResource
@@ -29,7 +31,7 @@ import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.Fil
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.VoiceMessageItem
 
 @Composable
-fun TextMessageItem(
+fun ChatMessageItem(
     msg: ChatMessage,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
@@ -41,7 +43,10 @@ fun TextMessageItem(
 ) {
     
     val spaceBetweenAuthors = if (isLastMessageByAuthor) Modifier.padding(top = 8.dp) else Modifier
-    Row(modifier = spaceBetweenAuthors) {
+    Row(
+        modifier = spaceBetweenAuthors,
+        horizontalArrangement = if (msg.isFromYou) Arrangement.End else Arrangement.Start
+    ) {
         Spacer(modifier = Modifier.width(24.dp))
         AuthorAndMessage(
             modifier = Modifier
@@ -71,13 +76,16 @@ fun AuthorAndMessage(
     onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = if (chatMessage.isFromYou) Alignment.End else Alignment.Start
+    ) {
         if (isLastMessageByAuthor) {
             AuthorName(isUserMe = chatMessage.isFromYou, peerUserName = chatMessage.peerUsername)
         }
         when (chatMessage) {
             is ChatMessage.TextMessage -> {
-                TextMessageItem(message = chatMessage)
+                ChatMessageItem(message = chatMessage)
             }
 
             is ChatMessage.VoiceMessage -> {
@@ -161,7 +169,53 @@ private fun AuthorName(
 @Composable
 private fun PreviewMessage() {
     AndroChatTheme {
-        TextMessageItem(
+        ChatMessageItem(
+            msg = ChatMessage.TextMessage(
+                message = ("Hello it is a text"),
+                formattedTime = "12:32",
+                isFromYou = true,
+                messageId = 0L,
+                peerUsername = "Khasan"
+            ),
+            isFirstMessageByAuthor = false,
+            isLastMessageByAuthor = true,
+            onFileItemClick = {},
+            onContactItemClick = {},
+            onPlayVoiceMessageClick = {},
+            onPauseVoiceMessageClick = {},
+            onStopVoiceMessageClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewMessageDark() {
+    AndroChatTheme(isDarkTheme = true) {
+        ChatMessageItem(
+            msg = ChatMessage.TextMessage(
+                message = ("Hello it is a text"),
+                formattedTime = "12:32",
+                isFromYou = true,
+                messageId = 0L,
+                peerUsername = "Khasan"
+            ),
+            isFirstMessageByAuthor = false,
+            isLastMessageByAuthor = true,
+            onFileItemClick = {},
+            onContactItemClick = {},
+            onPlayVoiceMessageClick = {},
+            onPauseVoiceMessageClick = {},
+            onStopVoiceMessageClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewMessagePeer() {
+    AndroChatTheme {
+        ChatMessageItem(
             msg = ChatMessage.TextMessage(
                 message = ("Hello it is a text"),
                 formattedTime = "12:32",
@@ -182,9 +236,9 @@ private fun PreviewMessage() {
 
 @Preview
 @Composable
-private fun PreviewMessageDark() {
+private fun PreviewMessageDarkPeer() {
     AndroChatTheme(isDarkTheme = true) {
-        TextMessageItem(
+        ChatMessageItem(
             msg = ChatMessage.TextMessage(
                 message = ("Hello it is a text"),
                 formattedTime = "12:32",

@@ -218,7 +218,7 @@ fun Messages(
                 val nextAuthor = messages.getOrNull(index + 1)?.isFromYou
                 val isFirstMessageByAuthor = prevAuthor != message.isFromYou
                 val isLastMessageByAuthor = nextAuthor != message.isFromYou
-                TextMessageItem(
+                ChatMessageItem(
                     msg = message,
                     isFirstMessageByAuthor = isFirstMessageByAuthor,
                     isLastMessageByAuthor = isLastMessageByAuthor,
@@ -258,10 +258,11 @@ fun Messages(
     }
 }
 
-private val ChatBubbleShape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+val ChatBubbleShapeStart = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+val ChatBubbleShapeEnd = RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
 
 @Composable
-fun TextMessageItem(
+fun ChatMessageItem(
     message: ChatMessage.TextMessage
 ) {
     val backgroundBubbleColor = if (message.isFromYou) {
@@ -271,7 +272,7 @@ fun TextMessageItem(
     }
     Surface(
         color = backgroundBubbleColor,
-        shape = ChatBubbleShape
+        shape = if (message.isFromYou) ChatBubbleShapeEnd else ChatBubbleShapeStart,
     ) {
         LocalClickableMessage(message = message)
     }
@@ -281,7 +282,7 @@ fun TextMessageItem(
 @Composable
 private fun PreviewLocalChatItemBubble() {
     AndroChatTheme {
-        TextMessageItem(
+        ChatMessageItem(
             message = ChatMessage.TextMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 message = "Assalom alekum aka yaxshimisiz",
@@ -297,7 +298,7 @@ private fun PreviewLocalChatItemBubble() {
 @Composable
 private fun PreviewLocalChatItemBubblePeer() {
     AndroChatTheme {
-        TextMessageItem(
+        ChatMessageItem(
             message = ChatMessage.TextMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 message = "Assalom alekum aka yaxshimisiz",
@@ -313,7 +314,7 @@ private fun PreviewLocalChatItemBubblePeer() {
 @Composable
 private fun PreviewLocalChatItemBubbleDark() {
     AndroChatTheme(isDarkTheme = true) {
-        TextMessageItem(
+        ChatMessageItem(
             message = ChatMessage.TextMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 message = "Assalom alekum aka yaxshimisiz",
@@ -329,7 +330,7 @@ private fun PreviewLocalChatItemBubbleDark() {
 @Composable
 private fun PreviewLocalChatItemBubbleDarkPeer() {
     AndroChatTheme(isDarkTheme = true) {
-        TextMessageItem(
+        ChatMessageItem(
             message = ChatMessage.TextMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 message = "Assalom alekum aka yaxshimisiz",

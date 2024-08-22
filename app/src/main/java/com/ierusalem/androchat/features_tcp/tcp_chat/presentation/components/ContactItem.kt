@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -20,8 +19,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features.conversation.presentation.components.messageFormatter
+import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.ChatBubbleShapeEnd
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.ChatBubbleShapeStart
 
 @Composable
 fun ContactItem(
@@ -41,7 +42,7 @@ fun ContactItem(
     Surface(
         modifier = modifier,
         color = backgroundBubbleColor,
-        shape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+        shape = if (message.isFromYou) ChatBubbleShapeEnd else ChatBubbleShapeStart,
     ) {
         Column(
             modifier = Modifier
