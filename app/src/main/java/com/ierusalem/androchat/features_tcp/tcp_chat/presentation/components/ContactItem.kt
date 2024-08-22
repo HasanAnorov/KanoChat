@@ -107,7 +107,8 @@ private fun PreviewLightContactItem() {
                 contactNumber = "93 337 36 46",
                 contactName = "Anorov Hasan",
                 isFromYou = true,
-                messageId = 0L
+                messageId = 0L,
+                peerUsername = "Khasan"
             ),
             onContactNumberClick = {}
         )
@@ -124,7 +125,8 @@ private fun PreviewDarkContactItem() {
                 contactNumber = "93 337 36 46",
                 contactName = "Anorov Hasan",
                 isFromYou = true,
-                messageId = 0L
+                messageId = 0L,
+                peerUsername = "Khasan"
             ),
             onContactNumberClick = {}
         )

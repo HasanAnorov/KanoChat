@@ -97,15 +97,28 @@ class TcpViewModel @Inject constructor(
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
 
     init {
+        initializeUserUniqueName()
         initBroadcastFrequency()
         initializeHotspotName()
         initializeHotspotPassword()
         listenWifiConnections()
     }
 
+    private fun initializeUserUniqueName() {
+        viewModelScope.launch {
+            val savedUniqueUsername = dataStorePreferenceRepository.getUsername.first()
+            _state.update {
+                it.copy(
+                    userUniqueName = savedUniqueUsername
+                )
+            }
+        }
+    }
+
     private fun initBroadcastFrequency() {
         viewModelScope.launch(Dispatchers.IO) {
-            val savedBroadcastFrequency = dataStorePreferenceRepository.getBroadcastFrequency.first()
+            val savedBroadcastFrequency =
+                dataStorePreferenceRepository.getBroadcastFrequency.first()
             val broadcastFrequency = try {
                 BroadcastFrequency.valueOf(savedBroadcastFrequency)
             } catch (e: IllegalArgumentException) {
@@ -146,13 +159,16 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun updatePeerUserUniqueId(userUniqueId: String) {
+    private fun updateInitialChatModel(initialChatModel: InitialChatModel) {
         _state.update {
             it.copy(
-                peerUserUniqueId = userUniqueId
+                peerUserUniqueId = initialChatModel.userUniqueId,
+                peerUniqueName = initialChatModel.userUniqueName
             )
         }
     }
+
+
 
     private fun startCollectingPlayTiming(messageId: Long) {
         viewModelScope.launch {
@@ -166,14 +182,17 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun loadChatHistory(userUniqueId: String) {
-        updatePeerUserUniqueId(userUniqueId)
+    fun loadChatHistory(initialChatModel: InitialChatModel) {
+        updateInitialChatModel(initialChatModel)
         viewModelScope.launch(Dispatchers.IO) {
-            messagesDao.getUserMessagesById(userUniqueId).collect { messages ->
+            messagesDao.getUserMessagesById(initialChatModel.userUniqueId).collect { messages ->
                 _state.update { uiState ->
+                    messages.forEach {
+                        log("message - $it")
+                    }
                     uiState.copy(
                         messages = messages.mapNotNull {
-                            it.toChatMessage()
+                            it.toChatMessage(initialChatModel.userUniqueName)
                         }
                     )
                 }
@@ -223,22 +242,18 @@ class TcpViewModel @Inject constructor(
         connectivityObserver.observeWifiState().onEach { connectivityStatus ->
             when (connectivityStatus) {
                 ConnectivityObserver.Status.Available -> {
-                    log("wifi is connected")
                     updateConnectedWifiAddress(connectivityObserver.getWifiServerIpAddress())
                 }
 
                 ConnectivityObserver.Status.Loosing -> {
-                    log("wifi is loosing")
                     updateConnectedWifiAddress("Not Connected")
                 }
 
                 ConnectivityObserver.Status.Lost -> {
-                    log("wifi is disconnected")
                     updateConnectedWifiAddress("Not Connected")
                 }
 
                 ConnectivityObserver.Status.Unavailable -> {
-                    log("wifi is unavailable")
                     updateConnectedWifiAddress("Not Connected")
                 }
             }
@@ -676,7 +691,7 @@ class TcpViewModel @Inject constructor(
             }
 
             TcpScreenEvents.DiscoverHotSpotClick -> {
-                if (!state.value.isWifiOn){
+                if (!state.value.isWifiOn) {
                     showWifiNotEnabledDialog()
                     return
                 }
@@ -748,7 +763,7 @@ class TcpViewModel @Inject constructor(
             }
 
             TcpScreenEvents.DiscoverP2PClick -> {
-                if (!state.value.isWifiOn){
+                if (!state.value.isWifiOn) {
                     showWifiNotEnabledDialog()
                     return
                 }
@@ -825,10 +840,11 @@ class TcpViewModel @Inject constructor(
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
                     return
                 }
-                if (state.value.generalNetworkingStatus == GeneralNetworkingStatus.Idle) {
-                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.NO_NETWORK_FOR_CONNECTION)
-                    return
-                }
+
+//                if (state.value.generalNetworkingStatus == GeneralNetworkingStatus.Idle) {
+//                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.NO_NETWORK_FOR_CONNECTION)
+//                    return
+//                }
 
                 if (!state.value.isValidPortNumber) {
                     Log.d("ahi3646", "handleEvents: invalid port number ")
@@ -837,10 +853,6 @@ class TcpViewModel @Inject constructor(
                 }
 
                 if (!state.value.isValidConnectedWifiAddress) {
-                    Log.d(
-                        "ahi3646",
-                        "handleEvents: invalid ip address - ${state.value.connectedWifiAddress} "
-                    )
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidWiFiServerIpAddress))
                     return
                 }
@@ -1201,3 +1213,8 @@ sealed interface VisibleActionDialogs {
         override val onNegativeButtonClick: () -> Unit = {}
     ) : VisibleActionDialogs
 }
+
+data class InitialChatModel(
+    val userUniqueId: String,
+    val userUniqueName: String,
+)

@@ -71,12 +71,10 @@ class WiFiDirectBroadcastReceiver(
     private fun handleStateChangedAction(intent: Intent) {
         when (val p2pState = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, 0)) {
             WifiP2pManager.WIFI_P2P_STATE_ENABLED -> {
-                log("handleStateChangedAction: WiFi Direct: Enabled")
                 networkEventHandler(WiFiNetworkEvent.WifiStateChanged(isWifiOn = true))
             }
 
             WifiP2pManager.WIFI_P2P_STATE_DISABLED -> {
-                log("handleStateChangedAction: WiFi Direct: Disabled")
                 networkEventHandler(WiFiNetworkEvent.WifiStateChanged(isWifiOn = false))
             }
 

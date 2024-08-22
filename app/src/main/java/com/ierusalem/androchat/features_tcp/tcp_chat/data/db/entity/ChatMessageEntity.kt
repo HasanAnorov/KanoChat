@@ -4,8 +4,6 @@ package com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.ierusalem.androchat.core.app.AppMessageType
-import com.ierusalem.androchat.core.utils.getAudioFileDuration
-import java.io.File
 
 @Entity(tableName = "messages")
 data class ChatMessageEntity(
@@ -30,7 +28,7 @@ data class ChatMessageEntity(
     val contactNumber: String? = null
 ) {
 
-    fun toChatMessage(): ChatMessage? {
+    fun toChatMessage(peerUsername:String): ChatMessage? {
         return when (type) {
             AppMessageType.TEXT -> {
                 text?.let {
@@ -39,23 +37,23 @@ data class ChatMessageEntity(
                         isFromYou = isFromYou,
                         messageType = type,
                         message = text,
-                        messageId = id
+                        messageId = id,
+                        peerUsername = peerUsername
                     )
                 }
             }
 
             AppMessageType.VOICE -> {
                 voiceMessageFileName?.let {
-//                    val voiceMessageAudioFile = File(voiceMessageFileName)
                     ChatMessage.VoiceMessage(
                         messageType = type,
                         isFromYou = isFromYou,
                         formattedTime = formattedTime,
                         voiceFileName = voiceMessageFileName,
-//                        duration = voiceMessageAudioFile.getAudioFileDuration(),
                         duration = voiceMessageAudioFileDuration!!,
                         fileState = FileMessageState.Success,
-                        messageId = id
+                        messageId = id,
+                        peerUsername = peerUsername
                     )
                 }
             }
@@ -70,7 +68,8 @@ data class ChatMessageEntity(
                     fileSize = fileSize!!,
                     fileExtension = fileExtension!!,
                     fileState = fileState,
-                    messageId = id
+                    messageId = id,
+                    peerUsername = peerUsername
                 )
             }
 
@@ -81,7 +80,8 @@ data class ChatMessageEntity(
                     messageType = type,
                     contactName = contactName!!,
                     contactNumber = contactNumber!!,
-                    messageId = id
+                    messageId = id,
+                    peerUsername = peerUsername
                 )
             }
 

@@ -209,7 +209,6 @@ fun Messages(
 ) {
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
-        val authorMe = "Hasan"
         LazyColumn(
             reverseLayout = true,
             state = scrollState,
@@ -230,7 +229,6 @@ fun Messages(
                         MessageItem(
                             onAuthorClick = { userId -> navigateToProfile(userId) },
                             message = message,
-                            isUserMe = message.isFromYou,
                             isFirstMessageByAuthor = isFirstMessageByAuthor,
                             isLastMessageByAuthor = isLastMessageByAuthor
                         )
@@ -302,11 +300,10 @@ private val ChatBubbleShape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
 @Composable
 fun ChatItemBubble(
     message: ChatMessage.TextMessage,
-    isUserMe: Boolean,
     authorClicked: (String) -> Unit
 ) {
 
-    val backgroundBubbleColor = if (isUserMe) {
+    val backgroundBubbleColor = if (message.isFromYou) {
         MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.surfaceVariant
@@ -319,7 +316,7 @@ fun ChatItemBubble(
         ) {
             ClickableMessage(
                 message = message,
-                isUserMe = isUserMe,
+                isUserMe = message.isFromYou,
                 authorClicked = authorClicked
             )
         }

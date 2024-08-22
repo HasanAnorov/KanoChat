@@ -15,6 +15,9 @@ import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
 
 data class TcpScreenUiState(
 
+    val userUniqueName:String = Constants.UNKNOWN_USER,
+    val peerUniqueName: String = Constants.UNKNOWN_PEER,
+
     val contacts: Resource<List<ContactItem>> = Resource.Loading(),
     val isReadContactsGranted: Boolean = false,
 
@@ -23,6 +26,7 @@ data class TcpScreenUiState(
     //general state
     val isWifiOn: Boolean = false,
     val peerUserUniqueId: String = "",
+
     val hotspotName: String = Constants.UNKNOWN_HOTSPOT_NAME,
     val isValidHotSpotName: Boolean = isValidHotspotName(hotspotName),
     val hotspotPassword: String = generateRandomPassword(length = 8),
@@ -52,6 +56,7 @@ data class TcpScreenUiState(
 
     //chat room
     val messages: List<ChatMessage> = emptyList(),
+
     //but Erkin aka said, chat should be between only two people
     //todo - maybe you should use connectedWifiNetworks.size here !
     val connectionsCount: Int = 0,

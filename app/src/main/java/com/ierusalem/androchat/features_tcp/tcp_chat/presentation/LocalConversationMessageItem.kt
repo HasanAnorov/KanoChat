@@ -103,11 +103,11 @@ fun AuthorAndTextMessage(
 ) {
     Column(modifier = modifier) {
         if (isLastMessageByAuthor) {
-            AuthorName(msg)
+            AuthorName(isUserMe = msg.isFromYou, peerUserName = msg.peerUsername)
         }
         when (msg) {
             is ChatMessage.TextMessage -> {
-                LocalMessageItem(msg)
+                LocalMessageItem(message = msg)
             }
 
             is ChatMessage.VoiceMessage -> {
@@ -172,11 +172,12 @@ fun LocalClickableMessage(
 
 @Composable
 private fun AuthorName(
-    message: ChatMessage
+    isUserMe: Boolean,
+    peerUserName:String
 ) {
     Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
-            text = if (message.isFromYou) stringResource(id = R.string.author_me) else "message.username",
+            text = if (isUserMe) stringResource(id = R.string.author_me) else peerUserName,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .alignBy(LastBaseline)
@@ -193,8 +194,9 @@ private fun PreviewMessage() {
             msg = ChatMessage.TextMessage(
                 message = ("Hello it is a text"),
                 formattedTime = "12:32",
-                isFromYou = true,
-                messageId = 0L
+                isFromYou = false,
+                messageId = 0L,
+                peerUsername = "Khasan"
             ),
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,

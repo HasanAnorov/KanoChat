@@ -21,6 +21,8 @@ object Constants {
     const val PREFERENCE_UNIQUE_DEVICE_ID = "device_unique_id"
 
     const val UNKNOWN_USER = "Unknown User"
+    const val UNKNOWN_PEER = "Unknown Peer"
+
     const val UNKNOWN_HOTSPOT_NAME = "TEMP-HOTSPOT"
 
     const val USERNAME_REGISTER_TO_HOME = "username_register_to_home"

@@ -33,11 +33,10 @@ import com.ierusalem.androchat.features.conversation.presentation.ChatItemBubble
 fun MessageItem(
     onAuthorClick: (String) -> Unit,
     message: ChatMessage.TextMessage,
-    isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean
 ) {
-    val borderColor = if (isUserMe) {
+    val borderColor = if (message.isFromYou) {
         MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.tertiary
@@ -71,7 +70,6 @@ fun MessageItem(
         }
         AuthorAndTextMessage(
             message = message,
-            isUserMe = isUserMe,
             isFirstMessageByAuthor = isFirstMessageByAuthor,
             isLastMessageByAuthor = isLastMessageByAuthor,
             authorClicked = onAuthorClick,
@@ -85,7 +83,6 @@ fun MessageItem(
 @Composable
 fun AuthorAndTextMessage(
     message: ChatMessage.TextMessage,
-    isUserMe: Boolean,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
     authorClicked: (String) -> Unit,
@@ -98,7 +95,6 @@ fun AuthorAndTextMessage(
 
         ChatItemBubble(
             message,
-            isUserMe,
             authorClicked = authorClicked
         )
         if (isFirstMessageByAuthor) {
@@ -144,11 +140,11 @@ private fun PreviewMessage() {
                 message =("Hello it is a text"),
                 formattedTime = "12:32",
                 isFromYou = false,
-                messageId = 23431241
+                messageId = 23431241,
+                peerUsername = "Khasan"
             ),
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,
-            isUserMe = true
         )
     }
 }

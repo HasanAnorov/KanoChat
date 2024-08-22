@@ -280,7 +280,8 @@ private fun PreviewLightVoiceMessageItem() {
                     duration = 12000,
                     audioState = AudioState.Paused(6000),
                     fileState = FileMessageState.Failure,
-                    messageId = 0L
+                    messageId = 0L,
+                    peerUsername = "Khasan"
                 ),
                 onPlayClick = {},
                 onPauseClick = {},
@@ -303,7 +304,8 @@ private fun PreviewDarkVoiceMessageItem() {
                     isFromYou = false,
                     duration = 80,
                     fileState = FileMessageState.Success,
-                    messageId = 0L
+                    messageId = 0L,
+                    peerUsername = "Khasan"
                 ),
                 onPlayClick = {},
                 onPauseClick = {},

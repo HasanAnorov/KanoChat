@@ -77,8 +77,7 @@ fun LocalConversationContent(
                 contentAlignment = Alignment.Center
             ) {
                 ChannelNameBar(
-                    channelName = uiState.groupOwnerAddress.takeIf { it.isNotEmpty() }
-                        ?: stringResource(R.string.not_connected),
+                    channelName = uiState.connectedServerAddress.asString(),
                     channelMembers = uiState.connectionsCount,
                 )
             }
@@ -285,7 +284,8 @@ private fun PreviewLocalChatItemBubble() {
                 formattedTime = "12:12:12, jul 12 2034",
                 message = "Assalom alekum aka yaxshimisiz",
                 isFromYou = true,
-                messageId = 0L
+                messageId = 0L,
+                peerUsername = "Khasan"
             )
         )
     }
@@ -294,7 +294,7 @@ private fun PreviewLocalChatItemBubble() {
 
 @Preview
 @Composable
-private fun PreviwLightFileItem() {
+private fun PreviewLightFileItem() {
     AndroChatTheme {
         FileMessageItem(
             modifier = Modifier,
@@ -305,7 +305,8 @@ private fun PreviwLightFileItem() {
                 fileExtension = ".pdf",
                 filePath = "file_path_uri",
                 isFromYou = true,
-                messageId = 0L
+                messageId = 0L,
+                peerUsername = "Khasan"
             ),
             onFileItemClick = {}
         )
@@ -325,7 +326,8 @@ private fun PreviewDarkFileItem() {
                 fileExtension = ".pdf",
                 filePath = "file_path_uri",
                 isFromYou = true,
-                messageId = 0L
+                messageId = 0L,
+                peerUsername = "Khasan"
             ),
             onFileItemClick = {}
         )

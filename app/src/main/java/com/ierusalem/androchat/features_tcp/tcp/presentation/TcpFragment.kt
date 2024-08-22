@@ -78,6 +78,7 @@ import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImp
 import com.ierusalem.androchat.features_tcp.server.wifidirect.Reason
 import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiDirectBroadcastReceiver
 import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiNetworkEvent
+import com.ierusalem.androchat.features_tcp.tcp.domain.InitialChatModel
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.ClientConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.ContactMessageItem
@@ -1353,10 +1354,17 @@ class TcpFragment : Fragment() {
 
     private fun initializeUser(writer: DataOutputStream) {
         val userUniqueId = runBlocking(Dispatchers.IO) { viewModel.getUniqueDeviceId() }
+        val userUniqueName = viewModel.state.value.userUniqueName
+        val initialChatModel = InitialChatModel(
+            userUniqueId = userUniqueId,
+            userUniqueName = userUniqueName
+        )
+        val initialChatModelStringForm = gson.toJson(initialChatModel)
+
         val type = AppMessageType.INITIAL.identifier.code
         try {
             writer.writeChar(type)
-            writer.writeUTF(userUniqueId)
+            writer.writeUTF(initialChatModelStringForm)
         } catch (e: IOException) {
             e.printStackTrace()
             Log.d(
@@ -1377,9 +1385,14 @@ class TcpFragment : Fragment() {
     }
 
     private fun setupUserData(reader: DataInputStream) {
-        val uniqueDeviceId = reader.readUTF()
-        log("unique device id - $uniqueDeviceId")
-        viewModel.loadChatHistory(uniqueDeviceId)
+        val receivedMessage = reader.readUTF()
+        log("incoming initial message - $receivedMessage")
+
+        val initialChatModel = gson.fromJson(
+            receivedMessage,
+            InitialChatModel::class.java
+        )
+        viewModel.loadChatHistory(initialChatModel)
     }
 
     /**Socket Sending Functions*/
