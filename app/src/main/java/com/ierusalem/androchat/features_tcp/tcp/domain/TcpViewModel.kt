@@ -40,8 +40,10 @@ import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.voice_message.playback.AndroidAudioPlayer
 import com.ierusalem.androchat.core.voice_message.recorder.AndroidAudioRecorder
-import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuard
-import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiNetworkEvent
+import com.ierusalem.androchat.features_tcp.tcp.data.server.permission.PermissionGuard
+import com.ierusalem.androchat.features_tcp.tcp.data.server.wifidirect.WiFiNetworkEvent
+import com.ierusalem.androchat.features_tcp.tcp.data.db.dao.ChattingUsersDao
+import com.ierusalem.androchat.features_tcp.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.ClientConnectionStatus
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.ContactItem
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralConnectionStatus
@@ -81,6 +83,7 @@ class TcpViewModel @Inject constructor(
     private val wifiManager: WifiManager,
     private val contentResolver: ContentResolver,
     private val messagesDao: MessagesDao,
+    private val chattingUsersDao: ChattingUsersDao,
     private val audioRecorder: AndroidAudioRecorder,
     private val audioPlayer: AndroidAudioPlayer
 ) : ViewModel(), NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
@@ -102,6 +105,7 @@ class TcpViewModel @Inject constructor(
         initializeHotspotName()
         initializeHotspotPassword()
         listenWifiConnections()
+        loadChattingUsers()
     }
 
     private fun initializeUserUniqueName() {
@@ -169,7 +173,6 @@ class TcpViewModel @Inject constructor(
     }
 
 
-
     private fun startCollectingPlayTiming(messageId: Long) {
         viewModelScope.launch {
             audioPlayer
@@ -182,22 +185,70 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun loadChatHistory(initialChatModel: InitialChatModel) {
-        updateInitialChatModel(initialChatModel)
+    private fun loadChattingUsers(){
         viewModelScope.launch(Dispatchers.IO) {
-            messagesDao.getUserMessagesById(initialChatModel.userUniqueId).collect { messages ->
-                _state.update { uiState ->
-                    messages.forEach {
-                        log("message - $it")
-                    }
-                    uiState.copy(
-                        messages = messages.mapNotNull {
-                            it.toChatMessage(initialChatModel.userUniqueName)
-                        }
+            chattingUsersDao.getChattingUsers().collect{users ->
+                _state.update {
+                    it.copy(
+                        contactsList = Resource.Success(users)
                     )
                 }
             }
         }
+    }
+
+    fun createNewUserIfDoNotExist(initialChatModel: InitialChatModel){
+        viewModelScope.launch {
+            val isUserExist = chattingUsersDao.isChattingUserExists(initialChatModel.userUniqueId)
+            if(!isUserExist){
+                insertNewChattingUser(initialChatModel)
+            }
+        }
+    }
+
+    private fun insertNewChattingUser(initialChatModel: InitialChatModel) {
+        updateInitialChatModel(initialChatModel)
+        viewModelScope.launch(Dispatchers.IO) {
+            val chattingUserEntity = ChattingUserEntity(
+                userUniqueId = initialChatModel.userUniqueId,
+                userUniqueName = initialChatModel.userUniqueName
+            )
+            chattingUsersDao.insertChattingUser(chattingUserEntity)
+        }
+
+//        viewModelScope.launch(Dispatchers.IO) {
+////            messagesDao.getUserMessagesById(initialChatModel.userUniqueId).collect { messages ->
+////                _state.update { uiState ->
+////                    messages.forEach {
+////                        log("message - $it")
+////                    }
+////                    uiState.copy(
+////                        messages = messages.mapNotNull {
+////                            it.toChatMessage(initialChatModel.userUniqueName)
+////                        }
+////                    )
+////                }
+////            }
+//            _state.update {
+//                it.copy(
+//                    messages = Pager(
+//                        PagingConfig(pageSize = 10, prefetchDistance = 20),
+//                        pagingSourceFactory = {
+//                            messagesDao.getPagedUserMessagesById(
+//                                initialChatModel.userUniqueId
+//                            )
+//                        }
+//                    ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
+//                        value.map { chatMessageEntity ->
+//                            chatMessageEntity.toChatMessage(
+//                                initialChatModel.userUniqueName
+//                            )!!
+//                        }
+//                    }.cachedIn(viewModelScope)
+//                )
+//            }
+//            //messagesDao.getPagedUserMessagesById(initialChatModel.userUniqueId)
+//        }
     }
 
     suspend fun getUniqueDeviceId(): String {
@@ -442,55 +493,57 @@ class TcpViewModel @Inject constructor(
 
     private fun updateIsPlaying(audioState: AudioState, messageId: Long) {
         // Find the target message
-        val targetMessage: ChatMessage.VoiceMessage? = state.value.messages
-            .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
-        // Check if targetMessage is not null
-        targetMessage?.let { message ->
-            // Create a copy with the updated isPlaying value
-            val updatedMessage = message.copy(audioState = audioState)
-            // Create a new list with the updated message
-            val newMessages = state.value.messages.map { msg ->
-                if (msg.messageId == messageId && msg.messageType == AppMessageType.VOICE) {
-                    updatedMessage
-                } else if (msg.messageType == AppMessageType.VOICE) {
-                    (msg as ChatMessage.VoiceMessage).copy(audioState = AudioState.Idle)
-                } else {
-                    msg
-                }
-            }
-            // Update the state with the new list of messages
-            _state.update { currentState ->
-                currentState.copy(
-                    messages = newMessages
-                )
-            }
-        }
+//        val targetMessage: ChatMessage.VoiceMessage? = state.value.messages.collect{msg ->
+//            msg.
+//        }
+//            .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
+//        // Check if targetMessage is not null
+//        targetMessage?.let { message ->
+//            // Create a copy with the updated isPlaying value
+//            val updatedMessage = message.copy(audioState = audioState)
+//            // Create a new list with the updated message
+//            val newMessages = state.value.messages.map { msg ->
+//                if (msg.messageId == messageId && msg.messageType == AppMessageType.VOICE) {
+//                    updatedMessage
+//                } else if (msg.messageType == AppMessageType.VOICE) {
+//                    (msg as ChatMessage.VoiceMessage).copy(audioState = AudioState.Idle)
+//                } else {
+//                    msg
+//                }
+//            }
+//            // Update the state with the new list of messages
+//            _state.update { currentState ->
+//                currentState.copy(
+//                    messages = newMessages
+//                )
+//            }
+//        }
     }
 
     private fun updatePlayTiming(timing: Long, messageId: Long) {
         // Find the target message
-        val targetMessage: ChatMessage.VoiceMessage? = state.value.messages
-            .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
-        // Check if targetMessage is not null
-        targetMessage?.let {
-            val newAudioState = AudioState.Playing(timing)
-            // Create a copy with the updated isPlaying value
-            val updatedMessage = it.copy(audioState = newAudioState)
-            // Get the current list of messages
-            val messages = state.value.messages
-            // Find the index of the target message
-            val targetMessageIndex = messages.indexOf(targetMessage)
-            // Create a new list with the updated message
-            val newMessages = messages.toMutableList().apply {
-                set(targetMessageIndex, updatedMessage)
-            }
-            // Update the state with the new list of messages
-            _state.update { currentState ->
-                currentState.copy(
-                    messages = newMessages
-                )
-            }
-        }
+//        val targetMessage: ChatMessage.VoiceMessage? = state.value.messages
+//            .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
+//        // Check if targetMessage is not null
+//        targetMessage?.let {
+//            val newAudioState = AudioState.Playing(timing)
+//            // Create a copy with the updated isPlaying value
+//            val updatedMessage = it.copy(audioState = newAudioState)
+//            // Get the current list of messages
+//            val messages = state.value.messages
+//            // Find the index of the target message
+//            val targetMessageIndex = messages.indexOf(targetMessage)
+//            // Create a new list with the updated message
+//            val newMessages = messages.toMutableList().apply {
+//                set(targetMessageIndex, updatedMessage)
+//            }
+//            // Update the state with the new list of messages
+//            _state.update { currentState ->
+//                currentState.copy(
+//                    messages = newMessages
+//                )
+//            }
+//        }
     }
 
     private fun playAudioFile(voiceMessage: ChatMessage.VoiceMessage) {
@@ -586,6 +639,10 @@ class TcpViewModel @Inject constructor(
             //todo - you did not use the parameter inside on play voice message
             is TcpScreenEvents.OnPlayVoiceMessageClick -> {
                 playAudioFile(event.message)
+            }
+
+            is TcpScreenEvents.TcpContactItemClicked -> {
+
             }
 
             TcpScreenEvents.RequestRecordAudioPermission -> {

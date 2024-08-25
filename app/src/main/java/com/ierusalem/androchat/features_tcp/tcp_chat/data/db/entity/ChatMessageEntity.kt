@@ -59,6 +59,7 @@ data class ChatMessageEntity(
             }
 
             AppMessageType.FILE -> {
+
                 ChatMessage.FileMessage(
                     isFromYou = isFromYou,
                     formattedTime = formattedTime,

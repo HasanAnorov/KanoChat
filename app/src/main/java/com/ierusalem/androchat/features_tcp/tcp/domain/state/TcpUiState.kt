@@ -1,6 +1,7 @@
 package com.ierusalem.androchat.features_tcp.tcp.domain.state
 
 import android.net.wifi.p2p.WifiP2pDevice
+import androidx.paging.PagingData
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.BroadcastFrequency
 import com.ierusalem.androchat.core.constants.Constants
@@ -11,7 +12,10 @@ import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidHotspotPassword
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
+import com.ierusalem.androchat.features_tcp.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 data class TcpScreenUiState(
 
@@ -55,7 +59,11 @@ data class TcpScreenUiState(
     val connectedWifiNetworks: List<WifiP2pDevice> = emptyList(),
 
     //chat room
-    val messages: List<ChatMessage> = emptyList(),
+//    val messages: List<ChatMessage> = emptyList(),
+    val messages: Flow<PagingData<ChatMessage>> = flowOf(),
+
+    //contacts
+    val contactsList:Resource<List<ChattingUserEntity>> = Resource.Loading(),
 
     //but Erkin aka said, chat should be between only two people
     //todo - maybe you should use connectedWifiNetworks.size here !

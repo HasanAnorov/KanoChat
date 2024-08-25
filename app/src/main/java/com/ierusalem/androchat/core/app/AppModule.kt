@@ -12,8 +12,9 @@ import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.utils.FieldValidator
 import com.ierusalem.androchat.core.voice_message.playback.AndroidAudioPlayer
 import com.ierusalem.androchat.core.voice_message.recorder.AndroidAudioRecorder
-import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuard
-import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
+import com.ierusalem.androchat.features_tcp.tcp.data.server.permission.PermissionGuard
+import com.ierusalem.androchat.features_tcp.tcp.data.server.permission.PermissionGuardImpl
+import com.ierusalem.androchat.features_tcp.tcp.data.db.dao.ChattingUsersDao
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.MessagesDatabase
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.dao.MessagesDao
 import dagger.Module
@@ -52,8 +53,14 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideDao(messagesDatabase: MessagesDatabase) : MessagesDao {
-        return messagesDatabase.dao
+    fun provideMessagesDao(messagesDatabase: MessagesDatabase) : MessagesDao {
+        return messagesDatabase.messagesDao
+    }
+
+    @Provides
+    @Singleton
+    fun provideChattingUsersDao(messagesDatabase: MessagesDatabase) : ChattingUsersDao {
+        return messagesDatabase.chattingUsersDao
     }
 
     @Provides

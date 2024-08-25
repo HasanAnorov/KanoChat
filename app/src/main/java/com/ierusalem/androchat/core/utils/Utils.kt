@@ -3,7 +3,6 @@ package com.ierusalem.androchat.core.utils
 import android.util.Log
 import com.ierusalem.androchat.core.constants.Constants
 import com.ierusalem.androchat.core.constants.Constants.generateUniqueFileName
-import com.ierusalem.androchat.features_tcp.server.IP_ADDRESS_REGEX
 import java.io.File
 import java.util.Random
 
@@ -54,3 +53,14 @@ fun getFileByName(fileName: String, resourceDirectory: File): File {
     }
     return file
 }
+
+/**
+ * What the fuck is this
+ * https://stackoverflow.com/questions/10006459/regular-expression-for-ip-address-validation
+ *
+ * Tests if a given string is an IP address
+ */
+@JvmField
+val IP_ADDRESS_REGEX =
+    """^(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))$"""
+        .toRegex()

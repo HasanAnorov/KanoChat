@@ -49,7 +49,7 @@
     <string name="attach_photo_desc">Прикрепить фото</string>
     <string name="map_selector_desc">Выбор местоположения</string>
     <string name="videochat_desc">Начать видеочат</string>
-    <string name="textfield_desc">Ввод текста</string>
+    <string name="text_field_desc">Ввод текста</string>
     <string name="not_available">Функционал на данный момент недоступен</string>
     <string name="search">Поиск</string>
     <string name="info">Информация</string>

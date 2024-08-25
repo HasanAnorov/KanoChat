@@ -11,9 +11,8 @@ import androidx.compose.ui.Modifier
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpView
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
-import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.LocalConversationContent
 import com.ierusalem.androchat.features_tcp.tcp_connections.ConnectionsContent
-import com.ierusalem.androchat.features_tcp.tcp_instructions.InstructionsContent
+import com.ierusalem.androchat.features_tcp.tcp_contacts.ContactsScreen
 import com.ierusalem.androchat.features_tcp.tcp_networking.NetworkingContent
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -38,6 +37,14 @@ fun TcpContent(
         }
         when (screen) {
 
+            TcpView.CONTACTS -> {
+                ContactsScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    eventHandler = eventHandler,
+                    state = state.contactsList
+                )
+            }
+
             TcpView.NETWORKING -> {
                 NetworkingContent(
                     modifier = Modifier.fillMaxSize(),
@@ -54,19 +61,6 @@ fun TcpContent(
                 )
             }
 
-            TcpView.INSTRUCTIONS -> {
-                InstructionsContent(
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-
-            TcpView.CHAT_ROOM -> {
-                LocalConversationContent(
-                    modifier = Modifier.fillMaxSize(),
-                    uiState = state,
-                    eventHandler = eventHandler
-                )
-            }
         }
     }
 }

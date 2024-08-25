@@ -16,7 +16,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
@@ -85,10 +85,9 @@ fun TcpAppBar(
         )
 
         val currentPage = pagerState.currentPage
-        ScrollableTabRow(
+        TabRow(
             modifier = Modifier.fillMaxWidth(),
             selectedTabIndex = currentPage,
-            edgePadding = 0.dp,
             indicator = { tabPositions ->
                 if (currentPage < tabPositions.size) {
                     TabRowDefaults.SecondaryIndicator(

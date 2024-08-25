@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_tcp.server.wifidirect
+package com.ierusalem.androchat.features_tcp.tcp.data.server.wifidirect
 
 import android.net.wifi.p2p.WifiP2pManager
 import androidx.annotation.CheckResult

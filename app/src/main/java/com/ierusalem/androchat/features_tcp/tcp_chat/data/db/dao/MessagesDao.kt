@@ -1,5 +1,6 @@
 package com.ierusalem.androchat.features_tcp.tcp_chat.data.db.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -7,7 +8,6 @@ import androidx.room.Query
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 import kotlinx.coroutines.flow.Flow
-import kotlin.time.Duration
 
 @Dao
 interface MessagesDao {
@@ -33,5 +33,8 @@ interface MessagesDao {
 
     @Query("SELECT * FROM messages WHERE userId = :userId")
     fun getUserMessagesById(userId: String): Flow<List<ChatMessageEntity>>
+
+    @Query("SELECT * FROM messages WHERE userId = :userId")
+    fun getPagedUserMessagesById(userId: String): PagingSource<Int, ChatMessageEntity>
 
 }

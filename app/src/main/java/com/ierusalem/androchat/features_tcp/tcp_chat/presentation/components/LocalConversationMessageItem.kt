@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_tcp.tcp_chat.presentation
+package com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,9 +26,6 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features.conversation.presentation.components.messageFormatter
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
-import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ContactItem
-import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.FileMessageItem
-import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.VoiceMessageItem
 
 @Composable
 fun ChatMessageItem(
@@ -85,7 +82,7 @@ fun AuthorAndMessage(
         }
         when (chatMessage) {
             is ChatMessage.TextMessage -> {
-                ChatMessageItem(message = chatMessage)
+                TextMessageItem(message = chatMessage)
             }
 
             is ChatMessage.VoiceMessage -> {
@@ -102,7 +99,7 @@ fun AuthorAndMessage(
             }
 
             is ChatMessage.ContactMessage -> {
-                ContactItem(
+                ContactMessageItem(
                     message = chatMessage,
                     onContactNumberClick = onContactItemClick
                 )

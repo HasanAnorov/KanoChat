@@ -25,7 +25,7 @@ import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.ChatBubbleShap
 import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.ChatBubbleShapeStart
 
 @Composable
-fun ContactItem(
+fun ContactMessageItem(
     modifier: Modifier = Modifier,
     message: ChatMessage.ContactMessage,
     onContactNumberClick: (ChatMessage.ContactMessage) -> Unit
@@ -110,7 +110,7 @@ fun ContactItem(
 @Composable
 private fun PreviewLightContactItem() {
     AndroChatTheme {
-        ContactItem(
+        ContactMessageItem(
             message = ChatMessage.ContactMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 contactNumber = "93 337 36 46",
@@ -128,7 +128,7 @@ private fun PreviewLightContactItem() {
 @Composable
 private fun PreviewDarkContactItem() {
     AndroChatTheme(isDarkTheme = true) {
-        ContactItem(
+        ContactMessageItem(
             message = ChatMessage.ContactMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 contactNumber = "93 337 36 46",
@@ -146,7 +146,7 @@ private fun PreviewDarkContactItem() {
 @Composable
 private fun PreviewLightContactItemPeer() {
     AndroChatTheme {
-        ContactItem(
+        ContactMessageItem(
             message = ChatMessage.ContactMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 contactNumber = "93 337 36 46",
@@ -164,7 +164,7 @@ private fun PreviewLightContactItemPeer() {
 @Composable
 private fun PreviewDarkContactItemPeer() {
     AndroChatTheme(isDarkTheme = true) {
-        ContactItem(
+        ContactMessageItem(
             message = ChatMessage.ContactMessage(
                 formattedTime = "12:12:12, jul 12 2034",
                 contactNumber = "93 337 36 46",

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -41,6 +40,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
@@ -48,7 +51,8 @@ import com.ierusalem.androchat.features.conversation.presentation.components.Jum
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_tcp.tcp.presentation.utils.TcpScreenEvents
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessage
-import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.FileMessageItem
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.ChatMessageItem
+import com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components.LocalConversationUserInput
 import kotlinx.coroutines.launch
 
 @Composable
@@ -93,7 +97,7 @@ fun LocalConversationContent(
                 .background(MaterialTheme.colorScheme.surfaceDim.copy(0.12F)),
             content = {
                 Messages(
-                    messages = uiState.messages.reversed(),
+                    messages = uiState.messages.collectAsLazyPagingItems(),
                     modifier = Modifier.weight(1f),
                     scrollState = scrollState,
                     onFileItemClicked = { eventHandler(TcpScreenEvents.OnFileItemClick(it)) },
@@ -170,9 +174,9 @@ fun ChannelNameBar(
 
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text = if(isOnline) stringResource(id = R.string.connected) else stringResource(id = R.string.not_connected),
+                text = if (isOnline) stringResource(id = R.string.connected) else stringResource(id = R.string.not_connected),
                 style = MaterialTheme.typography.bodySmall,
-                color = if(isOnline) Color(0xFF35C47C) else Color.Red
+                color = if (isOnline) Color(0xFF35C47C) else Color.Red
             )
         }
         // Search icon
@@ -190,7 +194,7 @@ const val ConversationTestTag = "ConversationTestTag"
 
 @Composable
 fun Messages(
-    messages: List<ChatMessage>,
+    messages: LazyPagingItems<ChatMessage>,
     scrollState: LazyListState,
     modifier: Modifier = Modifier,
     onFileItemClicked: (ChatMessage.FileMessage) -> Unit,
@@ -212,23 +216,32 @@ fun Messages(
             item {
                 Spacer(modifier = Modifier.height(32.dp))
             }
-            itemsIndexed(messages) { index, message ->
-                /// todo: fix this
-                val prevAuthor = messages.getOrNull(index - 1)?.isFromYou
-                val nextAuthor = messages.getOrNull(index + 1)?.isFromYou
-                val isFirstMessageByAuthor = prevAuthor != message.isFromYou
-                val isLastMessageByAuthor = nextAuthor != message.isFromYou
-                ChatMessageItem(
-                    msg = message,
-                    isFirstMessageByAuthor = isFirstMessageByAuthor,
-                    isLastMessageByAuthor = isLastMessageByAuthor,
-                    onFileItemClick = onFileItemClicked,
-                    onContactItemClick = onContactItemClick,
-                    onPlayVoiceMessageClick = {onPlayVoiceMessageClick(it)},
-                    onPauseVoiceMessageClick = {onPauseVoiceMessageClick(it)},
-                    onStopVoiceMessageClick = {onStopVoiceMessageClick(it)},
-                )
+
+            items(
+                count = messages.itemCount,
+                key = messages.itemKey { chatMessage -> chatMessage.messageId },
+                contentType = messages.itemContentType { "ChatMessages" }
+            ) { index: Int ->
+                val chatMessage: ChatMessage? = messages[index]
+                chatMessage?.let {
+                    // todo: fix this
+                    val prevAuthor = messages.itemSnapshotList.getOrNull(index - 1)?.isFromYou
+                    val nextAuthor = messages.itemSnapshotList.getOrNull(index + 1)?.isFromYou
+                    val isFirstMessageByAuthor = prevAuthor != chatMessage.isFromYou
+                    val isLastMessageByAuthor = nextAuthor != chatMessage.isFromYou
+                    ChatMessageItem(
+                        msg = chatMessage,
+                        isFirstMessageByAuthor = isFirstMessageByAuthor,
+                        isLastMessageByAuthor = isLastMessageByAuthor,
+                        onFileItemClick = onFileItemClicked,
+                        onContactItemClick = onContactItemClick,
+                        onPlayVoiceMessageClick = { onPlayVoiceMessageClick(it) },
+                        onPauseVoiceMessageClick = { onPauseVoiceMessageClick(it) },
+                        onStopVoiceMessageClick = { onStopVoiceMessageClick(it) },
+                    )
+                }
             }
+
         }
         // Jump to bottom button shows up when user scrolls past a threshold.
         // Convert to pixels:
@@ -261,129 +274,6 @@ fun Messages(
 val ChatBubbleShapeStart = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
 val ChatBubbleShapeEnd = RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
 
-@Composable
-fun ChatMessageItem(
-    message: ChatMessage.TextMessage
-) {
-    val backgroundBubbleColor = if (message.isFromYou) {
-        MaterialTheme.colorScheme.surfaceVariant
-    } else {
-        MaterialTheme.colorScheme.inverseOnSurface
-    }
-    Surface(
-        color = backgroundBubbleColor,
-        shape = if (message.isFromYou) ChatBubbleShapeEnd else ChatBubbleShapeStart,
-    ) {
-        LocalClickableMessage(message = message)
-    }
-}
-
-@Preview
-@Composable
-private fun PreviewLocalChatItemBubble() {
-    AndroChatTheme {
-        ChatMessageItem(
-            message = ChatMessage.TextMessage(
-                formattedTime = "12:12:12, jul 12 2034",
-                message = "Assalom alekum aka yaxshimisiz",
-                isFromYou = true,
-                messageId = 0L,
-                peerUsername = "Khasan"
-            )
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun PreviewLocalChatItemBubblePeer() {
-    AndroChatTheme {
-        ChatMessageItem(
-            message = ChatMessage.TextMessage(
-                formattedTime = "12:12:12, jul 12 2034",
-                message = "Assalom alekum aka yaxshimisiz",
-                isFromYou = false,
-                messageId = 0L,
-                peerUsername = "Khasan"
-            )
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun PreviewLocalChatItemBubbleDark() {
-    AndroChatTheme(isDarkTheme = true) {
-        ChatMessageItem(
-            message = ChatMessage.TextMessage(
-                formattedTime = "12:12:12, jul 12 2034",
-                message = "Assalom alekum aka yaxshimisiz",
-                isFromYou = true,
-                messageId = 0L,
-                peerUsername = "Khasan"
-            )
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun PreviewLocalChatItemBubbleDarkPeer() {
-    AndroChatTheme(isDarkTheme = true) {
-        ChatMessageItem(
-            message = ChatMessage.TextMessage(
-                formattedTime = "12:12:12, jul 12 2034",
-                message = "Assalom alekum aka yaxshimisiz",
-                isFromYou = false,
-                messageId = 0L,
-                peerUsername = "Khasan"
-            )
-        )
-    }
-}
-
-
-@Preview
-@Composable
-private fun PreviewLightFileItem() {
-    AndroChatTheme {
-        FileMessageItem(
-            modifier = Modifier,
-            message = ChatMessage.FileMessage(
-                formattedTime = "12:12:12, jul 12 2034",
-                fileName = "SamsungElectronics Dubai Global Version home.edition.com",
-                fileSize = "16 Kb",
-                fileExtension = ".pdf",
-                filePath = "file_path_uri",
-                isFromYou = true,
-                messageId = 0L,
-                peerUsername = "Khasan"
-            ),
-            onFileItemClick = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun PreviewDarkFileItem() {
-    AndroChatTheme(isDarkTheme = true) {
-        FileMessageItem(
-            modifier = Modifier,
-            message = ChatMessage.FileMessage(
-                formattedTime = "12:12:12, jul 12 2034",
-                fileName = "SamsungElectronics Dubai Global Version home.edition.com",
-                fileSize = "16 Kb",
-                fileExtension = ".pdf",
-                filePath = "file_path_uri",
-                isFromYou = true,
-                messageId = 0L,
-                peerUsername = "Khasan"
-            ),
-            onFileItemClick = {}
-        )
-    }
-}
 
 @Preview
 @Composable

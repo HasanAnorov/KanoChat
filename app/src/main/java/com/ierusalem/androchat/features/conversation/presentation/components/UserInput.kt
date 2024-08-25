@@ -401,7 +401,7 @@ fun UserInputText(
 ) {
     val swipeOffset = remember { mutableFloatStateOf(0f) }
     var isRecordingMessage by remember { mutableStateOf(false) }
-    val a11ylabel = stringResource(id = R.string.textfield_desc)
+    val a11ylabel = stringResource(id = R.string.text_field_desc)
     Row(
         modifier = Modifier
             .fillMaxWidth()

@@ -1,7 +1,6 @@
-package com.ierusalem.androchat.features_tcp.server.wifidirect
+package com.ierusalem.androchat.features_tcp.tcp.data.server.wifidirect
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.GeneralConnectionStatus
 
 @Immutable

@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_tcp.tcp_chat.presentation
+package com.ierusalem.androchat.features_tcp.tcp_chat.presentation.components
 
 import android.Manifest
 import android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -64,7 +63,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
@@ -120,7 +118,6 @@ fun LocalConversationUserInput(
 ) {
     var currentInputSelector by rememberSaveable { mutableStateOf(LocalInputSelector.NONE) }
     val dismissKeyboard = { currentInputSelector = LocalInputSelector.NONE }
-    val context = LocalContext.current
 
     // Intercept back navigation if there's a InputSelector visible
     if (currentInputSelector != LocalInputSelector.NONE) {
@@ -487,7 +484,7 @@ private fun UserInputText(
     onTextFieldFocused: (Boolean) -> Unit,
     focusState: Boolean
 ) {
-    val a11ylabel = stringResource(id = R.string.textfield_desc)
+    val a11YLabel = stringResource(id = R.string.text_field_desc)
     Box(
         Modifier
             .fillMaxWidth()
@@ -501,7 +498,7 @@ private fun UserInputText(
             keyboardType,
             focusState,
             Modifier.semantics {
-                contentDescription = a11ylabel
+                contentDescription = a11YLabel
                 keyboardShownProperty = keyboardShown
             }
         )

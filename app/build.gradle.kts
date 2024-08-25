@@ -95,6 +95,7 @@ dependencies {
 
     //kotlin json serializer
     implementation(libs.kotlinx.serialization.json)
+    implementation (libs.kotlin.reflect)
 
     //recording view
     implementation(libs.recordview)
@@ -109,6 +110,10 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
-    implementation (libs.kotlin.reflect)
+    //paging
+    implementation (libs.androidx.paging.runtime)
+    implementation (libs.androidx.paging.compose)
+    // Add this dependency for using PagingSource with Room
+    implementation (libs.androidx.room.paging)
 
 }

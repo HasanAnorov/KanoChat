@@ -53,7 +53,7 @@
     <string name="attach_photo_desc">Attach Photo</string>
     <string name="map_selector_desc">Location selector</string>
     <string name="videochat_desc">Start videochat</string>
-    <string name="textfield_desc">Text input</string>
+    <string name="text_field_desc">Text input</string>
     <string name="not_available">Functionality currently not available</string>
     <string name="search">Search</string>
     <string name="info">Information</string>

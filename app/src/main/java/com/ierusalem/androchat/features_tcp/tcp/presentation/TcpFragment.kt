@@ -73,11 +73,11 @@ import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.core.utils.openFile
 import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.core.utils.shortToast
-import com.ierusalem.androchat.features_tcp.server.ServerDefaults
-import com.ierusalem.androchat.features_tcp.server.permission.PermissionGuardImpl
-import com.ierusalem.androchat.features_tcp.server.wifidirect.Reason
-import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiDirectBroadcastReceiver
-import com.ierusalem.androchat.features_tcp.server.wifidirect.WiFiNetworkEvent
+import com.ierusalem.androchat.features_tcp.tcp.data.server.ServerDefaults
+import com.ierusalem.androchat.features_tcp.tcp.data.server.permission.PermissionGuardImpl
+import com.ierusalem.androchat.features_tcp.tcp.data.server.wifidirect.Reason
+import com.ierusalem.androchat.features_tcp.tcp.data.server.wifidirect.WiFiDirectBroadcastReceiver
+import com.ierusalem.androchat.features_tcp.tcp.data.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_tcp.tcp.domain.InitialChatModel
 import com.ierusalem.androchat.features_tcp.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_tcp.tcp.domain.state.ClientConnectionStatus
@@ -1392,7 +1392,7 @@ class TcpFragment : Fragment() {
             receivedMessage,
             InitialChatModel::class.java
         )
-        viewModel.loadChatHistory(initialChatModel)
+        viewModel.createNewUserIfDoNotExist(initialChatModel)
     }
 
     /**Socket Sending Functions*/

@@ -6,7 +6,7 @@ import com.ierusalem.androchat.core.utils.Json.gson
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_tcp.tcp_chat.data.db.entity.FileMessageState
 
-class Converters {
+class ChatMessageTypeConverter {
 
     @TypeConverter
     fun fromChatMessageEntity(value: ChatMessageEntity): String {

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "71ec16e719613f7796a2284f237c9c35",
+    "identityHash": "8b7d23ad7fbff3db26d7de18c23fea70",
     "entities": [
       {
         "tableName": "messages",
@@ -107,12 +107,38 @@
         },
         "indices": [],
         "foreignKeys": []
+      },
+      {
+        "tableName": "chatting_users",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userUniqueId` TEXT NOT NULL, `userUniqueName` TEXT NOT NULL, PRIMARY KEY(`userUniqueId`))",
+        "fields": [
+          {
+            "fieldPath": "userUniqueId",
+            "columnName": "userUniqueId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userUniqueName",
+            "columnName": "userUniqueName",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "userUniqueId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '71ec16e719613f7796a2284f237c9c35')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8b7d23ad7fbff3db26d7de18c23fea70')"
     ]
   }
 }

@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_tcp.server.permission
+package com.ierusalem.androchat.features_tcp.tcp.data.server.permission
 
 import android.Manifest
 import android.content.Context
