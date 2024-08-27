@@ -7,7 +7,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features.home.presentation.HomeScreenClickIntents
+import com.ierusalem.androchat.features_remote.home.presentation.HomeScreenClickIntents
 
 /**
  * AndroChatDrawer

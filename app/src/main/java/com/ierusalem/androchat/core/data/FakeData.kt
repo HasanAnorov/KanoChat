@@ -1,7 +1,7 @@
 package com.ierusalem.androchat.core.data
 
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.features.profile.ProfileScreenState
+import com.ierusalem.androchat.features_remote.profile.ProfileScreenState
 
 /**
  * Example colleague profile

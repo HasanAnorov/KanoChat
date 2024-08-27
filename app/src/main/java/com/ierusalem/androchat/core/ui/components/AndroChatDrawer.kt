@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.data.PreviewSettings
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features.home.presentation.HomeScreenClickIntents
+import com.ierusalem.androchat.features_remote.home.presentation.HomeScreenClickIntents
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.glide.GlideImage
 

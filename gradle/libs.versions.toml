@@ -32,6 +32,7 @@ devtoolsKsp = "1.9.10-1.0.13"
 datastorePreferences = "1.1.1"
 pluginSerialization = "1.7.10"
 firebaseCrashlyticsBuildtools = "3.0.2"
+activity = "1.9.1"
 
 [libraries]
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
@@ -74,6 +75,7 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 landscapist-glide = { module = "com.github.skydoves:landscapist-glide", version.ref = "landscapistGlide" }
 firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
