@@ -51,7 +51,7 @@ import androidx.navigation.fragment.findNavController
 import com.google.gson.Gson
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
-import com.ierusalem.androchat.core.app.BroadcastFrequency
+import com.ierusalem.androchat.core.app.AppBroadcastFrequency
 import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.Constants.SOCKET_DEFAULT_BUFFER_SIZE
 import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
@@ -649,10 +649,10 @@ class TcpFragment : Fragment() {
         //here you have to return preferred wifi band like 2,4hz or 5hz
         val networkBand = viewModel.state.value.networkBand
         val band = when(networkBand){
-            BroadcastFrequency.FREQUENCY_2_4_GHZ -> {
+            AppBroadcastFrequency.FREQUENCY_2_4_GHZ -> {
                 WifiP2pConfig.GROUP_OWNER_BAND_2GHZ
             }
-            BroadcastFrequency.FREQUENCY_5_GHZ -> {
+            AppBroadcastFrequency.FREQUENCY_5_GHZ -> {
                 WifiP2pConfig.GROUP_OWNER_BAND_5GHZ
             }
         }

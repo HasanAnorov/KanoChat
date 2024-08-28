@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.core
+package com.ierusalem.androchat.features_local
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

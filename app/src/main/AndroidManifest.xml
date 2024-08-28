@@ -50,7 +50,7 @@
         </activity>
 
         <activity
-            android:name=".core.NavActivity"
+            android:name=".features_local.NavActivity"
             android:configChanges="uiMode|locale|layoutDirection|screenSize|screenLayout|orientation"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">

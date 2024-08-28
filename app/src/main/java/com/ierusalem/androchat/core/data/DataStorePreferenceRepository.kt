@@ -7,7 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.ierusalem.androchat.core.app.BroadcastFrequency
+import com.ierusalem.androchat.core.app.AppBroadcastFrequency
 import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.generateRandomPassword
 import com.ierusalem.androchat.core.utils.log
@@ -115,7 +115,7 @@ class DataStorePreferenceRepository(context: Context) {
             preferences[PREF_USERNAME] ?: defaultUsername
         }
 
-    suspend fun setBroadcastFrequency(frequency: BroadcastFrequency) {
+    suspend fun setBroadcastFrequency(frequency: AppBroadcastFrequency) {
         log("broadcast frequency - ${frequency.name}")
         dataStore.edit { preferences ->
             preferences[PREF_BROADCAST_FREQUENCY] = frequency.name

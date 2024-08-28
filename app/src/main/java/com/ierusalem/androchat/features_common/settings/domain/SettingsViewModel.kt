@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.core.app.AppLanguage
-import com.ierusalem.androchat.core.app.BroadcastFrequency
+import com.ierusalem.androchat.core.app.AppBroadcastFrequency
 import com.ierusalem.androchat.core.utils.Constants.getLanguageCode
 import com.ierusalem.androchat.core.utils.Constants.getLanguageFromCode
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
@@ -48,9 +48,9 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val savedBroadcastFrequency = dataStorePreferenceRepository.getBroadcastFrequency.first()
             val broadcastFrequency = try {
-                BroadcastFrequency.valueOf(savedBroadcastFrequency)
+                AppBroadcastFrequency.valueOf(savedBroadcastFrequency)
             } catch (e: IllegalArgumentException) {
-                BroadcastFrequency.FREQUENCY_2_4_GHZ
+                AppBroadcastFrequency.FREQUENCY_2_4_GHZ
             }
             _state.update { settingsState ->
                 settingsState.copy(
@@ -133,5 +133,5 @@ data class SettingsState(
     ),
     val selectedLanguage: AppLanguage = languagesList.first{it.isSelected},
     val appTheme: Boolean = false,
-    val selectedBroadcastFrequency: BroadcastFrequency = BroadcastFrequency.FREQUENCY_2_4_GHZ
+    val selectedBroadcastFrequency: AppBroadcastFrequency = AppBroadcastFrequency.FREQUENCY_2_4_GHZ
 )

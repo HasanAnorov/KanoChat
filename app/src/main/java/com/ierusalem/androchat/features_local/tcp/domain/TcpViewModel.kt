@@ -26,7 +26,7 @@ import androidx.paging.cachedIn
 import androidx.paging.map
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
-import com.ierusalem.androchat.core.app.BroadcastFrequency
+import com.ierusalem.androchat.core.app.AppBroadcastFrequency
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
@@ -130,9 +130,9 @@ class TcpViewModel @Inject constructor(
             val savedBroadcastFrequency =
                 dataStorePreferenceRepository.getBroadcastFrequency.first()
             val broadcastFrequency = try {
-                BroadcastFrequency.valueOf(savedBroadcastFrequency)
+                AppBroadcastFrequency.valueOf(savedBroadcastFrequency)
             } catch (e: IllegalArgumentException) {
-                BroadcastFrequency.FREQUENCY_2_4_GHZ
+                AppBroadcastFrequency.FREQUENCY_2_4_GHZ
             }
             _state.update { settingsState ->
                 settingsState.copy(

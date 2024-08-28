@@ -46,7 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.core.app.BroadcastFrequency
+import com.ierusalem.androchat.core.app.AppBroadcastFrequency
 import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
 import com.ierusalem.androchat.core.ui.components.LanguageDialog
 import com.ierusalem.androchat.core.ui.components.ThemeSwitcher
@@ -164,7 +164,7 @@ fun LogoutUi() {
 fun BroadFrequencyUi(
     modifier: Modifier = Modifier,
     uiState: SettingsState,
-    onCheckedChange: (BroadcastFrequency) -> Unit
+    onCheckedChange: (AppBroadcastFrequency) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -184,9 +184,9 @@ fun BroadFrequencyUi(
             title = R.string._2_4_hz,
             description = R.string._2_4_hz_desc,
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-            isChecked = uiState.selectedBroadcastFrequency == BroadcastFrequency.FREQUENCY_2_4_GHZ,
+            isChecked = uiState.selectedBroadcastFrequency == AppBroadcastFrequency.FREQUENCY_2_4_GHZ,
             onCheckedChange = {
-                onCheckedChange(BroadcastFrequency.FREQUENCY_2_4_GHZ)
+                onCheckedChange(AppBroadcastFrequency.FREQUENCY_2_4_GHZ)
             }
         )
         Spacer(modifier = Modifier.height(1.dp))
@@ -194,9 +194,9 @@ fun BroadFrequencyUi(
             title = R.string._5_hz,
             description = R.string._5_hz_desc,
             shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp),
-            isChecked = uiState.selectedBroadcastFrequency == BroadcastFrequency.FREQUENCY_5_GHZ,
+            isChecked = uiState.selectedBroadcastFrequency == AppBroadcastFrequency.FREQUENCY_5_GHZ,
             onCheckedChange = {
-                onCheckedChange(BroadcastFrequency.FREQUENCY_5_GHZ)
+                onCheckedChange(AppBroadcastFrequency.FREQUENCY_5_GHZ)
             }
         )
     }

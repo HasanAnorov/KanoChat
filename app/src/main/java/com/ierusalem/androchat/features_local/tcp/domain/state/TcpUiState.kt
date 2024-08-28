@@ -3,7 +3,7 @@ package com.ierusalem.androchat.features_local.tcp.domain.state
 import android.net.wifi.p2p.WifiP2pDevice
 import androidx.paging.PagingData
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.core.app.BroadcastFrequency
+import com.ierusalem.androchat.core.app.AppBroadcastFrequency
 import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
@@ -80,7 +80,7 @@ data class TcpScreenUiState(
     //to disable view pager's horizontal scrolling
     val isRecording: Boolean = false,
 
-    val networkBand: BroadcastFrequency = BroadcastFrequency.FREQUENCY_2_4_GHZ,
+    val networkBand: AppBroadcastFrequency = AppBroadcastFrequency.FREQUENCY_2_4_GHZ,
 
     //defines current chatting user unique id, used in conversation screen only
     val currentChattingUser: InitialChatModel? = null
