@@ -44,7 +44,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -117,7 +117,7 @@ import kotlin.math.min
 @AndroidEntryPoint
 class TcpFragment : Fragment() {
 
-    private val viewModel: TcpViewModel by viewModels()
+    private val viewModel: TcpViewModel by activityViewModels()
 
     //wifi direct
     private lateinit var wifiP2PManager: WifiP2pManager

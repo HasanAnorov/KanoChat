@@ -26,6 +26,7 @@
         android:id="@+id/homeFragment"
         android:name="com.ierusalem.androchat.features_remote.home.presentation.HomeFragment"
         android:label="HomeFragment">
+
         <action
             android:id="@+id/action_homeFragment_to_conversationFragment"
             app:destination="@id/conversationFragment"
@@ -49,6 +50,7 @@
             app:popEnterAnim="@anim/fade_in"
             app:popExitAnim="@anim/slide_out"
             app:destination="@id/settingsFragment" />
+
         <action
             android:id="@+id/action_homeFragment_to_tcpFragment"
             app:destination="@id/tcpFragment" />
@@ -64,6 +66,7 @@
         android:id="@+id/tcpFragment"
         android:name="com.ierusalem.androchat.features_local.tcp.presentation.TcpFragment"
         android:label="TcpFragment" >
+
         <action
             android:id="@+id/action_tcpFragment_to_settingsFragment"
             app:enterAnim="@anim/slide_in"
@@ -72,7 +75,20 @@
             app:popExitAnim="@anim/slide_out"
             app:popUpTo="@id/homeFragment"
             app:destination="@id/settingsFragment" />
+
+        <action
+            android:id="@+id/action_tcpFragment_to_localConversationFragment"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in"
+            app:popExitAnim="@anim/slide_out"
+            app:destination="@id/localConversationFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/localConversationFragment"
+        android:name="com.ierusalem.androchat.features_local.tcp_chat.presentation.LocalConversationFragment"
+        android:label="LocalConversationFragment" />
 
 
 </navigation>

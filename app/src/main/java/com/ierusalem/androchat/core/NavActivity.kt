@@ -2,6 +2,7 @@ package com.ierusalem.androchat.core
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.ui.platform.ComposeView
@@ -11,6 +12,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.databinding.ActivityNavBinding
+import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -19,8 +21,11 @@ import dagger.hilt.android.AndroidEntryPoint
  * @author A.H.I "andro" on 28/08/2024
  */
 
+@Suppress("unused")
 @AndroidEntryPoint
 class NavActivity : AppCompatActivity() {
+
+    private val viewModel: TcpViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
