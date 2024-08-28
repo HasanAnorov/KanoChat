@@ -108,7 +108,7 @@ class RegistrationViewModel @Inject constructor(
         //save username in data store and navigate
         viewModelScope.launch {
             dataStorePreferenceRepository.setUsername(state.value.username)
-            emitNavigation(RegistrationNavigation.ToHome(state.value.username))
+            emitNavigation(RegistrationNavigation.ToLocal(state.value.username))
         }
     }
 }

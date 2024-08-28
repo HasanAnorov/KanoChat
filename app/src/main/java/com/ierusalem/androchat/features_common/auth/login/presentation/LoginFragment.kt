@@ -49,8 +49,8 @@ class LoginFragment : Fragment() {
 
     private fun executeNavigation(navigation: LoginNavigation) {
         when (navigation) {
-            LoginNavigation.ToHome -> {
-                findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
+            LoginNavigation.ToLocal -> {
+                findNavController().navigate(R.id.action_loginFragment_to_nav_graph)
             }
             LoginNavigation.ToRegister -> {
                 findNavController().navigate(R.id.action_loginFragment_to_registrationFragment)

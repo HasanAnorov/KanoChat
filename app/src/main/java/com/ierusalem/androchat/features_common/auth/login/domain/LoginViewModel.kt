@@ -85,7 +85,7 @@ class LoginViewModel @Inject constructor(
 
         viewModelScope.launch {
             dataStorePreferenceRepository.setUsername(state.value.username)
-            emitNavigation(LoginNavigation.ToHome)
+            emitNavigation(LoginNavigation.ToLocal)
         }
     }
 

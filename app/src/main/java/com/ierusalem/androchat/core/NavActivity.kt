@@ -10,13 +10,13 @@ import androidx.core.view.ViewCompat
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.databinding.ActivityNavBinding
+import com.ierusalem.androchat.databinding.ActivityAuthBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * NavActivity
  *
- * @author A.H.I "andro" on 7/03/2024
+ * @author A.H.I "andro" on 28/08/2024
  */
 
 @AndroidEntryPoint
@@ -30,7 +30,7 @@ class NavActivity : AppCompatActivity() {
             ComposeView(this@NavActivity).apply {
                 consumeWindowInsets = false
                 setContent {
-                    AndroidViewBinding(ActivityNavBinding::inflate)
+                    AndroidViewBinding(ActivityAuthBinding::inflate)
                 }
             }
         )
