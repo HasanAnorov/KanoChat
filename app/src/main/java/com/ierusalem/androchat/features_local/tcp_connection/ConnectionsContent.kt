@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_connections
+package com.ierusalem.androchat.features_local.tcp_connection
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

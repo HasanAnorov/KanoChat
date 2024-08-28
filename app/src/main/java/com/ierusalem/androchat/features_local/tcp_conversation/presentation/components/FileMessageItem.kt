@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_chat.presentation.components
+package com.ierusalem.androchat.features_local.tcp_conversation.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,10 +25,10 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.CircularProgressBar
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.log
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessage
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.FileMessageState
-import com.ierusalem.androchat.features_local.tcp_chat.presentation.ChatBubbleShapeEnd
-import com.ierusalem.androchat.features_local.tcp_chat.presentation.ChatBubbleShapeStart
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_local.tcp_conversation.presentation.ChatBubbleShapeEnd
+import com.ierusalem.androchat.features_local.tcp_conversation.presentation.ChatBubbleShapeStart
 
 @Composable
 fun FileMessageItem(

@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_chat.presentation
+package com.ierusalem.androchat.features_local.tcp_conversation.presentation
 
 import android.os.Bundle
 import android.view.LayoutInflater

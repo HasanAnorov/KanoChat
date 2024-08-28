@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_chat.presentation
+package com.ierusalem.androchat.features_local.tcp_conversation.presentation
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -42,8 +42,8 @@ import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.components.NetworkErrorDialog
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessage
-import com.ierusalem.androchat.features_local.tcp_chat.presentation.components.LocalConversationUserInput
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.LocalConversationUserInput
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 

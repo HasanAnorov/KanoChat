@@ -15,8 +15,8 @@ import com.ierusalem.androchat.core.voice_message.recorder.AndroidAudioRecorder
 import com.ierusalem.androchat.features_local.tcp.data.server.permission.PermissionGuard
 import com.ierusalem.androchat.features_local.tcp.data.server.permission.PermissionGuardImpl
 import com.ierusalem.androchat.features_local.tcp.data.db.dao.ChattingUsersDao
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.MessagesDatabase
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.dao.MessagesDao
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.MessagesDatabase
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.dao.MessagesDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

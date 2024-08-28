@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_chat.data.db
+package com.ierusalem.androchat.features_local.tcp_conversation.data.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
@@ -6,8 +6,8 @@ import androidx.room.TypeConverters
 import com.ierusalem.androchat.features_local.tcp.data.db.converters.ChattingUserConverter
 import com.ierusalem.androchat.features_local.tcp.data.db.dao.ChattingUsersDao
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.dao.MessagesDao
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.dao.MessagesDao
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessageEntity
 
 @Database(
     entities = [ChatMessageEntity::class, ChattingUserEntity::class],

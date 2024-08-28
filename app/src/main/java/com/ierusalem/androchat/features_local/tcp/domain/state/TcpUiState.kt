@@ -14,7 +14,7 @@ import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_local.tcp.domain.InitialChatModel
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 

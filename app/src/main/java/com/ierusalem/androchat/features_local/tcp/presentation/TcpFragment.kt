@@ -92,9 +92,9 @@ import com.ierusalem.androchat.features_local.tcp.presentation.components.rememb
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenNavigation
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpView
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessageEntity
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.FileMessageState
-import com.ierusalem.androchat.features_local.tcp_chat.presentation.components.ContactListContent
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.ContactListContent
 import com.ierusalem.androchat.features_local.tcp_networking.components.ActionRequestDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers

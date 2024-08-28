@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_contacts
+package com.ierusalem.androchat.features_local.tcp_chats
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

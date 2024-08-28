@@ -2,9 +2,9 @@ package com.ierusalem.androchat.features_local.tcp.presentation.utils
 
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenErrors
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessageEntity
 
 interface TcpScreenNavigation {
 

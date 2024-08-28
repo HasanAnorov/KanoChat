@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_chat.presentation.components
+package com.ierusalem.androchat.features_local.tcp_conversation.presentation.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_chat.presentation.components
+package com.ierusalem.androchat.features_local.tcp_conversation.presentation.components
 
 import android.Manifest
 import android.content.pm.PackageManager.PERMISSION_GRANTED

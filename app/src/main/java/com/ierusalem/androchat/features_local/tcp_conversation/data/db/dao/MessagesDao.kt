@@ -1,12 +1,12 @@
-package com.ierusalem.androchat.features_local.tcp_chat.data.db.dao
+package com.ierusalem.androchat.features_local.tcp_conversation.data.db.dao
 
 import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessageEntity
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.FileMessageState
 import kotlinx.coroutines.flow.Flow
 
 @Dao

@@ -11,8 +11,8 @@ import androidx.compose.ui.Modifier
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpView
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
-import com.ierusalem.androchat.features_local.tcp_connections.ConnectionsContent
-import com.ierusalem.androchat.features_local.tcp_contacts.ContactsScreen
+import com.ierusalem.androchat.features_local.tcp_connection.ConnectionsContent
+import com.ierusalem.androchat.features_local.tcp_chats.ContactsScreen
 import com.ierusalem.androchat.features_local.tcp_networking.NetworkingContent
 
 @OptIn(ExperimentalFoundationApi::class)

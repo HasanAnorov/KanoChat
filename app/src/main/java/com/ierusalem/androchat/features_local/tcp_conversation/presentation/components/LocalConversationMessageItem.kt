@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_chat.presentation.components
+package com.ierusalem.androchat.features_local.tcp_conversation.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features_remote.conversation.presentation.components.messageFormatter
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
 
 @Composable
 fun ChatMessageItem(

@@ -87,7 +87,7 @@
 
     <fragment
         android:id="@+id/localConversationFragment"
-        android:name="com.ierusalem.androchat.features_local.tcp_chat.presentation.LocalConversationFragment"
+        android:name="com.ierusalem.androchat.features_local.tcp_conversation.presentation.LocalConversationFragment"
         android:label="LocalConversationFragment" />
 
 

@@ -62,10 +62,10 @@ import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenErrors
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenNavigation
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.dao.MessagesDao
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.AudioState
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessage
-import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.dao.MessagesDao
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.AudioState
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessageEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

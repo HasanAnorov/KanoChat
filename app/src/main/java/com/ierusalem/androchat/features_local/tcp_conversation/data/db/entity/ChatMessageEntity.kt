@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_chat.data.db.entity
+package com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity
 
 
 import androidx.room.Entity
