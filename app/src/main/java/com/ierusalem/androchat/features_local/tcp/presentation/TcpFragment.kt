@@ -52,9 +52,9 @@ import com.google.gson.Gson
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.app.BroadcastFrequency
-import com.ierusalem.androchat.core.constants.Constants
-import com.ierusalem.androchat.core.constants.Constants.SOCKET_DEFAULT_BUFFER_SIZE
-import com.ierusalem.androchat.core.constants.Constants.getCurrentTime
+import com.ierusalem.androchat.core.utils.Constants
+import com.ierusalem.androchat.core.utils.Constants.SOCKET_DEFAULT_BUFFER_SIZE
+import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
 import com.ierusalem.androchat.core.ui.components.CoarseLocationPermissionTextProvider
 import com.ierusalem.androchat.core.ui.components.FineLocationPermissionTextProvider
 import com.ierusalem.androchat.core.ui.components.NearbyWifiDevicesPermissionTextProvider
@@ -556,7 +556,7 @@ class TcpFragment : Fragment() {
                     }
 
                     TcpScreen(
-                        state = uiState,
+                        uiState = uiState,
                         //try to use pass lambda like this,
                         // this will help to avoid extra recomposition
                         eventHandler = viewModel::handleEvents,
@@ -801,8 +801,8 @@ class TcpFragment : Fragment() {
                 makeCall(phoneNumber = navigation.message.contactNumber)
             }
 
-            is TcpScreenNavigation.OnChattingUserClicked -> {
-
+            TcpScreenNavigation.OnChattingUserClicked -> {
+                findNavController().navigate(R.id.action_tcpFragment_to_localConversationFragment)
             }
 
             is TcpScreenNavigation.OnFileItemClick -> {
@@ -1721,6 +1721,9 @@ class TcpFragment : Fragment() {
     //6-fragment lifecycle callback
     override fun onResume() {
         super.onResume()
+        //set user unique id to null hence you are in tcp fragment not in conversation fragment
+        viewModel.updateCurrentChattingUniqueIds(null)
+
         //todo - here handle connected devices
         val peerListListener = WifiP2pManager.PeerListListener { peerList ->
             val peers = viewModel.state.value.availableWifiNetworks

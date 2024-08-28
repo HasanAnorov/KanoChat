@@ -19,13 +19,18 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.map
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.app.BroadcastFrequency
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
-import com.ierusalem.androchat.core.constants.Constants
-import com.ierusalem.androchat.core.constants.Constants.getCurrentTime
-import com.ierusalem.androchat.core.constants.Constants.getTimeInHours
+import com.ierusalem.androchat.core.utils.Constants
+import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
+import com.ierusalem.androchat.core.utils.Constants.getTimeInHours
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
@@ -69,6 +74,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -185,9 +191,9 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun loadChattingUsers(){
+    private fun loadChattingUsers() {
         viewModelScope.launch(Dispatchers.IO) {
-            chattingUsersDao.getChattingUsers().collect{users ->
+            chattingUsersDao.getChattingUsers().collect { users ->
                 _state.update {
                     it.copy(
                         contactsList = Resource.Success(users)
@@ -197,10 +203,10 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun createNewUserIfDoNotExist(initialChatModel: InitialChatModel){
+    fun createNewUserIfDoNotExist(initialChatModel: InitialChatModel) {
         viewModelScope.launch {
             val isUserExist = chattingUsersDao.isChattingUserExists(initialChatModel.userUniqueId)
-            if(!isUserExist){
+            if (!isUserExist) {
                 insertNewChattingUser(initialChatModel)
             }
         }
@@ -215,40 +221,29 @@ class TcpViewModel @Inject constructor(
             )
             chattingUsersDao.insertChattingUser(chattingUserEntity)
         }
+    }
 
-//        viewModelScope.launch(Dispatchers.IO) {
-////            messagesDao.getUserMessagesById(initialChatModel.userUniqueId).collect { messages ->
-////                _state.update { uiState ->
-////                    messages.forEach {
-////                        log("message - $it")
-////                    }
-////                    uiState.copy(
-////                        messages = messages.mapNotNull {
-////                            it.toChatMessage(initialChatModel.userUniqueName)
-////                        }
-////                    )
-////                }
-////            }
-//            _state.update {
-//                it.copy(
-//                    messages = Pager(
-//                        PagingConfig(pageSize = 10, prefetchDistance = 20),
-//                        pagingSourceFactory = {
-//                            messagesDao.getPagedUserMessagesById(
-//                                initialChatModel.userUniqueId
-//                            )
-//                        }
-//                    ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
-//                        value.map { chatMessageEntity ->
-//                            chatMessageEntity.toChatMessage(
-//                                initialChatModel.userUniqueName
-//                            )!!
-//                        }
-//                    }.cachedIn(viewModelScope)
-//                )
-//            }
-//            //messagesDao.getPagedUserMessagesById(initialChatModel.userUniqueId)
-//        }
+    fun loadMessages(chattingUser: InitialChatModel) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.update {
+                it.copy(
+                    messages = Pager(
+                        PagingConfig(pageSize = 10, prefetchDistance = 20),
+                        pagingSourceFactory = {
+                            messagesDao.getPagedUserMessagesById(
+                                chattingUser.userUniqueId
+                            )
+                        }
+                    ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
+                        value.map { chatMessageEntity ->
+                            chatMessageEntity.toChatMessage(
+                                chattingUser.userUniqueName
+                            )!!
+                        }
+                    }.cachedIn(viewModelScope)
+                )
+            }
+        }
     }
 
     suspend fun getUniqueDeviceId(): String {
@@ -633,6 +628,14 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    fun updateCurrentChattingUniqueIds(currentChattingUser: InitialChatModel?) {
+        _state.update {
+            it.copy(
+                currentChattingUser = currentChattingUser
+            )
+        }
+    }
+
     @SuppressLint("NewApi")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
@@ -642,7 +645,8 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.TcpContactItemClicked -> {
-                emitNavigation(TcpScreenNavigation.OnChattingUserClicked(event.userUniqueId))
+                updateCurrentChattingUniqueIds(event.currentChattingUser)
+                emitNavigation(TcpScreenNavigation.OnChattingUserClicked)
             }
 
             TcpScreenEvents.RequestRecordAudioPermission -> {

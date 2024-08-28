@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.core.constants
+package com.ierusalem.androchat.core.utils
 
 import com.ierusalem.androchat.core.app.AppLanguage
 import java.io.File

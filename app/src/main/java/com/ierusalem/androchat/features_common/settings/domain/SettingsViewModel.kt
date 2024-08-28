@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.core.app.AppLanguage
 import com.ierusalem.androchat.core.app.BroadcastFrequency
-import com.ierusalem.androchat.core.constants.Constants.getLanguageCode
-import com.ierusalem.androchat.core.constants.Constants.getLanguageFromCode
+import com.ierusalem.androchat.core.utils.Constants.getLanguageCode
+import com.ierusalem.androchat.core.utils.Constants.getLanguageFromCode
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate

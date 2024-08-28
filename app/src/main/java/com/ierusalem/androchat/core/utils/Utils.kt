@@ -1,8 +1,7 @@
 package com.ierusalem.androchat.core.utils
 
 import android.util.Log
-import com.ierusalem.androchat.core.constants.Constants
-import com.ierusalem.androchat.core.constants.Constants.generateUniqueFileName
+import com.ierusalem.androchat.core.utils.Constants.generateUniqueFileName
 import java.io.File
 import java.util.Random
 

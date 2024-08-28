@@ -30,6 +30,7 @@ import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.features_remote.home.presentation.contacts.ErrorType
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
+import com.ierusalem.androchat.features_local.tcp.domain.InitialChatModel
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
 
 @Composable
@@ -82,7 +83,12 @@ fun ContactsScreen(
                                 TcpContactItem(
                                     contact = contact,
                                     modifier = Modifier,
-                                    onClick = { eventHandler(TcpScreenEvents.TcpContactItemClicked(contact.userUniqueId)) }
+                                    onClick = {
+                                        val selectedChattingUser = InitialChatModel(
+                                            userUniqueId = contact.userUniqueId,
+                                            userUniqueName = contact.userUniqueName
+                                        )
+                                        eventHandler(TcpScreenEvents.TcpContactItemClicked(selectedChattingUser)) }
                                 )
                                 if (index < data.lastIndex) {
                                     HorizontalDivider(

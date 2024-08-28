@@ -6,7 +6,8 @@ import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessag
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenErrors
 import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessageEntity
 
-sealed interface TcpScreenNavigation {
+interface TcpScreenNavigation {
+
     data object OnNavIconClick : TcpScreenNavigation
     data object WifiDisabledCase : TcpScreenNavigation
     data object OnSettingsClick : TcpScreenNavigation
@@ -22,16 +23,17 @@ sealed interface TcpScreenNavigation {
     data class OnConnectToServerClick(val serverIpAddress: String, val portNumber: Int) :
         TcpScreenNavigation
 
-    data object WifiEnableRequest: TcpScreenNavigation
+    data object WifiEnableRequest : TcpScreenNavigation
 
-    data object ShowFileChooserClick: TcpScreenNavigation
+    data object ShowFileChooserClick : TcpScreenNavigation
 
-    data object RequestReadContactsPermission: TcpScreenNavigation
-    data object RequestRecordAudioPermission: TcpScreenNavigation
+    data object RequestReadContactsPermission : TcpScreenNavigation
+    data object RequestRecordAudioPermission : TcpScreenNavigation
 
-    data class OnFileItemClick(val message: ChatMessage.FileMessage): TcpScreenNavigation
-    data class OnContactItemClick(val message: ChatMessage.ContactMessage): TcpScreenNavigation
-    data class HandlePickingMultipleMedia(val medias: List<Uri>):TcpScreenNavigation
+    data class OnFileItemClick(val message: ChatMessage.FileMessage) : TcpScreenNavigation
+    data class OnContactItemClick(val message: ChatMessage.ContactMessage) : TcpScreenNavigation
+    data class HandlePickingMultipleMedia(val medias: List<Uri>) : TcpScreenNavigation
 
-    data class OnChattingUserClicked(val userUniqueId: String): TcpScreenNavigation
+    data object OnChattingUserClicked : TcpScreenNavigation
+
 }

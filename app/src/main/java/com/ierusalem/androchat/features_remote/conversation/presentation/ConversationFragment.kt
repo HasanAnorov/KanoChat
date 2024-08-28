@@ -14,7 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.findNavController
-import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.features_remote.conversation.domain.ConversationNavigation

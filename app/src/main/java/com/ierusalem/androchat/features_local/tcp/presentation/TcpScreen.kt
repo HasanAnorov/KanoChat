@@ -32,7 +32,7 @@ fun TcpScreen(
     eventHandler: (TcpScreenEvents) -> Unit,
     allTabs: SnapshotStateList<TcpView>,
     pagerState: PagerState,
-    state: TcpScreenUiState,
+    uiState: TcpScreenUiState,
     onTabChanged: (TcpView) -> Unit
 ) {
     Scaffold(
@@ -40,13 +40,13 @@ fun TcpScreen(
             .fillMaxSize()
             .imePadding()
     ) { pv ->
-        if (state.hasDialogErrorOccurred != null) {
+        if (uiState.hasDialogErrorOccurred != null) {
             NetworkErrorDialog(
                 onDismissRequest = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },
                 onConfirmation = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },
-                dialogTitle = state.hasDialogErrorOccurred.title,
-                dialogText = state.hasDialogErrorOccurred.message,
-                icon = painterResource(id = state.hasDialogErrorOccurred.icon)
+                dialogTitle = uiState.hasDialogErrorOccurred.title,
+                dialogText = uiState.hasDialogErrorOccurred.message,
+                icon = painterResource(id = uiState.hasDialogErrorOccurred.icon)
             )
         }
 
@@ -70,7 +70,7 @@ fun TcpScreen(
                 allTabs = allTabs,
                 pagerState = pagerState,
                 eventHandler = eventHandler,
-                state = state
+                state = uiState
             )
         }
     }
@@ -91,7 +91,7 @@ private fun TcpScreenPreview() {
                 pageCount = { allTabs.size },
             ),
             onTabChanged = {},
-            state = TcpScreenUiState()
+            uiState = TcpScreenUiState()
         )
     }
 }

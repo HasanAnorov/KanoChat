@@ -8,7 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.ierusalem.androchat.core.app.BroadcastFrequency
-import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.generateRandomPassword
 import com.ierusalem.androchat.core.utils.log
 import kotlinx.coroutines.flow.Flow

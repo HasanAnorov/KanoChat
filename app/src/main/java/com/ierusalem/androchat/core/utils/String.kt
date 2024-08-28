@@ -1,6 +1,6 @@
 package com.ierusalem.androchat.core.utils
 
-import com.ierusalem.androchat.core.constants.Constants.FILE_LABEL
+import com.ierusalem.androchat.core.utils.Constants.FILE_LABEL
 
 /**
  * returns empty string if file extension is not found

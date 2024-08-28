@@ -2,10 +2,12 @@ package com.ierusalem.androchat.features_local.tcp.presentation.utils
 
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
+import com.ierusalem.androchat.features_local.tcp.domain.InitialChatModel
 import com.ierusalem.androchat.features_local.tcp_chat.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenDialogErrors
 
 sealed interface TcpScreenEvents {
+
     data object OnNavIconClick : TcpScreenEvents
     data object OnSettingIconClick : TcpScreenEvents
 
@@ -36,7 +38,7 @@ sealed interface TcpScreenEvents {
 
     data class UpdateBottomSheetState(val shouldBeShown: Boolean) : TcpScreenEvents
 
-    data class TcpContactItemClicked(val userUniqueId: String) : TcpScreenEvents
+    data class TcpContactItemClicked(val currentChattingUser: InitialChatModel) : TcpScreenEvents
 
     data class OnFileItemClick(val message: ChatMessage.FileMessage) : TcpScreenEvents
     data class OnContactItemClick(val message: ChatMessage.ContactMessage) : TcpScreenEvents

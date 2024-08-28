@@ -7,7 +7,7 @@ import android.net.wifi.WifiManager
 import androidx.room.Room
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.core.connectivity.NetworkConnectivityObserver
-import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.utils.FieldValidator
 import com.ierusalem.androchat.core.voice_message.playback.AndroidAudioPlayer

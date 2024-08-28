@@ -9,8 +9,8 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.core.constants.Constants.FILE_PROVIDER_AUTHORITY
-import com.ierusalem.androchat.core.constants.Constants.generateUniqueFileName
+import com.ierusalem.androchat.core.utils.Constants.FILE_PROVIDER_AUTHORITY
+import com.ierusalem.androchat.core.utils.Constants.generateUniqueFileName
 import java.io.File
 import java.io.FileOutputStream
 

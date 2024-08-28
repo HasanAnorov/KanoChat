@@ -27,7 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.core.constants.Constants
+import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 
 @Composable
