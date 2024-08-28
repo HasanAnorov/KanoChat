@@ -10,7 +10,7 @@ import androidx.core.view.ViewCompat
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.databinding.ActivityNavBinding
+import com.ierusalem.androchat.databinding.ActivityAuthBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -24,7 +24,7 @@ class AuthActivity : AppCompatActivity() {
             ComposeView(this@AuthActivity).apply {
                 consumeWindowInsets = false
                 setContent {
-                    AndroidViewBinding(ActivityNavBinding::inflate)
+                    AndroidViewBinding(ActivityAuthBinding::inflate)
                 }
             }
         )
