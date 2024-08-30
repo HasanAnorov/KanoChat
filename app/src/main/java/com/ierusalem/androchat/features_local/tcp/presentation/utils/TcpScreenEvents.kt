@@ -31,7 +31,6 @@ sealed interface TcpScreenEvents {
     data class HandlePickingMultipleMedia(val medias: List<Uri>) : TcpScreenEvents
 
     data object RequestRecordAudioPermission : TcpScreenEvents
-    data object RequestReadContactsPermission : TcpScreenEvents
 
     data object ReadContacts : TcpScreenEvents
     data object ShowFileChooserClick : TcpScreenEvents

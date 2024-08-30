@@ -67,7 +67,7 @@ data class TcpScreenUiState(
     val contactsList:Resource<List<ChattingUserEntity>> = Resource.Loading(),
 
     //but Erkin aka said, chat should be between only two people
-    //todo - maybe you should use connectedWifiNetworks.size here !
+    //todo - maybe you should use connectedWifiNetworks.size here ! , delete this later
     val connectionsCount: Int = 0,
 
     //this wifi address used for connecting to server by clients, don't use this for host side

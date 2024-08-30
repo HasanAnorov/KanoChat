@@ -7,7 +7,10 @@ import android.database.Cursor
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.net.wifi.WifiManager.LocalOnlyHotspotCallback
+import android.net.wifi.WpsInfo
+import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
+import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
 import android.os.Environment
 import android.provider.ContactsContract
@@ -25,16 +28,16 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.app.AppBroadcastFrequency
+import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
-import com.ierusalem.androchat.core.utils.Constants
-import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
-import com.ierusalem.androchat.core.utils.Constants.getTimeInHours
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
+import com.ierusalem.androchat.core.utils.Constants
+import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
+import com.ierusalem.androchat.core.utils.Constants.getTimeInHours
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
 import com.ierusalem.androchat.core.utils.getAudioFileDuration
@@ -45,10 +48,12 @@ import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.voice_message.playback.AndroidAudioPlayer
 import com.ierusalem.androchat.core.voice_message.recorder.AndroidAudioRecorder
-import com.ierusalem.androchat.features_local.tcp.data.server.permission.PermissionGuard
-import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_local.tcp.data.db.dao.ChattingUsersDao
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
+import com.ierusalem.androchat.features_local.tcp.data.server.ServerDefaults
+import com.ierusalem.androchat.features_local.tcp.data.server.permission.PermissionGuard
+import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.Reason
+import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_local.tcp.domain.state.ClientConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactItem
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
@@ -83,7 +88,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TcpViewModel @Inject constructor(
-    private val permissionGuardImpl: PermissionGuard,
+    private val permissionGuard: PermissionGuard,
     private val dataStorePreferenceRepository: DataStorePreferenceRepository,
     private val connectivityObserver: ConnectivityObserver,
     private val wifiManager: WifiManager,
@@ -91,8 +96,198 @@ class TcpViewModel @Inject constructor(
     private val messagesDao: MessagesDao,
     private val chattingUsersDao: ChattingUsersDao,
     private val audioRecorder: AndroidAudioRecorder,
-    private val audioPlayer: AndroidAudioPlayer
+    private val audioPlayer: AndroidAudioPlayer,
+    private val wifiP2PManager: WifiP2pManager,
+    private val channel: WifiP2pManager.Channel
 ) : ViewModel(), NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
+
+    var isTcpServiceBound: Boolean = false
+
+    /** Hotspot networking creation*/
+
+    private fun stopHotspotNetworking() {
+        log("stopHotspotNetworking")
+        //close socket only when serverSocket is initialized
+//        if (::serverSocket.isInitialized) {
+//            serverSocket.close()
+//        }
+//        if (::connectedClientSocketOnServer.isInitialized) {
+//            connectedClientSocketOnServer.close()
+//        }
+
+        val listener = object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                log("Wifi P2P Channel is removed")
+                updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Idle)
+                handleNetworkEvents(
+                    WiFiNetworkEvent.ConnectionStatusChanged(
+                        GeneralConnectionStatus.Idle
+                    )
+                )
+                handleNetworkEvents(WiFiNetworkEvent.UpdateGroupOwnerAddress("Not connected"))
+            }
+
+            override fun onFailure(reason: Int) {
+                val r = Reason.parseReason(reason)
+                log("Failed to stop network: ${r.displayReason}")
+            }
+        }
+        wifiP2PManager.removeGroup(channel, listener)
+    }
+
+    private fun startHotspotNetworking() {
+        log("vm - startHotspotNetworking")
+        viewModelScope.launch(Dispatchers.IO) {
+            if (permissionGuard.canCreateNetwork()) {
+                if (ServerDefaults.canUseCustomConfig()) {
+                    createGroup()
+                } else {
+                    //fixme clarify error
+                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.AndroidVersion10RequiredForGroupNetworking)
+                }
+            } else {
+                log("Permissions not granted!")
+                permissionGuard.requiredPermissionsForWifi.forEach { permission ->
+                    onPermissionResult(
+                        permission = permission,
+                        isGranted = false
+                    )
+                }
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission", "NewApi")
+    private fun createGroup() {
+        updateHotspotDiscoveryStatus(HotspotNetworkingStatus.LaunchingHotspot)
+        val config = getConfiguration()
+        val listener = object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                log("New network created")
+                updateHotspotDiscoveryStatus(HotspotNetworkingStatus.HotspotRunning)
+            }
+
+            override fun onFailure(reason: Int) {
+                val r = Reason.parseReason(reason)
+                log("Unable to create Wifi Direct Group - ${r.displayReason}")
+                //todo - show dialog error message with corresponding reason
+                updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Failure)
+            }
+        }
+
+        if (config != null) {
+            log("Creating group with configuration")
+            wifiP2PManager.createGroup(channel, config, listener)
+        } else {
+            log("Creating group without custom configuration")
+            wifiP2PManager.createGroup(channel, listener)
+        }
+    }
+
+    private fun getConfiguration(): WifiP2pConfig? {
+        if (!ServerDefaults.canUseCustomConfig()) {
+            return null
+        }
+
+        val ssid = ServerDefaults.asSsid(
+            //here you have to return preferred ssid from data store or preference helper
+            state.value.hotspotName
+        )
+
+        val password = state.value.hotspotPassword
+
+        //here you have to return preferred wifi band like 2,4hz or 5hz
+        val networkBand = state.value.networkBand
+        val band = when (networkBand) {
+            AppBroadcastFrequency.FREQUENCY_2_4_GHZ -> {
+                WifiP2pConfig.GROUP_OWNER_BAND_2GHZ
+            }
+
+            AppBroadcastFrequency.FREQUENCY_5_GHZ -> {
+                WifiP2pConfig.GROUP_OWNER_BAND_5GHZ
+            }
+        }
+        return WifiP2pConfig
+            .Builder()
+            .setNetworkName(ssid)
+            .setPassphrase(password)
+            .setGroupOperatingBand(band)
+            .build()
+    }
+
+    /****/
+
+    /** Wifi P2P networking creation */
+    @SuppressLint("MissingPermission")
+    private fun startP2PNetworking() {
+        updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
+        viewModelScope.launch(Dispatchers.IO) {
+            if (permissionGuard.canCreateNetwork()) {
+                val listener = object : WifiP2pManager.ActionListener {
+                    override fun onSuccess() {
+                        log("onSuccess: discover ")
+                        updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
+                    }
+
+                    override fun onFailure(reason: Int) {
+                        // Code for when the discovery initiation fails goes here.
+                        // Alert the user that something went wrong.
+                        log("onFailure: discover $reason ")
+                        updateP2PDiscoveryStatus(P2PNetworkingStatus.Failure)
+                    }
+                }
+                wifiP2PManager.discoverPeers(channel, listener)
+            } else {
+                log("Permissions not granted!")
+                permissionGuard.requiredPermissionsForWifi.forEach { permission ->
+                    onPermissionResult(
+                        permission = permission,
+                        isGranted = false
+                    )
+                }
+            }
+        }
+    }
+
+    private fun stopP2PNetworking() {
+        val listener = object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                log("Wifi P2P Discovery is stopped")
+                clearPeersList()
+                updateP2PDiscoveryStatus(P2PNetworkingStatus.Idle)
+            }
+
+            override fun onFailure(reason: Int) {
+                val r = Reason.parseReason(reason)
+                log("Failed to stop p2p discovery: ${r.displayReason}")
+            }
+        }
+        wifiP2PManager.stopPeerDiscovery(channel, listener)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun connectToWifi(wifiP2pDevice: WifiP2pDevice) {
+        log("connectToWifi: $wifiP2pDevice ")
+        val config = WifiP2pConfig().apply {
+            deviceAddress = wifiP2pDevice.deviceAddress
+            wps.setup = WpsInfo.PBC
+        }
+        val listener = object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                // WiFiDirectBroadcastReceiver notifies us. Ignore for now
+                log("success: connected to wifi - ${wifiP2pDevice.deviceAddress}")
+                updateConnectedDevices(wifiP2pDevice)
+            }
+
+            override fun onFailure(reason: Int) {
+                log("failure: failure on wifi connection ")
+                emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.FailedToConnectToWifiDevice))
+            }
+        }
+        wifiP2PManager.connect(channel, config, listener)
+    }
+
+    /******/
 
     private val _state: MutableStateFlow<TcpScreenUiState> = MutableStateFlow(TcpScreenUiState())
     val state: StateFlow<TcpScreenUiState> = _state.asStateFlow()
@@ -254,7 +449,7 @@ class TcpViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update {
                 it.copy(
-                    isReadContactsGranted = permissionGuardImpl.canAccessContacts()
+                    isReadContactsGranted = permissionGuard.canAccessContacts()
                 )
             }
         }
@@ -573,10 +768,10 @@ class TcpViewModel @Inject constructor(
 
     private fun createLocalOnlyHotspotNetwork() {
         viewModelScope.launch {
-            if (permissionGuardImpl.canCreateLocalOnlyHotSpotNetwork()) {
+            if (permissionGuard.canCreateLocalOnlyHotSpotNetwork()) {
                 startLocalOnlyHotspot()
             } else {
-                permissionGuardImpl.requiredPermissionsForLocalOnlyHotSpot.forEach {
+                permissionGuard.requiredPermissionsForLocalOnlyHotSpot.forEach {
                     if (!visiblePermissionDialogQueue.contains(it)) {
                         visiblePermissionDialogQueue.add(it)
                     }
@@ -679,7 +874,7 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.OnConnectToWifiClick -> {
-                emitNavigation(TcpScreenNavigation.OnConnectToWifiClick(event.wifiDevice))
+                connectToWifi(event.wifiDevice)
             }
 
             is TcpScreenEvents.OnContactItemClick -> {
@@ -716,10 +911,6 @@ class TcpViewModel @Inject constructor(
 
             TcpScreenEvents.OnSettingIconClick -> {
                 emitNavigation(TcpScreenNavigation.OnSettingsClick)
-            }
-
-            TcpScreenEvents.RequestReadContactsPermission -> {
-                emitNavigation(TcpScreenNavigation.RequestReadContactsPermission)
             }
 
             is TcpScreenEvents.OnDialogErrorOccurred -> {
@@ -762,7 +953,8 @@ class TcpViewModel @Inject constructor(
                         if (hasOtherNetworkingIsRunning()) {
                             return
                         }
-                        emitNavigation(TcpScreenNavigation.OnStartHotspotNetworking)
+                        startHotspotNetworking()
+                        //emitNavigation(TcpScreenNavigation.OnStartHotspotNetworking)
                     }
 
                     HotspotNetworkingStatus.LaunchingHotspot -> {
@@ -770,14 +962,16 @@ class TcpViewModel @Inject constructor(
                     }
 
                     HotspotNetworkingStatus.HotspotRunning -> {
-                        emitNavigation(TcpScreenNavigation.OnStopHotspotNetworking)
+                        stopHotspotNetworking()
+                        //emitNavigation(TcpScreenNavigation.OnStopHotspotNetworking)
                     }
 
                     HotspotNetworkingStatus.Failure -> {
                         if (hasOtherNetworkingIsRunning()) {
                             return
                         }
-                        emitNavigation(TcpScreenNavigation.OnStartHotspotNetworking)
+                        startHotspotNetworking()
+                        //emitNavigation(TcpScreenNavigation.OnStartHotspotNetworking)
                     }
                 }
             }
@@ -834,18 +1028,18 @@ class TcpViewModel @Inject constructor(
                         if (hasOtherNetworkingIsRunning()) {
                             return
                         }
-                        emitNavigation(TcpScreenNavigation.OnDiscoverP2PClick)
+                        startP2PNetworking()
                     }
 
                     P2PNetworkingStatus.Discovering -> {
-                        emitNavigation(TcpScreenNavigation.OnStopP2PDiscovery)
+                        stopP2PNetworking()
                     }
 
                     P2PNetworkingStatus.Failure -> {
                         if (hasOtherNetworkingIsRunning()) {
                             return
                         }
-                        emitNavigation(TcpScreenNavigation.OnDiscoverP2PClick)
+                        startP2PNetworking()
                     }
                 }
             }

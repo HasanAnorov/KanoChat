@@ -28,6 +28,11 @@ fun Fragment.shortToast(text: String, duration: Int = Toast.LENGTH_SHORT): Toast
     }
 }
 
+fun Fragment.openWifiSettings(){
+    val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
+    startActivity(intent)
+}
+
 fun Fragment.makeCall(phoneNumber: String){
     val intent = Intent(Intent.ACTION_DIAL)
     intent.setData(Uri.parse("tel:$phoneNumber"))

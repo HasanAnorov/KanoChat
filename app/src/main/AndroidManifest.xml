@@ -41,12 +41,12 @@
             android:name=".features_common.auth.AuthActivity"
             android:configChanges="uiMode|locale|layoutDirection|screenSize|screenLayout|orientation"
             android:exported="true"
-            android:windowSoftInputMode="adjustResize" >
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
+            android:windowSoftInputMode="adjustResize">
+            <!--            <intent-filter>-->
+            <!--                <action android:name="android.intent.action.MAIN" />-->
 
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
+            <!--                <category android:name="android.intent.category.LAUNCHER" />-->
+            <!--            </intent-filter>-->
         </activity>
 
         <activity
@@ -79,6 +79,12 @@
                 android:name="autoStoreLocales"
                 android:value="true" />
         </service>
+
+        <service
+            android:name=".features_local.TcpService"
+            android:enabled="true"
+            android:exported="false" />
+
     </application>
 
 </manifest>
