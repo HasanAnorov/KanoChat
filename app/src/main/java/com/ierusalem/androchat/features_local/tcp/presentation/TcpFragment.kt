@@ -1,13 +1,8 @@
 package com.ierusalem.androchat.features_local.tcp.presentation
 
 import android.Manifest
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.Environment
-import android.os.IBinder
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -45,7 +40,6 @@ import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.core.utils.openWifiSettings
 import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.core.utils.shortToast
-import com.ierusalem.androchat.features_local.TcpService
 import com.ierusalem.androchat.features_local.tcp.data.server.permission.PermissionGuardImpl
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactMessageItem
@@ -84,35 +78,6 @@ class TcpFragment : Fragment() {
     //resource directory
     private lateinit var resourceDirectory: File
 
-    private lateinit var tcpService: TcpService
-    private var isBound: Boolean = false
-
-    private val connection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance.
-            val binder = service as TcpService.LocalBinder
-            tcpService = binder.getService()
-            isBound = true
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            isBound = false
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        // Bind to LocalService.
-        Intent(requireContext(), TcpService::class.java).also { intent ->
-            requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        requireActivity().unbindService(connection)
-        isBound = false
-    }
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -293,7 +258,7 @@ class TcpFragment : Fragment() {
             }
 
             TcpScreenNavigation.WifiDisabledCase -> {
-                tcpService.handleWifiDisabledCase(viewModel.state.value.generalConnectionStatus)
+                viewModel.handleWifiDisabledCase()
             }
 
             is TcpScreenNavigation.OnErrorsOccurred -> {
@@ -302,36 +267,15 @@ class TcpFragment : Fragment() {
 
             is TcpScreenNavigation.OnCreateServerClick -> {
                 lifecycleScope.launch(Dispatchers.IO) {
-                    tcpService.createServer(
-                        serverPort = navigation.portNumber,
-                        onDialogErrorOccurred = {
-                            viewModel.handleEvents(
-                                TcpScreenEvents.OnDialogErrorOccurred(it)
-                            )
-                        },
-                        createNewUserIfDoNotExist = {
-                            viewModel.createNewUserIfDoNotExist(it)
-                        },
-                        updateConnectionsCount = {
-                            viewModel.updateConnectionsCount(it)
-                        },
-                        updateHostConnectionStatus = {
-                            viewModel.updateHostConnectionStatus(it)
-                        }
-                    )
+                    viewModel.createServer(serverPort = navigation.portNumber)
                 }
             }
 
             is TcpScreenNavigation.OnConnectToServerClick -> {
                 lifecycleScope.launch(Dispatchers.IO) {
-                    tcpService.connectToServer(
+                    viewModel.connectToServer(
                         serverIpAddress = navigation.serverIpAddress,
-                        serverPort = navigation.portNumber,
-                        onDialogErrorOccurred = {
-                            viewModel.handleEvents(TcpScreenEvents.OnDialogErrorOccurred(it))
-                        },
-                        updateConnectionsCount = { viewModel.updateConnectionsCount(it) },
-                        updateClientConnectionStatus = { viewModel.updateClientConnectionStatus(it) }
+                        serverPort = navigation.portNumber
                     )
                 }
             }

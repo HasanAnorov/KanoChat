@@ -51,7 +51,6 @@ class NavActivity : AppCompatActivity() {
     @Inject
     lateinit var channel: WifiP2pManager.Channel
 
-
     //todo delegate this to viewmodel
     private lateinit var permissionGuard: PermissionGuardImpl
 
@@ -63,38 +62,6 @@ class NavActivity : AppCompatActivity() {
 
     private lateinit var receiver: WiFiDirectBroadcastReceiver
     private val intentFilter = IntentFilter()
-
-    private lateinit var tcpService: TcpService
-
-    private val connection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance.
-            val binder = service as TcpService.LocalBinder
-            tcpService = binder.getService()
-            viewModel.isTcpServiceBound = true
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            viewModel.isTcpServiceBound = false
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        // Bind to LocalService.
-        if (!viewModel.isTcpServiceBound) {
-            Intent(this, TcpService::class.java).also { intent ->
-                bindService(intent, connection, Context.BIND_AUTO_CREATE)
-            }
-        }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        unbindService(connection)
-        viewModel.isTcpServiceBound = false
-    }
-
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()

@@ -38,6 +38,7 @@ import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
 import com.ierusalem.androchat.core.utils.Constants.getTimeInHours
+import com.ierusalem.androchat.core.utils.Json.gson
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
 import com.ierusalem.androchat.core.utils.getAudioFileDuration
@@ -83,7 +84,15 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import java.io.BufferedInputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
 import java.io.File
+import java.io.IOException
+import java.net.ServerSocket
+import java.net.Socket
+import java.net.UnknownHostException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -101,7 +110,359 @@ class TcpViewModel @Inject constructor(
     private val channel: WifiP2pManager.Channel
 ) : ViewModel(), NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
 
-    var isTcpServiceBound: Boolean = false
+    //chatting server side
+    private lateinit var serverSocket: ServerSocket
+    private lateinit var connectedClientSocketOnServer: Socket
+    private lateinit var connectedClientWriter: DataOutputStream
+
+    //chatting client side
+    private lateinit var clientSocket: Socket
+    private lateinit var clientWriter: DataOutputStream
+
+    /** Socket User Initializing Functions*/
+    private fun initializeUser(writer: DataOutputStream) {
+        val userUniqueId = runBlocking(Dispatchers.IO) { getUniqueDeviceId() }
+        val userUniqueName = state.value.userUniqueName
+        val initialChatModel = InitialChatModel(
+            userUniqueId = userUniqueId,
+            userUniqueName = userUniqueName
+        )
+        val initialChatModelStringForm = gson.toJson(initialChatModel)
+
+        val type = AppMessageType.INITIAL.identifier.code
+        try {
+            writer.writeChar(type)
+            writer.writeUTF(initialChatModelStringForm)
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Log.d(
+                "ahi3646",
+                "sendMessage server: dataOutputStream is closed io exception "
+            )
+            handleEvents(
+                TcpScreenEvents.OnDialogErrorOccurred(
+                    TcpScreenDialogErrors.IOException
+                )
+            )
+            try {
+                writer.close()
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+            }
+        }
+    }
+
+    private fun setupUserData(reader: DataInputStream) {
+        val receivedMessage = reader.readUTF()
+        log("incoming initial message - $receivedMessage")
+
+        val initialChatModel = gson.fromJson(
+            receivedMessage,
+            InitialChatModel::class.java
+        )
+        createNewUserIfDoNotExist(initialChatModel)
+    }
+
+    fun createServer(serverPort: Int) {
+        log("creating server ...")
+        log("group address - ${state.value.groupOwnerAddress} \ncreating server ...")
+        updateHostConnectionStatus(HostConnectionStatus.Creating)
+
+//            try {
+        serverSocket = ServerSocket(serverPort)
+        log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
+        if (serverSocket.isBound) {
+            updateHostConnectionStatus(HostConnectionStatus.Created)
+            updateConnectionsCount(true)
+        }
+        while (!serverSocket.isClosed) {
+            connectedClientSocketOnServer = serverSocket.accept()
+            connectedClientWriter =
+                DataOutputStream(connectedClientSocketOnServer.getOutputStream())
+            //here we sending the unique device id to the client
+            initializeUser(writer = connectedClientWriter)
+            log("New client : $connectedClientSocketOnServer ")
+            updateConnectionsCount(true)
+
+            while (!connectedClientSocketOnServer.isClosed) {
+                val reader =
+                    DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
+
+//                        try {
+                val messageType = AppMessageType.fromChar(reader.readChar())
+
+                when (messageType) {
+                    AppMessageType.INITIAL -> {
+                        setupUserData(reader)
+                    }
+
+                    AppMessageType.VOICE -> {
+                        viewModelScope.launch(Dispatchers.IO) {
+                            //receiveVoiceMessage(reader = reader)
+                        }
+                    }
+
+                    AppMessageType.CONTACT -> {
+                        viewModelScope.launch(Dispatchers.IO) {
+                            //receiveContactMessage(reader = reader)
+                        }
+                    }
+
+                    AppMessageType.TEXT -> {
+                        viewModelScope.launch(Dispatchers.IO) {
+                            //receiveTextMessage(reader = reader)
+                        }
+                    }
+
+                    AppMessageType.FILE -> {
+                        //receiveFile(reader = reader)
+                    }
+
+                    AppMessageType.UNKNOWN -> {
+                        /**Ignore case*/
+                    }
+                }
+//                        } catch (e: EOFException) {
+//                            e.printStackTrace()
+//                            //if the IP address of the host could not be determined.
+//                            log("createServer: EOFException")
+//                            connectedClientSocketOnServer.close()
+//                            viewModel.updateConnectionsCount(false)
+//                            log("in while - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
+//                            viewModel.handleEvents(
+//                                TcpScreenEvents.OnDialogErrorOccurred(
+//                                    TcpScreenDialogErrors.EOException
+//                                )
+//                            )
+//                            try {
+//                                reader.close()
+//                            } catch (e: IOException) {
+//                                e.printStackTrace()
+//                            }
+//                        } catch (e: IOException) {
+//                            e.printStackTrace()
+//                            //the stream has been closed and the contained
+//                            // input stream does not support reading after close,
+//                            // or another I/O error occurs
+//                            log("createServer: io exception ")
+//                            viewModel.handleEvents(
+//                                TcpScreenEvents.OnDialogErrorOccurred(
+//                                    TcpScreenDialogErrors.IOException
+//                                )
+//                            )
+//                            viewModel.updateConnectionsCount(false)
+//                            connectedClientSocketOnServer.close()
+//                            //serverSocket.close()
+//                            try {
+//                                reader.close()
+//                            } catch (e: IOException) {
+//                                e.printStackTrace()
+//                                log("reader close exception - $e ")
+//                            }
+//                        } catch (e: UTFDataFormatException) {
+//                            e.printStackTrace()
+//                            /** here is firing***/
+//                            //if the bytes do not represent a valid modified UTF-8 encoding of a string.
+//                            log("createServer: io exception ")
+//                            viewModel.handleEvents(
+//                                TcpScreenEvents.OnDialogErrorOccurred(
+//                                    TcpScreenDialogErrors.UTFDataFormatException
+//                                )
+//                            )
+//                            viewModel.updateConnectionsCount(false)
+//                            connectedClientSocketOnServer.close()
+//                            //serverSocket.close()
+//                            try {
+//                                reader.close()
+//                            } catch (e: IOException) {
+//                                e.printStackTrace()
+//                            }
+//                        }
+            }
+        }
+//            } catch (e: IOException) {
+//                e.printStackTrace()
+//                serverSocket.close()
+//                //change server title status
+//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+//
+//            } catch (e: SecurityException) {
+//                e.printStackTrace()
+//                serverSocket.close()
+//                //change server title status
+//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+//
+//                //if a security manager exists and its checkConnect method doesn't allow the operation.
+//                log("createServer: SecurityException ")
+//            } catch (e: IllegalArgumentException) {
+//                e.printStackTrace()
+//                serverSocket.close()
+//                //change server title status
+//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
+//                //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
+//                log("createServer: IllegalArgumentException ")
+//            }
+    }
+
+    // todo - check stream closes also
+    // network clean up should be carried out in viewmodel
+    fun handleWifiDisabledCase() {
+        when (state.value.generalConnectionStatus) {
+            GeneralConnectionStatus.Idle -> {
+                /** do nothing */
+            }
+
+            GeneralConnectionStatus.ConnectedAsClient -> {
+                closeClientSocket()
+            }
+
+            GeneralConnectionStatus.ConnectedAsHost -> {
+                closerServeSocket()
+            }
+        }
+    }
+
+    private fun closerServeSocket() {
+        if (::serverSocket.isInitialized) {
+            serverSocket.close()
+        }
+    }
+
+    private fun closeClientSocket() {
+        if (::clientSocket.isInitialized) {
+            clientSocket.close()
+        }
+    }
+
+    fun connectToServer(serverIpAddress: String, serverPort: Int) {
+        log("connecting to server - $serverIpAddress:$serverPort")
+        try {
+            //create client socket
+            clientSocket = Socket(serverIpAddress, serverPort)
+            clientWriter = DataOutputStream(clientSocket.getOutputStream())
+            log("client writer initialized - $clientWriter")
+
+            viewModelScope.launch(Dispatchers.IO) {
+                initializeUser(clientWriter)
+                log("user initialized ")
+            }
+
+            updateClientConnectionStatus(ClientConnectionStatus.Connected)
+            updateConnectionsCount(true)
+
+            //received outcome messages here
+            while (!clientSocket.isClosed) {
+                val reader = DataInputStream(BufferedInputStream(clientSocket.getInputStream()))
+
+//                try {
+                val dataType = AppMessageType.fromChar(reader.readChar())
+                log("incoming message type - $dataType")
+
+                when (dataType) {
+                    AppMessageType.INITIAL -> {
+                        viewModelScope.launch(Dispatchers.IO) {
+                            setupUserData(reader = reader)
+                        }
+                    }
+
+                    AppMessageType.VOICE -> {
+                        viewModelScope.launch(Dispatchers.IO) {
+//                            receiveVoiceMessage(reader = reader)
+                        }
+                    }
+
+                    AppMessageType.TEXT -> {
+                        viewModelScope.launch(Dispatchers.IO) {
+//                            receiveTextMessage(reader = reader)
+                        }
+                    }
+
+                    AppMessageType.CONTACT -> {
+                        viewModelScope.launch(Dispatchers.IO) {
+//                            receiveContactMessage(reader = reader)
+                        }
+                    }
+
+                    AppMessageType.FILE -> {
+//                        receiveFile(reader = reader)
+                    }
+
+                    AppMessageType.UNKNOWN -> {
+                        /**Ignore case*/
+                    }
+                }
+//                } catch (e: EOFException) {
+//                    e.printStackTrace()
+//                    //if the IP address of the host could not be determined.
+//                    log("connectToServer: EOFException ")
+//                    viewModel.handleEvents(
+//                        TcpScreenEvents.OnDialogErrorOccurred(
+//                            TcpScreenDialogErrors.EOException
+//                        )
+//                    )
+//
+//                    try {
+//                        reader.close()
+//                    } catch (e: IOException) {
+//                        e.printStackTrace()
+//                    }
+//                } catch (e: IOException) {
+//                    e.printStackTrace()
+//                    //the stream has been closed and the contained
+//                    // input stream does not support reading after close,
+//                    // or another I/O error occurs
+//                    log("connectToServer: io exception ")
+//                    viewModel.updateClientConnectionStatus(ClientConnectionStatus.Failure)
+//                    viewModel.updateConnectionsCount(false)
+//                    viewModel.handleEvents(
+//                        TcpScreenEvents.OnDialogErrorOccurred(
+//                            TcpScreenDialogErrors.IOException
+//                        )
+//                    )
+//                    try {
+//                        reader.close()
+//                    } catch (e: IOException) {
+//                        e.printStackTrace()
+//                    }
+//                } catch (e: UTFDataFormatException) {
+//                    e.printStackTrace()
+//                    //if the bytes do not represent a valid modified UTF-8 encoding of a string.
+//                    log("connectToServer: io exception ")
+//                    viewModel.handleEvents(
+//                        TcpScreenEvents.OnDialogErrorOccurred(
+//                            TcpScreenDialogErrors.UTFDataFormatException
+//                        )
+//                    )
+//                    try {
+//                        reader.close()
+//                    } catch (e: IOException) {
+//                        e.printStackTrace()
+//                    }
+//                }
+            }
+        } catch (exception: UnknownHostException) {
+            exception.printStackTrace()
+            log("unknown host exception".uppercase())
+            handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.UnknownHostException))
+        } catch (exception: IOException) {
+            exception.printStackTrace()
+            //could not connect to a server
+            log("connectToServer: IOException ".uppercase())
+            handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.IOException))
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+            //fixme add security exception handling
+            //if a security manager exists and its checkConnect method doesn't allow the operation.
+            log("connectToServer: SecurityException".uppercase())
+        } catch (e: IllegalArgumentException) {
+            e.printStackTrace()
+            //fixme add illegal argument handling
+            //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
+            log("connectToServer: IllegalArgumentException".uppercase())
+        }
+
+    }
+
 
     /** Hotspot networking creation*/
 
