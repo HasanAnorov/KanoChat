@@ -15,14 +15,13 @@ sealed interface TcpScreenEvents {
     data object ConnectToServerClick : TcpScreenEvents
 
     data object DiscoverP2PClick : TcpScreenEvents
+    data class OnConnectToWifiClick(val wifiDevice: WifiP2pDevice) : TcpScreenEvents
     data object DiscoverHotSpotClick : TcpScreenEvents
     data object DiscoverLocalOnlyHotSpotClick : TcpScreenEvents
 
     data class OnPortNumberChanged(val portNumber: String) : TcpScreenEvents
     data class OnHotspotNameChanged(val hotspotName: String) : TcpScreenEvents
     data class OnHotspotPasswordChanged(val hotspotPassword: String) : TcpScreenEvents
-
-    data class OnConnectToWifiClick(val wifiDevice: WifiP2pDevice) : TcpScreenEvents
 
     data class SendMessageRequest(val message: String) : TcpScreenEvents
 
@@ -49,4 +48,5 @@ sealed interface TcpScreenEvents {
     data class OnPlayVoiceMessageClick(val message: ChatMessage.VoiceMessage) : TcpScreenEvents
     data class OnPauseVoiceMessageClick(val message: ChatMessage.VoiceMessage) : TcpScreenEvents
     data class OnStopVoiceMessageClick(val message: ChatMessage.VoiceMessage) : TcpScreenEvents
+
 }

@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.database.Cursor
+import android.net.Uri
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.net.wifi.WifiManager.LocalOnlyHotspotCallback
@@ -36,17 +37,21 @@ import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.utils.Constants
+import com.ierusalem.androchat.core.utils.Constants.SOCKET_DEFAULT_BUFFER_SIZE
 import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
 import com.ierusalem.androchat.core.utils.Constants.getTimeInHours
 import com.ierusalem.androchat.core.utils.Json.gson
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
+import com.ierusalem.androchat.core.utils.generateFileFromUri
 import com.ierusalem.androchat.core.utils.getAudioFileDuration
+import com.ierusalem.androchat.core.utils.getFileByName
 import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidHotspotPassword
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.core.utils.log
+import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.core.voice_message.playback.AndroidAudioPlayer
 import com.ierusalem.androchat.core.voice_message.recorder.AndroidAudioRecorder
 import com.ierusalem.androchat.features_local.tcp.data.db.dao.ChattingUsersDao
@@ -57,6 +62,7 @@ import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.Reason
 import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_local.tcp.domain.state.ClientConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactItem
+import com.ierusalem.androchat.features_local.tcp.domain.state.ContactMessageItem
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralNetworkingStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.HostConnectionStatus
@@ -72,6 +78,7 @@ import com.ierusalem.androchat.features_local.tcp_conversation.data.db.dao.Messa
 import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.AudioState
 import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
 import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.FileMessageState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -85,15 +92,19 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.UnknownHostException
 import javax.inject.Inject
+import kotlin.math.min
 
 @HiltViewModel
 class TcpViewModel @Inject constructor(
@@ -120,6 +131,7 @@ class TcpViewModel @Inject constructor(
     private lateinit var clientWriter: DataOutputStream
 
     /** Socket User Initializing Functions*/
+
     private fun initializeUser(writer: DataOutputStream) {
         val userUniqueId = runBlocking(Dispatchers.IO) { getUniqueDeviceId() }
         val userUniqueName = state.value.userUniqueName
@@ -163,13 +175,13 @@ class TcpViewModel @Inject constructor(
         createNewUserIfDoNotExist(initialChatModel)
     }
 
-    fun createServer(serverPort: Int) {
+    private fun createServer(portNumber: Int) {
         log("creating server ...")
         log("group address - ${state.value.groupOwnerAddress} \ncreating server ...")
         updateHostConnectionStatus(HostConnectionStatus.Creating)
 
 //            try {
-        serverSocket = ServerSocket(serverPort)
+        serverSocket = ServerSocket(portNumber)
         log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
         if (serverSocket.isBound) {
             updateHostConnectionStatus(HostConnectionStatus.Created)
@@ -198,24 +210,24 @@ class TcpViewModel @Inject constructor(
 
                     AppMessageType.VOICE -> {
                         viewModelScope.launch(Dispatchers.IO) {
-                            //receiveVoiceMessage(reader = reader)
+                            receiveVoiceMessage(reader = reader)
                         }
                     }
 
                     AppMessageType.CONTACT -> {
                         viewModelScope.launch(Dispatchers.IO) {
-                            //receiveContactMessage(reader = reader)
+                            receiveContactMessage(reader = reader)
                         }
                     }
 
                     AppMessageType.TEXT -> {
                         viewModelScope.launch(Dispatchers.IO) {
-                            //receiveTextMessage(reader = reader)
+                            receiveTextMessage(reader = reader)
                         }
                     }
 
                     AppMessageType.FILE -> {
-                        //receiveFile(reader = reader)
+                        receiveFile(reader = reader)
                     }
 
                     AppMessageType.UNKNOWN -> {
@@ -306,7 +318,7 @@ class TcpViewModel @Inject constructor(
 
     // todo - check stream closes also
     // network clean up should be carried out in viewmodel
-    fun handleWifiDisabledCase() {
+    private fun handleWifiDisabledCase() {
         when (state.value.generalConnectionStatus) {
             GeneralConnectionStatus.Idle -> {
                 /** do nothing */
@@ -334,7 +346,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun connectToServer(serverIpAddress: String, serverPort: Int) {
+    private fun connectToServer(serverIpAddress: String, serverPort: Int) {
         log("connecting to server - $serverIpAddress:$serverPort")
         try {
             //create client socket
@@ -367,24 +379,26 @@ class TcpViewModel @Inject constructor(
 
                     AppMessageType.VOICE -> {
                         viewModelScope.launch(Dispatchers.IO) {
-//                            receiveVoiceMessage(reader = reader)
+                            receiveVoiceMessage(reader = reader)
                         }
                     }
 
                     AppMessageType.TEXT -> {
                         viewModelScope.launch(Dispatchers.IO) {
-//                            receiveTextMessage(reader = reader)
+                            receiveTextMessage(reader = reader)
                         }
                     }
 
                     AppMessageType.CONTACT -> {
-                        viewModelScope.launch(Dispatchers.IO) {
-//                            receiveContactMessage(reader = reader)
+                        viewModelScope.launch {
+                            receiveContactMessage(reader = reader)
                         }
                     }
 
                     AppMessageType.FILE -> {
-//                        receiveFile(reader = reader)
+                        viewModelScope.launch(Dispatchers.IO) {
+                            receiveFile(reader = reader)
+                        }
                     }
 
                     AppMessageType.UNKNOWN -> {
@@ -463,18 +477,533 @@ class TcpViewModel @Inject constructor(
 
     }
 
+    /**Socket Sending Functions*/
+
+    fun sendClientMessage(message: ChatMessageEntity) {
+        log("send client message - $message")
+        if (!clientSocket.isClosed) {
+            when (message.type) {
+                AppMessageType.TEXT -> {
+                    viewModelScope.launch(Dispatchers.IO) {
+                        sendTextMessage(writer = clientWriter, textMessage = message)
+                    }
+                }
+
+                AppMessageType.VOICE -> {
+                    viewModelScope.launch(Dispatchers.IO) {
+                        sendVoiceMessage(writer = clientWriter, voiceMessage = message)
+                    }
+                }
+
+                AppMessageType.CONTACT -> {
+                    viewModelScope.launch(Dispatchers.IO) {
+                        sendContactMessage(writer = clientWriter, contactMessage = message)
+                    }
+                }
+
+                AppMessageType.FILE -> {
+                    viewModelScope.launch {
+                        sendFileMessages(writer = clientWriter, messages = listOf(message))
+                    }
+                }
+
+                else -> {
+                    /** Just ignore */
+                }
+            }
+        } else {
+            log("send client message: client socket is closed ")
+            handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
+        }
+    }
+
+    fun sendHostMessage(message: ChatMessageEntity) {
+        log("send host message - $message")
+        if (!connectedClientSocketOnServer.isClosed) {
+            when (message.type) {
+                AppMessageType.TEXT -> {
+                    viewModelScope.launch(Dispatchers.IO) {
+                        sendTextMessage(writer = connectedClientWriter, textMessage = message)
+                    }
+                }
+
+                AppMessageType.VOICE -> {
+                    viewModelScope.launch {
+                        sendVoiceMessage(writer = connectedClientWriter, voiceMessage = message)
+                    }
+                }
+
+                AppMessageType.CONTACT -> {
+                    viewModelScope.launch(Dispatchers.IO) {
+                        sendContactMessage(writer = connectedClientWriter, contactMessage = message)
+                    }
+                }
+
+                AppMessageType.FILE -> {
+                    viewModelScope.launch {
+                        sendFileMessages(writer = connectedClientWriter, messages = listOf(message))
+                    }
+                }
+
+                else -> {
+                    /** Just ignore */
+                }
+            }
+        } else {
+            log("send host message: client socket is closed ")
+            handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
+        }
+    }
+
+    /**Socket Sending Functions*/
+
+    private fun sendTextMessage(
+        writer: DataOutputStream,
+        textMessage: ChatMessageEntity
+    ) {
+        log("sending text message from client - $textMessage")
+        try {
+            writer.writeChar(textMessage.type.identifier.code)
+            writer.writeUTF(textMessage.text)
+            viewModelScope.launch {
+                insertMessage(textMessage)
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Log.d(
+                "ahi3646",
+                "sendMessage server: dataOutputStream is closed io exception "
+            )
+            handleEvents(
+                TcpScreenEvents.OnDialogErrorOccurred(
+                    TcpScreenDialogErrors.IOException
+                )
+            )
+            try {
+                writer.close()
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+            }
+        }
+    }
+
+    private suspend fun sendVoiceMessage(
+        writer: DataOutputStream,
+        voiceMessage: ChatMessageEntity
+    ) {
+        log("sending voice message ...")
+        withContext(Dispatchers.IO) {
+//        try {
+            //sending file type
+            val type = voiceMessage.type.identifier.code
+            writer.writeChar(type)
+
+            //sending file name
+            writer.writeUTF(voiceMessage.voiceMessageFileName)
+            log("sending voice file name - ${voiceMessage.voiceMessageFileName}")
+
+            //Create File object
+            val file = File(resourceDirectory, voiceMessage.voiceMessageFileName!!)
+            val messageId = insertMessage(voiceMessage)
+
+            //write length
+            writer.writeLong(file.length())
+            log("sending voice file length - ${file.length()}")
+
+            var bytes: Int
+            var bytesForPercentage = 0L
+            val fileSizeForPercentage = file.length()
+            val fileInputStream = FileInputStream(file)
+
+            // Here we  break file into chunks
+            val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+            while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
+                // Send the file to Server Socket
+                writer.write(buffer, 0, bytes)
+                writer.flush()
+
+                bytesForPercentage += bytes.toLong()
+                val percentage =
+                    (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                val tempPercentage =
+                    ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+                if (percentage != tempPercentage) {
+                    withContext(Dispatchers.Main) {
+                        log("progress - $percentage")
+                        val newState = FileMessageState.Loading(percentage)
+                        val newVoiceMessage =
+                            voiceMessage.copy(fileState = newState, id = messageId)
+                        updatePercentageOfReceivingFile(newVoiceMessage)
+                    }
+                }
+            }
+            // close the file here
+            fileInputStream.close()
+
+            withContext(Dispatchers.Main) {
+                val newState = FileMessageState.Success
+                val newVoiceMessage = voiceMessage.copy(fileState = newState, id = messageId)
+                updatePercentageOfReceivingFile(newVoiceMessage)
+                log("file sent successfully")
+            }
+//        } catch (exception: IOException) {
+//            log("file sent failed")
+//            val newState = FileMessageState.Failure
+//            val newVoiceMessage = voiceMessage.copy(fileState = newState)
+//            viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
+//        } catch (error: Exception) {
+//            log("file sent failed")
+//            val newState = FileMessageState.Failure
+//            val newVoiceMessage = voiceMessage.copy(fileState = newState)
+//            viewModel.updatePercentageOfReceivingFile(newVoiceMessage)
+//        }
+        }
+    }
+
+    private fun sendContactMessage(
+        writer: DataOutputStream,
+        contactMessage: ChatMessageEntity
+    ) {
+        val contactsMessageItem = ContactMessageItem(
+            contactName = contactMessage.contactName!!,
+            contactNumber = contactMessage.contactNumber!!
+        )
+        val contactsStringForm = gson.toJson(contactsMessageItem)
+
+        try {
+            writer.writeChar(contactMessage.type.identifier.code)
+            writer.writeUTF(contactsStringForm)
+            viewModelScope.launch {
+                insertMessage(contactMessage)
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Log.d(
+                "ahi3646",
+                "sendMessage server: dataOutputStream is closed io exception "
+            )
+            handleEvents(
+                TcpScreenEvents.OnDialogErrorOccurred(
+                    TcpScreenDialogErrors.IOException
+                )
+            )
+            try {
+                writer.close()
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * 1. type
+     * 2. file count
+     * 3. file name
+     * 4. file length
+     * */
+    private suspend fun sendFileMessages(
+        writer: DataOutputStream,
+        messages: List<ChatMessageEntity>
+    ) {
+        log("sending file ...")
+
+        withContext(Dispatchers.IO) {
+//                try {
+
+            //sending file type
+            val type = AppMessageType.FILE.identifier.code
+            writer.writeChar(type)
+
+            //sending file count
+            writer.writeInt(messages.size)
+            log("messages size - ${messages.size}")
+
+            messages.forEach { fileMessage ->
+
+                //todo-check for duplication
+                val file = File(resourceDirectory, fileMessage.fileName!!)
+                log("sending file info: file size - ${file.length()} - ${file.name}")
+
+                val messageId = insertMessage(fileMessage)
+                log("message id - $messageId")
+
+                //sending file name
+                writer.writeUTF(fileMessage.fileName)
+                log("sending file name - ${fileMessage.fileName}")
+
+                //write length
+                val fileSizeForPercentage = file.length()
+                writer.writeLong(file.length())
+                log("sending file length - ${file.length()}")
+
+                var bytes: Int
+                var bytesForPercentage = 0L
+                val fileInputStream = FileInputStream(file)
+
+                // Here we  break file into chunks
+                val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+                while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
+                    // Send the file to Server Socket
+                    writer.write(buffer, 0, bytes)
+                    writer.flush()
+
+                    bytesForPercentage += bytes.toLong()
+                    val percentage =
+                        (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                    val tempPercentage =
+                        ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+                    if (percentage != tempPercentage) {
+                        withContext(Dispatchers.Main) {
+                            log("progress - $percentage")
+                            val newState = FileMessageState.Loading(percentage)
+                            val newFileMessage =
+                                fileMessage.copy(fileState = newState, id = messageId)
+                            updatePercentageOfReceivingFile(newFileMessage)
+                        }
+                    }
+                }
+
+                // close the file here
+                fileInputStream.close()
+
+                withContext(Dispatchers.Main) {
+                    val newState = FileMessageState.Success
+                    val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
+                    updatePercentageOfReceivingFile(newFileMessage)
+                    log("file sent successfully")
+                }
+
+//                } catch (exception: IOException) {
+//                    exception.printStackTrace()
+//                    withContext(Dispatchers.Main) {
+//                        log("file sent failed")
+//                        val newState = FileMessageState.Failure
+//                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+//                    }
+//                } catch (error: Exception) {
+//                    error.printStackTrace()
+//                    withContext(Dispatchers.Main) {
+//                        log("file sent failed")
+//                        val newState = FileMessageState.Failure
+//                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
+//                    }
+//                }
+            }
+        }
+    }
+
+    /** Socket Receiving Functions */
+
+    /***
+     * 1. type
+     * 2. file count
+     * 3. file name
+     * 4. file length
+     * */
+    private fun receiveFile(reader: DataInputStream) {
+        log("receiving file ...")
+
+        //reading file count
+        val fileCount = reader.readInt()
+        log("file count - $fileCount")
+
+        for (i in 0 until fileCount) {
+            //reading file name
+            val filename = reader.readUTF()
+            log("Expected file name - $filename")
+
+            // Read the expected file size
+            var fileSize: Long = reader.readLong() // read file size
+            log("file size - $fileSize")
+
+            var bytes = 0
+            var bytesForPercentage = 0L
+            val fileSizeForPercentage = fileSize
+
+            // Create File object
+            val file = getFileByName(fileName = filename, resourceDirectory = resourceDirectory)
+
+            // Create FileOutputStream to write the received file
+            val fileOutputStream = FileOutputStream(file)
+
+            val fileMessageEntity = ChatMessageEntity(
+                type = AppMessageType.FILE,
+                formattedTime = getCurrentTime(),
+                isFromYou = false,
+                userId = state.value.peerUserUniqueId,
+                //file specific fields
+                fileState = FileMessageState.Loading(0),
+                fileName = file.name,
+                fileSize = fileSize.readableFileSize(),
+                fileExtension = file.extension,
+                filePath = file.path,
+            )
+
+            val messageId = runBlocking(Dispatchers.IO) {
+                insertMessage(fileMessageEntity)
+            }
+
+            val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+            while (fileSize > 0
+                && (reader.read(
+                    buffer, 0,
+                    min(buffer.size.toDouble(), fileSize.toDouble()).toInt()
+                ).also { bytes = it })
+                != -1
+            ) {
+                // Here we write the file using write method
+                fileOutputStream.write(buffer, 0, bytes)
+                fileSize -= bytes.toLong()
+
+                bytesForPercentage += bytes.toLong()
+                val percentage =
+                    (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                val tempPercentage =
+                    ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+
+                if (percentage != tempPercentage) {
+                    log("progress - $percentage")
+                    val newState = FileMessageState.Loading(percentage)
+                    val newFileMessage =
+                        fileMessageEntity.copy(fileState = newState, id = messageId)
+                    updatePercentageOfReceivingFile(newFileMessage)
+                }
+            }
+
+            fileOutputStream.close()
+            log("file received successfully")
+
+            val newState = FileMessageState.Success
+            val newFileMessage = fileMessageEntity.copy(fileState = newState, id = messageId)
+
+            updatePercentageOfReceivingFile(newFileMessage)
+        }
+    }
+
+    private fun receiveVoiceMessage(reader: DataInputStream) {
+        log("receiving voice file ...")
+
+        //reading file name
+        val fileName = reader.readUTF()
+        log("Expected voice file name - $fileName")
+
+        // Read the expected file size
+        var fileSize: Long = reader.readLong() // read file size
+        log("voice file size - $fileSize")
+
+        var bytes = 0
+        var bytesForPercentage = 0L
+        val fileSizeForPercentage = fileSize
+
+        //Create File object
+        val file = getFileByName(fileName = fileName, resourceDirectory = resourceDirectory)
+
+        // Create FileOutputStream to write the received file
+        val fileOutputStream = FileOutputStream(file)
+
+        val voiceMessageEntity = ChatMessageEntity(
+            type = AppMessageType.VOICE,
+            formattedTime = getCurrentTime(),
+            isFromYou = false,
+            userId = state.value.peerUserUniqueId,
+            //message specific fields
+            fileState = FileMessageState.Loading(0),
+            voiceMessageFileName = file.name,
+            voiceMessageAudioFileDuration = file.getAudioFileDuration(),
+        )
+
+        val messageId = runBlocking(Dispatchers.IO) {
+            insertMessage(voiceMessageEntity)
+        }
+
+        val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+        while (fileSize > 0
+            && (reader.read(
+                buffer, 0,
+                min(buffer.size.toDouble(), fileSize.toDouble()).toInt()
+            ).also { bytes = it })
+            != -1
+        ) {
+            // Here we write the file using write method
+            fileOutputStream.write(buffer, 0, bytes)
+            fileSize -= bytes.toLong()
+
+            bytesForPercentage += bytes.toLong()
+            val percentage =
+                (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+            val tempPercentage =
+                ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+
+            if (percentage != tempPercentage) {
+                log("progress - $percentage")
+                val newState = FileMessageState.Loading(percentage)
+                val newVoiceMessage = voiceMessageEntity.copy(fileState = newState, id = messageId)
+                updatePercentageOfReceivingFile(newVoiceMessage)
+            }
+        }
+
+        fileOutputStream.close()
+        log("voice file received successfully")
+
+        val newState = FileMessageState.Success
+        val newVoiceMessage = voiceMessageEntity.copy(
+            fileState = newState,
+            voiceMessageAudioFileDuration = file.getAudioFileDuration(),
+            id = messageId
+        )
+        updatePercentageOfReceivingFile(newVoiceMessage)
+    }
+
+    private fun receiveTextMessage(reader: DataInputStream) {
+        val receivedMessage = reader.readUTF()
+        log("host incoming text message - $receivedMessage")
+
+        val textMessageEntity = ChatMessageEntity(
+            type = AppMessageType.TEXT,
+            formattedTime = getCurrentTime(),
+            isFromYou = false,
+            userId = state.value.peerUserUniqueId,
+            text = receivedMessage.toString()
+        )
+        viewModelScope.launch(Dispatchers.IO) {
+            insertMessage(textMessageEntity)
+        }
+    }
+
+    private fun receiveContactMessage(reader: DataInputStream) {
+        val receivedMessage = reader.readUTF()
+        log("host incoming contact message - $receivedMessage")
+
+        val contactMessageItem =
+            gson.fromJson(
+                receivedMessage,
+                ContactMessageItem::class.java
+            )
+
+        val contactMessageEntity = ChatMessageEntity(
+            type = AppMessageType.CONTACT,
+            formattedTime = getCurrentTime(),
+            isFromYou = false,
+            userId = state.value.peerUserUniqueId,
+            contactName = contactMessageItem.contactName,
+            contactNumber = contactMessageItem.contactNumber
+        )
+        viewModelScope.launch(Dispatchers.IO) {
+            insertMessage(contactMessageEntity)
+        }
+    }
 
     /** Hotspot networking creation*/
 
     private fun stopHotspotNetworking() {
         log("stopHotspotNetworking")
         //close socket only when serverSocket is initialized
-//        if (::serverSocket.isInitialized) {
-//            serverSocket.close()
-//        }
-//        if (::connectedClientSocketOnServer.isInitialized) {
-//            connectedClientSocketOnServer.close()
-//        }
+        if (::serverSocket.isInitialized) {
+            serverSocket.close()
+        }
+        if (::connectedClientSocketOnServer.isInitialized) {
+            connectedClientSocketOnServer.close()
+        }
 
         val listener = object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
@@ -759,7 +1288,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun createNewUserIfDoNotExist(initialChatModel: InitialChatModel) {
+    private fun createNewUserIfDoNotExist(initialChatModel: InitialChatModel) {
         viewModelScope.launch {
             val isUserExist = chattingUsersDao.isChattingUserExists(initialChatModel.userUniqueId)
             if (!isUserExist) {
@@ -802,7 +1331,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    suspend fun getUniqueDeviceId(): String {
+    private suspend fun getUniqueDeviceId(): String {
         return dataStorePreferenceRepository.getUniqueDeviceId.first()
     }
 
@@ -969,12 +1498,12 @@ class TcpViewModel @Inject constructor(
             }
 
             GeneralNetworkingStatus.P2PDiscovery -> {
-                emitNavigation(TcpScreenNavigation.WifiDisabledCase)
+                handleWifiDisabledCase()
                 updateP2PDiscoveryStatus(P2PNetworkingStatus.Idle)
             }
 
             GeneralNetworkingStatus.HotspotDiscovery -> {
-                emitNavigation(TcpScreenNavigation.WifiDisabledCase)
+                handleWifiDisabledCase()
                 updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Idle)
             }
 
@@ -1022,11 +1551,11 @@ class TcpViewModel @Inject constructor(
             }
 
             GeneralConnectionStatus.ConnectedAsClient -> {
-                emitNavigation(TcpScreenNavigation.SendClientMessage(voiceMessageEntity))
+                sendClientMessage(voiceMessageEntity)
             }
 
             GeneralConnectionStatus.ConnectedAsHost -> {
-                emitNavigation(TcpScreenNavigation.SendHostMessage(voiceMessageEntity))
+                sendHostMessage(voiceMessageEntity)
             }
         }
     }
@@ -1263,7 +1792,9 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.HandlePickingMultipleMedia -> {
-                emitNavigation(TcpScreenNavigation.HandlePickingMultipleMedia(event.medias))
+                viewModelScope.launch(Dispatchers.IO) {
+                    handlePickingMultipleMedia(event.medias)
+                }
             }
 
             TcpScreenEvents.OnNavIconClick -> {
@@ -1360,11 +1891,11 @@ class TcpViewModel @Inject constructor(
                     }
 
                     GeneralConnectionStatus.ConnectedAsClient -> {
-                        emitNavigation(TcpScreenNavigation.SendClientMessage(textMessageEntity))
+                        sendClientMessage(textMessageEntity)
                     }
 
                     GeneralConnectionStatus.ConnectedAsHost -> {
-                        emitNavigation(TcpScreenNavigation.SendHostMessage(textMessageEntity))
+                        sendHostMessage(textMessageEntity)
                     }
                 }
             }
@@ -1412,24 +1943,11 @@ class TcpViewModel @Inject constructor(
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidPortNumber))
                     return
                 }
-                //todo - CLARIFY WHY WE NEED GROUP ADDRESS
-//                if (!state.value.isValidGroupOwnerAddress) {
-//                    Log.d(
-//                        "ahi3646",
-//                        "handleEvents: invalid ip address - ${state.value.groupOwnerAddress} "
-//                    )
-//                    emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.InvalidHostAddress))
-//                    return
-//                }
 
                 //this when loop determines the state of wi fi connection
                 when (state.value.hostConnectionStatus) {
                     HostConnectionStatus.Idle -> {
-                        emitNavigation(
-                            TcpScreenNavigation.OnCreateServerClick(
-                                portNumber = state.value.portNumber.toInt()
-                            )
-                        )
+                        createServer(portNumber = state.value.portNumber.toInt())
                     }
 
                     HostConnectionStatus.Creating -> {
@@ -1441,11 +1959,7 @@ class TcpViewModel @Inject constructor(
                     }
 
                     HostConnectionStatus.Failure -> {
-                        emitNavigation(
-                            TcpScreenNavigation.OnCreateServerClick(
-                                portNumber = state.value.portNumber.toInt()
-                            )
-                        )
+                        createServer(portNumber = state.value.portNumber.toInt())
                     }
                 }
             }
@@ -1456,11 +1970,6 @@ class TcpViewModel @Inject constructor(
                     emitNavigation(TcpScreenNavigation.OnErrorsOccurred(TcpScreenErrors.WifiNotEnabled))
                     return
                 }
-
-//                if (state.value.generalNetworkingStatus == GeneralNetworkingStatus.Idle) {
-//                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.NO_NETWORK_FOR_CONNECTION)
-//                    return
-//                }
 
                 if (!state.value.isValidPortNumber) {
                     Log.d("ahi3646", "handleEvents: invalid port number ")
@@ -1473,15 +1982,11 @@ class TcpViewModel @Inject constructor(
                     return
                 }
 
-                //validateConfigurationsByNetworkType()
-
                 when (state.value.clientConnectionStatus) {
                     ClientConnectionStatus.Idle -> {
-                        emitNavigation(
-                            TcpScreenNavigation.OnConnectToServerClick(
-                                serverIpAddress = state.value.connectedWifiAddress,
-                                portNumber = state.value.portNumber.toInt()
-                            )
+                        connectToServer(
+                            serverIpAddress = state.value.connectedWifiAddress,
+                            serverPort = state.value.portNumber.toInt()
                         )
                     }
 
@@ -1495,11 +2000,9 @@ class TcpViewModel @Inject constructor(
 
                     ClientConnectionStatus.Failure -> {
                         log("client is failure")
-                        emitNavigation(
-                            TcpScreenNavigation.OnConnectToServerClick(
-                                serverIpAddress = state.value.connectedWifiAddress,
-                                portNumber = state.value.portNumber.toInt()
-                            )
+                        connectToServer(
+                            serverIpAddress = state.value.connectedWifiAddress,
+                            serverPort = state.value.portNumber.toInt()
                         )
                     }
                 }
@@ -1531,7 +2034,73 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updateClientConnectionStatus(status: ClientConnectionStatus) {
+    private suspend fun handlePickingMultipleMedia(medias: List<Uri>) {
+        when (state.value.generalConnectionStatus) {
+            GeneralConnectionStatus.Idle -> {
+                updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
+            }
+
+            GeneralConnectionStatus.ConnectedAsHost -> {
+                val fileMessages = mutableListOf<ChatMessageEntity>()
+                medias.forEach { imageUri ->
+                    val file = generateFileFromUri(
+                        contentResolver = contentResolver,
+                        uri = imageUri,
+                        resourceDirectory = resourceDirectory
+                    )
+
+                    val fileMessageEntity = ChatMessageEntity(
+                        type = AppMessageType.FILE,
+                        formattedTime = getCurrentTime(),
+                        isFromYou = true,
+                        userId = state.value.peerUserUniqueId,
+
+                        fileState = FileMessageState.Loading(0),
+                        fileName = file.name,
+                        fileSize = file.length().readableFileSize(),
+                        fileExtension = file.extension,
+                        filePath = file.path,
+                    )
+                    fileMessages.add(fileMessageEntity)
+                }
+
+                viewModelScope.launch {
+                    sendFileMessages(
+                        writer = connectedClientWriter,
+                        messages = fileMessages
+                    )
+                }
+            }
+
+            GeneralConnectionStatus.ConnectedAsClient -> {
+                val fileMessages = mutableListOf<ChatMessageEntity>()
+                medias.forEach { imageUri ->
+                    val file = generateFileFromUri(contentResolver, imageUri, resourceDirectory)
+                    val fileMessageEntity = ChatMessageEntity(
+                        type = AppMessageType.FILE,
+                        formattedTime = getCurrentTime(),
+                        isFromYou = true,
+                        userId = state.value.peerUserUniqueId,
+
+                        fileState = FileMessageState.Loading(0),
+                        fileName = file.name,
+                        fileSize = file.length().readableFileSize(),
+                        fileExtension = file.extension,
+                        filePath = file.path,
+                    )
+                    fileMessages.add(fileMessageEntity)
+                }
+                viewModelScope.launch {
+                    sendFileMessages(
+                        writer = clientWriter,
+                        messages = fileMessages
+                    )
+                }
+            }
+        }
+    }
+
+    private fun updateClientConnectionStatus(status: ClientConnectionStatus) {
         when (status) {
             ClientConnectionStatus.Idle -> {
                 log("on general connection status changed 2")
@@ -1564,7 +2133,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updateHostConnectionStatus(status: HostConnectionStatus) {
+    private fun updateHostConnectionStatus(status: HostConnectionStatus) {
         when (status) {
             HostConnectionStatus.Idle -> {
                 log("on general connection status changed 5")
@@ -1597,7 +2166,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updateP2PDiscoveryStatus(status: P2PNetworkingStatus) {
+    private fun updateP2PDiscoveryStatus(status: P2PNetworkingStatus) {
         when (status) {
             P2PNetworkingStatus.Idle -> {
                 _state.update {
@@ -1628,7 +2197,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updateLocalOnlyHotspotStatus(status: LocalOnlyHotspotStatus) {
+    private fun updateLocalOnlyHotspotStatus(status: LocalOnlyHotspotStatus) {
         when (status) {
             LocalOnlyHotspotStatus.Idle -> {
                 _state.update {
@@ -1660,7 +2229,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updateHotspotDiscoveryStatus(status: HotspotNetworkingStatus) {
+    private fun updateHotspotDiscoveryStatus(status: HotspotNetworkingStatus) {
         when (status) {
             HotspotNetworkingStatus.Idle -> {
                 _state.update {
@@ -1691,7 +2260,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun clearPeersList() {
+    private fun clearPeersList() {
         _state.update {
             it.copy(
                 availableWifiNetworks = emptyList()
@@ -1732,7 +2301,7 @@ class TcpViewModel @Inject constructor(
         } else return false
     }
 
-    fun updateHasErrorOccurredDialog(dialog: TcpScreenDialogErrors?) {
+    private fun updateHasErrorOccurredDialog(dialog: TcpScreenDialogErrors?) {
         _state.update {
             it.copy(
                 hasDialogErrorOccurred = dialog
@@ -1740,7 +2309,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updatePercentageOfReceivingFile(message: ChatMessageEntity) {
+    private fun updatePercentageOfReceivingFile(message: ChatMessageEntity) {
         when (message.type) {
             AppMessageType.FILE -> {
                 viewModelScope.launch(Dispatchers.IO) {
@@ -1766,7 +2335,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    suspend fun insertMessage(messageEntity: ChatMessageEntity): Long {
+    private suspend fun insertMessage(messageEntity: ChatMessageEntity): Long {
         return messagesDao.insertMessage(messageEntity)
     }
 
@@ -1783,7 +2352,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updateConnectionsCount(shouldIncrease: Boolean) {
+    private fun updateConnectionsCount(shouldIncrease: Boolean) {
         if (shouldIncrease) {
             _state.update {
                 it.copy(

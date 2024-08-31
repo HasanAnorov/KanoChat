@@ -3,7 +3,6 @@ package com.ierusalem.androchat.features_local.tcp_conversation.presentation
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.view.LayoutInflater
@@ -49,7 +48,6 @@ import com.ierusalem.androchat.core.utils.openFile
 import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
-import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenDialogErrors
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenNavigation
 import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessageEntity
@@ -116,11 +114,11 @@ class LocalConversationFragment : Fragment() {
                     }
 
                     GeneralConnectionStatus.ConnectedAsClient -> {
-                        //sendClientMessage(fileMessageEntity)
+                        viewModel.sendClientMessage(fileMessageEntity)
                     }
 
                     GeneralConnectionStatus.ConnectedAsHost -> {
-                        //sendHostMessage(fileMessageEntity)
+                        viewModel.sendHostMessage(fileMessageEntity)
                     }
                 }
             }
@@ -145,70 +143,6 @@ class LocalConversationFragment : Fragment() {
                 Toast.LENGTH_SHORT
             ).show()
             e.printStackTrace()
-        }
-    }
-
-
-    private fun handlePickingMultipleMedia(medias: List<Uri>) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            when (viewModel.state.value.generalConnectionStatus) {
-                GeneralConnectionStatus.Idle -> {
-                    viewModel.updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
-                }
-
-                GeneralConnectionStatus.ConnectedAsHost -> {
-                    val fileMessages = mutableListOf<ChatMessageEntity>()
-                    medias.forEach { imageUri ->
-                        val file = generateFileFromUri(imageUri, resourceDirectory)
-
-                        val fileMessageEntity = ChatMessageEntity(
-                            type = AppMessageType.FILE,
-                            formattedTime = getCurrentTime(),
-                            isFromYou = true,
-                            userId = viewModel.state.value.peerUserUniqueId,
-
-                            fileState = FileMessageState.Loading(0),
-                            fileName = file.name,
-                            fileSize = file.length().readableFileSize(),
-                            fileExtension = file.extension,
-                            filePath = file.path,
-                        )
-                        fileMessages.add(fileMessageEntity)
-                    }
-                    lifecycleScope.launch {
-//                        sendFileMessages(
-//                            writer = connectedClientWriter,
-//                            messages = fileMessages
-//                        )
-                    }
-                }
-
-                GeneralConnectionStatus.ConnectedAsClient -> {
-                    val fileMessages = mutableListOf<ChatMessageEntity>()
-                    medias.forEach { imageUri ->
-                        val file = generateFileFromUri(imageUri, resourceDirectory)
-                        val fileMessageEntity = ChatMessageEntity(
-                            type = AppMessageType.FILE,
-                            formattedTime = getCurrentTime(),
-                            isFromYou = true,
-                            userId = viewModel.state.value.peerUserUniqueId,
-
-                            fileState = FileMessageState.Loading(0),
-                            fileName = file.name,
-                            fileSize = file.length().readableFileSize(),
-                            fileExtension = file.extension,
-                            filePath = file.path,
-                        )
-                        fileMessages.add(fileMessageEntity)
-                    }
-                    lifecycleScope.launch {
-//                        sendFileMessages(
-//                            writer = clientWriter,
-//                            messages = fileMessages
-//                        )
-                    }
-                }
-            }
         }
     }
 
@@ -276,7 +210,9 @@ class LocalConversationFragment : Fragment() {
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
                                                                 )
-                                                            //sendClientMessage(contactMessageEntity)
+                                                            viewModel.sendClientMessage(
+                                                                contactMessageEntity
+                                                            )
                                                             delay(300)
                                                         }
                                                     }
@@ -300,7 +236,9 @@ class LocalConversationFragment : Fragment() {
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
                                                                 )
-                                                            //sendHostMessage(contactMessageEntity)
+                                                            viewModel.sendHostMessage(
+                                                                contactMessageEntity
+                                                            )
                                                             delay(300)
                                                         }
                                                     }
@@ -405,10 +343,6 @@ class LocalConversationFragment : Fragment() {
 
             TcpScreenNavigation.RequestRecordAudioPermission -> {
                 recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-            }
-
-            is TcpScreenNavigation.HandlePickingMultipleMedia -> {
-                handlePickingMultipleMedia(navigation.medias)
             }
 
             is TcpScreenNavigation.OnContactItemClick -> {
