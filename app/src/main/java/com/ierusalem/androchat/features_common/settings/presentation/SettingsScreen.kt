@@ -236,14 +236,8 @@ fun GeneralOptionsUI(eventHandler: (SettingsScreenEvents) -> Unit, uiState: Sett
             onClick = {
                 eventHandler(SettingsScreenEvents.OnThemeChange)
             },
-            isSystemInDarkMode = uiState.appTheme
-        )
-        GeneralSettingsItem(
-            modifier = Modifier.padding(top = 1.dp),
-            iconStart = R.drawable.add_person,
-            mainText = stringResource(R.string.invite_a_friend),
+            isSystemInDarkMode = uiState.appTheme,
             shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp),
-            onClick = {}
         )
     }
 }
