@@ -36,7 +36,7 @@ sealed interface TcpScreenEvents {
 
     data class UpdateBottomSheetState(val shouldBeShown: Boolean) : TcpScreenEvents
 
-    data class TcpContactItemClicked(val currentChattingUser: InitialChatModel) : TcpScreenEvents
+    data class TcpChatItemClicked(val currentChattingUser: InitialChatModel) : TcpScreenEvents
 
     data class OnFileItemClick(val message: ChatMessage.FileMessage) : TcpScreenEvents
     data class OnContactItemClick(val message: ChatMessage.ContactMessage) : TcpScreenEvents

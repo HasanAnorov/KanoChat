@@ -18,6 +18,9 @@ interface MessagesDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity): Long
 
+    @Query("SELECT * FROM messages WHERE userId = :userId ORDER BY id DESC LIMIT 1")
+    fun getLastUserMessage(userId: String): Flow<ChatMessageEntity?>
+
     @Query("UPDATE messages SET fileState = :newFileState WHERE id = :messageId")
     suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState)
 

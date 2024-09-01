@@ -66,6 +66,9 @@ data class TcpScreenUiState(
     //contacts
     val contactsList:Resource<List<ChattingUserEntity>> = Resource.Loading(),
 
+    //last chatting user message for home screen display
+    val lastChattingUserMessage: ChatMessage? = null,
+
     //but Erkin aka said, chat should be between only two people
     //todo - maybe you should use connectedWifiNetworks.size here ! , delete this later
     val connectionsCount: Int = 0,

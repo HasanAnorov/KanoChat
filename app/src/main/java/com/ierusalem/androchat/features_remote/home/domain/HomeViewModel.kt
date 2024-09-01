@@ -120,7 +120,7 @@ data class HomeScreenState(
     //tab row
     val tabItems: List<UiText> = listOf(
         UiText.StringResource(R.string.all),
-        UiText.StringResource(R.string.contacts),
+        UiText.StringResource(R.string.chats),
         UiText.StringResource(R.string.groups)
     ),
     val selectedTabIndex: Int = 0,

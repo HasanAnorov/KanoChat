@@ -39,6 +39,7 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.components.NetworkErrorDialog
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
@@ -69,6 +70,7 @@ fun ConversationContent(
 
     Scaffold(
         topBar = {
+            log("ui test current chatting user ${uiState.currentChattingUser} ")
             uiState.currentChattingUser?.let {
                 ConversationChannelBar(
                     channelName = it.userUniqueName,

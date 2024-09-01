@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.paddingFrom
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.MaterialTheme
@@ -16,16 +15,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.LastBaseline
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features_remote.conversation.presentation.components.messageFormatter
 import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_remote.conversation.presentation.components.messageFormatter
 
 @Composable
 fun ChatMessageItem(
@@ -51,7 +46,6 @@ fun ChatMessageItem(
                 .weight(1f),
             chatMessage = msg,
             isFirstMessageByAuthor = isFirstMessageByAuthor,
-            isLastMessageByAuthor = isLastMessageByAuthor,
             onFileItemClick = onFileItemClick,
             onContactItemClick = onContactItemClick,
             onPlayVoiceMessageClick = { onPlayVoiceMessageClick(it) },
@@ -66,7 +60,6 @@ fun AuthorAndMessage(
     modifier: Modifier = Modifier,
     chatMessage: ChatMessage,
     isFirstMessageByAuthor: Boolean,
-    isLastMessageByAuthor: Boolean,
     onFileItemClick: (ChatMessage.FileMessage) -> Unit,
     onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
     onPlayVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
@@ -77,9 +70,6 @@ fun AuthorAndMessage(
         modifier = modifier,
         horizontalAlignment = if (chatMessage.isFromYou) Alignment.End else Alignment.Start
     ) {
-        if (isLastMessageByAuthor) {
-            AuthorName(isUserMe = chatMessage.isFromYou, peerUserName = chatMessage.peerUsername)
-        }
         when (chatMessage) {
             is ChatMessage.TextMessage -> {
                 TextMessageItem(message = chatMessage)
@@ -142,22 +132,6 @@ fun LocalClickableMessage(
             textAlign = TextAlign.End,
             color = MaterialTheme.colorScheme.outline.copy(0.8F),
             style = MaterialTheme.typography.bodySmall
-        )
-    }
-}
-
-@Composable
-private fun AuthorName(
-    isUserMe: Boolean,
-    peerUserName: String
-) {
-    Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
-        Text(
-            text = if (isUserMe) stringResource(id = R.string.author_me) else peerUserName,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .alignBy(LastBaseline)
-                .paddingFrom(LastBaseline, after = 8.dp) // Space to 1st bubble
         )
     }
 }

@@ -37,7 +37,7 @@ fun HomeContent(
                 state = HomePreviewData.contactsSuccess
             )
 
-            HomeView.Contacts -> ContactsScreen(
+            HomeView.CHATS -> ContactsScreen(
                 state = state.contacts,
                 intentReducer = eventHandler
             )

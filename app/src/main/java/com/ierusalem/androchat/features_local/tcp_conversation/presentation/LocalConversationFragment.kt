@@ -149,6 +149,7 @@ class LocalConversationFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val chattingUser = viewModel.state.value.currentChattingUser
+        log("onCreate: $chattingUser")
         chattingUser?.let { user ->
             viewModel.loadMessages(user)
         }
@@ -210,9 +211,7 @@ class LocalConversationFragment : Fragment() {
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
                                                                 )
-                                                            viewModel.sendClientMessage(
-                                                                contactMessageEntity
-                                                            )
+                                                            viewModel.sendClientMessage(contactMessageEntity)
                                                             delay(300)
                                                         }
                                                     }
@@ -307,7 +306,6 @@ class LocalConversationFragment : Fragment() {
                         )
                     }
 
-
                     ConversationContent(
                         uiState = uiState,
                         eventHandler = viewModel::handleEvents
@@ -356,12 +354,6 @@ class LocalConversationFragment : Fragment() {
                 )
             }
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        //todo - check if really chatting user id set to null
-        viewModel.updateCurrentChattingUniqueIds(null)
     }
 
 }

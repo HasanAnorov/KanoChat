@@ -14,8 +14,8 @@
 
     <!-- Home strings-->
     <string name="all">All</string>
-    <string name="contacts">Contacts</string>
     <string name="groups">Groups</string>
+    <string name="chats">Chats</string>
 
     <!-- Conversation strings-->
     <string name="jumpBottom">Jump to bottom</string>
@@ -226,6 +226,5 @@
     <string name="dismiss">Dismiss</string>
     <string name="wifi_not_enabled">Wifi not enabled</string>
     <string name="wifi_not_enabled_message">Wifi should be enabled to perform this action</string>
-
 
 </resources>

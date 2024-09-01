@@ -222,7 +222,10 @@ fun Messages(
                 key = messages.itemKey { chatMessage -> chatMessage.messageId },
                 contentType = messages.itemContentType { "ChatMessages" }
             ) { index: Int ->
-                val chatMessage: ChatMessage? = messages[index]
+                // Get the reversed index
+                val reversedIndex = messages.itemCount - 1 - index
+                val chatMessage: ChatMessage? = messages[reversedIndex]
+
                 chatMessage?.let {
                     // todo: fix this
                     val prevAuthor = messages.itemSnapshotList.getOrNull(index - 1)?.isFromYou

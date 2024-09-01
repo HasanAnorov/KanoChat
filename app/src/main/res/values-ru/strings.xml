@@ -10,8 +10,8 @@
 
     <!-- Home strings-->
     <string name="all">Все</string>
-    <string name="contacts">Контакты</string>
     <string name="groups">Группы</string>
+    <string name="chats">Чаты</string>
 
     <!-- Conversation strings-->
     <string name="jumpBottom">Перейти вниз</string>

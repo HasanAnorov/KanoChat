@@ -5,6 +5,6 @@ import com.ierusalem.androchat.core.utils.UiText
 
 enum class HomeView(val displayName: UiText) {
     All(UiText.StringResource(R.string.all)),
-    Contacts(UiText.StringResource(R.string.contacts)),
+    CHATS(UiText.StringResource(R.string.chats)),
     Groups(UiText.StringResource(R.string.groups))
 }

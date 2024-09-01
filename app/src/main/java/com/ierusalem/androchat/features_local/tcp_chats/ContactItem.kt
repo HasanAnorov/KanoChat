@@ -28,11 +28,13 @@ import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
+import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
 
 @Composable
 fun TcpContactItem(
     modifier: Modifier = Modifier,
     contact: ChattingUserEntity,
+    lastMessage: ChatMessage? = null,
     onClick: () -> Unit,
 ) {
     Box(
@@ -68,17 +70,25 @@ fun TcpContactItem(
                     text = contact.userUniqueName,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                    maxLines = 1,
-                    style = MaterialTheme.typography.labelMedium,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.outline,
-                    text = "Enter user's last message here",
-                    fontSize = 14.sp
-                )
+                lastMessage?.let {
+                    val lastMessageHint = when(it){
+                        is ChatMessage.ContactMessage -> "Contact Message"
+                        is ChatMessage.FileMessage -> "File Message"
+                        is ChatMessage.TextMessage -> it.message
+                        is ChatMessage.VoiceMessage -> "Voice Message"
+                    }
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        maxLines = 1,
+                        style = MaterialTheme.typography.labelMedium,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.outline,
+                        text = lastMessageHint,
+                        fontSize = 14.sp
+                    )
+                }
             }
             Column(
                 modifier = Modifier
@@ -87,13 +97,14 @@ fun TcpContactItem(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
-                Text(
-                    text = "12:12",
-                    fontSize = 10.sp,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.outline
-                )
-
+                lastMessage?.let {
+                    Text(
+                        text = it.formattedTime,
+                        fontSize = 10.sp,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
             }
         }
     }
@@ -111,6 +122,13 @@ fun ContactItemPreview() {
             contact = ChattingUserEntity(
                 userUniqueId = "249141sadfs67df9s7f89s7f",
                 userUniqueName = "Hasan"
+            ),
+            lastMessage = ChatMessage.TextMessage(
+                messageId = 324242,
+                formattedTime = "12:10:23",
+                isFromYou = true,
+                message = "Hello",
+                peerUsername = "Hasan"
             )
         )
     }
@@ -128,6 +146,13 @@ fun ContactItemPreviewDark() {
             contact = ChattingUserEntity(
                 userUniqueId = "249141sadfs67df9s7f89s7f",
                 userUniqueName = "Hasan"
+            ),
+            lastMessage = ChatMessage.TextMessage(
+                messageId = 324242,
+                formattedTime = "12:10:23",
+                isFromYou = true,
+                message = "Hello",
+                peerUsername = "Hasan"
             )
         )
     }

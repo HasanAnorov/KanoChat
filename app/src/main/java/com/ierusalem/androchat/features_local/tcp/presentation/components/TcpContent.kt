@@ -12,7 +12,7 @@ import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEv
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpView
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp_connection.ConnectionsContent
-import com.ierusalem.androchat.features_local.tcp_chats.ContactsScreen
+import com.ierusalem.androchat.features_local.tcp_chats.ChatsScreen
 import com.ierusalem.androchat.features_local.tcp_networking.NetworkingContent
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -37,11 +37,11 @@ fun TcpContent(
         }
         when (screen) {
 
-            TcpView.CONTACTS -> {
-                ContactsScreen(
+            TcpView.CHATS -> {
+                ChatsScreen(
                     modifier = Modifier.fillMaxSize(),
                     eventHandler = eventHandler,
-                    state = state.contactsList
+                    uiState = state,
                 )
             }
 

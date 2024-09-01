@@ -28,18 +28,19 @@ import com.ierusalem.androchat.core.ui.components.FabButton
 import com.ierusalem.androchat.core.ui.components.LoadingScreen
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.Resource
-import com.ierusalem.androchat.features_remote.home.presentation.contacts.ErrorType
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_local.tcp.domain.InitialChatModel
+import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
+import com.ierusalem.androchat.features_remote.home.presentation.contacts.ErrorType
 
 @Composable
-fun ContactsScreen(
+fun ChatsScreen(
     modifier: Modifier = Modifier,
-    state: Resource<List<ChattingUserEntity>>,
+    uiState: TcpScreenUiState,
     eventHandler: (TcpScreenEvents) -> Unit
 ) {
-    when (state) {
+    when (uiState.contactsList) {
         is Resource.Loading -> LoadingScreen(modifier)
 
         is Resource.Success -> {
@@ -67,7 +68,7 @@ fun ContactsScreen(
                 }
             }
 
-            val data = state.data!!
+            val data = uiState.contactsList.data!!
             Box(modifier = modifier) {
                 if (data.isEmpty()) {
                     Log.d("ahi3646", "ContactsScreen: Data is empty ")
@@ -88,7 +89,13 @@ fun ContactsScreen(
                                             userUniqueId = contact.userUniqueId,
                                             userUniqueName = contact.userUniqueName
                                         )
-                                        eventHandler(TcpScreenEvents.TcpContactItemClicked(selectedChattingUser)) }
+                                        eventHandler(
+                                            TcpScreenEvents.TcpChatItemClicked(
+                                                selectedChattingUser
+                                            )
+                                        )
+                                    },
+                                    lastMessage = uiState.lastChattingUserMessage
                                 )
                                 if (index < data.lastIndex) {
                                     HorizontalDivider(
@@ -122,10 +129,12 @@ fun ContactsScreen(
 @Composable
 fun ContactsScreenPreview() {
     AndroChatTheme {
-        ContactsScreen(
+        ChatsScreen(
             modifier = Modifier,
             eventHandler = {},
-            state = Resource.Failure("Something went wrong")
+            uiState = TcpScreenUiState(
+                contacts = Resource.Failure("Something went wrong")
+            )
         )
     }
 }
@@ -134,50 +143,52 @@ fun ContactsScreenPreview() {
 @Composable
 fun ContactsScreenPreviewSuccess() {
     AndroChatTheme {
-        ContactsScreen(
+        ChatsScreen(
             modifier = Modifier,
             eventHandler = {},
-            state = Resource.Success(
-                listOf(
-                    ChattingUserEntity(
-                        userUniqueId = "123",
-                        userUniqueName = "Ahmed"
-                    ),
-                    ChattingUserEntity(
-                        userUniqueId = "123",
-                        userUniqueName = "Ahmed"
-                    ),
-                    ChattingUserEntity(
-                        userUniqueId = "123",
-                        userUniqueName = "Ahmed"
-                    ),
-                    ChattingUserEntity(
-                        userUniqueId = "123",
-                        userUniqueName = "Ahmed"
-                    ),
-                    ChattingUserEntity(
-                        userUniqueId = "123",
-                        userUniqueName = "Ahmed"
-                    ),
-                    ChattingUserEntity(
-                        userUniqueId = "123",
-                        userUniqueName = "Ahmed"
-                    ),
-                    ChattingUserEntity(
-                        userUniqueId = "123",
-                        userUniqueName = "Ahmed"
-                    ),
-                    ChattingUserEntity(
-                        userUniqueId = "123",
-                        userUniqueName = "Ahmed"
-                    ),
-                    ChattingUserEntity(
-                        userUniqueId = "123",
-                        userUniqueName = "Ahmed"
-                    ),
-                    ChattingUserEntity(
-                        userUniqueId = "123",
-                        userUniqueName = "Ahmed"
+            uiState = TcpScreenUiState(
+                contactsList = Resource.Success(
+                    listOf(
+                        ChattingUserEntity(
+                            userUniqueId = "123",
+                            userUniqueName = "Ahmed"
+                        ),
+                        ChattingUserEntity(
+                            userUniqueId = "123",
+                            userUniqueName = "Ahmed"
+                        ),
+                        ChattingUserEntity(
+                            userUniqueId = "123",
+                            userUniqueName = "Ahmed"
+                        ),
+                        ChattingUserEntity(
+                            userUniqueId = "123",
+                            userUniqueName = "Ahmed"
+                        ),
+                        ChattingUserEntity(
+                            userUniqueId = "123",
+                            userUniqueName = "Ahmed"
+                        ),
+                        ChattingUserEntity(
+                            userUniqueId = "123",
+                            userUniqueName = "Ahmed"
+                        ),
+                        ChattingUserEntity(
+                            userUniqueId = "123",
+                            userUniqueName = "Ahmed"
+                        ),
+                        ChattingUserEntity(
+                            userUniqueId = "123",
+                            userUniqueName = "Ahmed"
+                        ),
+                        ChattingUserEntity(
+                            userUniqueId = "123",
+                            userUniqueName = "Ahmed"
+                        ),
+                        ChattingUserEntity(
+                            userUniqueId = "123",
+                            userUniqueName = "Ahmed"
+                        )
                     )
                 )
             )
@@ -189,10 +200,12 @@ fun ContactsScreenPreviewSuccess() {
 @Composable
 fun ContactsScreenPreviewDark() {
     AndroChatTheme(isDarkTheme = true) {
-        ContactsScreen(
+        ChatsScreen(
             modifier = Modifier,
             eventHandler = {},
-            state = Resource.Loading()
+            uiState = TcpScreenUiState(
+                contactsList = Resource.Loading()
+            )
         )
     }
 }

@@ -172,7 +172,8 @@ class TcpViewModel @Inject constructor(
             receivedMessage,
             InitialChatModel::class.java
         )
-        createNewUserIfDoNotExist(initialChatModel)
+
+        upsertNewChattingUser(initialChatModel)
     }
 
     private fun createServer(portNumber: Int) {
@@ -1263,7 +1264,6 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-
     private fun startCollectingPlayTiming(messageId: Long) {
         viewModelScope.launch {
             audioPlayer
@@ -1288,16 +1288,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun createNewUserIfDoNotExist(initialChatModel: InitialChatModel) {
-        viewModelScope.launch {
-            val isUserExist = chattingUsersDao.isChattingUserExists(initialChatModel.userUniqueId)
-            if (!isUserExist) {
-                insertNewChattingUser(initialChatModel)
-            }
-        }
-    }
-
-    private fun insertNewChattingUser(initialChatModel: InitialChatModel) {
+    private fun upsertNewChattingUser(initialChatModel: InitialChatModel) {
         updateInitialChatModel(initialChatModel)
         viewModelScope.launch(Dispatchers.IO) {
             val chattingUserEntity = ChattingUserEntity(
@@ -1305,6 +1296,18 @@ class TcpViewModel @Inject constructor(
                 userUniqueName = initialChatModel.userUniqueName
             )
             chattingUsersDao.insertChattingUser(chattingUserEntity)
+        }
+    }
+
+    private fun loadLastChattingUserMessage(userUniqueId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            messagesDao.getLastUserMessage(userUniqueId).collect {
+                _state.update {
+                    it.copy(
+                        lastChattingUserMessage = it.lastChattingUserMessage
+                    )
+                }
+            }
         }
     }
 
@@ -1713,7 +1716,8 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updateCurrentChattingUniqueIds(currentChattingUser: InitialChatModel?) {
+    private fun updateCurrentChattingUniqueIds(currentChattingUser: InitialChatModel?) {
+        log("updateCurrentChattingUniqueIds chatting user - $currentChattingUser")
         _state.update {
             it.copy(
                 currentChattingUser = currentChattingUser
@@ -1729,7 +1733,7 @@ class TcpViewModel @Inject constructor(
                 playAudioFile(event.message)
             }
 
-            is TcpScreenEvents.TcpContactItemClicked -> {
+            is TcpScreenEvents.TcpChatItemClicked -> {
                 updateCurrentChattingUniqueIds(event.currentChattingUser)
                 emitNavigation(TcpScreenNavigation.OnChattingUserClicked)
             }
@@ -1947,7 +1951,9 @@ class TcpViewModel @Inject constructor(
                 //this when loop determines the state of wi fi connection
                 when (state.value.hostConnectionStatus) {
                     HostConnectionStatus.Idle -> {
-                        createServer(portNumber = state.value.portNumber.toInt())
+                        viewModelScope.launch(Dispatchers.IO) {
+                            createServer(portNumber = state.value.portNumber.toInt())
+                        }
                     }
 
                     HostConnectionStatus.Creating -> {
@@ -1959,7 +1965,9 @@ class TcpViewModel @Inject constructor(
                     }
 
                     HostConnectionStatus.Failure -> {
-                        createServer(portNumber = state.value.portNumber.toInt())
+                        viewModelScope.launch(Dispatchers.IO) {
+                            createServer(portNumber = state.value.portNumber.toInt())
+                        }
                     }
                 }
             }
@@ -1984,10 +1992,12 @@ class TcpViewModel @Inject constructor(
 
                 when (state.value.clientConnectionStatus) {
                     ClientConnectionStatus.Idle -> {
-                        connectToServer(
-                            serverIpAddress = state.value.connectedWifiAddress,
-                            serverPort = state.value.portNumber.toInt()
-                        )
+                        viewModelScope.launch(Dispatchers.IO) {
+                            connectToServer(
+                                serverIpAddress = state.value.connectedWifiAddress,
+                                serverPort = state.value.portNumber.toInt()
+                            )
+                        }
                     }
 
                     ClientConnectionStatus.Connecting -> {
@@ -2000,10 +2010,12 @@ class TcpViewModel @Inject constructor(
 
                     ClientConnectionStatus.Failure -> {
                         log("client is failure")
-                        connectToServer(
-                            serverIpAddress = state.value.connectedWifiAddress,
-                            serverPort = state.value.portNumber.toInt()
-                        )
+                        viewModelScope.launch(Dispatchers.IO) {
+                            connectToServer(
+                                serverIpAddress = state.value.connectedWifiAddress,
+                                serverPort = state.value.portNumber.toInt()
+                            )
+                        }
                     }
                 }
             }
