@@ -79,6 +79,12 @@ fun ChatsScreen(
                         verticalArrangement = Arrangement.Top,
                         content = {
                             itemsIndexed(data) { index, contact ->
+                                val lastMessages = uiState.usersLastMessages
+                                val lastMessage = if(lastMessages.isNotEmpty()){
+                                lastMessages[index]
+                                } else {
+                                    null
+                                }
                                 TcpContactItem(
                                     contact = contact,
                                     modifier = Modifier,
@@ -93,7 +99,7 @@ fun ChatsScreen(
                                             )
                                         )
                                     },
-                                    lastMessage = uiState.lastChattingUserMessage
+                                    lastMessage = lastMessage
                                 )
                                 if (index < data.lastIndex) {
                                     HorizontalDivider(

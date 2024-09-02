@@ -99,7 +99,8 @@ class LocalConversationFragment : Fragment() {
                     type = AppMessageType.FILE,
                     formattedTime = getCurrentTime(),
                     isFromYou = true,
-                    userId = viewModel.state.value.peerUserUniqueId,
+                    peerUniqueId = viewModel.state.value.peerUserUniqueId,
+                    authorUniqueId = viewModel.state.value.authorUniqueId,
 
                     filePath = file.path,
                     fileState = FileMessageState.Loading(0),
@@ -205,7 +206,8 @@ class LocalConversationFragment : Fragment() {
                                                                     type = AppMessageType.CONTACT,
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
-                                                                    userId = viewModel.state.value.peerUserUniqueId,
+                                                                    peerUniqueId = viewModel.state.value.peerUserUniqueId,
+                                                                    authorUniqueId = viewModel.state.value.authorUniqueId,
 
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
@@ -229,7 +231,8 @@ class LocalConversationFragment : Fragment() {
                                                                     type = AppMessageType.CONTACT,
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
-                                                                    userId = viewModel.state.value.peerUserUniqueId,
+                                                                    peerUniqueId = viewModel.state.value.peerUserUniqueId,
+                                                                    authorUniqueId = viewModel.state.value.authorUniqueId,
 
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,

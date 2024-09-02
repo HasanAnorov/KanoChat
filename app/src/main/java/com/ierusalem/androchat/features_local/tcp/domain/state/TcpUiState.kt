@@ -32,6 +32,7 @@ data class TcpScreenUiState(
     //general state
     val isWifiOn: Boolean = false,
     val peerUserUniqueId: String = "",
+    val authorUniqueId: String = "",
 
     val hotspotName: String = Constants.UNKNOWN_HOTSPOT_NAME,
     val isValidHotSpotName: Boolean = isValidHotspotName(hotspotName),
@@ -67,9 +68,6 @@ data class TcpScreenUiState(
     //contacts
     val contactsList:Resource<List<ChattingUserEntity>> = Resource.Loading(),
     val usersLastMessages: List<ChatMessageEntity?> = listOf(),
-
-    //last chatting user message for home screen display
-    val lastChattingUserMessage: ChatMessage? = null,
 
     //but Erkin aka said, chat should be between only two people
     //todo - maybe you should use connectedWifiNetworks.size here ! , delete this later

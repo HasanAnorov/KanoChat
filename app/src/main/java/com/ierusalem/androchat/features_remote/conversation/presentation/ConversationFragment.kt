@@ -36,7 +36,6 @@ class ConversationFragment : Fragment() {
         super.onAttach(context)
         arguments?.getString(Constants.USERNAME_REGISTER_TO_HOME)?.let { username ->
             Log.d("ahi3646", "onAttach: $username ")
-            viewModel.connectToChat(username)
         }
     }
 

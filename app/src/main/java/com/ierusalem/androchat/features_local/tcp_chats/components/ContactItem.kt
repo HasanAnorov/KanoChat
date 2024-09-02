@@ -26,15 +26,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
-import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 
 @Composable
 fun TcpContactItem(
     modifier: Modifier = Modifier,
     contact: ChattingUserEntity,
-    lastMessage: ChatMessage? = null,
+    lastMessage: ChatMessageEntity? = null,
     onClick: () -> Unit,
 ) {
     Box(
@@ -71,11 +72,12 @@ fun TcpContactItem(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 lastMessage?.let {
-                    val lastMessageHint = when(it){
-                        is ChatMessage.ContactMessage -> "Contact Message"
-                        is ChatMessage.FileMessage -> "File Message"
-                        is ChatMessage.TextMessage -> it.message
-                        is ChatMessage.VoiceMessage -> "Voice Message"
+                    val lastMessageHint = when (it.type) {
+                        AppMessageType.CONTACT -> "Contact Message"
+                        AppMessageType.FILE -> "File Message"
+                        AppMessageType.TEXT -> it.text ?: "Text Message"
+                        AppMessageType.VOICE -> "Voice Message"
+                        else -> "Unknown Message"
                     }
                     Text(
                         modifier = Modifier
@@ -123,12 +125,14 @@ fun ContactItemPreview() {
                 userUniqueId = "249141sadfs67df9s7f89s7f",
                 userUniqueName = "Hasan"
             ),
-            lastMessage = ChatMessage.TextMessage(
-                messageId = 324242,
+            lastMessage = ChatMessageEntity(
+                id = 324242,
                 formattedTime = "12:10:23",
                 isFromYou = true,
-                message = "Hello",
-                peerUsername = "Hasan"
+                text = "Hello",
+                type = AppMessageType.TEXT,
+                peerUniqueId = "sa79789s7f98s7s",
+                authorUniqueId = "sfsdf"
             )
         )
     }
@@ -147,12 +151,14 @@ fun ContactItemPreviewDark() {
                 userUniqueId = "249141sadfs67df9s7f89s7f",
                 userUniqueName = "Hasan"
             ),
-            lastMessage = ChatMessage.TextMessage(
-                messageId = 324242,
+            lastMessage = ChatMessageEntity(
+                id = 324242,
                 formattedTime = "12:10:23",
                 isFromYou = true,
-                message = "Hello",
-                peerUsername = "Hasan"
+                text = "Hello",
+                type = AppMessageType.CONTACT,
+                peerUniqueId = "sa79789s7f98s7s",
+                authorUniqueId = "dsfadtww3r53"
             )
         )
     }

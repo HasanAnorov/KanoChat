@@ -54,14 +54,18 @@ import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.core.voice_message.playback.AndroidAudioPlayer
 import com.ierusalem.androchat.core.voice_message.recorder.AndroidAudioRecorder
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_local.tcp.data.server.ServerDefaults
 import com.ierusalem.androchat.features_local.tcp.data.server.permission.PermissionGuard
 import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.Reason
 import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiNetworkEvent
+import com.ierusalem.androchat.features_local.tcp.domain.model.AudioState
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp.domain.state.ClientConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactItem
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactMessageItem
+import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralNetworkingStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.HostConnectionStatus
@@ -73,10 +77,6 @@ import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenErrors
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenNavigation
-import com.ierusalem.androchat.features_local.tcp.domain.model.AudioState
-import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
-import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
-import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -163,7 +163,7 @@ class TcpViewModel @Inject constructor(
 
     private fun setupUserData(reader: DataInputStream) {
         val receivedMessage = reader.readUTF()
-        log("incoming initial message - $receivedMessage")
+        log("setup user data - $receivedMessage")
 
         val initialChatModel = gson.fromJson(
             receivedMessage,
@@ -230,6 +230,7 @@ class TcpViewModel @Inject constructor(
 
                     AppMessageType.UNKNOWN -> {
                         /**Ignore case*/
+                        log("create server unknown message char - ${reader.readChar()}")
                     }
                 }
 //                        } catch (e: EOFException) {
@@ -365,19 +366,26 @@ class TcpViewModel @Inject constructor(
                 val reader = DataInputStream(BufferedInputStream(clientSocket.getInputStream()))
 
 //                try {
-                val dataType = AppMessageType.fromChar(reader.readChar())
-                log("incoming message type - $dataType")
+//                val dataType = runBlocking {
+//                    AppMessageType.fromChar(reader.readChar())
+//                }
+                val messageType = AppMessageType.fromChar(reader.readChar())
+                log("incoming message type - $messageType ")
 
-                when (dataType) {
+                when (messageType) {
                     AppMessageType.INITIAL -> {
-                        viewModelScope.launch(Dispatchers.IO) {
-                            setupUserData(reader = reader)
-                        }
+                        setupUserData(reader = reader)
                     }
 
                     AppMessageType.VOICE -> {
                         viewModelScope.launch(Dispatchers.IO) {
                             receiveVoiceMessage(reader = reader)
+                        }
+                    }
+
+                    AppMessageType.CONTACT -> {
+                        viewModelScope.launch(Dispatchers.IO) {
+                            receiveContactMessage(reader = reader)
                         }
                     }
 
@@ -387,20 +395,13 @@ class TcpViewModel @Inject constructor(
                         }
                     }
 
-                    AppMessageType.CONTACT -> {
-                        viewModelScope.launch {
-                            receiveContactMessage(reader = reader)
-                        }
-                    }
-
                     AppMessageType.FILE -> {
-                        viewModelScope.launch(Dispatchers.IO) {
-                            receiveFile(reader = reader)
-                        }
+                        receiveFile(reader = reader)
                     }
 
                     AppMessageType.UNKNOWN -> {
                         /**Ignore case*/
+                        log("connect to server unknown message char - ${reader.readChar()}")
                     }
                 }
 //                } catch (e: EOFException) {
@@ -500,13 +501,14 @@ class TcpViewModel @Inject constructor(
                 }
 
                 AppMessageType.FILE -> {
-                    viewModelScope.launch {
+                    viewModelScope.launch(Dispatchers.IO) {
                         sendFileMessages(writer = clientWriter, messages = listOf(message))
                     }
                 }
 
                 else -> {
                     /** Just ignore */
+                    log("unknown message type - ${message.type}")
                 }
             }
         } else {
@@ -526,7 +528,7 @@ class TcpViewModel @Inject constructor(
                 }
 
                 AppMessageType.VOICE -> {
-                    viewModelScope.launch {
+                    viewModelScope.launch(Dispatchers.IO) {
                         sendVoiceMessage(writer = connectedClientWriter, voiceMessage = message)
                     }
                 }
@@ -538,13 +540,14 @@ class TcpViewModel @Inject constructor(
                 }
 
                 AppMessageType.FILE -> {
-                    viewModelScope.launch {
+                    viewModelScope.launch(Dispatchers.IO) {
                         sendFileMessages(writer = connectedClientWriter, messages = listOf(message))
                     }
                 }
 
                 else -> {
                     /** Just ignore */
+                    log("unknown message type - ${message.type}")
                 }
             }
         } else {
@@ -711,10 +714,11 @@ class TcpViewModel @Inject constructor(
             //sending file type
             val type = AppMessageType.FILE.identifier.code
             writer.writeChar(type)
+            log("send file message - $type")
 
             //sending file count
             writer.writeInt(messages.size)
-            log("messages size - ${messages.size}")
+            log("file count - ${messages.size}")
 
             messages.forEach { fileMessage ->
 
@@ -792,7 +796,94 @@ class TcpViewModel @Inject constructor(
 
     /** Socket Receiving Functions */
 
-    /***
+//    /***
+//     * 1. type
+//     * 2. file count
+//     * 3. file name
+//     * 4. file length
+//     * */
+//    private fun receiveFile(reader: DataInputStream) {
+//        log("receiving file ...")
+//
+//        //reading file count
+//        val fileCount = reader.readInt()
+//        log("file count - $fileCount")
+//
+//        for (i in 0 until fileCount) {
+//            //reading file name
+//            val filename = reader.readUTF()
+//            log("Expected file name - $filename")
+//
+//            // Read the expected file size
+//            var fileSize: Long = reader.readLong() // read file size
+//            log("file size - $fileSize")
+//
+//            var bytes = 0
+//            var bytesForPercentage = 0L
+//            val fileSizeForPercentage = fileSize
+//
+//            // Create File object
+//            val file = getFileByName(fileName = filename, resourceDirectory = resourceDirectory)
+//
+//            // Create FileOutputStream to write the received file
+//            val fileOutputStream = FileOutputStream(file)
+//
+//            val fileMessageEntity = ChatMessageEntity(
+//                type = AppMessageType.FILE,
+//                formattedTime = getCurrentTime(),
+//                isFromYou = false,
+//                userId = state.value.peerUserUniqueId,
+//                //file specific fields
+//                fileState = FileMessageState.Loading(0),
+//                fileName = file.name,
+//                fileSize = fileSize.readableFileSize(),
+//                fileExtension = file.extension,
+//                filePath = file.path,
+//            )
+//
+//            val messageId = runBlocking(Dispatchers.IO) {
+//                insertMessage(fileMessageEntity)
+//            }
+//
+//            val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+//            while (fileSize > 0
+//                && (reader.read(
+//                    buffer, 0,
+//                    min(buffer.size.toDouble(), fileSize.toDouble()).toInt()
+//                ).also { bytes = it })
+//                != -1
+//            ) {
+//                // Here we write the file using write method
+//                fileOutputStream.write(buffer, 0, bytes)
+//                fileSize -= bytes.toLong()
+//
+//                bytesForPercentage += bytes.toLong()
+//                val percentage =
+//                    (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+//                val tempPercentage =
+//                    ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+//
+//                if (percentage != tempPercentage) {
+//                    log("progress - $percentage")
+//                    val newState = FileMessageState.Loading(percentage)
+//                    val newFileMessage =
+//                        fileMessageEntity.copy(fileState = newState, id = messageId)
+//                    updatePercentageOfReceivingFile(newFileMessage)
+//                }
+//            }
+//
+//            fileOutputStream.close()
+//            log("file received successfully")
+//
+//            val newState = FileMessageState.Success
+//            val newFileMessage = fileMessageEntity.copy(fileState = newState, id = messageId)
+//
+//            updatePercentageOfReceivingFile(newFileMessage)
+//        }
+//    }
+    /** Socket Receiving Functions*/
+
+    /**
      * 1. type
      * 2. file count
      * 3. file name
@@ -828,7 +919,8 @@ class TcpViewModel @Inject constructor(
                 type = AppMessageType.FILE,
                 formattedTime = getCurrentTime(),
                 isFromYou = false,
-                userId = state.value.peerUserUniqueId,
+                peerUniqueId = state.value.peerUserUniqueId,
+                authorUniqueId = state.value.authorUniqueId,
                 //file specific fields
                 fileState = FileMessageState.Loading(0),
                 fileName = file.name,
@@ -878,6 +970,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+
     private fun receiveVoiceMessage(reader: DataInputStream) {
         log("receiving voice file ...")
 
@@ -903,7 +996,8 @@ class TcpViewModel @Inject constructor(
             type = AppMessageType.VOICE,
             formattedTime = getCurrentTime(),
             isFromYou = false,
-            userId = state.value.peerUserUniqueId,
+            peerUniqueId = state.value.peerUserUniqueId,
+            authorUniqueId = state.value.authorUniqueId,
             //message specific fields
             fileState = FileMessageState.Loading(0),
             voiceMessageFileName = file.name,
@@ -960,7 +1054,8 @@ class TcpViewModel @Inject constructor(
             type = AppMessageType.TEXT,
             formattedTime = getCurrentTime(),
             isFromYou = false,
-            userId = state.value.peerUserUniqueId,
+            peerUniqueId = state.value.peerUserUniqueId,
+            authorUniqueId = state.value.authorUniqueId,
             text = receivedMessage.toString()
         )
         viewModelScope.launch(Dispatchers.IO) {
@@ -982,7 +1077,8 @@ class TcpViewModel @Inject constructor(
             type = AppMessageType.CONTACT,
             formattedTime = getCurrentTime(),
             isFromYou = false,
-            userId = state.value.peerUserUniqueId,
+            peerUniqueId = state.value.peerUserUniqueId,
+            authorUniqueId = state.value.authorUniqueId,
             contactName = contactMessageItem.contactName,
             contactNumber = contactMessageItem.contactNumber
         )
@@ -1200,9 +1296,11 @@ class TcpViewModel @Inject constructor(
     private fun initializeUserUniqueName() {
         viewModelScope.launch {
             val savedUniqueUsername = dataStorePreferenceRepository.getUsername.first()
+            val authorUniqueId = dataStorePreferenceRepository.getUniqueDeviceId.first()
             _state.update {
                 it.copy(
-                    userUniqueName = savedUniqueUsername
+                    userUniqueName = savedUniqueUsername,
+                    authorUniqueId = authorUniqueId
                 )
             }
         }
@@ -1281,7 +1379,9 @@ class TcpViewModel @Inject constructor(
                         contactsList = Resource.Success(users)
                     )
                 }
-                getUsersLastMessages()
+                if (users.isNotEmpty()) {
+                    getUsersLastMessages()
+                }
             }
         }
     }
@@ -1539,7 +1639,8 @@ class TcpViewModel @Inject constructor(
             type = AppMessageType.VOICE,
             formattedTime = getCurrentTime(),
             isFromYou = true,
-            userId = state.value.peerUserUniqueId,
+            peerUniqueId = state.value.peerUserUniqueId,
+            authorUniqueId = state.value.authorUniqueId,
             voiceMessageFileName = currentAudioFile.name,
             voiceMessageAudioFileDuration = currentAudioFile.getAudioFileDuration(),
         )
@@ -1875,7 +1976,8 @@ class TcpViewModel @Inject constructor(
                     type = AppMessageType.TEXT,
                     formattedTime = getCurrentTime(),
                     isFromYou = true,
-                    userId = state.value.peerUserUniqueId,
+                    peerUniqueId = state.value.peerUserUniqueId,
+                    authorUniqueId = state.value.authorUniqueId,
                     text = event.message
                 )
 
@@ -2062,7 +2164,8 @@ class TcpViewModel @Inject constructor(
                         type = AppMessageType.FILE,
                         formattedTime = getCurrentTime(),
                         isFromYou = true,
-                        userId = state.value.peerUserUniqueId,
+                        peerUniqueId = state.value.peerUserUniqueId,
+                        authorUniqueId = state.value.authorUniqueId,
 
                         fileState = FileMessageState.Loading(0),
                         fileName = file.name,
@@ -2089,7 +2192,8 @@ class TcpViewModel @Inject constructor(
                         type = AppMessageType.FILE,
                         formattedTime = getCurrentTime(),
                         isFromYou = true,
-                        userId = state.value.peerUserUniqueId,
+                        peerUniqueId = state.value.peerUserUniqueId,
+                        authorUniqueId = state.value.authorUniqueId,
 
                         fileState = FileMessageState.Loading(0),
                         fileName = file.name,

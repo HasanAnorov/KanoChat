@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.CircularProgressBar
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.ChatBubbleShapeEnd
@@ -52,7 +51,6 @@ fun FileMessageItem(
             ) {
                 when (val state = message.fileState) {
                     is FileMessageState.Loading -> {
-                        log("in file item progress - ${state.percentage}")
                         if(state.percentage == 100){
                             Box(
                                 modifier = Modifier

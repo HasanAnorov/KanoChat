@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features_local.tcp_conversation.presentation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,16 +8,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +28,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -41,108 +35,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features_remote.conversation.presentation.components.JumpToBottom
-import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
-import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.ChatMessageItem
-import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.LocalConversationUserInput
+import com.ierusalem.androchat.features_remote.conversation.presentation.components.JumpToBottom
 import kotlinx.coroutines.launch
-
-@Composable
-fun LocalConversationContent(
-    modifier: Modifier = Modifier,
-    uiState: TcpScreenUiState,
-    eventHandler: (TcpScreenEvents) -> Unit,
-) {
-    val scrollState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
-
-    Column(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.background)
-            .padding(top = 8.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .background(MaterialTheme.colorScheme.surfaceDim.copy(0.2F)),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceDim.copy(0.4F)),
-                contentAlignment = Alignment.Center
-            ) {
-                ChannelNameBar(
-                    channelName = uiState.peerUniqueName,
-                    isOnline = true,
-                )
-            }
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.background,
-                thickness = 1.dp
-            )
-        }
-        Column(
-            modifier = Modifier
-                .weight(1F)
-                .background(MaterialTheme.colorScheme.surfaceDim.copy(0.12F)),
-            content = {
-                Messages(
-                    messages = uiState.messages.collectAsLazyPagingItems(),
-                    modifier = Modifier.weight(1f),
-                    scrollState = scrollState,
-                    onFileItemClicked = { eventHandler(TcpScreenEvents.OnFileItemClick(it)) },
-                    onContactItemClick = { eventHandler(TcpScreenEvents.OnContactItemClick(it)) },
-                    onPlayVoiceMessageClick = {
-                        eventHandler(
-                            TcpScreenEvents.OnPlayVoiceMessageClick(
-                                it
-                            )
-                        )
-                    },
-                    onPauseVoiceMessageClick = {
-                        eventHandler(
-                            TcpScreenEvents.OnPauseVoiceMessageClick(
-                                it
-                            )
-                        )
-                    },
-                    onStopVoiceMessageClick = {
-                        eventHandler(
-                            TcpScreenEvents.OnStopVoiceMessageClick(
-                                it
-                            )
-                        )
-                    },
-                )
-                LocalConversationUserInput(
-                    // let this element handle the padding so that the elevation is shown behind the
-                    // navigation bar
-                    modifier = Modifier
-                        .navigationBarsPadding()
-                        .imePadding(),
-                    uiState = uiState,
-                    eventHandler = eventHandler,
-                    resetScroll = {
-                        scope.launch {
-                            scrollState.scrollToItem(0)
-                        }
-                    },
-                )
-            }
-        )
-    }
-
-}
 
 @Composable
 fun ChannelNameBar(
@@ -228,10 +129,10 @@ fun Messages(
 
                 chatMessage?.let {
                     // todo: fix this
-                    val prevAuthor = messages.itemSnapshotList.getOrNull(index - 1)?.peerUsername
-                    val nextAuthor = messages.itemSnapshotList.getOrNull(index + 1)?.peerUsername
-                    val isFirstMessageByAuthor = prevAuthor != chatMessage.peerUsername
-                    val isLastMessageByAuthor = nextAuthor != chatMessage.peerUsername
+                    val prevAuthor = messages.itemSnapshotList.getOrNull(reversedIndex - 1)?.isFromYou
+                    val nextAuthor = messages.itemSnapshotList.getOrNull(reversedIndex + 1)?.isFromYou
+                    val isFirstMessageByAuthor = prevAuthor != chatMessage.isFromYou
+                    val isLastMessageByAuthor = nextAuthor != chatMessage.isFromYou
                     ChatMessageItem(
                         msg = chatMessage,
                         isFirstMessageByAuthor = isFirstMessageByAuthor,
@@ -277,17 +178,6 @@ fun Messages(
 val ChatBubbleShapeStart = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
 val ChatBubbleShapeEnd = RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
 
-
-@Preview
-@Composable
-fun ConversationPreview() {
-    AndroChatTheme {
-        LocalConversationContent(
-            uiState = TcpScreenUiState(),
-            eventHandler = {}
-        )
-    }
-}
 
 @Preview
 @Composable
