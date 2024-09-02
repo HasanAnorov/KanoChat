@@ -28,9 +28,9 @@ import com.ierusalem.androchat.core.ui.components.CircularProgressBar
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.millisecondsToTime
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.AudioState
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_local.tcp.domain.model.AudioState
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.ChatBubbleShapeEnd
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.ChatBubbleShapeStart
 

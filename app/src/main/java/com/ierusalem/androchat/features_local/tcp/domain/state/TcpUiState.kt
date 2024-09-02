@@ -14,7 +14,8 @@ import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_local.tcp.domain.InitialChatModel
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
@@ -65,6 +66,7 @@ data class TcpScreenUiState(
 
     //contacts
     val contactsList:Resource<List<ChattingUserEntity>> = Resource.Loading(),
+    val usersLastMessages: List<ChatMessageEntity?> = listOf(),
 
     //last chatting user message for home screen display
     val lastChattingUserMessage: ChatMessage? = null,

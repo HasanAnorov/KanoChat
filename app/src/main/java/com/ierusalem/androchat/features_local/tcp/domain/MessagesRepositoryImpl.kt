@@ -1,0 +1,55 @@
+package com.ierusalem.androchat.features_local.tcp.domain
+
+import androidx.paging.PagingSource
+import com.ierusalem.androchat.features_local.tcp.data.db.dao.ChattingUsersDao
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
+import com.ierusalem.androchat.features_local.tcp.data.db.dao.MessagesDao
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
+import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+
+class MessagesRepositoryImpl @Inject constructor(
+    private val messagesDao: MessagesDao,
+    private val chattingUsersDao: ChattingUsersDao
+) : MessagesRepository {
+
+    override suspend fun updateVoiceFileMessage(
+        messageId: Long,
+        newFileState: FileMessageState,
+        newDuration: Long?
+    ) {
+        return messagesDao.updateVoiceFileMessage(
+            messageId = messageId,
+            newFileState = newFileState,
+            newDuration = newDuration
+        )
+    }
+
+    override suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState) {
+        messagesDao.updateFileMessage(
+            messageId = messageId,
+            newFileState = newFileState
+        )
+    }
+
+    override fun getPagedUserMessagesById(userId: String): PagingSource<Int, ChatMessageEntity> {
+        return messagesDao.getPagedUserMessagesById(userId)
+    }
+
+    override suspend fun insertChattingUser(chattingUserEntity: ChattingUserEntity): Long {
+        return chattingUsersDao.insertChattingUser(chattingUserEntity)
+    }
+
+    override suspend fun insertMessage(message: ChatMessageEntity): Long {
+        return messagesDao.insertMessage(message)
+    }
+
+    override fun getChattingUsers(): Flow<List<ChattingUserEntity>> {
+        return chattingUsersDao.getChattingUsers()
+    }
+
+    override fun getAllUsersLastMessages(): Flow<List<ChatMessageEntity?>> {
+        return messagesDao.getAllUsersLastMessages()
+    }
+}

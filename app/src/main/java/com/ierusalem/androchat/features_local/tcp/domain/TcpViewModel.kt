@@ -54,7 +54,6 @@ import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.core.voice_message.playback.AndroidAudioPlayer
 import com.ierusalem.androchat.core.voice_message.recorder.AndroidAudioRecorder
-import com.ierusalem.androchat.features_local.tcp.data.db.dao.ChattingUsersDao
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_local.tcp.data.server.ServerDefaults
 import com.ierusalem.androchat.features_local.tcp.data.server.permission.PermissionGuard
@@ -72,13 +71,12 @@ import com.ierusalem.androchat.features_local.tcp.domain.state.P2PNetworkingStat
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenDialogErrors
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenErrors
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenNavigation
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.dao.MessagesDao
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.AudioState
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessageEntity
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
+import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenNavigation
+import com.ierusalem.androchat.features_local.tcp.domain.model.AudioState
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -113,12 +111,11 @@ class TcpViewModel @Inject constructor(
     private val connectivityObserver: ConnectivityObserver,
     private val wifiManager: WifiManager,
     private val contentResolver: ContentResolver,
-    private val messagesDao: MessagesDao,
-    private val chattingUsersDao: ChattingUsersDao,
     private val audioRecorder: AndroidAudioRecorder,
     private val audioPlayer: AndroidAudioPlayer,
     private val wifiP2PManager: WifiP2pManager,
-    private val channel: WifiP2pManager.Channel
+    private val channel: WifiP2pManager.Channel,
+    private val messagesRepository: MessagesRepository
 ) : ViewModel(), NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
 
     //chatting server side
@@ -173,7 +170,7 @@ class TcpViewModel @Inject constructor(
             InitialChatModel::class.java
         )
 
-        upsertNewChattingUser(initialChatModel)
+        upsertChattingUser(initialChatModel)
     }
 
     private fun createServer(portNumber: Int) {
@@ -1278,36 +1275,37 @@ class TcpViewModel @Inject constructor(
 
     private fun loadChattingUsers() {
         viewModelScope.launch(Dispatchers.IO) {
-            chattingUsersDao.getChattingUsers().collect { users ->
+            messagesRepository.getChattingUsers().collect { users ->
                 _state.update {
                     it.copy(
                         contactsList = Resource.Success(users)
+                    )
+                }
+                getUsersLastMessages()
+            }
+        }
+    }
+
+    private fun getUsersLastMessages() {
+        viewModelScope.launch(Dispatchers.IO) {
+            messagesRepository.getAllUsersLastMessages().collect { lastMessages ->
+                _state.update {
+                    it.copy(
+                        usersLastMessages = lastMessages
                     )
                 }
             }
         }
     }
 
-    private fun upsertNewChattingUser(initialChatModel: InitialChatModel) {
+    private fun upsertChattingUser(initialChatModel: InitialChatModel) {
         updateInitialChatModel(initialChatModel)
         viewModelScope.launch(Dispatchers.IO) {
             val chattingUserEntity = ChattingUserEntity(
                 userUniqueId = initialChatModel.userUniqueId,
                 userUniqueName = initialChatModel.userUniqueName
             )
-            chattingUsersDao.insertChattingUser(chattingUserEntity)
-        }
-    }
-
-    private fun loadLastChattingUserMessage(userUniqueId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            messagesDao.getLastUserMessage(userUniqueId).collect {
-                _state.update {
-                    it.copy(
-                        lastChattingUserMessage = it.lastChattingUserMessage
-                    )
-                }
-            }
+            messagesRepository.insertChattingUser(chattingUserEntity)
         }
     }
 
@@ -1318,7 +1316,7 @@ class TcpViewModel @Inject constructor(
                     messages = Pager(
                         PagingConfig(pageSize = 10, prefetchDistance = 20),
                         pagingSourceFactory = {
-                            messagesDao.getPagedUserMessagesById(
+                            messagesRepository.getPagedUserMessagesById(
                                 chattingUser.userUniqueId
                             )
                         }
@@ -1717,7 +1715,6 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun updateCurrentChattingUniqueIds(currentChattingUser: InitialChatModel?) {
-        log("updateCurrentChattingUniqueIds chatting user - $currentChattingUser")
         _state.update {
             it.copy(
                 currentChattingUser = currentChattingUser
@@ -2325,7 +2322,7 @@ class TcpViewModel @Inject constructor(
         when (message.type) {
             AppMessageType.FILE -> {
                 viewModelScope.launch(Dispatchers.IO) {
-                    messagesDao.updateFileMessage(
+                    messagesRepository.updateFileMessage(
                         messageId = message.id,
                         newFileState = message.fileState
                     )
@@ -2335,7 +2332,7 @@ class TcpViewModel @Inject constructor(
             AppMessageType.VOICE -> {
                 log("updating voice message - $message")
                 viewModelScope.launch(Dispatchers.IO) {
-                    messagesDao.updateVoiceFileMessage(
+                    messagesRepository.updateVoiceFileMessage(
                         messageId = message.id,
                         newFileState = message.fileState,
                         newDuration = message.voiceMessageAudioFileDuration
@@ -2348,7 +2345,7 @@ class TcpViewModel @Inject constructor(
     }
 
     private suspend fun insertMessage(messageEntity: ChatMessageEntity): Long {
-        return messagesDao.insertMessage(messageEntity)
+        return messagesRepository.insertMessage(messageEntity)
     }
 
     fun updateConnectedDevices(device: WifiP2pDevice) {

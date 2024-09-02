@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_chats
+package com.ierusalem.androchat.features_local.tcp_chats.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 
 @Composable
 fun TcpContactItem(

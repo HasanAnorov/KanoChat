@@ -7,5 +7,5 @@ import androidx.room.PrimaryKey
 @Entity("chatting_users")
 data class ChattingUserEntity(
     @PrimaryKey val userUniqueId: String,
-    val userUniqueName: String
+    val userUniqueName: String,
 )

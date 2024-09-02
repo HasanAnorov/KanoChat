@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity
+package com.ierusalem.androchat.features_local.tcp.domain.state
 
 sealed interface FileMessageState {
     data class Loading(val percentage: Int) : FileMessageState

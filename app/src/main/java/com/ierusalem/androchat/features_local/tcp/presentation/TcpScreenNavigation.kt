@@ -1,7 +1,7 @@
-package com.ierusalem.androchat.features_local.tcp.presentation.utils
+package com.ierusalem.androchat.features_local.tcp.presentation
 
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenErrors
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 
 interface TcpScreenNavigation {
 

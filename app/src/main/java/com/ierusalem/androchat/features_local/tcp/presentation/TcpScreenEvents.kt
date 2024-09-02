@@ -1,9 +1,9 @@
-package com.ierusalem.androchat.features_local.tcp.presentation.utils
+package com.ierusalem.androchat.features_local.tcp.presentation
 
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
 import com.ierusalem.androchat.features_local.tcp.domain.InitialChatModel
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenDialogErrors
 
 sealed interface TcpScreenEvents {

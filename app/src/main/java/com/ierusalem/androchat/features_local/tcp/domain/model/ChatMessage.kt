@@ -1,6 +1,7 @@
-package com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity
+package com.ierusalem.androchat.features_local.tcp.domain.model
 
 import com.ierusalem.androchat.core.app.AppMessageType
+import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 
 sealed interface ChatMessage {
     val messageId: Long
@@ -57,7 +58,7 @@ sealed interface ChatMessage {
 
 sealed interface AudioState{
     data object Idle: AudioState
-    data class Playing(val timing: Long):AudioState
+    data class Playing(val timing: Long): AudioState
     data class Paused(val currentPosition: Int): AudioState
 }
 

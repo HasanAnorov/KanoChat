@@ -88,7 +88,7 @@ import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenDialogErrors
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
+import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 
 
 enum class LocalInputSelector {

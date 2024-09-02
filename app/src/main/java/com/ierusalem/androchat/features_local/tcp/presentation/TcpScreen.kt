@@ -22,8 +22,6 @@ import com.ierusalem.androchat.features_local.tcp.presentation.components.Networ
 import com.ierusalem.androchat.features_local.tcp.presentation.components.TcpAppBar
 import com.ierusalem.androchat.features_local.tcp.presentation.components.TcpContent
 import com.ierusalem.androchat.features_local.tcp.presentation.components.rememberTcpAllTabs
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpView
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

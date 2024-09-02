@@ -8,8 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpView
+import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
+import com.ierusalem.androchat.features_local.tcp.presentation.TcpView
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp_connection.ConnectionsContent
 import com.ierusalem.androchat.features_local.tcp_chats.ChatsScreen

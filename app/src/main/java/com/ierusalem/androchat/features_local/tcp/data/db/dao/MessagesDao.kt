@@ -1,12 +1,12 @@
-package com.ierusalem.androchat.features_local.tcp_conversation.data.db.dao
+package com.ierusalem.androchat.features_local.tcp.data.db.dao
 
 import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessageEntity
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -20,6 +20,16 @@ interface MessagesDao {
 
     @Query("SELECT * FROM messages WHERE userId = :userId ORDER BY id DESC LIMIT 1")
     fun getLastUserMessage(userId: String): Flow<ChatMessageEntity?>
+
+    @Query("""
+    SELECT * FROM messages
+    WHERE id IN (
+        SELECT MAX(id) FROM messages
+        GROUP BY userId
+    )
+    ORDER BY id DESC
+""")
+    fun getAllUsersLastMessages(): Flow<List<ChatMessageEntity?>>
 
     @Query("UPDATE messages SET fileState = :newFileState WHERE id = :messageId")
     suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState)

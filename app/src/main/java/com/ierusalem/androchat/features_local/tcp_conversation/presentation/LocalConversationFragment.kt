@@ -48,10 +48,10 @@ import com.ierusalem.androchat.core.utils.openFile
 import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenNavigation
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessageEntity
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
+import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenNavigation
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.ContactListContent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -149,7 +149,6 @@ class LocalConversationFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val chattingUser = viewModel.state.value.currentChattingUser
-        log("onCreate: $chattingUser")
         chattingUser?.let { user ->
             viewModel.loadMessages(user)
         }

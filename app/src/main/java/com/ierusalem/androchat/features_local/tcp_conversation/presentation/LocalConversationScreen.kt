@@ -39,11 +39,10 @@ import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.components.NetworkErrorDialog
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.LocalConversationUserInput
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -70,7 +69,6 @@ fun ConversationContent(
 
     Scaffold(
         topBar = {
-            log("ui test current chatting user ${uiState.currentChattingUser} ")
             uiState.currentChattingUser?.let {
                 ConversationChannelBar(
                     channelName = it.userUniqueName,
@@ -286,7 +284,7 @@ private fun PreviewLocalConversationDark() {
                             isFromYou = true,
                             messageId = 3413255531435L,
                             peerUsername = "Hasan"
-                        ),ChatMessage.TextMessage(
+                        ), ChatMessage.TextMessage(
                             formattedTime = "12:02:23",
                             message = "Hello",
                             messageType = AppMessageType.TEXT,

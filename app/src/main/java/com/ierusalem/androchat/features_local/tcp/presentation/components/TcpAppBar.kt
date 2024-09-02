@@ -33,7 +33,7 @@ import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
 import com.ierusalem.androchat.core.ui.components.AndroChatTab
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.UiText
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpView
+import com.ierusalem.androchat.features_local.tcp.presentation.TcpView
 
 @Composable
 @CheckResult

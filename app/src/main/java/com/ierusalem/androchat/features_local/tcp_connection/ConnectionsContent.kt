@@ -40,7 +40,7 @@ import com.ierusalem.androchat.core.ui.components.baselineHeight
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.ui.theme.MontserratFontFamily
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
+import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp_networking.components.StatusProperty
 import com.ierusalem.androchat.features_local.tcp_networking.components.WifiLazyItem
 

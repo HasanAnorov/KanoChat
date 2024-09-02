@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,10 +34,6 @@ class ConversationViewModel @Inject constructor(
                 emitNavigation(ConversationNavigation.OnNavIconClick)
             }
         }
-    }
-
-    fun connectToChat(username: String) {
-        Log.d("ahi3646", "handleIntents: send message ${savedStateHandle.get<String>("username")} ")
     }
 
 

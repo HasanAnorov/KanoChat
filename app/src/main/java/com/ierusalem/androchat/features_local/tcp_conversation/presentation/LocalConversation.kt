@@ -49,8 +49,8 @@ import com.ierusalem.androchat.core.ui.components.FunctionalityNotAvailablePopup
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features_remote.conversation.presentation.components.JumpToBottom
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.ChatMessageItem
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.LocalConversationUserInput
 import kotlinx.coroutines.launch
@@ -228,10 +228,10 @@ fun Messages(
 
                 chatMessage?.let {
                     // todo: fix this
-                    val prevAuthor = messages.itemSnapshotList.getOrNull(index - 1)?.isFromYou
-                    val nextAuthor = messages.itemSnapshotList.getOrNull(index + 1)?.isFromYou
-                    val isFirstMessageByAuthor = prevAuthor != chatMessage.isFromYou
-                    val isLastMessageByAuthor = nextAuthor != chatMessage.isFromYou
+                    val prevAuthor = messages.itemSnapshotList.getOrNull(index - 1)?.peerUsername
+                    val nextAuthor = messages.itemSnapshotList.getOrNull(index + 1)?.peerUsername
+                    val isFirstMessageByAuthor = prevAuthor != chatMessage.peerUsername
+                    val isLastMessageByAuthor = nextAuthor != chatMessage.peerUsername
                     ChatMessageItem(
                         msg = chatMessage,
                         isFirstMessageByAuthor = isFirstMessageByAuthor,

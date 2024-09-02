@@ -8,16 +8,18 @@ import android.net.wifi.p2p.WifiP2pManager
 import androidx.room.Room
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.core.connectivity.NetworkConnectivityObserver
-import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
+import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.FieldValidator
 import com.ierusalem.androchat.core.voice_message.playback.AndroidAudioPlayer
 import com.ierusalem.androchat.core.voice_message.recorder.AndroidAudioRecorder
+import com.ierusalem.androchat.features_local.tcp.data.db.dao.ChattingUsersDao
 import com.ierusalem.androchat.features_local.tcp.data.server.permission.PermissionGuard
 import com.ierusalem.androchat.features_local.tcp.data.server.permission.PermissionGuardImpl
-import com.ierusalem.androchat.features_local.tcp.data.db.dao.ChattingUsersDao
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.MessagesDatabase
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.dao.MessagesDao
+import com.ierusalem.androchat.features_local.tcp.domain.MessagesRepository
+import com.ierusalem.androchat.features_local.tcp.domain.MessagesRepositoryImpl
+import com.ierusalem.androchat.features_local.tcp.data.MessagesDatabase
+import com.ierusalem.androchat.features_local.tcp.data.db.dao.MessagesDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,6 +31,15 @@ import javax.inject.Singleton
 object AppModule {
 
     @Provides
+    @Singleton
+    fun provideMessagesRepository(
+        messagesDao: MessagesDao,
+        chattingUsersDao: ChattingUsersDao
+        ): MessagesRepository {
+        return MessagesRepositoryImpl(messagesDao, chattingUsersDao)
+    }
+
+     @Provides
     @Singleton
     fun provideMessageDatabase(application: Application): MessagesDatabase {
         return Room.databaseBuilder(

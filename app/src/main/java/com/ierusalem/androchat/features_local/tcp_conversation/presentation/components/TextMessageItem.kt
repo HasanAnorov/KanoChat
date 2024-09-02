@@ -5,7 +5,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.ChatBubbleShapeEnd
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.ChatBubbleShapeStart
 

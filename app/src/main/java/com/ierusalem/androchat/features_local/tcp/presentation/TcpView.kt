@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp.presentation.utils
+package com.ierusalem.androchat.features_local.tcp.presentation
 
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.utils.UiText

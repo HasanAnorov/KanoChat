@@ -1,9 +1,10 @@
-package com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity
-
+package com.ierusalem.androchat.features_local.tcp.data.db.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.ierusalem.androchat.core.app.AppMessageType
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 
 @Entity(tableName = "messages")
 data class ChatMessageEntity(

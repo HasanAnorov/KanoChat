@@ -15,7 +15,7 @@ import androidx.navigation.fragment.NavHostFragment
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.log
-import com.ierusalem.androchat.databinding.ActivityNavBinding
+import com.ierusalem.androchat.databinding.ActivityLocalBinding
 import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiDirectBroadcastReceiver
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,12 +29,13 @@ import javax.inject.Inject
 
 @Suppress("unused")
 @AndroidEntryPoint
-class NavActivity : AppCompatActivity() {
+class LocalActivity : AppCompatActivity() {
 
     private val viewModel: TcpViewModel by viewModels()
 
     @Inject
     lateinit var wifiP2PManager: WifiP2pManager
+
     @Inject
     lateinit var channel: WifiP2pManager.Channel
 
@@ -56,11 +57,11 @@ class NavActivity : AppCompatActivity() {
         }
 
         setContentView(
-            ComposeView(this@NavActivity).apply {
+            ComposeView(this@LocalActivity).apply {
                 consumeWindowInsets = false
                 setContent {
                     AndroChatTheme {
-                        AndroidViewBinding(ActivityNavBinding::inflate)
+                        AndroidViewBinding(ActivityLocalBinding::inflate)
                     }
                 }
             }

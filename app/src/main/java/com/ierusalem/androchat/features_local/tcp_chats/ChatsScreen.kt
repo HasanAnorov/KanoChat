@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -15,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -24,14 +22,14 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.core.ui.components.ErrorScreen
-import com.ierusalem.androchat.core.ui.components.FabButton
 import com.ierusalem.androchat.core.ui.components.LoadingScreen
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_local.tcp.domain.InitialChatModel
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
-import com.ierusalem.androchat.features_local.tcp.presentation.utils.TcpScreenEvents
+import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
+import com.ierusalem.androchat.features_local.tcp_chats.components.TcpContactItem
 import com.ierusalem.androchat.features_remote.home.presentation.contacts.ErrorType
 
 @Composable
@@ -107,14 +105,6 @@ fun ChatsScreen(
                         }
                     )
                 }
-                FabButton(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        // Offsets the FAB to compensate for CoordinatorLayout collapsing behaviour
-                        .offset(y = ((-12).dp), x = ((-12).dp)),
-                    isVisible = isVisible.value,
-                    onClick = {}
-                )
             }
         }
 

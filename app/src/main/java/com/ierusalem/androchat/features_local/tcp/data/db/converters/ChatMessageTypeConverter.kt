@@ -1,10 +1,10 @@
-package com.ierusalem.androchat.features_local.tcp_conversation.data.db
+package com.ierusalem.androchat.features_local.tcp.data.db.converters
 
 import androidx.room.TypeConverter
 import com.google.gson.reflect.TypeToken
 import com.ierusalem.androchat.core.utils.Json.gson
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.ChatMessageEntity
-import com.ierusalem.androchat.features_local.tcp_conversation.data.db.entity.FileMessageState
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 
 class ChatMessageTypeConverter {
 
