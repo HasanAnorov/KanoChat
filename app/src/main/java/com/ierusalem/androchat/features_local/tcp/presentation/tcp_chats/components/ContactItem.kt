@@ -1,6 +1,5 @@
-package com.ierusalem.androchat.features_local.tcp_chats.components
+package com.ierusalem.androchat.features_local.tcp.presentation.tcp_chats.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,21 +19,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.RandomColors
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
-import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 
 @Composable
 fun TcpContactItem(
     modifier: Modifier = Modifier,
-    contact: ChattingUserEntity,
+    contact: ChattingUser,
     lastMessage: ChatMessageEntity? = null,
     onClick: () -> Unit,
 ) {
@@ -51,14 +50,36 @@ fun TcpContactItem(
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
+            Box(
                 modifier = Modifier
                     .padding(vertical = 8.dp)
-                    .size(50.dp)
-                    .clip(CircleShape),
-                painter = painterResource(id = R.drawable.setup),
-                contentDescription = null,
-            )
+                    .size(50.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+                        .background(Color(contact.avatarBackgroundColor)),
+                    contentAlignment = Alignment.Center
+                ){
+                    Text(
+                        text = contact.username.first().toString(),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
+                if(contact.isOnline){
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 2.dp, bottom = 2.dp)
+                            .size(12.dp)
+                            .clip(CircleShape)
+                            .background(Color.Green)
+                            .align(Alignment.BottomEnd)
+                    )
+                }
+            }
             Column(
                 modifier = Modifier
                     .weight(1F)
@@ -68,7 +89,7 @@ fun TcpContactItem(
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.titleSmall,
                     fontSize = 16.sp,
-                    text = contact.userUniqueName,
+                    text = contact.username,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 lastMessage?.let {
@@ -121,9 +142,11 @@ fun ContactItemPreview() {
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background),
             onClick = {},
-            contact = ChattingUserEntity(
+            contact = ChattingUser(
                 userUniqueId = "249141sadfs67df9s7f89s7f",
-                userUniqueName = "Hasan"
+                username = "Hasan",
+                isOnline = false,
+                avatarBackgroundColor = RandomColors().getColor()
             ),
             lastMessage = ChatMessageEntity(
                 id = 324242,
@@ -147,9 +170,11 @@ fun ContactItemPreviewDark() {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background),
-            contact = ChattingUserEntity(
+            contact = ChattingUser(
                 userUniqueId = "249141sadfs67df9s7f89s7f",
-                userUniqueName = "Hasan"
+                username = "Hasan",
+                isOnline = true,
+                avatarBackgroundColor = RandomColors().getColor()
             ),
             lastMessage = ChatMessageEntity(
                 id = 324242,

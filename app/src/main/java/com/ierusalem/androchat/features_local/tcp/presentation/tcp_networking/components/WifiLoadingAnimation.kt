@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_networking.components
+package com.ierusalem.androchat.features_local.tcp.presentation.tcp_networking.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing

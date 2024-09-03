@@ -226,5 +226,8 @@
     <string name="dismiss">Dismiss</string>
     <string name="wifi_not_enabled">Wifi not enabled</string>
     <string name="wifi_not_enabled_message">Wifi should be enabled to perform this action</string>
+    <string name="unknown_user">Uknown User</string>
+    <string name="offline">Offline</string>
+    <string name="online">Online</string>
 
 </resources>

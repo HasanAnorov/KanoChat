@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "e49523eea1b14a1b2e99f56aa5e7b024",
+    "identityHash": "ac8ef19b5982f9af67d9179e167839c3",
     "entities": [
       {
         "tableName": "messages",
@@ -116,7 +116,7 @@
       },
       {
         "tableName": "chatting_users",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userUniqueId` TEXT NOT NULL, `userUniqueName` TEXT NOT NULL, PRIMARY KEY(`userUniqueId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userUniqueId` TEXT NOT NULL, `userUniqueName` TEXT NOT NULL, `avatarBackgroundColor` INTEGER NOT NULL, PRIMARY KEY(`userUniqueId`))",
         "fields": [
           {
             "fieldPath": "userUniqueId",
@@ -128,6 +128,12 @@
             "fieldPath": "userUniqueName",
             "columnName": "userUniqueName",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "avatarBackgroundColor",
+            "columnName": "avatarBackgroundColor",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -144,7 +150,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e49523eea1b14a1b2e99f56aa5e7b024')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ac8ef19b5982f9af67d9179e167839c3')"
     ]
   }
 }

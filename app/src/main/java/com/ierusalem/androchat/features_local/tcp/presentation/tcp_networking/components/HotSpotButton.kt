@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_networking.components
+package com.ierusalem.androchat.features_local.tcp.presentation.tcp_networking.components
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement

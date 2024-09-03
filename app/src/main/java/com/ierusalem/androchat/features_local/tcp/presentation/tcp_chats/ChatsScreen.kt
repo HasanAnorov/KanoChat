@@ -1,4 +1,4 @@
-package com.ierusalem.androchat.features_local.tcp_chats
+package com.ierusalem.androchat.features_local.tcp.presentation.tcp_chats
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -24,12 +24,12 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.core.ui.components.ErrorScreen
 import com.ierusalem.androchat.core.ui.components.LoadingScreen
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.RandomColors
 import com.ierusalem.androchat.core.utils.Resource
-import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
-import com.ierusalem.androchat.features_local.tcp.domain.InitialChatModel
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
-import com.ierusalem.androchat.features_local.tcp_chats.components.TcpContactItem
+import com.ierusalem.androchat.features_local.tcp.presentation.tcp_chats.components.TcpContactItem
 import com.ierusalem.androchat.features_remote.home.presentation.contacts.ErrorType
 
 @Composable
@@ -80,8 +80,8 @@ fun ChatsScreen(
                         content = {
                             itemsIndexed(data) { index, contact ->
                                 val lastMessages = uiState.usersLastMessages
-                                val lastMessage = if(lastMessages.isNotEmpty()){
-                                lastMessages[index]
+                                val lastMessage = if (lastMessages.isNotEmpty()) {
+                                    lastMessages[index]
                                 } else {
                                     null
                                 }
@@ -89,15 +89,7 @@ fun ChatsScreen(
                                     contact = contact,
                                     modifier = Modifier,
                                     onClick = {
-                                        val selectedChattingUser = InitialChatModel(
-                                            userUniqueId = contact.userUniqueId,
-                                            userUniqueName = contact.userUniqueName
-                                        )
-                                        eventHandler(
-                                            TcpScreenEvents.TcpChatItemClicked(
-                                                selectedChattingUser
-                                            )
-                                        )
+                                        eventHandler(TcpScreenEvents.TcpChatItemClicked(contact))
                                     },
                                     lastMessage = lastMessage
                                 )
@@ -145,45 +137,65 @@ fun ContactsScreenPreviewSuccess() {
             uiState = TcpScreenUiState(
                 chattingUsers = Resource.Success(
                     listOf(
-                        ChattingUserEntity(
+                        ChattingUser(
                             userUniqueId = "123",
-                            userUniqueName = "Ahmed"
+                            username = "Ahmed",
+                            isOnline = false,
+                            avatarBackgroundColor = RandomColors().getColor()
                         ),
-                        ChattingUserEntity(
+                        ChattingUser(
                             userUniqueId = "123",
-                            userUniqueName = "Ahmed"
+                            username = "Ahmed",
+                            isOnline = false,
+                            avatarBackgroundColor = RandomColors().getColor()
                         ),
-                        ChattingUserEntity(
+                        ChattingUser(
                             userUniqueId = "123",
-                            userUniqueName = "Ahmed"
+                            username = "Ahmed",
+                            isOnline = false,
+                            avatarBackgroundColor = RandomColors().getColor()
                         ),
-                        ChattingUserEntity(
+                        ChattingUser(
                             userUniqueId = "123",
-                            userUniqueName = "Ahmed"
+                            username = "Ahmed",
+                            isOnline = false,
+                            avatarBackgroundColor = RandomColors().getColor()
                         ),
-                        ChattingUserEntity(
+                        ChattingUser(
                             userUniqueId = "123",
-                            userUniqueName = "Ahmed"
+                            username = "Ahmed",
+                            isOnline = false,
+                            avatarBackgroundColor = RandomColors().getColor()
                         ),
-                        ChattingUserEntity(
+                        ChattingUser(
                             userUniqueId = "123",
-                            userUniqueName = "Ahmed"
+                            username = "Ahmed",
+                            isOnline = false,
+                            avatarBackgroundColor = RandomColors().getColor()
                         ),
-                        ChattingUserEntity(
+                        ChattingUser(
                             userUniqueId = "123",
-                            userUniqueName = "Ahmed"
+                            username = "Ahmed",
+                            isOnline = false,
+                            avatarBackgroundColor = RandomColors().getColor()
                         ),
-                        ChattingUserEntity(
+                        ChattingUser(
                             userUniqueId = "123",
-                            userUniqueName = "Ahmed"
+                            username = "Ahmed",
+                            isOnline = false,
+                            avatarBackgroundColor = RandomColors().getColor()
                         ),
-                        ChattingUserEntity(
+                        ChattingUser(
                             userUniqueId = "123",
-                            userUniqueName = "Ahmed"
+                            username = "Ahmed",
+                            isOnline = false,
+                            avatarBackgroundColor = RandomColors().getColor()
                         ),
-                        ChattingUserEntity(
+                        ChattingUser(
                             userUniqueId = "123",
-                            userUniqueName = "Ahmed"
+                            username = "Ahmed",
+                            isOnline = false,
+                            avatarBackgroundColor = RandomColors().getColor()
                         )
                     )
                 )

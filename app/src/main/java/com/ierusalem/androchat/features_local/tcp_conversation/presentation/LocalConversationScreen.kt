@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -43,6 +44,7 @@ import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.components.NetworkErrorDialog
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.LocalConversationUserInput
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.Messages
 import kotlinx.coroutines.flow.flowOf
@@ -70,10 +72,8 @@ fun ConversationContent(
 
     Scaffold(
         topBar = {
-            val channelNameBar = uiState.currentChattingUser?.userUniqueName ?: "Unknown"
             ConversationChannelBar(
-                channelName = channelNameBar,
-                channelMembers = "Online",
+                contact = uiState.currentChattingUser,
                 onNavIconPressed = { eventHandler(TcpScreenEvents.OnNavIconClick) },
                 scrollBehavior = scrollBehavior,
             )
@@ -148,8 +148,7 @@ fun ConversationContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversationChannelBar(
-    channelName: String,
-    channelMembers: String,
+    contact: ChattingUser?,
     modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     onNavIconPressed: () -> Unit = { }
@@ -162,15 +161,25 @@ fun ConversationChannelBar(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 // Channel name
                 Text(
-                    text = channelName,
+                    text = contact?.username ?: stringResource(id = R.string.unknown_user),
                     style = MaterialTheme.typography.titleMedium
                 )
                 // Number of members
-                Text(
-                    text = channelMembers,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                contact?.let {
+                    if(it.isOnline){
+                        Text(
+                            text = stringResource(id = R.string.online),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF35C47C)
+                        )
+                    }else{
+                        Text(
+                            text = stringResource(id = R.string.offline),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
         },
         navIcon = Icons.AutoMirrored.Filled.ArrowBack,
@@ -193,7 +202,126 @@ fun ConversationChannelBar(
 @Composable
 private fun PreviewLocalConversation() {
     AndroChatTheme {
-        ConversationContent(uiState = TcpScreenUiState(), eventHandler = {})
+        ConversationContent(
+            uiState = TcpScreenUiState(
+                currentChattingUser = ChattingUser(
+                    userUniqueId = "123",
+                    username = "Ahmed",
+                    isOnline = true,
+                    avatarBackgroundColor = 0xFF5733
+                ),
+                messages = flowOf(
+                    PagingData.from(
+                        listOf(
+                            ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = true,
+                                messageId = 341325321435L,
+                                peerUsername = "Hasan"
+                            ),
+                            ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = true,
+                                messageId = 341323451435L,
+                                peerUsername = "Hasan"
+                            ),
+                            ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = true,
+                                messageId = 3413251435L,
+                                peerUsername = "Hasan"
+                            ),
+                            ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = true,
+                                messageId = 34132514L,
+                                peerUsername = "Hasan"
+                            ),
+                            ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = false,
+                                messageId = 341325341435L,
+                                peerUsername = "Hasan"
+                            ),
+                            ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = true,
+                                messageId = 34132521231435L,
+                                peerUsername = "Hasan"
+                            ),
+                            ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = true,
+                                messageId = 341327451435L,
+                                peerUsername = "Hasan"
+                            ),
+                            ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = false,
+                                messageId = 341326651435L,
+                                peerUsername = "Hasan"
+                            ),
+                            ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = false,
+                                messageId = 341325142134635L,
+                                peerUsername = "Hasan"
+                            ),
+                            ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = true,
+                                messageId = 3413255531435L,
+                                peerUsername = "Hasan"
+                            ), ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = true,
+                                messageId = 3413251454335L,
+                                peerUsername = "Hasan"
+                            ),
+                            ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = false,
+                                messageId = 341322345551435L,
+                                peerUsername = "Hasan"
+                            ),
+                            ChatMessage.TextMessage(
+                                formattedTime = "12:02:23",
+                                message = "Hello",
+                                messageType = AppMessageType.TEXT,
+                                isFromYou = true,
+                                messageId = 341321551435L,
+                                peerUsername = "Hasan"
+                            )
+                        )
+                    )
+                )
+            ),
+            eventHandler = {}
+        )
     }
 }
 
@@ -203,6 +331,12 @@ private fun PreviewLocalConversationDark() {
     AndroChatTheme(isDarkTheme = true) {
         ConversationContent(
             uiState = TcpScreenUiState(
+                currentChattingUser = ChattingUser(
+                    userUniqueId = "123",
+                    username = "Ahmed",
+                    isOnline = false,
+                    avatarBackgroundColor = 0xFF5733
+                ),
                 messages = flowOf(
                     PagingData.from(
                         listOf(

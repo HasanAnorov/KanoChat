@@ -41,6 +41,7 @@ import com.ierusalem.androchat.core.utils.Constants.SOCKET_DEFAULT_BUFFER_SIZE
 import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
 import com.ierusalem.androchat.core.utils.Constants.getTimeInHours
 import com.ierusalem.androchat.core.utils.Json.gson
+import com.ierusalem.androchat.core.utils.RandomColors
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
 import com.ierusalem.androchat.core.utils.generateFileFromUri
@@ -62,6 +63,7 @@ import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.Reason
 import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_local.tcp.domain.model.AudioState
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import com.ierusalem.androchat.features_local.tcp.domain.state.ClientConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactItem
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactMessageItem
@@ -169,7 +171,6 @@ class TcpViewModel @Inject constructor(
             receivedMessage,
             InitialChatModel::class.java
         )
-
         upsertChattingUser(initialChatModel)
     }
 
@@ -1280,7 +1281,7 @@ class TcpViewModel @Inject constructor(
             messagesRepository.getChattingUsers().collect { users ->
                 _state.update {
                     it.copy(
-                        chattingUsers = Resource.Success(users)
+                        chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
                     )
                 }
                 if (users.isNotEmpty()) {
@@ -1305,20 +1306,22 @@ class TcpViewModel @Inject constructor(
     private fun upsertChattingUser(initialChatModel: InitialChatModel) {
         updateInitialChatModel(initialChatModel)
         viewModelScope.launch(Dispatchers.IO) {
+            val avatarBackgroundColor = RandomColors().getColor()
             val chattingUserEntity = ChattingUserEntity(
                 userUniqueId = initialChatModel.userUniqueId,
-                userUniqueName = initialChatModel.userUniqueName
+                userUniqueName = initialChatModel.userUniqueName,
+                avatarBackgroundColor = avatarBackgroundColor
             )
             messagesRepository.insertChattingUser(chattingUserEntity)
         }
     }
 
-    fun loadMessages(chattingUser: InitialChatModel) {
+    fun loadMessages(chattingUser: ChattingUser) {
         viewModelScope.launch(Dispatchers.IO) {
             _state.update {
                 it.copy(
                     messages = Pager(
-                        PagingConfig(pageSize = 10, prefetchDistance = 20),
+                        PagingConfig(pageSize = 18, prefetchDistance = 25),
                         pagingSourceFactory = {
                             messagesRepository.getPagedUserMessagesById(
                                 chattingUser.userUniqueId
@@ -1326,9 +1329,7 @@ class TcpViewModel @Inject constructor(
                         }
                     ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
                         value.map { chatMessageEntity ->
-                            chatMessageEntity.toChatMessage(
-                                chattingUser.userUniqueName
-                            )!!
+                            chatMessageEntity.toChatMessage(chattingUser.username)!!
                         }
                     }.cachedIn(viewModelScope)
                 )
@@ -1719,7 +1720,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun updateCurrentChattingUniqueIds(currentChattingUser: InitialChatModel?) {
+    private fun updateCurrentChattingUniqueIds(currentChattingUser: ChattingUser?) {
         _state.update {
             it.copy(
                 currentChattingUser = currentChattingUser

@@ -12,16 +12,15 @@ import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidHotspotPassword
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
-import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
-import com.ierusalem.androchat.features_local.tcp.domain.InitialChatModel
-import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 data class TcpScreenUiState(
 
-    val userUniqueName:String = Constants.UNKNOWN_USER,
+    val userUniqueName: String = Constants.UNKNOWN_USER,
     val peerUniqueName: String = Constants.UNKNOWN_PEER,
 
     val isReadContactsGranted: Boolean = false,
@@ -47,7 +46,7 @@ data class TcpScreenUiState(
     val connectedWifiAddress: String = "Not created",
     val isValidConnectedWifiAddress: Boolean = isValidIpAddress(connectedWifiAddress),
     //general ip address to display
-    val connectedServerAddress : UiText = UiText.StringResource(R.string.not_connected),
+    val connectedServerAddress: UiText = UiText.StringResource(R.string.not_connected),
 
     //general networking state
     val generalNetworkingStatus: GeneralNetworkingStatus = GeneralNetworkingStatus.Idle,
@@ -64,13 +63,13 @@ data class TcpScreenUiState(
     val availableWifiNetworks: List<WifiP2pDevice> = emptyList(),
     val connectedWifiNetworks: List<WifiP2pDevice> = emptyList(),
 
-    //contacts
-    val usersLastMessages: List<ChatMessageEntity?> = listOf(),
-    val chattingUsers:Resource<List<ChattingUserEntity>> = Resource.Loading(),
     //chat room messages
     val messages: Flow<PagingData<ChatMessage>> = flowOf(),
-    //defines current chatting user unique id, used in conversation screen only
-    val currentChattingUser: InitialChatModel? = null,
+    val usersLastMessages: List<ChatMessageEntity?> = listOf(),
+
+    //contacts
+    val chattingUsers: Resource<List<ChattingUser>> = Resource.Loading(),
+    val currentChattingUser: ChattingUser? = null,
 
     //error handling with dialogs
     val hasDialogErrorOccurred: TcpScreenDialogErrors? = null,
