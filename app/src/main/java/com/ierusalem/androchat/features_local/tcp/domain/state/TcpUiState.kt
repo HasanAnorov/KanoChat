@@ -24,10 +24,9 @@ data class TcpScreenUiState(
     val userUniqueName:String = Constants.UNKNOWN_USER,
     val peerUniqueName: String = Constants.UNKNOWN_PEER,
 
-    val contacts: Resource<List<ContactItem>> = Resource.Loading(),
     val isReadContactsGranted: Boolean = false,
-
     val showBottomSheet: Boolean = false,
+    val contacts: Resource<List<ContactItem>> = Resource.Loading(),
 
     //general state
     val isWifiOn: Boolean = false,
@@ -41,9 +40,13 @@ data class TcpScreenUiState(
 
     val portNumber: String = Constants.DEFAULT_PORT_NUMBER,
     val isValidPortNumber: Boolean = isValidPortNumber(portNumber),
+
     val groupOwnerAddress: String = "Not connected",
     val isValidGroupOwnerAddress: Boolean = isValidIpAddress(groupOwnerAddress),
-
+    //this wifi address used for connecting to server by clients, don't use this for host side
+    val connectedWifiAddress: String = "Not created",
+    val isValidConnectedWifiAddress: Boolean = isValidIpAddress(connectedWifiAddress),
+    //general ip address to display
     val connectedServerAddress : UiText = UiText.StringResource(R.string.not_connected),
 
     //general networking state
@@ -61,30 +64,20 @@ data class TcpScreenUiState(
     val availableWifiNetworks: List<WifiP2pDevice> = emptyList(),
     val connectedWifiNetworks: List<WifiP2pDevice> = emptyList(),
 
-    //chat room
-//    val messages: List<ChatMessage> = emptyList(),
-    val messages: Flow<PagingData<ChatMessage>> = flowOf(),
-
     //contacts
-    val contactsList:Resource<List<ChattingUserEntity>> = Resource.Loading(),
     val usersLastMessages: List<ChatMessageEntity?> = listOf(),
-
-    //but Erkin aka said, chat should be between only two people
-    //todo - maybe you should use connectedWifiNetworks.size here ! , delete this later
-    val connectionsCount: Int = 0,
-
-    //this wifi address used for connecting to server by clients, don't use this for host side
-    val connectedWifiAddress: String = "Not created",
-    val isValidConnectedWifiAddress: Boolean = isValidIpAddress(connectedWifiAddress),
+    val chattingUsers:Resource<List<ChattingUserEntity>> = Resource.Loading(),
+    //chat room messages
+    val messages: Flow<PagingData<ChatMessage>> = flowOf(),
+    //defines current chatting user unique id, used in conversation screen only
+    val currentChattingUser: InitialChatModel? = null,
 
     //error handling with dialogs
     val hasDialogErrorOccurred: TcpScreenDialogErrors? = null,
-
     //to disable view pager's horizontal scrolling
     val isRecording: Boolean = false,
 
+    //network broad frequency for hotspot networking
     val networkBand: AppBroadcastFrequency = AppBroadcastFrequency.FREQUENCY_2_4_GHZ,
 
-    //defines current chatting user unique id, used in conversation screen only
-    val currentChattingUser: InitialChatModel? = null
-)
+    )

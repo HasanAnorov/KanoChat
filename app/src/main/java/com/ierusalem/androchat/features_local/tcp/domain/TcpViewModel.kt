@@ -178,61 +178,59 @@ class TcpViewModel @Inject constructor(
         log("group address - ${state.value.groupOwnerAddress} \ncreating server ...")
         updateHostConnectionStatus(HostConnectionStatus.Creating)
 
-//            try {
-        serverSocket = ServerSocket(portNumber)
-        log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
-        if (serverSocket.isBound) {
-            updateHostConnectionStatus(HostConnectionStatus.Created)
-            updateConnectionsCount(true)
-        }
-        while (!serverSocket.isClosed) {
-            connectedClientSocket = serverSocket.accept()
-            connectedClientWriter =
-                DataOutputStream(connectedClientSocket.getOutputStream())
-            //here we sending the unique device id to the client
-            initializeUser(writer = connectedClientWriter)
-            log("New client : $connectedClientSocket ")
-            updateConnectionsCount(true)
+        try {
+            serverSocket = ServerSocket(portNumber)
+            log("server created in : $serverSocket ${serverSocket.localSocketAddress}")
+            if (serverSocket.isBound) {
+                updateHostConnectionStatus(HostConnectionStatus.Created)
+            }
+            while (!serverSocket.isClosed) {
+                connectedClientSocket = serverSocket.accept()
+                connectedClientWriter =
+                    DataOutputStream(connectedClientSocket.getOutputStream())
+                //here we sending the unique device id to the client
+                initializeUser(writer = connectedClientWriter)
+                log("New client : $connectedClientSocket ")
 
-            while (!connectedClientSocket.isClosed) {
-                val reader =
-                    DataInputStream(BufferedInputStream(connectedClientSocket.getInputStream()))
+                while (!connectedClientSocket.isClosed) {
+                    val reader =
+                        DataInputStream(BufferedInputStream(connectedClientSocket.getInputStream()))
 
-//                        try {
-                val messageType = AppMessageType.fromChar(reader.readChar())
+//                try {
+                    val messageType = AppMessageType.fromChar(reader.readChar())
 
-                when (messageType) {
-                    AppMessageType.INITIAL -> {
-                        setupUserData(reader)
-                    }
+                    when (messageType) {
+                        AppMessageType.INITIAL -> {
+                            setupUserData(reader)
+                        }
 
-                    AppMessageType.VOICE -> {
-                        viewModelScope.launch(Dispatchers.IO) {
-                            receiveVoiceMessage(reader = reader)
+                        AppMessageType.VOICE -> {
+                            viewModelScope.launch(Dispatchers.IO) {
+                                receiveVoiceMessage(reader = reader)
+                            }
+                        }
+
+                        AppMessageType.CONTACT -> {
+                            viewModelScope.launch(Dispatchers.IO) {
+                                receiveContactMessage(reader = reader)
+                            }
+                        }
+
+                        AppMessageType.TEXT -> {
+                            viewModelScope.launch(Dispatchers.IO) {
+                                receiveTextMessage(reader = reader)
+                            }
+                        }
+
+                        AppMessageType.FILE -> {
+                            receiveFile(reader = reader)
+                        }
+
+                        AppMessageType.UNKNOWN -> {
+                            /**Ignore case*/
+                            log("create server unknown message char - ${reader.readChar()}")
                         }
                     }
-
-                    AppMessageType.CONTACT -> {
-                        viewModelScope.launch(Dispatchers.IO) {
-                            receiveContactMessage(reader = reader)
-                        }
-                    }
-
-                    AppMessageType.TEXT -> {
-                        viewModelScope.launch(Dispatchers.IO) {
-                            receiveTextMessage(reader = reader)
-                        }
-                    }
-
-                    AppMessageType.FILE -> {
-                        receiveFile(reader = reader)
-                    }
-
-                    AppMessageType.UNKNOWN -> {
-                        /**Ignore case*/
-                        log("create server unknown message char - ${reader.readChar()}")
-                    }
-                }
 //                        } catch (e: EOFException) {
 //                            e.printStackTrace()
 //                            //if the IP address of the host could not be determined.
@@ -289,30 +287,30 @@ class TcpViewModel @Inject constructor(
 //                                e.printStackTrace()
 //                            }
 //                        }
+                }
             }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            serverSocket.close()
+            //change server title status
+            updateHostConnectionStatus(HostConnectionStatus.Failure)
+
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+            serverSocket.close()
+            //change server title status
+            updateHostConnectionStatus(HostConnectionStatus.Failure)
+
+            //if a security manager exists and its checkConnect method doesn't allow the operation.
+            log("createServer: SecurityException ")
+        } catch (e: IllegalArgumentException) {
+            e.printStackTrace()
+            serverSocket.close()
+            //change server title status
+            updateHostConnectionStatus(HostConnectionStatus.Failure)
+            //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
+            log("createServer: IllegalArgumentException ")
         }
-//            } catch (e: IOException) {
-//                e.printStackTrace()
-//                serverSocket.close()
-//                //change server title status
-//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-//
-//            } catch (e: SecurityException) {
-//                e.printStackTrace()
-//                serverSocket.close()
-//                //change server title status
-//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-//
-//                //if a security manager exists and its checkConnect method doesn't allow the operation.
-//                log("createServer: SecurityException ")
-//            } catch (e: IllegalArgumentException) {
-//                e.printStackTrace()
-//                serverSocket.close()
-//                //change server title status
-//                viewModel.updateHostConnectionStatus(HostConnectionStatus.Failure)
-//                //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
-//                log("createServer: IllegalArgumentException ")
-//            }
     }
 
     // todo - check stream closes also
@@ -359,16 +357,14 @@ class TcpViewModel @Inject constructor(
             }
 
             updateClientConnectionStatus(ClientConnectionStatus.Connected)
-            updateConnectionsCount(true)
+            //fixme - connected here
 
             //received outcome messages here
             while (!clientSocket.isClosed) {
                 val reader = DataInputStream(BufferedInputStream(clientSocket.getInputStream()))
 
 //                try {
-//                val dataType = runBlocking {
-//                    AppMessageType.fromChar(reader.readChar())
-//                }
+
                 val messageType = AppMessageType.fromChar(reader.readChar())
                 log("incoming message type - $messageType ")
 
@@ -1284,7 +1280,7 @@ class TcpViewModel @Inject constructor(
             messagesRepository.getChattingUsers().collect { users ->
                 _state.update {
                     it.copy(
-                        contactsList = Resource.Success(users)
+                        chattingUsers = Resource.Success(users)
                     )
                 }
                 if (users.isNotEmpty()) {
@@ -1879,6 +1875,8 @@ class TcpViewModel @Inject constructor(
 
             is TcpScreenEvents.SendMessageRequest -> {
 
+                //fixme - send message only after connection is established
+
                 val textMessageEntity = ChatMessageEntity(
                     type = AppMessageType.TEXT,
                     formattedTime = getCurrentTime(),
@@ -1888,11 +1886,6 @@ class TcpViewModel @Inject constructor(
                     text = event.message
                 )
 
-                //todo - think about this later
-                if (state.value.connectionsCount < 1) {
-                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.PeerNotConnected)
-                    return
-                }
                 when (state.value.generalConnectionStatus) {
                     GeneralConnectionStatus.Idle -> {
                         //Establish connection to send message
@@ -2370,22 +2363,6 @@ class TcpViewModel @Inject constructor(
             it.copy(
                 connectedWifiNetworks = connectedDevices
             )
-        }
-    }
-
-    private fun updateConnectionsCount(shouldIncrease: Boolean) {
-        if (shouldIncrease) {
-            _state.update {
-                it.copy(
-                    connectionsCount = state.value.connectionsCount + 1
-                )
-            }
-        } else {
-            _state.update {
-                it.copy(
-                    connectionsCount = state.value.connectionsCount - 1
-                )
-            }
         }
     }
 

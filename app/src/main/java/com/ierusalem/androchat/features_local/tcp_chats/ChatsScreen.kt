@@ -38,7 +38,7 @@ fun ChatsScreen(
     uiState: TcpScreenUiState,
     eventHandler: (TcpScreenEvents) -> Unit
 ) {
-    when (uiState.contactsList) {
+    when (uiState.chattingUsers) {
         is Resource.Loading -> LoadingScreen(modifier)
 
         is Resource.Success -> {
@@ -66,7 +66,7 @@ fun ChatsScreen(
                 }
             }
 
-            val data = uiState.contactsList.data!!
+            val data = uiState.chattingUsers.data!!
             Box(modifier = modifier) {
                 if (data.isEmpty()) {
                     Log.d("ahi3646", "ContactsScreen: Data is empty ")
@@ -143,7 +143,7 @@ fun ContactsScreenPreviewSuccess() {
             modifier = Modifier,
             eventHandler = {},
             uiState = TcpScreenUiState(
-                contactsList = Resource.Success(
+                chattingUsers = Resource.Success(
                     listOf(
                         ChattingUserEntity(
                             userUniqueId = "123",
@@ -200,7 +200,7 @@ fun ContactsScreenPreviewDark() {
             modifier = Modifier,
             eventHandler = {},
             uiState = TcpScreenUiState(
-                contactsList = Resource.Loading()
+                chattingUsers = Resource.Loading()
             )
         )
     }
