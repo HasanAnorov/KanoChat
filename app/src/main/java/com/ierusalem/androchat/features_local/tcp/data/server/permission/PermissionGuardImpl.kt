@@ -31,7 +31,7 @@ class PermissionGuardImpl(
 
     override val requiredPermissionsForWifi: List<String> by lazy(LazyThreadSafetyMode.NONE) {
         // Always require these WiFi permissions
-        ALWAYS_PERMISSIONS + WIFI_NEARBY_PERMISSIONS
+        WIFI_NEARBY_PERMISSIONS
     }
 
     override suspend fun canAccessContacts(): Boolean =
@@ -65,13 +65,6 @@ class PermissionGuardImpl(
 
 
     companion object {
-
-        private val ALWAYS_PERMISSIONS =
-            listOf(
-                // To open Wifi direct network
-                Manifest.permission.ACCESS_WIFI_STATE,
-                Manifest.permission.CHANGE_WIFI_STATE,
-            )
 
         private val CONTACTS_READ_PERMISSIONS = listOf(
             Manifest.permission.READ_CONTACTS

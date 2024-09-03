@@ -26,8 +26,6 @@ import com.ierusalem.androchat.core.ui.components.CircularProgressBar
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
-import com.ierusalem.androchat.features_local.tcp_conversation.presentation.ChatBubbleShapeEnd
-import com.ierusalem.androchat.features_local.tcp_conversation.presentation.ChatBubbleShapeStart
 
 @Composable
 fun FileMessageItem(

@@ -149,24 +149,23 @@ class TcpFragment : Fragment() {
                             ),
                             onDismiss = viewModel::dismissPermissionDialog,
                             onOkClick = {
+                                viewModel.dismissPermissionDialog()
+
                                 when (permission) {
 
                                     Manifest.permission.NEARBY_WIFI_DEVICES -> {
-                                        viewModel.dismissPermissionDialog()
                                         locationPermissionRequest.launch(
                                             permissionGuard.requiredPermissionsForWifi.toTypedArray()
                                         )
                                     }
 
                                     Manifest.permission.ACCESS_FINE_LOCATION -> {
-                                        viewModel.dismissPermissionDialog()
                                         locationPermissionRequest.launch(
                                             permissionGuard.requiredPermissionsForWifi.toTypedArray()
                                         )
                                     }
 
                                     Manifest.permission.ACCESS_COARSE_LOCATION -> {
-                                        viewModel.dismissPermissionDialog()
                                         locationPermissionRequest.launch(
                                             permissionGuard.requiredPermissionsForWifi.toTypedArray()
                                         )
@@ -202,6 +201,12 @@ class TcpFragment : Fragment() {
 
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
+
+            TcpScreenNavigation.RequestLocationPermission -> {
+                locationPermissionRequest.launch(
+                    permissionGuard.requiredPermissionsForWifi.toTypedArray()
+                )
+            }
 
             TcpScreenNavigation.WifiEnableRequest -> {
                 openWifiSettings()

@@ -120,7 +120,7 @@ class TcpViewModel @Inject constructor(
 
     //chatting server side
     private lateinit var serverSocket: ServerSocket
-    private lateinit var connectedClientSocketOnServer: Socket
+    private lateinit var connectedClientSocket: Socket
     private lateinit var connectedClientWriter: DataOutputStream
 
     //chatting client side
@@ -186,17 +186,17 @@ class TcpViewModel @Inject constructor(
             updateConnectionsCount(true)
         }
         while (!serverSocket.isClosed) {
-            connectedClientSocketOnServer = serverSocket.accept()
+            connectedClientSocket = serverSocket.accept()
             connectedClientWriter =
-                DataOutputStream(connectedClientSocketOnServer.getOutputStream())
+                DataOutputStream(connectedClientSocket.getOutputStream())
             //here we sending the unique device id to the client
             initializeUser(writer = connectedClientWriter)
-            log("New client : $connectedClientSocketOnServer ")
+            log("New client : $connectedClientSocket ")
             updateConnectionsCount(true)
 
-            while (!connectedClientSocketOnServer.isClosed) {
+            while (!connectedClientSocket.isClosed) {
                 val reader =
-                    DataInputStream(BufferedInputStream(connectedClientSocketOnServer.getInputStream()))
+                    DataInputStream(BufferedInputStream(connectedClientSocket.getInputStream()))
 
 //                        try {
                 val messageType = AppMessageType.fromChar(reader.readChar())
@@ -519,7 +519,7 @@ class TcpViewModel @Inject constructor(
 
     fun sendHostMessage(message: ChatMessageEntity) {
         log("send host message - $message")
-        if (!connectedClientSocketOnServer.isClosed) {
+        if (!connectedClientSocket.isClosed) {
             when (message.type) {
                 AppMessageType.TEXT -> {
                     viewModelScope.launch(Dispatchers.IO) {
@@ -794,93 +794,6 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    /** Socket Receiving Functions */
-
-//    /***
-//     * 1. type
-//     * 2. file count
-//     * 3. file name
-//     * 4. file length
-//     * */
-//    private fun receiveFile(reader: DataInputStream) {
-//        log("receiving file ...")
-//
-//        //reading file count
-//        val fileCount = reader.readInt()
-//        log("file count - $fileCount")
-//
-//        for (i in 0 until fileCount) {
-//            //reading file name
-//            val filename = reader.readUTF()
-//            log("Expected file name - $filename")
-//
-//            // Read the expected file size
-//            var fileSize: Long = reader.readLong() // read file size
-//            log("file size - $fileSize")
-//
-//            var bytes = 0
-//            var bytesForPercentage = 0L
-//            val fileSizeForPercentage = fileSize
-//
-//            // Create File object
-//            val file = getFileByName(fileName = filename, resourceDirectory = resourceDirectory)
-//
-//            // Create FileOutputStream to write the received file
-//            val fileOutputStream = FileOutputStream(file)
-//
-//            val fileMessageEntity = ChatMessageEntity(
-//                type = AppMessageType.FILE,
-//                formattedTime = getCurrentTime(),
-//                isFromYou = false,
-//                userId = state.value.peerUserUniqueId,
-//                //file specific fields
-//                fileState = FileMessageState.Loading(0),
-//                fileName = file.name,
-//                fileSize = fileSize.readableFileSize(),
-//                fileExtension = file.extension,
-//                filePath = file.path,
-//            )
-//
-//            val messageId = runBlocking(Dispatchers.IO) {
-//                insertMessage(fileMessageEntity)
-//            }
-//
-//            val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
-//            while (fileSize > 0
-//                && (reader.read(
-//                    buffer, 0,
-//                    min(buffer.size.toDouble(), fileSize.toDouble()).toInt()
-//                ).also { bytes = it })
-//                != -1
-//            ) {
-//                // Here we write the file using write method
-//                fileOutputStream.write(buffer, 0, bytes)
-//                fileSize -= bytes.toLong()
-//
-//                bytesForPercentage += bytes.toLong()
-//                val percentage =
-//                    (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-//                val tempPercentage =
-//                    ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
-//
-//                if (percentage != tempPercentage) {
-//                    log("progress - $percentage")
-//                    val newState = FileMessageState.Loading(percentage)
-//                    val newFileMessage =
-//                        fileMessageEntity.copy(fileState = newState, id = messageId)
-//                    updatePercentageOfReceivingFile(newFileMessage)
-//                }
-//            }
-//
-//            fileOutputStream.close()
-//            log("file received successfully")
-//
-//            val newState = FileMessageState.Success
-//            val newFileMessage = fileMessageEntity.copy(fileState = newState, id = messageId)
-//
-//            updatePercentageOfReceivingFile(newFileMessage)
-//        }
-//    }
     /** Socket Receiving Functions*/
 
     /**
@@ -1090,13 +1003,12 @@ class TcpViewModel @Inject constructor(
     /** Hotspot networking creation*/
 
     private fun stopHotspotNetworking() {
-        log("stopHotspotNetworking")
         //close socket only when serverSocket is initialized
         if (::serverSocket.isInitialized) {
             serverSocket.close()
         }
-        if (::connectedClientSocketOnServer.isInitialized) {
-            connectedClientSocketOnServer.close()
+        if (::connectedClientSocket.isInitialized) {
+            connectedClientSocket.close()
         }
 
         val listener = object : WifiP2pManager.ActionListener {
@@ -1120,7 +1032,6 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun startHotspotNetworking() {
-        log("vm - startHotspotNetworking")
         viewModelScope.launch(Dispatchers.IO) {
             if (permissionGuard.canCreateNetwork()) {
                 if (ServerDefaults.canUseCustomConfig()) {
@@ -1130,13 +1041,10 @@ class TcpViewModel @Inject constructor(
                     updateHasErrorOccurredDialog(TcpScreenDialogErrors.AndroidVersion10RequiredForGroupNetworking)
                 }
             } else {
-                log("Permissions not granted!")
-                permissionGuard.requiredPermissionsForWifi.forEach { permission ->
-                    onPermissionResult(
-                        permission = permission,
-                        isGranted = false
-                    )
-                }
+                log("Permissions not granted for location!")
+                // request at leas one time location permission,
+                // this make requestPermissionForRationale return true
+                emitNavigation(TcpScreenNavigation.RequestLocationPermission)
             }
         }
     }
@@ -1204,9 +1112,9 @@ class TcpViewModel @Inject constructor(
     /** Wifi P2P networking creation */
     @SuppressLint("MissingPermission")
     private fun startP2PNetworking() {
-        updateP2PDiscoveryStatus(P2PNetworkingStatus.Discovering)
         viewModelScope.launch(Dispatchers.IO) {
             if (permissionGuard.canCreateNetwork()) {
+
                 val listener = object : WifiP2pManager.ActionListener {
                     override fun onSuccess() {
                         log("onSuccess: discover ")
@@ -1328,7 +1236,7 @@ class TcpViewModel @Inject constructor(
         visiblePermissionDialogQueue.forEach {
             log("visible permission - $it")
         }
-        visiblePermissionDialogQueue.removeFirst()
+        visiblePermissionDialogQueue.clear()
     }
 
     fun onPermissionResult(
@@ -1343,7 +1251,7 @@ class TcpViewModel @Inject constructor(
             Manifest.permission.READ_CONTACTS -> {
                 _state.update {
                     it.copy(
-                        isReadContactsGranted = isGranted
+                        isReadContactsGranted = isGranted,
                     )
                 }
             }
@@ -1948,7 +1856,6 @@ class TcpViewModel @Inject constructor(
                             return
                         }
                         startHotspotNetworking()
-                        //emitNavigation(TcpScreenNavigation.OnStartHotspotNetworking)
                     }
 
                     HotspotNetworkingStatus.LaunchingHotspot -> {
@@ -2020,6 +1927,7 @@ class TcpViewModel @Inject constructor(
 
                 when (state.value.p2pNetworkingStatus) {
                     P2PNetworkingStatus.Idle -> {
+                        //todo check that
                         if (hasOtherNetworkingIsRunning()) {
                             return
                         }
