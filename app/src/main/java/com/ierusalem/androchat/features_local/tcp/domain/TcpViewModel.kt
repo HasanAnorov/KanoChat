@@ -1329,45 +1329,16 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun loadChattingUsers() {
-        log("load chatting users")
         viewModelScope.launch(Dispatchers.IO) {
-//            messagesRepository.getChattingUsers().collect { users ->
-//                _state.update {
-//                    it.copy(
-//                        chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
-//                    )
-//                }
-////                if (users.isNotEmpty()) {
-////                    getUsersLastMessages()
-////                }
-//            }
             messagesRepository.getAllUsersWithLastMessages().collect { users ->
-                users.forEach {
-                    log("user - $it")
+                _state.update {
+                    it.copy(
+                        chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
+                    )
                 }
-//                _state.update {
-//                    it.copy(
-//                        chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
-//                    )
-//                }
             }
         }
     }
-
-//    private fun getUsersLastMessages() {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            messagesRepository.getAllUsersLastMessages().collect { lastMessages ->
-//                lastMessages.forEach { msg ->
-//                    log("last message - ${msg?.text}")
-//                }
-//                _state.update {
-//                    it.copy(
-//                        usersLastMessages = lastMessages
-//                    )
-//                }
-//            }
-//        }
-//    }
 
     fun loadMessages(chattingUser: ChattingUser) {
         viewModelScope.launch(Dispatchers.IO) {

@@ -26,4 +26,13 @@ data class UserWithLastMessage(
     val userUniqueName: String,
     val avatarBackgroundColor: Int,
     @Embedded val lastMessage: ChatMessageEntity?
-)
+){
+    fun toChattingUser(): ChattingUser{
+        return ChattingUser(
+            userUniqueId = userUniqueId,
+            username = userUniqueName,
+            avatarBackgroundColor = avatarBackgroundColor,
+            lastMessage = lastMessage
+        )
+    }
+}

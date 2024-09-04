@@ -26,7 +26,6 @@ import com.ierusalem.androchat.core.ui.components.LoadingScreen
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.RandomColors
 import com.ierusalem.androchat.core.utils.Resource
-import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
@@ -82,20 +81,14 @@ fun ChatsScreen(
                         verticalArrangement = Arrangement.Top,
                         content = {
                             itemsIndexed(items = users) { index, contact ->
-                                log("chats screen contact - $contact")
-                                val lastMessages = uiState.usersLastMessages
-                                val lastMessage = if (lastMessages.isNotEmpty()) {
-                                    lastMessages[index]
-                                } else {
-                                    null
-                                }
+
                                 TcpContactItem(
                                     contact = contact,
                                     modifier = Modifier,
                                     onClick = {
                                         eventHandler(TcpScreenEvents.TcpChatItemClicked(contact))
                                     },
-                                    lastMessage = lastMessage
+                                    lastMessage = contact.lastMessage
                                 )
                                 if (index < users.lastIndex) {
                                     HorizontalDivider(
