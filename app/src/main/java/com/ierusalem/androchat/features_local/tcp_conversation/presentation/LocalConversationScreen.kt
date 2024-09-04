@@ -208,7 +208,8 @@ private fun PreviewLocalConversation() {
                     userUniqueId = "123",
                     username = "Ahmed",
                     isOnline = true,
-                    avatarBackgroundColor = 0xFF5733
+                    avatarBackgroundColor = 0xFF5733,
+                    lastMessage = null
                 ),
                 messages = flowOf(
                     PagingData.from(
@@ -335,7 +336,8 @@ private fun PreviewLocalConversationDark() {
                     userUniqueId = "123",
                     username = "Ahmed",
                     isOnline = false,
-                    avatarBackgroundColor = 0xFF5733
+                    avatarBackgroundColor = 0xFF5733,
+                    lastMessage = null
                 ),
                 messages = flowOf(
                     PagingData.from(

@@ -5,6 +5,7 @@ import com.ierusalem.androchat.features_local.tcp.data.db.dao.ChattingUsersDao
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_local.tcp.data.db.dao.MessagesDao
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.UserWithLastMessage
 import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -41,6 +42,20 @@ class MessagesRepositoryImpl @Inject constructor(
         return chattingUsersDao.insertChattingUser(chattingUserEntity)
     }
 
+    override suspend fun updateChattingUserUniqueName(
+        userUniqueId: String,
+        userUniqueName: String
+    ) {
+        chattingUsersDao.updateUserUniqueName(
+            userId = userUniqueId,
+            newName = userUniqueName
+        )
+    }
+
+    override suspend fun isUserExist(userUniqueId: String): Boolean {
+        return chattingUsersDao.isChattingUserExists(userUniqueId = userUniqueId)
+    }
+
     override suspend fun insertMessage(message: ChatMessageEntity): Long {
         return messagesDao.insertMessage(message)
     }
@@ -49,7 +64,11 @@ class MessagesRepositoryImpl @Inject constructor(
         return chattingUsersDao.getChattingUsers()
     }
 
-    override fun getAllUsersLastMessages(): Flow<List<ChatMessageEntity?>> {
-        return messagesDao.getAllUsersLastMessages()
+    override fun getAllUsersWithLastMessages(): Flow<List<UserWithLastMessage>> {
+        return messagesDao.getAllUsersWithLastMessage()
     }
+
+//    override fun getAllUsersLastMessages(): Flow<List<ChatMessageEntity?>> {
+//        return null
+//    }
 }

@@ -134,7 +134,7 @@ class TcpViewModel @Inject constructor(
     private fun initializeUser(writer: DataOutputStream) {
         val userUniqueId = runBlocking(Dispatchers.IO) { getUniqueDeviceId() }
         val userUniqueName = state.value.userUniqueName
-        val initialChatModel = InitialChatModel(
+        val initialChatModel = InitialUserModel(
             userUniqueId = userUniqueId,
             userUniqueName = userUniqueName
         )
@@ -167,11 +167,68 @@ class TcpViewModel @Inject constructor(
         val receivedMessage = reader.readUTF()
         log("setup user data - $receivedMessage")
 
-        val initialChatModel = gson.fromJson(
+        val initialChattingUserModel = gson.fromJson(
             receivedMessage,
-            InitialChatModel::class.java
+            InitialUserModel::class.java
         )
-        upsertChattingUser(initialChatModel)
+
+        // Call the function that handles user insertion and online status
+        handleUserInsertionAndStatus(initialChattingUserModel)
+    }
+
+    // Function to handle both inserting the user and updating their online status
+    private fun handleUserInsertionAndStatus(initialChatModel: InitialUserModel) {
+        updateInitialChatModel(initialChatModel)
+        viewModelScope.launch(Dispatchers.IO) {
+
+            val userExists = messagesRepository.isUserExist(initialChatModel.userUniqueId)
+            if (userExists) {
+                messagesRepository.updateChattingUserUniqueName(
+                    initialChatModel.userUniqueId,
+                    initialChatModel.userUniqueName
+                )
+            } else {
+                val avatarBackgroundColor = RandomColors().getColor()
+                val chattingUserEntity = ChattingUserEntity(
+                    userUniqueId = initialChatModel.userUniqueId,
+                    userUniqueName = initialChatModel.userUniqueName,
+                    avatarBackgroundColor = avatarBackgroundColor
+                )
+                messagesRepository.insertChattingUser(chattingUserEntity)
+            }
+
+            // Then, collect the current users from the repository to ensure they are up-to-date
+            messagesRepository.getChattingUsers().collect { users ->
+                _state.update {
+                    it.copy(
+                        chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
+                    )
+                }
+
+                // After ensuring state is updated, mark the relevant user as online
+                markUserOnline(initialChatModel.userUniqueId)
+            }
+        }
+    }
+
+    // Function to mark a specific user as online
+    private fun markUserOnline(userUniqueId: String) {
+        val users = state.value.chattingUsers
+        if (users is Resource.Success) {
+            val updatedUsers = users.data?.map { user ->
+                if (user.userUniqueId == userUniqueId) {
+                    user.copy(isOnline = true) // Mark the user as online
+                } else {
+                    user // Keep other users unchanged
+                }
+            }
+
+            _state.update {
+                it.copy(
+                    chattingUsers = Resource.Success(updatedUsers ?: emptyList())
+                )
+            }
+        }
     }
 
     private fun createServer(portNumber: Int) {
@@ -202,7 +259,7 @@ class TcpViewModel @Inject constructor(
 
                     when (messageType) {
                         AppMessageType.INITIAL -> {
-                            setupUserData(reader)
+                            setupUserData(reader = reader)
                         }
 
                         AppMessageType.VOICE -> {
@@ -351,14 +408,9 @@ class TcpViewModel @Inject constructor(
             clientSocket = Socket(serverIpAddress, serverPort)
             clientWriter = DataOutputStream(clientSocket.getOutputStream())
             log("client writer initialized - $clientWriter")
-
-            viewModelScope.launch(Dispatchers.IO) {
-                initializeUser(clientWriter)
-                log("user initialized ")
-            }
+            initializeUser(writer = clientWriter)
 
             updateClientConnectionStatus(ClientConnectionStatus.Connected)
-            //fixme - connected here
 
             //received outcome messages here
             while (!clientSocket.isClosed) {
@@ -1255,7 +1307,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun updateInitialChatModel(initialChatModel: InitialChatModel) {
+    private fun updateInitialChatModel(initialChatModel: InitialUserModel) {
         _state.update {
             it.copy(
                 peerUserUniqueId = initialChatModel.userUniqueId,
@@ -1277,44 +1329,45 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun loadChattingUsers() {
+        log("load chatting users")
         viewModelScope.launch(Dispatchers.IO) {
-            messagesRepository.getChattingUsers().collect { users ->
-                _state.update {
-                    it.copy(
-                        chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
-                    )
+//            messagesRepository.getChattingUsers().collect { users ->
+//                _state.update {
+//                    it.copy(
+//                        chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
+//                    )
+//                }
+////                if (users.isNotEmpty()) {
+////                    getUsersLastMessages()
+////                }
+//            }
+            messagesRepository.getAllUsersWithLastMessages().collect { users ->
+                users.forEach {
+                    log("user - $it")
                 }
-                if (users.isNotEmpty()) {
-                    getUsersLastMessages()
-                }
+//                _state.update {
+//                    it.copy(
+//                        chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
+//                    )
+//                }
             }
         }
     }
 
-    private fun getUsersLastMessages() {
-        viewModelScope.launch(Dispatchers.IO) {
-            messagesRepository.getAllUsersLastMessages().collect { lastMessages ->
-                _state.update {
-                    it.copy(
-                        usersLastMessages = lastMessages
-                    )
-                }
-            }
-        }
-    }
-
-    private fun upsertChattingUser(initialChatModel: InitialChatModel) {
-        updateInitialChatModel(initialChatModel)
-        viewModelScope.launch(Dispatchers.IO) {
-            val avatarBackgroundColor = RandomColors().getColor()
-            val chattingUserEntity = ChattingUserEntity(
-                userUniqueId = initialChatModel.userUniqueId,
-                userUniqueName = initialChatModel.userUniqueName,
-                avatarBackgroundColor = avatarBackgroundColor
-            )
-            messagesRepository.insertChattingUser(chattingUserEntity)
-        }
-    }
+//    private fun getUsersLastMessages() {
+//        viewModelScope.launch(Dispatchers.IO) {
+//            messagesRepository.getAllUsersLastMessages().collect { lastMessages ->
+//                lastMessages.forEach { msg ->
+//                    log("last message - ${msg?.text}")
+//                }
+//                _state.update {
+//                    it.copy(
+//                        usersLastMessages = lastMessages
+//                    )
+//                }
+//            }
+//        }
+//    }
 
     fun loadMessages(chattingUser: ChattingUser) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -2398,7 +2451,7 @@ sealed interface VisibleActionDialogs {
     ) : VisibleActionDialogs
 }
 
-data class InitialChatModel(
+data class InitialUserModel(
     val userUniqueId: String,
     val userUniqueName: String,
 )

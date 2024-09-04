@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.RandomColors
+import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 
@@ -37,6 +38,7 @@ fun TcpContactItem(
     lastMessage: ChatMessageEntity? = null,
     onClick: () -> Unit,
 ) {
+    log("TcpContactItem: ${contact.isOnline}")
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -146,7 +148,8 @@ fun ContactItemPreview() {
                 userUniqueId = "249141sadfs67df9s7f89s7f",
                 username = "Hasan",
                 isOnline = false,
-                avatarBackgroundColor = RandomColors().getColor()
+                avatarBackgroundColor = RandomColors().getColor(),
+                lastMessage = null
             ),
             lastMessage = ChatMessageEntity(
                 id = 324242,
@@ -174,7 +177,8 @@ fun ContactItemPreviewDark() {
                 userUniqueId = "249141sadfs67df9s7f89s7f",
                 username = "Hasan",
                 isOnline = true,
-                avatarBackgroundColor = RandomColors().getColor()
+                avatarBackgroundColor = RandomColors().getColor(),
+                lastMessage = null
             ),
             lastMessage = ChatMessageEntity(
                 id = 324242,

@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.UserWithLastMessage
 import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import kotlinx.coroutines.flow.Flow
 
@@ -18,20 +19,27 @@ interface MessagesDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity): Long
 
-    @Query("SELECT * FROM messages WHERE peerUniqueId = :userId ORDER BY id DESC LIMIT 1")
-    fun getLastUserMessage(userId: String): Flow<ChatMessageEntity?>
-
-    @Query(
-        """
-    SELECT * FROM messages
-    WHERE id IN (
-        SELECT MAX(id) FROM messages
-        GROUP BY peerUniqueId
-    )
-    ORDER BY id DESC
-"""
-    )
-    fun getAllUsersLastMessages(): Flow<List<ChatMessageEntity?>>
+//    @Query("""
+//        SELECT chatting_users.userUniqueId, chatting_users.userUniqueName, messages.*
+//        FROM chatting_users
+//        LEFT JOIN messages ON chatting_users.userUniqueId = messages.peerUniqueId
+//        WHERE messages.id IN (
+//            SELECT MAX(id) FROM messages GROUP BY peerUniqueId
+//        ) OR messages.id IS NULL
+//    """)
+//    fun getAllUsersWithLastMessage(): Flow<List<UserWithLastMessage>>
+@Query("""
+        SELECT chatting_users.userUniqueId, 
+               chatting_users.userUniqueName, 
+               chatting_users.avatarBackgroundColor, -- Add the missing fields
+               messages.*
+        FROM chatting_users 
+        LEFT JOIN messages ON chatting_users.userUniqueId = messages.peerUniqueId
+        WHERE messages.id IN (
+            SELECT MAX(id) FROM messages GROUP BY peerUniqueId
+        ) OR messages.id IS NULL
+    """)
+fun getAllUsersWithLastMessage(): Flow<List<UserWithLastMessage>>
 
     @Query("UPDATE messages SET fileState = :newFileState WHERE id = :messageId")
     suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState)
