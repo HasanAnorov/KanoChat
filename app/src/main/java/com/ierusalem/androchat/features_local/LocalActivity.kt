@@ -65,15 +65,15 @@ class LocalActivity : AppCompatActivity() {
             .commitNow()
 
         // Set up navigation graph and start destination
-        setupNavigationGraph(navHostFragment)
+        setupNavigationGraph()
 
         // Ensure your XML layout contains a NavHostFragment with ID nav_host_fragment
         setContentView(R.layout.activity_local)
 
     }
 
-    private fun setupNavigationGraph(navHostFragment: NavHostFragment) {
-        val navController = navHostFragment.navController
+    private fun setupNavigationGraph() {
+        val navController = findNavController()
         val navInflater = navController.navInflater
         val navGraph = navInflater.inflate(R.navigation.nav_graph_local)
 

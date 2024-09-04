@@ -22,8 +22,6 @@ class DataStorePreferenceRepository(context: Context) {
     private val defaultLanguage = Constants.DEFAULT_LOCALE
     private val defaultTheme = Constants.DEFAULT_THEME
     private val defaultBroadcastFrequency = Constants.DEFAULT_BROADCAST_FREQUENCY
-    private val defaultUsername = Constants.UNKNOWN_USER
-    private val defaultPassword = Constants.DEFAULT_PASSWORD
     private val defaultHotspotName = Constants.DEFAULT_HOTSPOT_NAME
     private val defaultUniqueDeviceId = ""
 
@@ -43,6 +41,7 @@ class DataStorePreferenceRepository(context: Context) {
 
         private var INSTANCE: DataStorePreferenceRepository? = null
 
+        @Suppress("unused")
         fun getInstance(context: Context): DataStorePreferenceRepository {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE?.let {
@@ -67,7 +66,7 @@ class DataStorePreferenceRepository(context: Context) {
 
     private val getPassword: Flow<String> = dataStore.data
         .map { preferences ->
-            preferences[PREF_PASSWORD] ?: defaultPassword
+            preferences[PREF_PASSWORD] ?: ""
         }
 
     suspend fun setUsername(username: String) {
@@ -78,7 +77,7 @@ class DataStorePreferenceRepository(context: Context) {
 
     val getUsername: Flow<String> = dataStore.data
         .map { preferences ->
-            preferences[PREF_USERNAME] ?: defaultUsername
+            preferences[PREF_USERNAME] ?: ""
         }
 
     suspend fun setUniqueDeviceId(uniqueDeviceId: String) {
