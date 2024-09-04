@@ -16,10 +16,8 @@ interface MessagesRepository {
     suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState)
     fun getPagedUserMessagesById(userId: String): PagingSource<Int, ChatMessageEntity>
     suspend fun insertChattingUser(chattingUserEntity: ChattingUserEntity):Long
-    fun getChattingUsers(): Flow<List<ChattingUserEntity>>
     suspend fun updateChattingUserUniqueName(userUniqueId: String, userUniqueName: String)
     suspend fun insertMessage(message: ChatMessageEntity): Long
-//    fun getAllUsersLastMessages(): Flow<List<ChatMessageEntity?>>
     suspend fun isUserExist(userUniqueId: String): Boolean
     fun getAllUsersWithLastMessages(): Flow<List<UserWithLastMessage>>
 

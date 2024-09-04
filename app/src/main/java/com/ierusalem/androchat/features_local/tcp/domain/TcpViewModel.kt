@@ -198,7 +198,7 @@ class TcpViewModel @Inject constructor(
             }
 
             // Then, collect the current users from the repository to ensure they are up-to-date
-            messagesRepository.getChattingUsers().collect { users ->
+            messagesRepository.getAllUsersWithLastMessages().collect { users ->
                 _state.update {
                     it.copy(
                         chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })

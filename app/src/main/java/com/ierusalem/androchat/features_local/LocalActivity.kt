@@ -6,19 +6,18 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.viewinterop.AndroidViewBinding
 import androidx.core.view.ViewCompat
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.utils.log
-import com.ierusalem.androchat.databinding.ActivityLocalBinding
 import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiDirectBroadcastReceiver
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -32,6 +31,9 @@ import javax.inject.Inject
 class LocalActivity : AppCompatActivity() {
 
     private val viewModel: TcpViewModel by viewModels()
+
+    @Inject
+    lateinit var dataStorePreferenceRepository: DataStorePreferenceRepository
 
     @Inject
     lateinit var wifiP2PManager: WifiP2pManager
@@ -55,16 +57,41 @@ class LocalActivity : AppCompatActivity() {
             addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION)
         }
 
-        setContentView(
-            ComposeView(this@LocalActivity).apply {
-                consumeWindowInsets = false
-                setContent {
-                    AndroChatTheme {
-                        AndroidViewBinding(ActivityLocalBinding::inflate)
-                    }
-                }
-            }
-        )
+        // Setup the NavHostFragment and set the graph before setting content view
+        val navHostFragment = NavHostFragment.create(R.navigation.nav_graph_local)
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.nav_host_fragment, navHostFragment)
+            .setPrimaryNavigationFragment(navHostFragment)
+            .commitNow()
+
+        // Set up navigation graph and start destination
+        setupNavigationGraph(navHostFragment)
+
+        // Ensure your XML layout contains a NavHostFragment with ID nav_host_fragment
+        setContentView(R.layout.activity_local)
+
+    }
+
+    private fun setupNavigationGraph(navHostFragment: NavHostFragment) {
+        val navController = navHostFragment.navController
+        val navInflater = navController.navInflater
+        val navGraph = navInflater.inflate(R.navigation.nav_graph_local)
+
+        // Set the start destination synchronously based on login state
+        val startDestination = if (runBlocking { hasUserLoggedIn() }) {
+            R.id.tcpFragment
+        } else {
+            R.id.loginFragment
+        }
+
+        navGraph.setStartDestination(startDestination)
+        navController.graph = navGraph
+    }
+
+    private suspend fun hasUserLoggedIn(): Boolean {
+        return withContext(Dispatchers.IO) {
+            dataStorePreferenceRepository.hasUserLoggedIn()
+        }
     }
 
     override fun onResume() {
@@ -106,7 +133,7 @@ class LocalActivity : AppCompatActivity() {
      */
     private fun findNavController(): NavController {
         val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_container) as NavHostFragment
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         return navHostFragment.navController
     }
 

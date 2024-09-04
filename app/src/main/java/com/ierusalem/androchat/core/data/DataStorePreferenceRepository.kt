@@ -12,6 +12,7 @@ import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.generateRandomPassword
 import com.ierusalem.androchat.core.utils.log
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class DataStorePreferenceRepository(context: Context) {
@@ -22,18 +23,23 @@ class DataStorePreferenceRepository(context: Context) {
     private val defaultTheme = Constants.DEFAULT_THEME
     private val defaultBroadcastFrequency = Constants.DEFAULT_BROADCAST_FREQUENCY
     private val defaultUsername = Constants.UNKNOWN_USER
+    private val defaultPassword = Constants.DEFAULT_PASSWORD
     private val defaultHotspotName = Constants.DEFAULT_HOTSPOT_NAME
     private val defaultUniqueDeviceId = ""
 
     companion object {
         val PREF_LANGUAGE = stringPreferencesKey(name = Constants.PREFERENCE_LANGUAGE)
-        val PREF_BROADCAST_FREQUENCY = stringPreferencesKey(name = Constants.PREFERENCE_BROADCAST_FREQUENCY)
+        val PREF_BROADCAST_FREQUENCY =
+            stringPreferencesKey(name = Constants.PREFERENCE_BROADCAST_FREQUENCY)
         val PREF_THEME = booleanPreferencesKey(name = Constants.PREFERENCE_THEME)
         val PREF_USERNAME = stringPreferencesKey(name = Constants.PREFERENCE_USERNAME)
+        val PREF_PASSWORD = stringPreferencesKey(name = Constants.PREFERENCE_PASSWORD)
         val PREF_HOTSPOT_NAME = stringPreferencesKey(name = Constants.PREFERENCE_HOTSPOT_NAME)
-        val PREF_HOTSPOT_PASSWORD = stringPreferencesKey(name = Constants.PREFERENCE_HOTSPOT_PASSWORD)
+        val PREF_HOTSPOT_PASSWORD =
+            stringPreferencesKey(name = Constants.PREFERENCE_HOTSPOT_PASSWORD)
 
-        val PREF_UNIQUE_DEVICE_ID = stringPreferencesKey(name = Constants.PREFERENCE_UNIQUE_DEVICE_ID)
+        val PREF_UNIQUE_DEVICE_ID =
+            stringPreferencesKey(name = Constants.PREFERENCE_UNIQUE_DEVICE_ID)
 
         private var INSTANCE: DataStorePreferenceRepository? = null
 
@@ -48,6 +54,21 @@ class DataStorePreferenceRepository(context: Context) {
             }
         }
     }
+
+    suspend fun hasUserLoggedIn(): Boolean {
+        return getUsername.first().isNotEmpty() && getPassword.first().isNotEmpty()
+    }
+
+    suspend fun setPassword(password: String) {
+        dataStore.edit { preferences ->
+            preferences[PREF_PASSWORD] = password
+        }
+    }
+
+    private val getPassword: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PREF_PASSWORD] ?: defaultPassword
+        }
 
     suspend fun setUsername(username: String) {
         dataStore.edit { preferences ->
@@ -67,9 +88,9 @@ class DataStorePreferenceRepository(context: Context) {
     }
 
     val getUniqueDeviceId: Flow<String> = dataStore.data
-        .map {preferences ->
+        .map { preferences ->
             preferences[PREF_UNIQUE_DEVICE_ID] ?: defaultUniqueDeviceId
-    }
+        }
 
     suspend fun setHotSpotName(hotspotName: String) {
         dataStore.edit { preferences ->

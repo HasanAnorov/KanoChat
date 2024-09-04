@@ -19,16 +19,8 @@ interface MessagesDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity): Long
 
-//    @Query("""
-//        SELECT chatting_users.userUniqueId, chatting_users.userUniqueName, messages.*
-//        FROM chatting_users
-//        LEFT JOIN messages ON chatting_users.userUniqueId = messages.peerUniqueId
-//        WHERE messages.id IN (
-//            SELECT MAX(id) FROM messages GROUP BY peerUniqueId
-//        ) OR messages.id IS NULL
-//    """)
-//    fun getAllUsersWithLastMessage(): Flow<List<UserWithLastMessage>>
-@Query("""
+    @Query(
+        """
         SELECT chatting_users.userUniqueId, 
                chatting_users.userUniqueName, 
                chatting_users.avatarBackgroundColor, -- Add the missing fields
@@ -38,8 +30,9 @@ interface MessagesDao {
         WHERE messages.id IN (
             SELECT MAX(id) FROM messages GROUP BY peerUniqueId
         ) OR messages.id IS NULL
-    """)
-fun getAllUsersWithLastMessage(): Flow<List<UserWithLastMessage>>
+    """
+    )
+    fun getAllUsersWithLastMessage(): Flow<List<UserWithLastMessage>>
 
     @Query("UPDATE messages SET fileState = :newFileState WHERE id = :messageId")
     suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState)

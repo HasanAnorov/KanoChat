@@ -85,6 +85,7 @@ class LoginViewModel @Inject constructor(
 
         viewModelScope.launch {
             dataStorePreferenceRepository.setUsername(state.value.username)
+            dataStorePreferenceRepository.setPassword(state.value.password)
             emitNavigation(LoginNavigation.ToLocal)
         }
     }

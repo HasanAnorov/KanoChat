@@ -15,6 +15,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -33,18 +34,18 @@ class AndroChatApp : Application() {
             throw IllegalStateException("Mobile Device Required!")
         }
 
-//        GlobalScope.launch(Dispatchers.IO) {
-//            dataStorePreferenceRepository.getUniqueDeviceId.collect{ uniqueDeviceId ->
-//                if (uniqueDeviceId.isNotEmpty()){
-//                    log("unique device id found: $uniqueDeviceId")
-//                }else{
-//                    log("unique device id not found")
-//                    val uniqueID = UUID.randomUUID().toString()
-//                    dataStorePreferenceRepository.setUniqueDeviceId(uniqueID)
-//                    log("unique device id generated: $uniqueID")
-//                }
-//            }
-//        }
+        GlobalScope.launch(Dispatchers.IO) {
+            dataStorePreferenceRepository.getUniqueDeviceId.collect{ uniqueDeviceId ->
+                if (uniqueDeviceId.isNotEmpty()){
+                    log("unique device id found: $uniqueDeviceId")
+                }else{
+                    log("unique device id not found")
+                    val uniqueID = UUID.randomUUID().toString()
+                    dataStorePreferenceRepository.setUniqueDeviceId(uniqueID)
+                    log("unique device id generated: $uniqueID")
+                }
+            }
+        }
 
         GlobalScope.launch {
             dataStorePreferenceRepository.getLanguage.collect { languageCode ->

@@ -16,11 +16,13 @@ object Constants {
     const val PREFERENCE_BROADCAST_FREQUENCY = "device_broadcast_frequency"
     const val PREFERENCE_THEME = "device_theme"
     const val PREFERENCE_USERNAME = "device_user_username"
+    const val PREFERENCE_PASSWORD = "device_user_password"
     const val PREFERENCE_HOTSPOT_NAME = "device_hotspot_name"
     const val PREFERENCE_HOTSPOT_PASSWORD = "device_hotspot_password"
     const val PREFERENCE_UNIQUE_DEVICE_ID = "device_unique_id"
 
     const val UNKNOWN_USER = "Unknown User"
+    const val DEFAULT_PASSWORD = "admin"
     const val UNKNOWN_PEER = "Unknown Peer"
 
     const val UNKNOWN_HOTSPOT_NAME = "TEMP-HOTSPOT"

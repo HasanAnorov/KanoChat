@@ -60,15 +60,8 @@ class MessagesRepositoryImpl @Inject constructor(
         return messagesDao.insertMessage(message)
     }
 
-    override fun getChattingUsers(): Flow<List<ChattingUserEntity>> {
-        return chattingUsersDao.getChattingUsers()
-    }
-
     override fun getAllUsersWithLastMessages(): Flow<List<UserWithLastMessage>> {
         return messagesDao.getAllUsersWithLastMessage()
     }
 
-//    override fun getAllUsersLastMessages(): Flow<List<ChatMessageEntity?>> {
-//        return null
-//    }
 }

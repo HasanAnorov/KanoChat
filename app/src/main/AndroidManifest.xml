@@ -37,23 +37,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AndroChat.NoActionBar"
         tools:targetApi="tiramisu">
-        <activity
-            android:name=".features_common.auth.AuthActivity"
-            android:configChanges="uiMode|locale|layoutDirection|screenSize|screenLayout|orientation"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize">
-                        <intent-filter>
-                            <action android:name="android.intent.action.MAIN" />
-
-                            <category android:name="android.intent.category.LAUNCHER" />
-                        </intent-filter>
-        </activity>
 
         <activity
             android:name=".features_local.LocalActivity"
             android:configChanges="uiMode|locale|layoutDirection|screenSize|screenLayout|orientation"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
         <provider

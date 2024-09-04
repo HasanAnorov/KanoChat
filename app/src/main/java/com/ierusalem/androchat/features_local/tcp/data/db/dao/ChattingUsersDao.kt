@@ -5,7 +5,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ChattingUsersDao {
@@ -16,9 +15,6 @@ interface ChattingUsersDao {
     // New function to update only the userUniqueName
     @Query("UPDATE chatting_users SET userUniqueName = :newName WHERE userUniqueId = :userId")
     suspend fun updateUserUniqueName(userId: String, newName: String): Int
-
-    @Query("SELECT * FROM chatting_users")
-    fun getChattingUsers(): Flow<List<ChattingUserEntity>>
 
     @Query("DELETE FROM chatting_users WHERE userUniqueId = :userUniqueId")
     suspend fun deleteChattingUser(userUniqueId: String)
