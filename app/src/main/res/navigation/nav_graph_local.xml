@@ -24,7 +24,7 @@
             app:exitAnim="@anim/fade_out"
             app:popEnterAnim="@anim/fade_in"
             app:popExitAnim="@anim/fade_out"
-            app:popUpTo="@id/tcpFragment"
+            app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true"
             app:destination="@id/tcpFragment" />
 
@@ -51,7 +51,7 @@
             app:exitAnim="@anim/fade_out"
             app:popEnterAnim="@anim/fade_in"
             app:popExitAnim="@anim/fade_out"
-            app:popUpTo="@id/tcpFragment"
+            app:popUpTo="@id/registrationFragment"
             app:popUpToInclusive="true"
             app:destination="@id/tcpFragment" />
 

@@ -23,7 +23,8 @@ interface MessagesDao {
         """
         SELECT chatting_users.userUniqueId, 
                chatting_users.userUniqueName, 
-               chatting_users.avatarBackgroundColor, -- Add the missing fields
+               chatting_users.avatarBackgroundColor, 
+               chatting_users.isOnline,
                messages.*
         FROM chatting_users 
         LEFT JOIN messages ON chatting_users.userUniqueId = messages.peerUniqueId

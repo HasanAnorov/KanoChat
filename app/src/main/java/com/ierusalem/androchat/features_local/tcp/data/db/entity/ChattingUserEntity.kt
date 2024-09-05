@@ -10,21 +10,14 @@ data class ChattingUserEntity(
     @PrimaryKey val userUniqueId: String,
     val userUniqueName: String,
     val avatarBackgroundColor: Int,
-) {
-    fun toChattingUser(): ChattingUser {
-        return ChattingUser(
-            userUniqueId = userUniqueId,
-            username = userUniqueName,
-            avatarBackgroundColor = avatarBackgroundColor,
-            lastMessage = null
-        )
-    }
-}
+    val isOnline: Boolean,
+)
 
 data class UserWithLastMessage(
     val userUniqueId: String,
     val userUniqueName: String,
     val avatarBackgroundColor: Int,
+    val isOnline: Boolean,
     @Embedded val lastMessage: ChatMessageEntity?
 ){
     fun toChattingUser(): ChattingUser{
@@ -32,7 +25,8 @@ data class UserWithLastMessage(
             userUniqueId = userUniqueId,
             username = userUniqueName,
             avatarBackgroundColor = avatarBackgroundColor,
-            lastMessage = lastMessage
+            lastMessage = lastMessage,
+            isOnline = isOnline
         )
     }
 }

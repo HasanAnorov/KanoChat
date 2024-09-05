@@ -132,8 +132,8 @@ class TcpViewModel @Inject constructor(
     /** Socket User Initializing Functions*/
 
     private fun initializeUser(writer: DataOutputStream) {
-        val userUniqueId = runBlocking(Dispatchers.IO) { getUniqueDeviceId() }
-        val userUniqueName = state.value.userUniqueName
+        val userUniqueId = runBlocking { dataStorePreferenceRepository.getUniqueDeviceId.first() }
+        val userUniqueName = runBlocking { dataStorePreferenceRepository.getUsername.first() }
         val initialChatModel = InitialUserModel(
             userUniqueId = userUniqueId,
             userUniqueName = userUniqueName
@@ -185,50 +185,24 @@ class TcpViewModel @Inject constructor(
             val userExists = messagesRepository.isUserExist(initialChatModel.userUniqueId)
             if (userExists) {
                 messagesRepository.updateChattingUserUniqueName(
-                    initialChatModel.userUniqueId,
-                    initialChatModel.userUniqueName
+                    userUniqueId = initialChatModel.userUniqueId,
+                    userUniqueName = initialChatModel.userUniqueName
+                )
+                messagesRepository.updateIsUserOnline(
+                    userUniqueId = initialChatModel.userUniqueId,
+                    isOnline = true
                 )
             } else {
                 val avatarBackgroundColor = RandomColors().getColor()
                 val chattingUserEntity = ChattingUserEntity(
                     userUniqueId = initialChatModel.userUniqueId,
                     userUniqueName = initialChatModel.userUniqueName,
-                    avatarBackgroundColor = avatarBackgroundColor
+                    avatarBackgroundColor = avatarBackgroundColor,
+                    isOnline = true
                 )
                 messagesRepository.insertChattingUser(chattingUserEntity)
             }
 
-            // Then, collect the current users from the repository to ensure they are up-to-date
-            messagesRepository.getAllUsersWithLastMessages().collect { users ->
-                _state.update {
-                    it.copy(
-                        chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
-                    )
-                }
-
-                // After ensuring state is updated, mark the relevant user as online
-                markUserOnline(initialChatModel.userUniqueId)
-            }
-        }
-    }
-
-    // Function to mark a specific user as online
-    private fun markUserOnline(userUniqueId: String) {
-        val users = state.value.chattingUsers
-        if (users is Resource.Success) {
-            val updatedUsers = users.data?.map { user ->
-                if (user.userUniqueId == userUniqueId) {
-                    user.copy(isOnline = true) // Mark the user as online
-                } else {
-                    user // Keep other users unchanged
-                }
-            }
-
-            _state.update {
-                it.copy(
-                    chattingUsers = Resource.Success(updatedUsers ?: emptyList())
-                )
-            }
         }
     }
 
@@ -1252,12 +1226,10 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun initializeUserUniqueName() {
-        viewModelScope.launch {
-            val savedUniqueUsername = dataStorePreferenceRepository.getUsername.first()
+        viewModelScope.launch(Dispatchers.IO) {
             val authorUniqueId = dataStorePreferenceRepository.getUniqueDeviceId.first()
             _state.update {
                 it.copy(
-                    userUniqueName = savedUniqueUsername,
                     authorUniqueId = authorUniqueId
                 )
             }
@@ -1360,10 +1332,6 @@ class TcpViewModel @Inject constructor(
                 )
             }
         }
-    }
-
-    private suspend fun getUniqueDeviceId(): String {
-        return dataStorePreferenceRepository.getUniqueDeviceId.first()
     }
 
     fun checkReadContactsPermission() {

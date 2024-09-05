@@ -45,10 +45,17 @@ class MessagesRepositoryImpl @Inject constructor(
     override suspend fun updateChattingUserUniqueName(
         userUniqueId: String,
         userUniqueName: String
-    ) {
-        chattingUsersDao.updateUserUniqueName(
+    ): Int {
+        return chattingUsersDao.updateUserUniqueName(
             userId = userUniqueId,
             newName = userUniqueName
+        )
+    }
+
+    override suspend fun updateIsUserOnline(userUniqueId: String, isOnline: Boolean):Int {
+        return chattingUsersDao.updateUserOnlineStatus(
+            userId = userUniqueId,
+            isOnline = isOnline
         )
     }
 
