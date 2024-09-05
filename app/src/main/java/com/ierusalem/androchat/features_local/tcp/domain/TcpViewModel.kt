@@ -139,6 +139,7 @@ class TcpViewModel @Inject constructor(
             userUniqueName = userUniqueName
         )
         val initialChatModelStringForm = gson.toJson(initialChatModel)
+        log("initializing user - $initialChatModelStringForm")
 
         val type = AppMessageType.INITIAL.identifier.code
         try {
