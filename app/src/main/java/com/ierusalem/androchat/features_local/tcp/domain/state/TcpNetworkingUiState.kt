@@ -2,14 +2,20 @@ package com.ierusalem.androchat.features_local.tcp.domain.state
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralNetworkingStatus.HotspotDiscovery
-import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralNetworkingStatus.Idle
+import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralNetworkingStatus.LocalOnlyHotspot
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralNetworkingStatus.P2PDiscovery
 import com.ierusalem.androchat.features_local.tcp.domain.state.HotspotNetworkingStatus.HotspotRunning
 import com.ierusalem.androchat.features_local.tcp.domain.state.HotspotNetworkingStatus.LaunchingHotspot
+import com.ierusalem.androchat.features_local.tcp.domain.state.LocalOnlyHotspotStatus.LaunchingLocalOnlyHotspot
+import com.ierusalem.androchat.features_local.tcp.domain.state.LocalOnlyHotspotStatus.LocalOnlyHotspotRunning
 import com.ierusalem.androchat.features_local.tcp.domain.state.P2PNetworkingStatus.Discovering
 import com.ierusalem.androchat.features_local.tcp.domain.state.P2PNetworkingStatus.Failure
+import com.ierusalem.androchat.features_local.tcp.domain.state.P2PNetworkingStatus.Idle
 
 /**
  * Indicates the state of discovering wifi networks
@@ -34,7 +40,17 @@ enum class GeneralNetworkingStatus(@StringRes val status: Int) {
 enum class P2PNetworkingStatus(@StringRes val res: Int, @DrawableRes val icon: Int) {
     Idle(R.string.peer_networking, R.drawable.wifi),
     Discovering(R.string.stop_peer_networking, R.drawable.wifi),
-    Failure(R.string.discovering_not_started, R.drawable.error_prompt)
+    Failure(R.string.discovering_not_started, R.drawable.error_prompt);
+
+    @Composable
+    fun getIconColor(): Color {
+        return when (this) {
+            Idle -> MaterialTheme.colorScheme.onErrorContainer
+            Discovering -> Color(0xFF35C47C)
+            Failure -> Color.Red
+        }
+    }
+
 }
 
 /**
@@ -48,7 +64,17 @@ enum class HotspotNetworkingStatus(@StringRes val res: Int, @DrawableRes val ico
     Idle(R.string.group_networking, R.drawable.wifi),
     LaunchingHotspot(R.string.launching_hotspot, R.drawable.wifi),
     HotspotRunning(R.string.stop_group_networking, R.drawable.wifi),
-    Failure(R.string.couldn_t_launch_hotspot, R.drawable.error_prompt)
+    Failure(R.string.couldn_t_launch_hotspot, R.drawable.error_prompt);
+
+    @Composable
+    fun getIconColor(): Color {
+        return when (this) {
+            Idle -> MaterialTheme.colorScheme.onErrorContainer
+            LaunchingHotspot -> Color(0xFF35C47C)
+            HotspotRunning -> Color(0xFF35C47C)
+            Failure -> Color.Red
+        }
+    }
 }
 
 /**
@@ -58,9 +84,19 @@ enum class HotspotNetworkingStatus(@StringRes val res: Int, @DrawableRes val ico
  * @property LocalOnlyHotspotRunning local-only hotspot has fully started and is running
  * @property Failure local-only hotspot failed to start
  */
-enum class LocalOnlyHotspotStatus(@StringRes val res: Int, @DrawableRes val icon: Int){
+enum class LocalOnlyHotspotStatus(@StringRes val res: Int, @DrawableRes val icon: Int) {
     Idle(R.string.start_local_only_hotspot, R.drawable.wifi),
     LaunchingLocalOnlyHotspot(R.string.launching_hotspot, R.drawable.wifi),
     LocalOnlyHotspotRunning(R.string.stop_local_only_hotspot, R.drawable.wifi),
-    Failure(R.string.couldn_t_launch_hotspot, R.drawable.error_prompt)
+    Failure(R.string.couldn_t_launch_hotspot, R.drawable.error_prompt);
+
+    @Composable
+    fun getIconColor(): Color {
+        return when (this) {
+            Idle -> MaterialTheme.colorScheme.onErrorContainer
+            LaunchingLocalOnlyHotspot -> Color(0xFF35C47C)
+            LocalOnlyHotspotRunning -> Color(0xFF35C47C)
+            Failure -> Color.Red
+        }
+    }
 }

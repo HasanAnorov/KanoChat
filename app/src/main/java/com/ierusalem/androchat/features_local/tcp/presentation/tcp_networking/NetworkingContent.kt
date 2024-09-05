@@ -75,7 +75,6 @@ fun NetworkingContent(
                         containerColor = MaterialTheme.colorScheme.background
                     ),
                     content = {
-                        //todo - optimize ui
                         Column {
                             Row(
                                 modifier = Modifier
@@ -98,7 +97,7 @@ fun NetworkingContent(
                                     modifier = Modifier.padding(start = 8.dp),
                                     painter = painterResource(id = state.localOnlyHotspotNetworkingStatus.icon),
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                                    tint = state.localOnlyHotspotNetworkingStatus.getIconColor()
                                 )
                             }
                             HorizontalDivider(
@@ -122,11 +121,11 @@ fun NetworkingContent(
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium
                                 )
-                                Icon(
+                                    Icon(
                                     modifier = Modifier.padding(start = 8.dp),
                                     painter = painterResource(id = state.hotspotNetworkingStatus.icon),
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                                    tint = state.hotspotNetworkingStatus.getIconColor()
                                 )
                             }
                             HorizontalDivider(
@@ -154,7 +153,7 @@ fun NetworkingContent(
                                     modifier = Modifier.padding(start = 8.dp),
                                     painter = painterResource(id = state.p2pNetworkingStatus.icon),
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                                    tint = state.p2pNetworkingStatus.getIconColor()
                                 )
                             }
                         }

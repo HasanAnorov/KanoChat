@@ -64,14 +64,20 @@ fun TcpContactItem(
                         .clip(CircleShape)
                         .background(Color(contact.avatarBackgroundColor)),
                     contentAlignment = Alignment.Center
-                ){
+                ) {
+                    log("contact username ${contact.username}")
+                    val username = try {
+                        contact.username.first().toString()
+                    } catch (e: Exception) {
+                        "?"
+                    }
                     Text(
-                        text = contact.username.first().toString(),
+                        text = username,
                         color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.titleLarge
                     )
                 }
-                if(contact.isOnline){
+                if (contact.isOnline) {
                     Box(
                         modifier = Modifier
                             .padding(end = 2.dp, bottom = 2.dp)
