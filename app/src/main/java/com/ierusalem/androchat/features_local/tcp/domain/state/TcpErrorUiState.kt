@@ -81,4 +81,15 @@ enum class TcpScreenDialogErrors(
         R.string.there_is_no_online_peers_to_chat,
         R.drawable.info
     ),
+    SecurityException(
+        R.string.security_exception_occurred,
+        R.string.security_exception_occurred_definition,
+        R.drawable.info
+    ),
+    IllegalArgumentException(
+        R.string.illegal_argument_exception_occurred,
+        R.string.illegal_argument_exception_occurred_definition,
+        R.drawable.info
+    )
+
 }

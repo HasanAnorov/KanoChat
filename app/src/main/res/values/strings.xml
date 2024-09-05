@@ -232,5 +232,9 @@
     <string name="no_messages_yet">No Messages, yet.</string>
     <string name="no_messages_in_your_inbox_yet_start_chatting_with_people_around_you">No messages in your inbox, yet! Start chatting with people around you.</string>
     <string name="create_network">Create Network</string>
+    <string name="security_exception_occurred">Security Exception Occurred</string>
+    <string name="security_exception_occurred_definition">A security manager exists and its checkConnect method doesn\'t allow the operation.</string>
+    <string name="illegal_argument_exception_occurred_definition">The port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.</string>
+    <string name="illegal_argument_exception_occurred">Illegal Argument Exception</string>
 
 </resources>

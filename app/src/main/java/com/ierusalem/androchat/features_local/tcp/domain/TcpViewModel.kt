@@ -96,10 +96,12 @@ import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
+import java.io.EOFException
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.UTFDataFormatException
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.UnknownHostException
@@ -164,7 +166,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun updateAllUsersOnlineStatus(isOnline: Boolean){
+    fun updateAllUsersOnlineStatus(isOnline: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             messagesRepository.updateAllUsersOnlineStatus(isOnline = isOnline)
         }
@@ -212,6 +214,12 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    private fun updateUserOnlineStatus(userUniqueId: String, isOnline: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            messagesRepository.updateIsUserOnline(userUniqueId = userUniqueId, isOnline = isOnline)
+        }
+    }
+
     private fun createServer(portNumber: Int) {
         log("creating server ...")
         log("group address - ${state.value.groupOwnerAddress} \ncreating server ...")
@@ -235,120 +243,128 @@ class TcpViewModel @Inject constructor(
                     val reader =
                         DataInputStream(BufferedInputStream(connectedClientSocket.getInputStream()))
 
-//                try {
-                    val messageType = AppMessageType.fromChar(reader.readChar())
+                    try {
+                        val messageType = AppMessageType.fromChar(reader.readChar())
 
-                    when (messageType) {
-                        AppMessageType.INITIAL -> {
-                            setupUserData(reader = reader)
-                        }
+                        when (messageType) {
+                            AppMessageType.INITIAL -> {
+                                setupUserData(reader = reader)
+                            }
 
-                        AppMessageType.VOICE -> {
-                            viewModelScope.launch(Dispatchers.IO) {
-                                receiveVoiceMessage(reader = reader)
+                            AppMessageType.VOICE -> {
+                                viewModelScope.launch(Dispatchers.IO) {
+                                    receiveVoiceMessage(reader = reader)
+                                }
+                            }
+
+                            AppMessageType.CONTACT -> {
+                                viewModelScope.launch(Dispatchers.IO) {
+                                    receiveContactMessage(reader = reader)
+                                }
+                            }
+
+                            AppMessageType.TEXT -> {
+                                viewModelScope.launch(Dispatchers.IO) {
+                                    receiveTextMessage(reader = reader)
+                                }
+                            }
+
+                            AppMessageType.FILE -> {
+                                receiveFile(reader = reader)
+                            }
+
+                            AppMessageType.UNKNOWN -> {
+                                /**Ignore case*/
+                                log("create server unknown message char - ${reader.readChar()}")
                             }
                         }
-
-                        AppMessageType.CONTACT -> {
-                            viewModelScope.launch(Dispatchers.IO) {
-                                receiveContactMessage(reader = reader)
-                            }
+                    } catch (e: EOFException) {
+                        e.printStackTrace()
+                        //if the IP address of the host could not be determined.
+                        log("createServer: EOFException")
+                        closerServeSocket()
+                        updateHostConnectionStatus(HostConnectionStatus.Failure)
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.EOException)
+                        updateUserOnlineStatus(
+                            userUniqueId = state.value.peerUserUniqueId,
+                            isOnline = false
+                        )
+                        try {
+                            reader.close()
+                        } catch (e: IOException) {
+                            e.printStackTrace()
                         }
-
-                        AppMessageType.TEXT -> {
-                            viewModelScope.launch(Dispatchers.IO) {
-                                receiveTextMessage(reader = reader)
-                            }
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                        //the stream has been closed and the contained
+                        // input stream does not support reading after close,
+                        // or another I/O error occurs
+                        log("createServer: io exception ")
+                        closerServeSocket()
+                        updateHostConnectionStatus(HostConnectionStatus.Failure)
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+                        updateUserOnlineStatus(
+                            userUniqueId = state.value.peerUserUniqueId,
+                            isOnline = false
+                        )
+                        try {
+                            reader.close()
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                            log("reader close exception - $e ")
                         }
-
-                        AppMessageType.FILE -> {
-                            receiveFile(reader = reader)
-                        }
-
-                        AppMessageType.UNKNOWN -> {
-                            /**Ignore case*/
-                            log("create server unknown message char - ${reader.readChar()}")
+                    } catch (e: UTFDataFormatException) {
+                        e.printStackTrace()
+                        /** here is firing***/
+                        //if the bytes do not represent a valid modified UTF-8 encoding of a string.
+                        log("createServer: io exception ")
+                        closerServeSocket()
+                        updateHostConnectionStatus(HostConnectionStatus.Failure)
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.UTFDataFormatException)
+                        updateUserOnlineStatus(
+                            userUniqueId = state.value.peerUserUniqueId,
+                            isOnline = false
+                        )
+                        try {
+                            reader.close()
+                        } catch (e: IOException) {
+                            e.printStackTrace()
                         }
                     }
-//                        } catch (e: EOFException) {
-//                            e.printStackTrace()
-//                            //if the IP address of the host could not be determined.
-//                            log("createServer: EOFException")
-//                            connectedClientSocketOnServer.close()
-//                            viewModel.updateConnectionsCount(false)
-//                            log("in while - ${connectedClientSocketOnServer.isClosed} - $connectedClientSocketOnServer")
-//                            viewModel.handleEvents(
-//                                TcpScreenEvents.OnDialogErrorOccurred(
-//                                    TcpScreenDialogErrors.EOException
-//                                )
-//                            )
-//                            try {
-//                                reader.close()
-//                            } catch (e: IOException) {
-//                                e.printStackTrace()
-//                            }
-//                        } catch (e: IOException) {
-//                            e.printStackTrace()
-//                            //the stream has been closed and the contained
-//                            // input stream does not support reading after close,
-//                            // or another I/O error occurs
-//                            log("createServer: io exception ")
-//                            viewModel.handleEvents(
-//                                TcpScreenEvents.OnDialogErrorOccurred(
-//                                    TcpScreenDialogErrors.IOException
-//                                )
-//                            )
-//                            viewModel.updateConnectionsCount(false)
-//                            connectedClientSocketOnServer.close()
-//                            //serverSocket.close()
-//                            try {
-//                                reader.close()
-//                            } catch (e: IOException) {
-//                                e.printStackTrace()
-//                                log("reader close exception - $e ")
-//                            }
-//                        } catch (e: UTFDataFormatException) {
-//                            e.printStackTrace()
-//                            /** here is firing***/
-//                            //if the bytes do not represent a valid modified UTF-8 encoding of a string.
-//                            log("createServer: io exception ")
-//                            viewModel.handleEvents(
-//                                TcpScreenEvents.OnDialogErrorOccurred(
-//                                    TcpScreenDialogErrors.UTFDataFormatException
-//                                )
-//                            )
-//                            viewModel.updateConnectionsCount(false)
-//                            connectedClientSocketOnServer.close()
-//                            //serverSocket.close()
-//                            try {
-//                                reader.close()
-//                            } catch (e: IOException) {
-//                                e.printStackTrace()
-//                            }
-//                        }
                 }
             }
         } catch (e: IOException) {
             e.printStackTrace()
-            serverSocket.close()
-            //change server title status
+            closerServeSocket()
             updateHostConnectionStatus(HostConnectionStatus.Failure)
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+            updateUserOnlineStatus(
+                userUniqueId = state.value.peerUserUniqueId,
+                isOnline = false
+            )
 
         } catch (e: SecurityException) {
             e.printStackTrace()
-            serverSocket.close()
-            //change server title status
-            updateHostConnectionStatus(HostConnectionStatus.Failure)
-
             //if a security manager exists and its checkConnect method doesn't allow the operation.
             log("createServer: SecurityException ")
+            closerServeSocket()
+            updateHostConnectionStatus(HostConnectionStatus.Failure)
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.SecurityException)
+            updateUserOnlineStatus(
+                userUniqueId = state.value.peerUserUniqueId,
+                isOnline = false
+            )
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
-            serverSocket.close()
-            //change server title status
-            updateHostConnectionStatus(HostConnectionStatus.Failure)
             //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
             log("createServer: IllegalArgumentException ")
+            closerServeSocket()
+            updateHostConnectionStatus(HostConnectionStatus.Failure)
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IllegalArgumentException)
+            updateUserOnlineStatus(
+                userUniqueId = state.value.peerUserUniqueId,
+                isOnline = false
+            )
         }
     }
 
@@ -364,12 +380,14 @@ class TcpViewModel @Inject constructor(
                 log("connected as client")
                 closeClientSocket()
                 updateClientConnectionStatus(ClientConnectionStatus.Idle)
+                updateUserOnlineStatus(userUniqueId = state.value.peerUserUniqueId, isOnline = false)
             }
 
             GeneralConnectionStatus.ConnectedAsHost -> {
                 log("connected as host")
                 closerServeSocket()
                 updateHostConnectionStatus(HostConnectionStatus.Idle)
+                updateUserOnlineStatus(userUniqueId = state.value.peerUserUniqueId, isOnline = false)
             }
         }
     }
@@ -404,7 +422,7 @@ class TcpViewModel @Inject constructor(
             while (!clientSocket.isClosed) {
                 val reader = DataInputStream(BufferedInputStream(clientSocket.getInputStream()))
 
-//                try {
+                try {
 
                 val messageType = AppMessageType.fromChar(reader.readChar())
                 log("incoming message type - $messageType ")
@@ -441,74 +459,97 @@ class TcpViewModel @Inject constructor(
                         log("connect to server unknown message char - ${reader.readChar()}")
                     }
                 }
-//                } catch (e: EOFException) {
-//                    e.printStackTrace()
-//                    //if the IP address of the host could not be determined.
-//                    log("connectToServer: EOFException ")
-//                    viewModel.handleEvents(
-//                        TcpScreenEvents.OnDialogErrorOccurred(
-//                            TcpScreenDialogErrors.EOException
-//                        )
-//                    )
-//
-//                    try {
-//                        reader.close()
-//                    } catch (e: IOException) {
-//                        e.printStackTrace()
-//                    }
-//                } catch (e: IOException) {
-//                    e.printStackTrace()
-//                    //the stream has been closed and the contained
-//                    // input stream does not support reading after close,
-//                    // or another I/O error occurs
-//                    log("connectToServer: io exception ")
-//                    viewModel.updateClientConnectionStatus(ClientConnectionStatus.Failure)
-//                    viewModel.updateConnectionsCount(false)
-//                    viewModel.handleEvents(
-//                        TcpScreenEvents.OnDialogErrorOccurred(
-//                            TcpScreenDialogErrors.IOException
-//                        )
-//                    )
-//                    try {
-//                        reader.close()
-//                    } catch (e: IOException) {
-//                        e.printStackTrace()
-//                    }
-//                } catch (e: UTFDataFormatException) {
-//                    e.printStackTrace()
-//                    //if the bytes do not represent a valid modified UTF-8 encoding of a string.
-//                    log("connectToServer: io exception ")
-//                    viewModel.handleEvents(
-//                        TcpScreenEvents.OnDialogErrorOccurred(
-//                            TcpScreenDialogErrors.UTFDataFormatException
-//                        )
-//                    )
-//                    try {
-//                        reader.close()
-//                    } catch (e: IOException) {
-//                        e.printStackTrace()
-//                    }
-//                }
+                } catch (e: EOFException) {
+                    e.printStackTrace()
+                    //if the IP address of the host could not be determined.
+                    log("connectToServer: EOFException ")
+                    closeClientSocket()
+                    updateClientConnectionStatus(ClientConnectionStatus.Failure)
+                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.EOException)
+                    updateUserOnlineStatus(
+                        userUniqueId = state.value.peerUserUniqueId,
+                        isOnline = false
+                    )
+                    try {
+                        reader.close()
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    //the stream has been closed and the contained
+                    // input stream does not support reading after close,
+                    // or another I/O error occurs
+                    log("connectToServer: io exception ")
+                    closeClientSocket()
+                    updateClientConnectionStatus(ClientConnectionStatus.Failure)
+                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+                    updateUserOnlineStatus(
+                        userUniqueId = state.value.peerUserUniqueId,
+                        isOnline = false
+                    )
+                    try {
+                        reader.close()
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+                } catch (e: UTFDataFormatException) {
+                    e.printStackTrace()
+                    //if the bytes do not represent a valid modified UTF-8 encoding of a string.
+                    log("connectToServer: io exception ")
+                    closeClientSocket()
+                    updateClientConnectionStatus(ClientConnectionStatus.Failure)
+                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.UTFDataFormatException)
+                    updateUserOnlineStatus(
+                        userUniqueId = state.value.peerUserUniqueId,
+                        isOnline = false
+                    )
+                    try {
+                        reader.close()
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+                }
             }
         } catch (exception: UnknownHostException) {
             exception.printStackTrace()
             log("unknown host exception".uppercase())
-            handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.UnknownHostException))
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.UnknownHostException)
+            updateClientConnectionStatus(ClientConnectionStatus.Failure)
+            updateUserOnlineStatus(
+                userUniqueId = state.value.peerUserUniqueId,
+                isOnline = false
+            )
         } catch (exception: IOException) {
             exception.printStackTrace()
             //could not connect to a server
             log("connectToServer: IOException ".uppercase())
-            handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.IOException))
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+            updateClientConnectionStatus(ClientConnectionStatus.Failure)
+            updateUserOnlineStatus(
+                userUniqueId = state.value.peerUserUniqueId,
+                isOnline = false
+            )
         } catch (e: SecurityException) {
             e.printStackTrace()
-            //fixme add security exception handling
             //if a security manager exists and its checkConnect method doesn't allow the operation.
             log("connectToServer: SecurityException".uppercase())
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.SecurityException)
+            updateClientConnectionStatus(ClientConnectionStatus.Failure)
+            updateUserOnlineStatus(
+                userUniqueId = state.value.peerUserUniqueId,
+                isOnline = false
+            )
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
-            //fixme add illegal argument handling
             //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
             log("connectToServer: IllegalArgumentException".uppercase())
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IllegalArgumentException)
+            updateClientConnectionStatus(ClientConnectionStatus.Failure)
+            updateUserOnlineStatus(
+                userUniqueId = state.value.peerUserUniqueId,
+                isOnline = false
+            )
         }
 
     }
@@ -625,6 +666,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    //fixme
     private suspend fun sendVoiceMessage(
         writer: DataOutputStream,
         voiceMessage: ChatMessageEntity
@@ -739,6 +781,7 @@ class TcpViewModel @Inject constructor(
      * 3. file name
      * 4. file length
      * */
+    //fixme
     private suspend fun sendFileMessages(
         writer: DataOutputStream,
         messages: List<ChatMessageEntity>
@@ -1508,6 +1551,7 @@ class TcpViewModel @Inject constructor(
             GeneralNetworkingStatus.Idle -> {
                 handleWifiDisabledCase()
             }
+
             GeneralNetworkingStatus.LocalOnlyHotspot -> {
                 //ignore case
             }
@@ -1885,8 +1929,6 @@ class TcpViewModel @Inject constructor(
 
             is TcpScreenEvents.SendMessageRequest -> {
 
-                //fixme - send message only after connection is established
-
                 val textMessageEntity = ChatMessageEntity(
                     type = AppMessageType.TEXT,
                     formattedTime = getCurrentTime(),
@@ -1958,7 +2000,7 @@ class TcpViewModel @Inject constructor(
                     return
                 }
 
-                if(state.value.generalNetworkingStatus == GeneralNetworkingStatus.Idle){
+                if (state.value.generalNetworkingStatus == GeneralNetworkingStatus.Idle) {
                     updateHasErrorOccurredDialog(TcpScreenDialogErrors.ServerCreationWithoutNetworking)
                     return
                 }
