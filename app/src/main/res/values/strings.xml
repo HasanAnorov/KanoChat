@@ -226,8 +226,11 @@
     <string name="dismiss">Dismiss</string>
     <string name="wifi_not_enabled">Wifi not enabled</string>
     <string name="wifi_not_enabled_message">Wifi should be enabled to perform this action</string>
-    <string name="unknown_user">Uknown User</string>
+    <string name="unknown_user">Unknown User</string>
     <string name="offline">Offline</string>
     <string name="online">Online</string>
+    <string name="no_messages_yet">No Messages, yet.</string>
+    <string name="no_messages_in_your_inbox_yet_start_chatting_with_people_around_you">No messages in your inbox, yet! Start chatting with people around you.</string>
+    <string name="create_network">Create Network</string>
 
 </resources>

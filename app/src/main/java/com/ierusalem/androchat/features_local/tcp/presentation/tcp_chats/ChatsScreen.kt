@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features_local.tcp.presentation.tcp_chats
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +28,7 @@ import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
+import com.ierusalem.androchat.features_local.tcp.presentation.tcp_chats.components.NoMessagesScreen
 import com.ierusalem.androchat.features_local.tcp.presentation.tcp_chats.components.TcpContactItem
 import com.ierusalem.androchat.features_remote.home.presentation.contacts.ErrorType
 
@@ -36,6 +36,7 @@ import com.ierusalem.androchat.features_remote.home.presentation.contacts.ErrorT
 fun ChatsScreen(
     modifier: Modifier = Modifier,
     uiState: TcpScreenUiState,
+    onCreateNetworkClick: () -> Unit = {},
     eventHandler: (TcpScreenEvents) -> Unit
 ) {
     when (val state = uiState.chattingUsers) {
@@ -71,7 +72,7 @@ fun ChatsScreen(
 
             Box(modifier = modifier) {
                 if (users.isEmpty()) {
-                    Log.d("ahi3646", "ContactsScreen: Data is empty ")
+                    NoMessagesScreen(onCreateNetworkClick = onCreateNetworkClick)
                 } else {
                     LazyColumn(
                         modifier = Modifier
@@ -219,7 +220,7 @@ fun ContactsScreenPreviewDark() {
             modifier = Modifier,
             eventHandler = {},
             uiState = TcpScreenUiState(
-                chattingUsers = Resource.Loading()
+                chattingUsers = Resource.Success(listOf())
             )
         )
     }

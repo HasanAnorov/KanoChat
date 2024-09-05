@@ -90,7 +90,7 @@ fun ConnectionsContent(
                                     modifier = Modifier.padding(start = 8.dp),
                                     painter = painterResource(id = R.drawable.wifi_tethering),
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                                    tint = state.hostConnectionStatus.getIconColor()
                                 )
                             }
                             HorizontalDivider(
@@ -118,7 +118,7 @@ fun ConnectionsContent(
                                     modifier = Modifier.padding(start = 8.dp),
                                     painter = painterResource(id = R.drawable.wifi_tethering),
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                                    tint = state.clientConnectionStatus.getIconColor()
                                 )
                             }
                         }

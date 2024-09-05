@@ -68,7 +68,8 @@ fun TcpScreen(
                 allTabs = allTabs,
                 pagerState = pagerState,
                 eventHandler = eventHandler,
-                state = uiState
+                state = uiState,
+                onCreateNetworkClick = { onTabChanged(TcpView.NETWORKING) }
             )
         }
     }

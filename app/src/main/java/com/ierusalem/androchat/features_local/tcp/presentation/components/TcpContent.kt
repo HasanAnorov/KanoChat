@@ -22,6 +22,7 @@ fun TcpContent(
     state: TcpScreenUiState,
     allTabs: SnapshotStateList<TcpView>,
     pagerState: PagerState,
+    onCreateNetworkClick: () -> Unit = {},
     eventHandler: (TcpScreenEvents) -> Unit
 ) {
     HorizontalPager(
@@ -42,6 +43,7 @@ fun TcpContent(
                     modifier = Modifier.fillMaxSize(),
                     eventHandler = eventHandler,
                     uiState = state,
+                    onCreateNetworkClick = onCreateNetworkClick
                 )
             }
 

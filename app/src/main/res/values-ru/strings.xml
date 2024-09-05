@@ -223,4 +223,11 @@
     <string name="wifi_not_enabled">Wi-Fi не включен</string>
     <string name="wifi_not_enabled_message">Wi-Fi должен быть включен для выполнения этого действия</string>
 
+    <string name="unknown_user">Неизвестный пользователь</string>
+    <string name="offline">Оффлайн</string>
+    <string name="online">Онлайн</string>
+    <string name="no_messages_yet">Сообщений пока нет.</string>
+    <string name="no_messages_in_your_inbox_yet_start_chatting_with_people_around_you">Пока что в вашем почтовом ящике нет сообщений! Начните общаться с людьми вокруг вас.</string>
+    <string name="create_network">Создать сеть</string>
+
 </resources>
