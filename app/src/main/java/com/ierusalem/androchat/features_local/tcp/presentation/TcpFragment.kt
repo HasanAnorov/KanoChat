@@ -199,6 +199,11 @@ class TcpFragment : Fragment() {
         )
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        log("onDestroy called")
+    }
+
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
 

@@ -52,6 +52,10 @@ class MessagesRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun updateAllUsersOnlineStatus(isOnline: Boolean): Int {
+        return chattingUsersDao.updateAllUsersOnlineStatus(isOnline)
+    }
+
     override suspend fun updateIsUserOnline(userUniqueId: String, isOnline: Boolean):Int {
         return chattingUsersDao.updateUserOnlineStatus(
             userId = userUniqueId,

@@ -164,6 +164,12 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    fun updateAllUsersOnlineStatus(isOnline: Boolean){
+        viewModelScope.launch(Dispatchers.IO) {
+            messagesRepository.updateAllUsersOnlineStatus(isOnline = isOnline)
+        }
+    }
+
     private fun setupUserData(reader: DataInputStream) {
         val receivedMessage = reader.readUTF()
         log("setup user data - $receivedMessage")
@@ -355,11 +361,15 @@ class TcpViewModel @Inject constructor(
             }
 
             GeneralConnectionStatus.ConnectedAsClient -> {
+                log("connected as client")
                 closeClientSocket()
+                updateClientConnectionStatus(ClientConnectionStatus.Idle)
             }
 
             GeneralConnectionStatus.ConnectedAsHost -> {
+                log("connected as host")
                 closerServeSocket()
+                updateHostConnectionStatus(HostConnectionStatus.Idle)
             }
         }
     }
@@ -367,6 +377,9 @@ class TcpViewModel @Inject constructor(
     private fun closerServeSocket() {
         if (::serverSocket.isInitialized) {
             serverSocket.close()
+        }
+        if (::connectedClientSocket.isInitialized) {
+            connectedClientSocket.close()
         }
     }
 
@@ -1459,7 +1472,6 @@ class TcpViewModel @Inject constructor(
             }
 
             is WiFiNetworkEvent.ConnectionStatusChanged -> {
-                log("on general connection status changed 1 - network event - $networkEvent")
                 _state.update {
                     it.copy(
                         generalConnectionStatus = networkEvent.status
@@ -1478,6 +1490,7 @@ class TcpViewModel @Inject constructor(
             }
 
             is WiFiNetworkEvent.WifiStateChanged -> {
+                log("on wifi state changed - $networkEvent")
                 _state.update {
                     it.copy(
                         isWifiOn = networkEvent.isWifiOn
@@ -1492,7 +1505,10 @@ class TcpViewModel @Inject constructor(
 
     private fun handleWifiDisableCase() {
         when (state.value.generalNetworkingStatus) {
-            GeneralNetworkingStatus.Idle, GeneralNetworkingStatus.LocalOnlyHotspot -> {
+            GeneralNetworkingStatus.Idle -> {
+                handleWifiDisabledCase()
+            }
+            GeneralNetworkingStatus.LocalOnlyHotspot -> {
                 //ignore case
             }
 
@@ -1942,6 +1958,11 @@ class TcpViewModel @Inject constructor(
                     return
                 }
 
+                if(state.value.generalNetworkingStatus == GeneralNetworkingStatus.Idle){
+                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.ServerCreationWithoutNetworking)
+                    return
+                }
+
                 //this when loop determines the state of wi fi connection
                 when (state.value.hostConnectionStatus) {
                     HostConnectionStatus.Idle -> {
@@ -1956,6 +1977,7 @@ class TcpViewModel @Inject constructor(
 
                     HostConnectionStatus.Created -> {
                         //request for stop
+
                     }
 
                     HostConnectionStatus.Failure -> {
@@ -2111,7 +2133,6 @@ class TcpViewModel @Inject constructor(
     private fun updateClientConnectionStatus(status: ClientConnectionStatus) {
         when (status) {
             ClientConnectionStatus.Idle -> {
-                log("on general connection status changed 2")
                 _state.update {
                     it.copy(
                         clientConnectionStatus = status,
@@ -2130,7 +2151,6 @@ class TcpViewModel @Inject constructor(
             }
 
             ClientConnectionStatus.Failure -> {
-                log("on general connection status changed 4")
                 _state.update {
                     it.copy(
                         clientConnectionStatus = status,
@@ -2144,7 +2164,6 @@ class TcpViewModel @Inject constructor(
     private fun updateHostConnectionStatus(status: HostConnectionStatus) {
         when (status) {
             HostConnectionStatus.Idle -> {
-                log("on general connection status changed 5")
                 _state.update {
                     it.copy(
                         hostConnectionStatus = status,
@@ -2163,7 +2182,7 @@ class TcpViewModel @Inject constructor(
             }
 
             HostConnectionStatus.Failure -> {
-                log("on general connection status changed 6")
+
                 _state.update {
                     it.copy(
                         hostConnectionStatus = status,

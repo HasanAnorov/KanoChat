@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.ierusalem.androchat.R
@@ -16,6 +17,8 @@ import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiDir
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -48,6 +51,9 @@ class LocalActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets -> insets }
+
+        //as long as you are saving isOnline in DB, initial value should be false for all users
+        viewModel.updateAllUsersOnlineStatus(false)
 
         intentFilter.apply {
             addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)

@@ -38,7 +38,6 @@ fun TcpContactItem(
     lastMessage: ChatMessageEntity? = null,
     onClick: () -> Unit,
 ) {
-    log("TcpContactItem: ${contact.isOnline}")
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -65,7 +64,6 @@ fun TcpContactItem(
                         .background(Color(contact.avatarBackgroundColor)),
                     contentAlignment = Alignment.Center
                 ) {
-                    log("contact username ${contact.username}")
                     val username = try {
                         contact.username.first().toString()
                     } catch (e: Exception) {

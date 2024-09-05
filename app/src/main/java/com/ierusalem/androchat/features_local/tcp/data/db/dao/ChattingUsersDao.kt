@@ -19,7 +19,7 @@ interface ChattingUsersDao {
     suspend fun updateUserOnlineStatus(userId: String, isOnline: Boolean): Int
 
     @Query("UPDATE chatting_users SET isOnline = :isOnline")
-    suspend fun updateAllUsersOnlineStatus(isOnline: Boolean)
+    suspend fun updateAllUsersOnlineStatus(isOnline: Boolean): Int
 
     @Query("DELETE FROM chatting_users WHERE userUniqueId = :userUniqueId")
     suspend fun deleteChattingUser(userUniqueId: String)

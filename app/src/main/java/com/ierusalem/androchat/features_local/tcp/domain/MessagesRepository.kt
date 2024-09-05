@@ -17,7 +17,7 @@ interface MessagesRepository {
     suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState)
     fun getPagedUserMessagesById(userId: String): PagingSource<Int, ChatMessageEntity>
     suspend fun insertChattingUser(chattingUserEntity: ChattingUserEntity): Long
-
+    suspend fun updateAllUsersOnlineStatus(isOnline: Boolean):Int
     suspend fun updateChattingUserUniqueName(userUniqueId: String, userUniqueName: String):Int
     suspend fun updateIsUserOnline(userUniqueId: String, isOnline: Boolean):Int
     suspend fun insertMessage(message: ChatMessageEntity): Long
