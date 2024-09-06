@@ -229,5 +229,12 @@
     <string name="no_messages_yet">Сообщений пока нет.</string>
     <string name="no_messages_in_your_inbox_yet_start_chatting_with_people_around_you">Пока что в вашем почтовом ящике нет сообщений! Начните общаться с людьми вокруг вас.</string>
     <string name="create_network">Создать сеть</string>
+    <string name="security_exception_occurred">Произошло исключение безопасности</string>
+    <string name="security_exception_occurred_definition">Существует менеджер безопасности, и его метод checkConnect не разрешает операцию.</string>
+    <string name="illegal_argument_exception_occurred_definition">Параметр порта находится вне указанного диапазона допустимых значений порта, который находится между 0 и 65535 включительно.</string>
+    <string name="illegal_argument_exception_occurred">Исключение недопустимого аргумента</string>
+    <string name="local_only_hotspot_name">Имя локальной точки доступа</string>
+    <string name="local_only_hotspot_password">Пароль локальной точки доступа</string>
+    <string name="error_occurred">Произошла ошибка</string>
 
 </resources>

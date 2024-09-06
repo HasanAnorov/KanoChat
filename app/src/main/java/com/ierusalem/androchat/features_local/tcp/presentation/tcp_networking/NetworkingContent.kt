@@ -1,5 +1,6 @@
 package com.ierusalem.androchat.features_local.tcp.presentation.tcp_networking
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +43,7 @@ import com.ierusalem.androchat.core.ui.components.baselineHeight
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.ui.theme.MontserratFontFamily
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralNetworkingStatus
+import com.ierusalem.androchat.features_local.tcp.domain.state.LocalOnlyHotspotStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.P2PNetworkingStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
@@ -100,6 +102,93 @@ fun NetworkingContent(
                                     tint = state.localOnlyHotspotNetworkingStatus.getIconColor()
                                 )
                             }
+                            AnimatedVisibility(visible = state.localOnlyHotspotNetworkingStatus != LocalOnlyHotspotStatus.Idle) {
+                                Column(
+                                    modifier = Modifier
+                                        .background(
+                                            MaterialTheme.colorScheme.surfaceVariant.copy(
+                                                0.3F
+                                            )
+                                        )
+                                        .padding(horizontal = 10.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(bottom = 16.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.local_only_hotspot_name),
+                                            fontFamily = MontserratFontFamily,
+                                            modifier = Modifier.baselineHeight(20.dp),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        TextField(
+                                            modifier = Modifier
+                                                .height(IntrinsicSize.Max)
+                                                .fillMaxWidth()
+                                                .padding(top = 8.dp),
+                                            value = state.localOnlyHotspotName.ifEmpty {
+                                                stringResource(
+                                                    id = R.string.error_occurred
+                                                )
+                                            },
+                                            textStyle = MaterialTheme.typography.titleMedium,
+                                            colors = TextFieldDefaults.colors(
+                                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                disabledTextColor = if(state.localOnlyHotspotPassword.isEmpty()) Color.Red else MaterialTheme.colorScheme.onSurface,
+                                                focusedIndicatorColor = Color.Transparent,
+                                                unfocusedIndicatorColor = Color.Transparent,
+                                                disabledIndicatorColor = Color.Transparent
+                                            ),
+                                            onValueChange = {},
+                                            placeholder = {},
+                                            shape = RoundedCornerShape(size = 12.dp),
+                                            singleLine = true,
+                                            enabled = false
+                                        )
+                                    }
+                                    HorizontalDivider(
+                                        color = MaterialTheme.colorScheme.background
+                                    )
+                                    Column(
+                                        modifier = Modifier.padding(bottom = 16.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.local_only_hotspot_password),
+                                            fontFamily = MontserratFontFamily,
+                                            modifier = Modifier.baselineHeight(20.dp),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        TextField(
+                                            modifier = Modifier
+                                                .height(IntrinsicSize.Max)
+                                                .fillMaxWidth()
+                                                .padding(top = 8.dp),
+                                            value = state.localOnlyHotspotPassword.ifEmpty {
+                                                stringResource(
+                                                    id = R.string.error_occurred
+                                                )
+                                            },
+                                            textStyle = MaterialTheme.typography.titleMedium,
+                                            colors = TextFieldDefaults.colors(
+                                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                disabledTextColor = if(state.localOnlyHotspotPassword.isEmpty()) Color.Red else MaterialTheme.colorScheme.onSurface,
+                                                focusedIndicatorColor = Color.Transparent,
+                                                unfocusedIndicatorColor = Color.Transparent,
+                                                disabledIndicatorColor = Color.Transparent
+                                            ),
+                                            onValueChange = {},
+                                            placeholder = {},
+                                            shape = RoundedCornerShape(size = 12.dp),
+                                            singleLine = true,
+                                            enabled = false
+                                        )
+                                    }
+                                }
+                            }
                             HorizontalDivider(
                                 thickness = 1.dp,
                                 color = MaterialTheme.colorScheme.background
@@ -121,7 +210,7 @@ fun NetworkingContent(
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium
                                 )
-                                    Icon(
+                                Icon(
                                     modifier = Modifier.padding(start = 8.dp),
                                     painter = painterResource(id = state.hotspotNetworkingStatus.icon),
                                     contentDescription = null,
@@ -213,7 +302,10 @@ fun NetworkingContent(
                         singleLine = true,
                     )
                 }
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp), color = MaterialTheme.colorScheme.background)
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.background
+                )
                 Column(
                     modifier = Modifier
                         .padding(horizontal = 10.dp)
@@ -268,7 +360,10 @@ fun NetworkingContent(
                         singleLine = true,
                     )
                 }
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp), color = MaterialTheme.colorScheme.background)
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.background
+                )
                 StatusProperty(
                     modifier = Modifier
                         .padding(horizontal = 10.dp)
@@ -277,13 +372,18 @@ fun NetworkingContent(
                     state = if (state.isWifiOn) R.string.wifi_enabled else R.string.wifi_disabled,
                     stateColor = if (state.isWifiOn) Color(0xFF35C47C) else Color.Red
                 )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp), color = MaterialTheme.colorScheme.background)
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.background
+                )
                 StatusProperty(
                     modifier = Modifier
                         .padding(horizontal = 10.dp),
                     status = stringResource(R.string.networking_status),
                     state = state.generalNetworkingStatus.status,
-                    stateColor = if (state.generalNetworkingStatus != GeneralNetworkingStatus.Idle) Color(0xFF35C47C) else Color.Red
+                    stateColor = if (state.generalNetworkingStatus != GeneralNetworkingStatus.Idle) Color(
+                        0xFF35C47C
+                    ) else Color.Red
                 )
             }
         }

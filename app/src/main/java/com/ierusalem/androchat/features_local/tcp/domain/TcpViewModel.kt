@@ -1744,6 +1744,14 @@ class TcpViewModel @Inject constructor(
                     val config: WifiConfiguration? = reservation?.wifiConfiguration
 
                     log("SSID: ${config?.SSID}, Password: ${config?.preSharedKey}")
+
+                    _state.update {
+                        it.copy(
+                            localOnlyHotspotName = config?.SSID ?: "",
+                            localOnlyHotspotPassword = config?.preSharedKey ?: ""
+                        )
+                    }
+
                     log("HttpProxy: ${config?.httpProxy}  HiddenSSID: ${config?.hiddenSSID}")
                     log("Local Only Hotspot Started".uppercase())
                     val ip = connectivityObserver.getWifiServerIpAddress()

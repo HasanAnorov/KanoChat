@@ -109,7 +109,6 @@ fun AuthorAndMessage(
 fun LocalClickableMessage(
     message: ChatMessage.TextMessage
 ) {
-
     val styledMessage = messageFormatter(
         text = message.message,
         primary = message.isFromYou

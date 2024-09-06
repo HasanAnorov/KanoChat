@@ -35,9 +35,11 @@ data class TcpScreenUiState(
     val isValidHotSpotName: Boolean = isValidHotspotName(hotspotName),
     val hotspotPassword: String = generateRandomPassword(length = 8),
     val isValidHotSpotPassword: Boolean = isValidHotspotPassword(hotspotPassword),
-
     val portNumber: String = Constants.DEFAULT_PORT_NUMBER,
     val isValidPortNumber: Boolean = isValidPortNumber(portNumber),
+
+    val localOnlyHotspotName: String = "",
+    val localOnlyHotspotPassword: String = "",
 
     val groupOwnerAddress: String = "Not connected",
     val isValidGroupOwnerAddress: Boolean = isValidIpAddress(groupOwnerAddress),
