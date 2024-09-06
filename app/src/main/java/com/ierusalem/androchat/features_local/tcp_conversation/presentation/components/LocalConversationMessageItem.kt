@@ -20,7 +20,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
-import com.ierusalem.androchat.features_remote.conversation.presentation.components.messageFormatter
 
 @Composable
 fun ChatMessageItem(

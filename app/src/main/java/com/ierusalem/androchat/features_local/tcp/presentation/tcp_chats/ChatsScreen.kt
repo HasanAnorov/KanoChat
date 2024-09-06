@@ -21,6 +21,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.core.ui.components.ErrorScreen
+import com.ierusalem.androchat.core.ui.components.ErrorType
 import com.ierusalem.androchat.core.ui.components.LoadingScreen
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.RandomColors
@@ -30,7 +31,6 @@ import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.tcp_chats.components.NoMessagesScreen
 import com.ierusalem.androchat.features_local.tcp.presentation.tcp_chats.components.TcpContactItem
-import com.ierusalem.androchat.features_remote.home.presentation.contacts.ErrorType
 
 @Composable
 fun ChatsScreen(

@@ -23,7 +23,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features_remote.home.presentation.contacts.ErrorType
+
+enum class ErrorType{
+    NetworkError,
+    InvalidResponse
+}
 
 @Composable
 fun ErrorScreen(

@@ -66,6 +66,7 @@ class NetworkConnectivityObserver(
         }.distinctUntilChanged()
     }
 
+    @Suppress("MissingPermission")
     override fun observe(): Flow<ConnectivityObserver.Status> {
         return callbackFlow {
             val callback = object : ConnectivityManager.NetworkCallback(){

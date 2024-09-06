@@ -31,10 +31,10 @@ import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.components.EmptyScreen
 import com.ierusalem.androchat.core.ui.components.ErrorScreen
+import com.ierusalem.androchat.core.ui.components.ErrorType
 import com.ierusalem.androchat.core.ui.components.LoadingScreen
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.Resource
-import com.ierusalem.androchat.features_remote.home.presentation.contacts.ErrorType
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactItem
 
 @Composable

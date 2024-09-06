@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.RandomColors
-import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 

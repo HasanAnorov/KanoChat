@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.toArgb
 import java.util.Collections
 import java.util.Stack
 
-class RandomColors() {
+class RandomColors {
     private val recycle: Stack<Int> = Stack()
     private val colors: Stack<Int> = Stack()
 

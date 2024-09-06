@@ -28,7 +28,6 @@ import androidx.paging.compose.itemKey
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
-import com.ierusalem.androchat.features_remote.conversation.presentation.components.JumpToBottom
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 

@@ -10,14 +10,15 @@ import com.google.gson.stream.JsonWriter
 import kotlin.jvm.internal.Reflection
 import kotlin.reflect.KClass
 
+@Suppress("unused")
 object Json {
     val gson: Gson =
         GsonBuilder().registerTypeAdapterFactory(
             object : TypeAdapterFactory {
                 override fun <T : Any> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T> {
-                    val kclass = Reflection.getOrCreateKotlinClass(type.rawType)
-                    return if (kclass.sealedSubclasses.any()) {
-                        SealedClassTypeAdapter<T>(kclass, gson)
+                    val kClass = Reflection.getOrCreateKotlinClass(type.rawType)
+                    return if (kClass.sealedSubclasses.any()) {
+                        SealedClassTypeAdapter(kClass, gson)
                     } else
                         gson.getDelegateAdapter(this, type)
                 }
@@ -27,17 +28,18 @@ object Json {
     fun <T> fromJsonWithClass(x: String, classObj: Class<T>): T =
         this.gson.fromJson(x, classObj)
 
-    inline fun <T> toJson(item: T): String = this.gson.toJson(item)
+    fun <T> toJson(item: T): String = this.gson.toJson(item)
 }
 
-class SealedClassTypeAdapter<T : Any>(val kclass: KClass<Any>, val gson: Gson) : TypeAdapter<T>() {
+@Suppress("unused")
+class SealedClassTypeAdapter<T : Any>(private val kClass: KClass<Any>, private val gson: Gson) : TypeAdapter<T>() {
     override fun read(jsonReader: JsonReader): T? {
         jsonReader.beginObject() //start reading the object
         val nextName = jsonReader.nextName() //get the name on the object
-        val innerClass = kclass.sealedSubclasses.firstOrNull {
+        val innerClass = kClass.sealedSubclasses.firstOrNull {
             it.simpleName!!.contains(nextName)
         }
-            ?: throw Exception("$nextName is not found to be a data class of the sealed class ${kclass.qualifiedName}")
+            ?: throw Exception("$nextName is not found to be a data class of the sealed class ${kClass.qualifiedName}")
         val x = gson.fromJson<T>(jsonReader, innerClass.javaObjectType)
         jsonReader.endObject()
         //if there a static object, actually return that back to ensure equality and such!

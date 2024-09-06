@@ -20,8 +20,6 @@
     <!-- Conversation strings-->
     <string name="jumpBottom">Jump to bottom</string>
     <string name="send">Send</string>
-    <string name="author_me">you</string>
-    <string name="members">%d members</string>
     <string name="textfield_hint">Message #composers</string>
     <string name="swipe_to_cancel_recording">&#x25C0; Swipe to cancel</string>
     <string name="emojis_label">Emojis</string>
@@ -83,7 +81,6 @@
     <string name="app_theme">App Theme</string>
     <string name="general">General</string>
     <string name="logout">Logout</string>
-    <string name="invite_a_friend">Invite a friend</string>
     <string name="select_app_language">Select app language</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
@@ -98,15 +95,12 @@
     <string name="local_connection">Local connection</string>
 
     <!-- Nearby Connection strings-->
-    <string name="nearby_connection">Nearby Connection</string>
     <string name="connections">Connections</string>
     <string name="create_a_server">Create a server</string>
     <string name="creating_a_server">Creating a server</string>
     <string name="server_created_waiting_for_clients">Server created, waiting for clients …</string>
     <string name="connecting_to_server">Connecting to server</string>
     <string name="connected_to_a_server">Connected to a server</string>
-    <string name="discover_wifi">Discover Wifi</string>
-    <string name="discovering_wifi">Discovering WiFi</string>
     <string name="discovering_not_started">Couldn\'t discover wifi networks,\n try again!</string>
     <string name="available_wifi_networks">Available Wifi Networks</string>
     <string name="click_discover_button_to_search_for_available_wifi_networks">Click Discover Button to search for available wifi networks!</string>
@@ -114,22 +108,14 @@
     <string name="wifi_status">"Wifi Status: "</string>
     <string name="proxy_port">Proxy Port</string>
 
-    <!-- Instructions strings-->
-    <string name="instructions">Instructions</string>
-
     <!-- Connections strings-->
-    <string name="client">Client</string>
-    <string name="owner">Owner</string>
-    <string name="waiting_for_connection">Waiting for connection …</string>
     <string name="not_running">Not Running</string>
-    <string name="connection_connected">Connected</string>
     <string name="not_connected">Not Connected</string>
     <string name="wifi_enabled">WiFi enabled</string>
     <string name="wifi_disabled">WiFi disabled</string>
     <string name="connect">Connect</string>
     <string name="connections_details">Connections Details</string>
     <string name="connection_status">"Connection Status: "</string>
-    <string name="role">"Role: "</string>
     <string name="server_address">Server Address</string>
     <string name="connected_devices_will_display_here">Connected devices will display here</string>
     <string name="connections_are_not_established_yet">Connections are not established yet!</string>
@@ -143,13 +129,9 @@
     <string name="fine_location_denied">You permanently declined fine location permission. \nYou can go to the app settings to grant it.</string>
     <string name="fine_location_permission_request">This app needs access to your fine location. Please grant it!</string>
 
-    <!-- Local conversations strings-->
-    <string name="chat_room">Chat Room</string>
-
     <!-- TcpScreen Errors strings-->
     <string name="couldn_t_connect_to_chosen_wifi_device">Couldn\'t connect to chosen wifi device!</string>
     <string name="wifi_should_be_enabled_to_perform_this_action">Wifi should be enabled to perform this action!</string>
-    <string name="already_discovering_wifi_networks">Already Discovering Wifi Networks!</string>
     <string name="try_to_use_another_port_number_current_port_is_already_in_use_or_invalid">Try to use another port number, current port is already in use or invalid!</string>
     <string name="try_to_reconnect_to_the_server_again_current_address_is_invalid">Try to reconnect to the server again, current address is invalid!</string>
 
@@ -160,12 +142,6 @@
     <string name="incoming_messages_are_not_in_utf_8_format_the_data_do_not_represent_a_valid_modified_utf_8_encoding_of_a_string">Incoming messages are not in UTF-8 format, the data do not represent a valid modified UTF-8 encoding of a string</string>
     <string name="the_ip_address_of_the_host_could_not_be_determined">The IP address of the host could not be determined</string>
     <string name="invalid_host_ip_address">Invalid Host Ip Address</string>
-    <string name="you_are_not_the_owner">You are not the owner</string>
-    <string name="you_connected_as_client_thus_you_can_t_create_a_server">You connected as client, thus you can\'t create a server</string>
-    <string name="you_are_not_the_client">You are not the client</string>
-    <string name="you_connected_as_a_host_for_this_server_thus_you_can_t_be_a_client">You connected as a host for this server, thus you can\'t be a client</string>
-    <string name="no_wifi_connection">No WiFi connection</string>
-    <string name="you_need_to_connect_to_a_wifi_network_to_create_or_connect_to_a_server">You need to connect to a wifi network to create or connect to a server</string>
     <string name="could_not_establish_connection_with_your_partner_please_try_to_reconnect_and_try_again">Could not establish connection with your partner, please try to reconnect and try again!</string>
     <string name="no_one_to_chat">No one to chat</string>
     <string name="you_have_existing_messages_with_your_partner_and_if_you_close_the_this_window_messages_will_not_be_saved">You have existing messages with your partner and if you close the this window messages will not be saved</string>
@@ -212,7 +188,6 @@
     <string name="there_is_no_online_peers_to_chat">There is no online peers to chat!</string>
     <string name="connected_as_host">Connected as a host</string>
     <string name="connected_as_client">Connected as a client</string>
-    <string name="not_defined">Not defined</string>
     <string name="no_peer_to_chat">No peer to chat!</string>
     <string name="current_connected_wifi_server_ip_address_is_not_a_valid">Current connected wifi server ip address is not a valid</string>
     <string name="please_connect_to_network">Please connect to the network!</string>
