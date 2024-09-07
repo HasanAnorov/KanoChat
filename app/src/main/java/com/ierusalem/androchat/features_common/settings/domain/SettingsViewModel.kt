@@ -74,6 +74,10 @@ class SettingsViewModel @Inject constructor(
     fun handleEvents(event: SettingsScreenEvents) {
         when (event) {
 
+            SettingsScreenEvents.Logout -> {
+                emitNavigation(SettingsScreenNavigation.ToLogin)
+            }
+
             is SettingsScreenEvents.OnBroadcastFrequencyChange -> {
                 viewModelScope.launch {
                     dataStorePreferenceRepository.setBroadcastFrequency(event.broadcastFrequency)

@@ -114,20 +114,24 @@ fun SettingsScreen(
                         eventHandler(SettingsScreenEvents.OnBroadcastFrequencyChange(it))
                     }
                 )
-                LogoutUi()
+                LogoutUi(
+                    onLogout = {eventHandler(SettingsScreenEvents.Logout)}
+                )
             }
         )
     }
 }
 
 @Composable
-fun LogoutUi() {
+fun LogoutUi(
+    onLogout: () -> Unit = {}
+) {
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(top = 16.dp)
             .fillMaxWidth(),
-        onClick = { /*TODO*/ },
+        onClick = onLogout,
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(0.dp),
         colors = CardDefaults.cardColors(
