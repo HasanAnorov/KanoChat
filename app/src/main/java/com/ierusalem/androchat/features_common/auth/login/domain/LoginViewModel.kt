@@ -100,6 +100,7 @@ class LoginViewModel @Inject constructor(
 
         if (deviceLogin.isNotEmpty() && devicePassword.isNotEmpty()) {
             if (deviceLogin == state.value.username && devicePassword == state.value.password) {
+                dataStorePreferenceRepository.setLoggingStatus(true)
                 emitNavigation(LoginNavigation.ToLocal)
             } else {
                 //show credentials didn't match error

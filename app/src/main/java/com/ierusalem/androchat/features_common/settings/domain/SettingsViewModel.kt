@@ -75,7 +75,10 @@ class SettingsViewModel @Inject constructor(
         when (event) {
 
             SettingsScreenEvents.Logout -> {
-                emitNavigation(SettingsScreenNavigation.ToLogin)
+                viewModelScope.launch {
+                    dataStorePreferenceRepository.setLoggingStatus(false)
+                    emitNavigation(SettingsScreenNavigation.ToLogin)
+                }
             }
 
             is SettingsScreenEvents.OnBroadcastFrequencyChange -> {
