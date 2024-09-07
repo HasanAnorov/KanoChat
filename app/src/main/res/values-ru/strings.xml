@@ -211,5 +211,8 @@
     <string name="local_only_hotspot_name">Имя локальной точки доступа</string>
     <string name="local_only_hotspot_password">Пароль локальной точки доступа</string>
     <string name="error_occurred">Произошла ошибка</string>
+    <string name="voice_message_sent">Голосовое сообщение отправлено</string>
+    <string name="file_shared">Файл передан</string>
+    <string name="contact_shared">Контакт передан</string>
 
 </resources>

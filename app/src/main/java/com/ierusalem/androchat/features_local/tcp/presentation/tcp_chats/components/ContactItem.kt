@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,10 +21,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.RandomColors
@@ -97,25 +101,111 @@ fun TcpContactItem(
                     text = contact.username,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                lastMessage?.let {
-                    val lastMessageHint = when (it.type) {
-                        AppMessageType.CONTACT -> "Contact Message"
-                        AppMessageType.FILE -> "File Message"
-                        AppMessageType.TEXT -> it.text ?: "Text Message"
-                        AppMessageType.VOICE -> "Voice Message"
-                        else -> "Unknown Message"
+
+                lastMessage?.let { message ->
+
+                    when (message.type) {
+                        AppMessageType.CONTACT -> {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    modifier = Modifier.size(16.dp),
+                                    painter = painterResource(id = R.drawable.call),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
+                                Text(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 4.dp),
+                                    maxLines = 1,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    text = stringResource(R.string.contact_shared),
+                                )
+                            }
+                        }
+
+                        AppMessageType.FILE -> {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    modifier = Modifier.size(16.dp),
+                                    painter = painterResource(id = R.drawable.file_text),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
+                                Text(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 4.dp),
+                                    maxLines = 1,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    text = stringResource(R.string.file_shared),
+                                )
+                            }
+                        }
+
+                        AppMessageType.TEXT -> {
+                            message.text?.let {
+                                Text(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 4.dp),
+                                    maxLines = 1,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    text = it,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+
+                        AppMessageType.VOICE -> {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    modifier = Modifier.size(16.dp),
+                                    painter = painterResource(id = R.drawable.voice_square),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
+                                Text(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 4.dp),
+                                    maxLines = 1,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    text = stringResource(R.string.voice_message_sent),
+                                )
+                            }
+                        }
+
+                        else -> {
+
+                        }
                     }
-                    Text(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp),
-                        maxLines = 1,
-                        style = MaterialTheme.typography.labelMedium,
-                        overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.outline,
-                        text = lastMessageHint,
-                        fontSize = 14.sp
-                    )
                 }
             }
             Column(
@@ -138,7 +228,7 @@ fun TcpContactItem(
     }
 }
 
-@Preview
+@Preview(locale = "ru")
 @Composable
 fun ContactItemPreview() {
     AndroChatTheme {

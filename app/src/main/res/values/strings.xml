@@ -214,5 +214,8 @@
     <string name="local_only_hotspot_name">Local-Only Hotspot Name</string>
     <string name="local_only_hotspot_password">Local-Only Hotspot Password</string>
     <string name="error_occurred">Error occurred</string>
+    <string name="voice_message_sent">Voice Message Sent</string>
+    <string name="file_shared">File Shared</string>
+    <string name="contact_shared">Contact Shared</string>
 
 </resources>
