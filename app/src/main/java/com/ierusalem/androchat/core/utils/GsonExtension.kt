@@ -31,7 +31,6 @@ object Json {
     fun <T> toJson(item: T): String = this.gson.toJson(item)
 }
 
-@Suppress("unused")
 class SealedClassTypeAdapter<T : Any>(private val kClass: KClass<Any>, private val gson: Gson) : TypeAdapter<T>() {
     override fun read(jsonReader: JsonReader): T? {
         jsonReader.beginObject() //start reading the object

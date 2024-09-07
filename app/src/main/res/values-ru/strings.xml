@@ -8,50 +8,27 @@
     <string name="functionality_not_available">Функционал недоступен!</string>
     <string name="close">ЗАКРЫВАТЬ</string>
 
-    <!-- Home strings-->
-    <string name="all">Все</string>
-    <string name="groups">Группы</string>
     <string name="chats">Чаты</string>
 
     <!-- Conversation strings-->
     <string name="jumpBottom">Перейти вниз</string>
     <string name="send">Отправлять</string>
     <string name="textfield_hint">Сообщение здесь</string>
-    <string name="swipe_to_cancel_recording">&#x25C0; Проведите, чтобы отменить</string>
-    <string name="emojis_label">Смайлики</string>
-    <string name="stickers_label">Наклейки</string>
     <string name="open_with">Открыть с</string>
     <string name="please_install_a_file_manager">Пожалуйста, установите файловый менеджер!</string>
     <string name="no_application_found_to_open_this_file">Не найдено приложение для открытия этого файла</string>
     <string name="give_permission">Давать разрешение!</string>
 
-    <!-- Profile strings-->
-    <string name="message">Сообщение</string>
-    <string name="edit_profile">Редактировать профиль</string>
-    <string name="profile_error">Произошла ошибка при загрузке профиля</string>
-    <string name="display_name">Отображаемое имя</string>
-    <string name="status">Статус</string>
-    <string name="timezone">Часовой пояс</string>
-    <string name="twitter">Твиттер</string>
-
     <!-- App Bar status strings-->
     <string name="connected">Подключено</string>
-    <string name="connectivity_loosing">Потеря соединения</string>
-    <string name="connectivity_lost">Потерянное соединение</string>
-    <string name="connectivity_unavailable">Недоступен</string>
 
     <!-- Accessibility descriptions -->
     <string name="emoji_selector_desc">Выбор эмодзи</string>
     <string name="emoji_selector_bt_desc">Показать выбор эмодзи</string>
-    <string name="dm_desc">Личное сообщение</string>
     <string name="attach_photo_desc">Прикрепить фото</string>
-    <string name="map_selector_desc">Выбор местоположения</string>
     <string name="videochat_desc">Начать видеочат</string>
     <string name="text_field_desc">Ввод текста</string>
-    <string name="not_available">Функционал на данный момент недоступен</string>
     <string name="search">Поиск</string>
-    <string name="info">Информация</string>
-    <string name="more_options">Больше вариантов</string>
     <string name="touch_and_hold_to_record">Нажмите и удерживайте, чтобы записать</string>
     <string name="record_message">Записать голосовое сообщение</string>
 
@@ -129,7 +106,6 @@
     <string name="couldn_t_connect_to_chosen_wifi_device">Не удалось подключиться к выбранному устройству Wi-Fi!</string>
     <string name="wifi_should_be_enabled_to_perform_this_action">Для выполнения этого действия Wi-Fi должен быть включен!</string>
     <string name="try_to_use_another_port_number_current_port_is_already_in_use_or_invalid">Попробуйте использовать другой номер порта, текущий порт уже используется или недействителен!</string>
-    <string name="try_to_reconnect_to_the_server_again_current_address_is_invalid">Попробуйте снова подключиться к серверу, текущий адрес недействителен!</string>
 
     <!--    TcpScreenDialog Errors strings-->
     <string name="network_error_occurred">Произошла сетевая ошибка</string>Сетевое соединение с вашим пиром было прервано. Проверьте соединение и повторите попытку.
