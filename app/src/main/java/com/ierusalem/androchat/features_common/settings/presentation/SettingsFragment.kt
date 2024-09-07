@@ -57,6 +57,9 @@ class SettingsFragment : Fragment() {
             SettingsScreenNavigation.NavIconClick -> {
                 findNavController().popBackStack()
             }
+            SettingsScreenNavigation.ToLogin -> {
+
+            }
         }
     }
 

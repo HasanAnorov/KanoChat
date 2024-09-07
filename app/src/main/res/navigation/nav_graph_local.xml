@@ -58,62 +58,19 @@
     </fragment>
 
     <fragment
-        android:id="@+id/conversationFragment"
-        android:name="com.ierusalem.androchat.features_remote.conversation.presentation.ConversationFragment"
-        android:label="ConversationFragment">
-        <action
-            android:id="@+id/action_conversationFragment_to_profileFragment"
-            app:destination="@id/profileFragment" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/profileFragment"
-        android:name="com.ierusalem.androchat.features_remote.profile.ProfileFragment"
-        android:label="ProfileFragment">
-        <argument
-            android:name="userId"
-            app:argType="string" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/homeFragment"
-        android:name="com.ierusalem.androchat.features_remote.home.presentation.HomeFragment"
-        android:label="HomeFragment">
-
-        <action
-            android:id="@+id/action_homeFragment_to_conversationFragment"
-            app:destination="@id/conversationFragment"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/fade_out"
-            app:popEnterAnim="@anim/fade_in"
-            app:popExitAnim="@anim/slide_out" />
-
-        <action
-            android:id="@+id/action_homeFragment_to_profileFragment"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/fade_out"
-            app:popEnterAnim="@anim/fade_in"
-            app:popExitAnim="@anim/slide_out"
-            app:destination="@id/profileFragment" />
-
-        <action
-            android:id="@+id/action_homeFragment_to_settingsFragment"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/fade_out"
-            app:popEnterAnim="@anim/fade_in"
-            app:popExitAnim="@anim/slide_out"
-            app:destination="@id/settingsFragment" />
-
-        <action
-            android:id="@+id/action_homeFragment_to_tcpFragment"
-            app:destination="@id/tcpFragment" />
-
-    </fragment>
-
-    <fragment
         android:id="@+id/settingsFragment"
         android:name="com.ierusalem.androchat.features_common.settings.presentation.SettingsFragment"
-        android:label="SettingsFragment" />
+        android:label="SettingsFragment" >
+        <action
+            android:id="@+id/action_settingsFragment_to_loginFragment"
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in"
+            app:popExitAnim="@anim/fade_out"
+            app:popUpTo="@id/settingsFragment"
+            app:popUpToInclusive="true"
+            app:destination="@id/loginFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/tcpFragment"
@@ -126,7 +83,6 @@
             app:exitAnim="@anim/fade_out"
             app:popEnterAnim="@anim/fade_in"
             app:popExitAnim="@anim/slide_out"
-            app:popUpTo="@id/homeFragment"
             app:destination="@id/settingsFragment" />
 
         <action

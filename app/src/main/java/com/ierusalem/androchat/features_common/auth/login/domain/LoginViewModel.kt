@@ -1,6 +1,7 @@
 package com.ierusalem.androchat.features_common.auth.login.domain
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,8 +13,10 @@ import com.ierusalem.androchat.core.utils.FieldValidator
 import com.ierusalem.androchat.features_common.auth.login.presentation.LoginFormEvents
 import com.ierusalem.androchat.features_common.auth.login.presentation.LoginNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,9 +31,16 @@ class LoginViewModel @Inject constructor(
     private val _state: MutableStateFlow<LoginScreenState> = MutableStateFlow(LoginScreenState())
     val state = _state.asStateFlow()
 
-    fun handleEvents(event: LoginFormEvents){
-        when(event){
-            LoginFormEvents.Login -> loginUser()
+    val visibleSnackbarMessagesQueue = mutableStateListOf<SnackBarMessage>()
+
+    fun handleEvents(event: LoginFormEvents) {
+        when (event) {
+            LoginFormEvents.Login -> {
+                viewModelScope.launch(Dispatchers.IO) {
+                    loginUser()
+                }
+            }
+
             LoginFormEvents.ToRegister -> emitNavigation(LoginNavigation.ToRegister)
             is LoginFormEvents.UsernameChanged -> {
                 _state.update {
@@ -39,6 +49,7 @@ class LoginViewModel @Inject constructor(
                     )
                 }
             }
+
             is LoginFormEvents.PasswordChanged -> {
                 _state.update {
                     it.copy(
@@ -46,6 +57,7 @@ class LoginViewModel @Inject constructor(
                     )
                 }
             }
+
             LoginFormEvents.PasswordVisibilityChanged -> {
                 _state.update {
                     it.copy(
@@ -56,7 +68,7 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private fun loginUser() {
+    private suspend fun loginUser() {
         val usernameResult = validator.validateUsername(state.value.username)
         val passwordResult = validator.validatePassword(state.value.password)
 
@@ -83,10 +95,29 @@ class LoginViewModel @Inject constructor(
             )
         }
 
-        viewModelScope.launch {
-            dataStorePreferenceRepository.setUsername(state.value.username)
-            dataStorePreferenceRepository.setPassword(state.value.password)
-            emitNavigation(LoginNavigation.ToLocal)
+        val deviceLogin: String = dataStorePreferenceRepository.getUsername.first()
+        val devicePassword: String = dataStorePreferenceRepository.getPassword.first()
+
+        if (deviceLogin.isNotEmpty() && devicePassword.isNotEmpty()) {
+            if (deviceLogin == state.value.username && devicePassword == state.value.password) {
+                emitNavigation(LoginNavigation.ToLocal)
+            } else {
+                //show credentials didn't match error
+                visibleSnackbarMessagesQueue.add(
+                    SnackBarMessage(
+                        message = "Credentials didn't match",
+                        actionLabel = "OK"
+                    )
+                )
+            }
+        } else {
+            //there is no saved username or password register
+            visibleSnackbarMessagesQueue.add(
+                SnackBarMessage(
+                    message = "There is no saved username or password. Register first",
+                    actionLabel = "OK"
+                )
+            )
         }
     }
 
@@ -98,5 +129,10 @@ data class LoginScreenState(
     val usernameError: String? = null,
     val password: String = "",
     val passwordError: String? = null,
-    val passwordVisibility: Boolean = false
+    val passwordVisibility: Boolean = false,
+)
+
+data class SnackBarMessage(
+    val message: String,
+    val actionLabel: String,
 )

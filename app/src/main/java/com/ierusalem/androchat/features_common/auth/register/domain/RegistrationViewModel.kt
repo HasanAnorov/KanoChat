@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features_common.auth.register.domain
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
@@ -73,7 +72,6 @@ class RegistrationViewModel @Inject constructor(
     }
 
     private fun registerUser() {
-        Log.d("ahi3646", "registerUser: ")
         val usernameResult = validator.validateUsername(state.value.username)
         val passwordResult = validator.validatePassword(state.value.password)
         val repeatedPasswordResult =
@@ -107,6 +105,7 @@ class RegistrationViewModel @Inject constructor(
 
         //save username & password into data store and navigate
         viewModelScope.launch {
+            dataStorePreferenceRepository.setLoggingStatus(true)
             dataStorePreferenceRepository.setUsername(state.value.username)
             dataStorePreferenceRepository.setPassword(state.value.password)
             emitNavigation(RegistrationNavigation.ToLocal(state.value.username))

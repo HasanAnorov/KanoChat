@@ -1,43 +1,56 @@
-    package com.ierusalem.androchat.features_common.auth.login.presentation
+package com.ierusalem.androchat.features_common.auth.login.presentation
 
-    import androidx.compose.foundation.background
-    import androidx.compose.foundation.clickable
-    import androidx.compose.foundation.layout.Arrangement
-    import androidx.compose.foundation.layout.Box
-    import androidx.compose.foundation.layout.Column
-    import androidx.compose.foundation.layout.Row
-    import androidx.compose.foundation.layout.Spacer
-    import androidx.compose.foundation.layout.fillMaxSize
-    import androidx.compose.foundation.layout.fillMaxWidth
-    import androidx.compose.foundation.layout.height
-    import androidx.compose.foundation.layout.imePadding
-    import androidx.compose.foundation.layout.padding
-    import androidx.compose.foundation.rememberScrollState
-    import androidx.compose.foundation.shape.RoundedCornerShape
-    import androidx.compose.foundation.verticalScroll
-    import androidx.compose.material3.MaterialTheme
-    import androidx.compose.material3.Text
-    import androidx.compose.runtime.Composable
-    import androidx.compose.ui.Alignment
-    import androidx.compose.ui.Modifier
-    import androidx.compose.ui.draw.clip
-    import androidx.compose.ui.res.stringResource
-    import androidx.compose.ui.text.style.TextAlign
-    import androidx.compose.ui.tooling.preview.Preview
-    import androidx.compose.ui.unit.dp
-    import com.ierusalem.androchat.R
-    import com.ierusalem.androchat.core.ui.components.CommonPasswordTextField
-    import com.ierusalem.androchat.core.ui.components.CommonTextFieldWithError
-    import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-    import com.ierusalem.androchat.features_common.auth.login.domain.LoginScreenState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.ui.components.CommonPasswordTextField
+import com.ierusalem.androchat.core.ui.components.CommonTextFieldWithError
+import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.features_common.auth.login.domain.LoginScreenState
 
-    @Composable
-    fun LoginScreen(
-        state: LoginScreenState,
-        intentReducer: (LoginFormEvents) -> Unit
-    ) {
+@Composable
+fun LoginScreen(
+    state: LoginScreenState,
+    intentReducer: (LoginFormEvents) -> Unit,
+    snackbarHostState: SnackbarHostState
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        }
+    ) { paddingValues ->
         Column(
             modifier = Modifier
+                .padding(paddingValues)
                 .fillMaxSize()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
@@ -98,7 +111,10 @@
                         .padding(top = 24.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(color = MaterialTheme.colorScheme.primary)
-                        .clickable { intentReducer(LoginFormEvents.Login) },
+                        .clickable {
+                            keyboardController?.hide()
+                            intentReducer(LoginFormEvents.Login)
+                        },
                     content = {
                         Text(
                             text = stringResource(R.string.login),
@@ -141,25 +157,28 @@
             }
         )
     }
+}
 
-    @Preview(locale = "en")
-    @Composable
-    fun LoginScreen_Preview_Light() {
-        AndroChatTheme {
-            LoginScreen(
-                state = LoginScreenState(),
-                intentReducer = {}
-            )
-        }
+@Preview(locale = "en")
+@Composable
+fun LoginScreen_Preview_Light() {
+    AndroChatTheme {
+        LoginScreen(
+            state = LoginScreenState(),
+            intentReducer = {},
+            snackbarHostState = remember { SnackbarHostState() }
+        )
     }
+}
 
-    @Preview(locale = "ru")
-    @Composable
-    fun LoginScreen_Preview_Dark() {
-        AndroChatTheme(isDarkTheme = true) {
-            LoginScreen(
-                state = LoginScreenState(),
-                intentReducer = {}
-            )
-        }
+@Preview(locale = "ru")
+@Composable
+fun LoginScreen_Preview_Dark() {
+    AndroChatTheme(isDarkTheme = true) {
+        LoginScreen(
+            state = LoginScreenState(),
+            intentReducer = {},
+            snackbarHostState = remember { SnackbarHostState() }
+        )
     }
+}

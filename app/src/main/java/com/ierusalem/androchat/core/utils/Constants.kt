@@ -15,6 +15,7 @@ object Constants {
     const val PREFERENCE_LANGUAGE = "device_language"
     const val PREFERENCE_BROADCAST_FREQUENCY = "device_broadcast_frequency"
     const val PREFERENCE_THEME = "device_theme"
+    const val PREFERENCE_LOGGING_STATUS = "device_logging_status"
     const val PREFERENCE_USERNAME = "device_user_username"
     const val PREFERENCE_PASSWORD = "device_user_password"
     const val PREFERENCE_HOTSPOT_NAME = "device_hotspot_name"
@@ -26,9 +27,7 @@ object Constants {
 
     const val UNKNOWN_HOTSPOT_NAME = "TEMP-HOTSPOT"
 
-    const val USERNAME_REGISTER_TO_HOME = "username_register_to_home"
     const val MINIMUM_LOGIN_LENGTH = 3
-    const val MAX_BADGE_COUNT = 99
 
     const val MAX_PORT_NUMBER = 65000
     const val MIN_PORT_NUMBER = 1025
