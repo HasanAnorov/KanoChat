@@ -36,7 +36,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppLanguage
-import com.ierusalem.androchat.core.data.PreviewSettings
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 
 @Composable
@@ -200,7 +199,10 @@ fun SelectionItem(
 private fun PreviewLight() {
     AndroChatTheme {
         LanguageDialog(
-            languages = PreviewSettings.languages,
+            languages = listOf(
+                AppLanguage.English,
+                AppLanguage.Russian,
+            ),
             onDismissDialog = {},
             onLanguageSelected = {},
             selectedLanguage = AppLanguage.Russian
@@ -213,7 +215,10 @@ private fun PreviewLight() {
 private fun PreviewDark() {
     AndroChatTheme(isDarkTheme = true) {
         LanguageDialog(
-            languages = PreviewSettings.languages,
+            languages = listOf(
+                AppLanguage.English,
+                AppLanguage.Russian,
+            ),
             onDismissDialog = {},
             onLanguageSelected = {},
             selectedLanguage = AppLanguage.Russian
