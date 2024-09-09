@@ -104,6 +104,7 @@ import java.io.IOException
 import java.io.UTFDataFormatException
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketException
 import java.net.UnknownHostException
 import javax.inject.Inject
 import kotlin.math.min
@@ -271,7 +272,7 @@ class TcpViewModel @Inject constructor(
                             }
 
                             AppMessageType.FILE -> {
-                                receiveFile(reader = reader)
+                                receiveFile(reader = reader, receivingSocket = connectedClientSocket)
                             }
 
                             AppMessageType.UNKNOWN -> {
@@ -473,7 +474,7 @@ class TcpViewModel @Inject constructor(
                         }
 
                         AppMessageType.FILE -> {
-                            receiveFile(reader = reader)
+                            receiveFile(reader = reader, receivingSocket = clientSocket)
                         }
 
                         AppMessageType.UNKNOWN -> {
@@ -901,7 +902,7 @@ class TcpViewModel @Inject constructor(
      * 3. file name
      * 4. file length
      * */
-    private fun receiveFile(reader: DataInputStream) {
+    private fun receiveFile(reader: DataInputStream, receivingSocket: Socket) {
         log("receiving file ...")
 
         try {
@@ -947,6 +948,7 @@ class TcpViewModel @Inject constructor(
                 // Using `use` to ensure the fileOutputStream is properly closed
                 FileOutputStream(file).use { fileOutputStream ->
                     try {
+                        receivingSocket.setSoTimeout(Constants.FILE_RECEIVE_TIMEOUT)
                         while (fileSize > 0) {
                             val bytesRead = reader.read(
                                 buffer,
@@ -985,7 +987,6 @@ class TcpViewModel @Inject constructor(
                         val newFileMessage =
                             fileMessageEntity.copy(fileState = newState, id = messageId)
                         updatePercentageOfReceivingFile(newFileMessage)
-
                     } catch (e: IOException) {
                         e.printStackTrace()
                         log("file receiving failed: ${e.message}")
@@ -993,6 +994,16 @@ class TcpViewModel @Inject constructor(
                         val newFileMessage =
                             fileMessageEntity.copy(fileState = newState, id = messageId)
                         updatePercentageOfReceivingFile(newFileMessage)
+                    }catch (e: SocketException) {
+                        e.printStackTrace()
+                        log("Client disconnected (SocketException): ${e.message}")
+                        val newState = FileMessageState.Failure
+                        val newFileMessage = fileMessageEntity.copy(fileState = newState, id = messageId)
+                        updatePercentageOfReceivingFile(newFileMessage)
+                    }finally {
+                        //set timeout to 0 which is infinite
+                        receivingSocket.soTimeout = Constants.INFINITELY_TIMEOUT
+                        log("file receiving process finished")
                     }
                 }
             }

@@ -12,6 +12,9 @@ object Constants {
 
     const val FILE_LABEL = "_fast_chat"
 
+    const val FILE_RECEIVE_TIMEOUT = 5000
+    const val INFINITELY_TIMEOUT = 0
+
     const val PREFERENCE_LANGUAGE = "device_language"
     const val PREFERENCE_BROADCAST_FREQUENCY = "device_broadcast_frequency"
     const val PREFERENCE_THEME = "device_theme"
