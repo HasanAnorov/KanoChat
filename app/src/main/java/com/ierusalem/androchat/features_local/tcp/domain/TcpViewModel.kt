@@ -315,9 +315,8 @@ class TcpViewModel @Inject constructor(
                         }
                     } catch (e: UTFDataFormatException) {
                         e.printStackTrace()
-                        /** here is firing***/
                         //if the bytes do not represent a valid modified UTF-8 encoding of a string.
-                        log("createServer: io exception ")
+                        log("createServer: UTFDataFormatException exception ")
                         closerServeSocket()
                         updateHostConnectionStatus(HostConnectionStatus.Failure)
                         updateHasErrorOccurredDialog(TcpScreenDialogErrors.UTFDataFormatException)
@@ -380,14 +379,20 @@ class TcpViewModel @Inject constructor(
                 log("connected as client")
                 closeClientSocket()
                 updateClientConnectionStatus(ClientConnectionStatus.Idle)
-                updateUserOnlineStatus(userUniqueId = state.value.peerUserUniqueId, isOnline = false)
+                updateUserOnlineStatus(
+                    userUniqueId = state.value.peerUserUniqueId,
+                    isOnline = false
+                )
             }
 
             GeneralConnectionStatus.ConnectedAsHost -> {
                 log("connected as host")
                 closerServeSocket()
                 updateHostConnectionStatus(HostConnectionStatus.Idle)
-                updateUserOnlineStatus(userUniqueId = state.value.peerUserUniqueId, isOnline = false)
+                updateUserOnlineStatus(
+                    userUniqueId = state.value.peerUserUniqueId,
+                    isOnline = false
+                )
             }
         }
     }
@@ -424,41 +429,41 @@ class TcpViewModel @Inject constructor(
 
                 try {
 
-                val messageType = AppMessageType.fromChar(reader.readChar())
-                log("incoming message type - $messageType ")
+                    val messageType = AppMessageType.fromChar(reader.readChar())
+                    log("incoming message type - $messageType ")
 
-                when (messageType) {
-                    AppMessageType.INITIAL -> {
-                        setupUserData(reader = reader)
-                    }
+                    when (messageType) {
+                        AppMessageType.INITIAL -> {
+                            setupUserData(reader = reader)
+                        }
 
-                    AppMessageType.VOICE -> {
-                        viewModelScope.launch(Dispatchers.IO) {
-                            receiveVoiceMessage(reader = reader)
+                        AppMessageType.VOICE -> {
+                            viewModelScope.launch(Dispatchers.IO) {
+                                receiveVoiceMessage(reader = reader)
+                            }
+                        }
+
+                        AppMessageType.CONTACT -> {
+                            viewModelScope.launch(Dispatchers.IO) {
+                                receiveContactMessage(reader = reader)
+                            }
+                        }
+
+                        AppMessageType.TEXT -> {
+                            viewModelScope.launch(Dispatchers.IO) {
+                                receiveTextMessage(reader = reader)
+                            }
+                        }
+
+                        AppMessageType.FILE -> {
+                            receiveFile(reader = reader)
+                        }
+
+                        AppMessageType.UNKNOWN -> {
+                            /**Ignore case*/
+                            log("connect to server unknown message char - ${reader.readChar()}")
                         }
                     }
-
-                    AppMessageType.CONTACT -> {
-                        viewModelScope.launch(Dispatchers.IO) {
-                            receiveContactMessage(reader = reader)
-                        }
-                    }
-
-                    AppMessageType.TEXT -> {
-                        viewModelScope.launch(Dispatchers.IO) {
-                            receiveTextMessage(reader = reader)
-                        }
-                    }
-
-                    AppMessageType.FILE -> {
-                        receiveFile(reader = reader)
-                    }
-
-                    AppMessageType.UNKNOWN -> {
-                        /**Ignore case*/
-                        log("connect to server unknown message char - ${reader.readChar()}")
-                    }
-                }
                 } catch (e: EOFException) {
                     e.printStackTrace()
                     //if the IP address of the host could not be determined.
@@ -781,7 +786,6 @@ class TcpViewModel @Inject constructor(
      * 3. file name
      * 4. file length
      * */
-    //fixme
     private suspend fun sendFileMessages(
         writer: DataOutputStream,
         messages: List<ChatMessageEntity>
@@ -789,7 +793,6 @@ class TcpViewModel @Inject constructor(
         log("sending file ...")
 
         withContext(Dispatchers.IO) {
-//                try {
 
             //sending file type
             val type = AppMessageType.FILE.identifier.code
@@ -802,40 +805,44 @@ class TcpViewModel @Inject constructor(
 
             messages.forEach { fileMessage ->
 
-                //todo-check for duplication
-                val file = File(resourceDirectory, fileMessage.fileName!!)
-                log("sending file info: file size - ${file.length()} - ${file.name}")
-
                 val messageId = insertMessage(fileMessage)
                 log("message id - $messageId")
 
-                //sending file name
-                writer.writeUTF(fileMessage.fileName)
-                log("sending file name - ${fileMessage.fileName}")
+                try {
 
-                //write length
-                val fileSizeForPercentage = file.length()
-                writer.writeLong(file.length())
-                log("sending file length - ${file.length()}")
+                    if (!resourceDirectory.exists()) {
+                        resourceDirectory.mkdir()
+                    }
 
-                var bytes: Int
-                var bytesForPercentage = 0L
-                val fileInputStream = FileInputStream(file)
+                    val file = File(resourceDirectory, fileMessage.fileName!!)
+                    log("sending file info: file size - ${file.length()} - ${file.name}")
 
-                // Here we  break file into chunks
-                val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
-                while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
-                    // Send the file to Server Socket
-                    writer.write(buffer, 0, bytes)
-                    writer.flush()
+                    //sending file name
+                    writer.writeUTF(fileMessage.fileName)
+                    log("sending file name - ${fileMessage.fileName}")
 
-                    bytesForPercentage += bytes.toLong()
-                    val percentage =
-                        (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-                    val tempPercentage =
-                        ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
-                    if (percentage != tempPercentage) {
-                        withContext(Dispatchers.Main) {
+                    //write length
+                    val fileSizeForPercentage = file.length()
+                    writer.writeLong(file.length())
+                    log("sending file length - ${file.length()}")
+
+                    var bytes: Int
+                    var bytesForPercentage = 0L
+                    val fileInputStream = FileInputStream(file)
+
+                    // Here we  break file into chunks
+                    val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+                    while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
+                        // Send the file to Server Socket
+                        writer.write(buffer, 0, bytes)
+                        writer.flush()
+
+                        bytesForPercentage += bytes.toLong()
+                        val percentage =
+                            (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                        val tempPercentage =
+                            ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+                        if (percentage != tempPercentage) {
                             log("progress - $percentage")
                             val newState = FileMessageState.Loading(percentage)
                             val newFileMessage =
@@ -843,33 +850,28 @@ class TcpViewModel @Inject constructor(
                             updatePercentageOfReceivingFile(newFileMessage)
                         }
                     }
-                }
 
-                // close the file here
-                fileInputStream.close()
+                    // close the file here
+                    fileInputStream.close()
 
-                withContext(Dispatchers.Main) {
                     val newState = FileMessageState.Success
                     val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
                     updatePercentageOfReceivingFile(newFileMessage)
                     log("file sent successfully")
-                }
 
-//                } catch (exception: IOException) {
-//                    exception.printStackTrace()
-//                    withContext(Dispatchers.Main) {
-//                        log("file sent failed")
-//                        val newState = FileMessageState.Failure
-//                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
-//                    }
-//                } catch (error: Exception) {
-//                    error.printStackTrace()
-//                    withContext(Dispatchers.Main) {
-//                        log("file sent failed")
-//                        val newState = FileMessageState.Failure
-//                        viewModel.updatePercentageOfReceivingFile(fileMessage, newState)
-//                    }
-//                }
+                } catch (exception: IOException) {
+                    exception.printStackTrace()
+                    log("file sent failed IOException")
+                    val newState = FileMessageState.Failure
+                    val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
+                    updatePercentageOfReceivingFile(newFileMessage)
+                } catch (error: Exception) {
+                    error.printStackTrace()
+                    log("file sent failed - Exception")
+                    val newState = FileMessageState.Failure
+                    val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
+                    updatePercentageOfReceivingFile(newFileMessage)
+                }
             }
         }
     }
@@ -1271,6 +1273,7 @@ class TcpViewModel @Inject constructor(
 
     private val resourceDirectory =
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
+
 
     init {
         initializeUserUniqueName()
