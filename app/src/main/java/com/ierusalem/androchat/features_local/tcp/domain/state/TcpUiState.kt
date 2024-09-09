@@ -69,7 +69,7 @@ data class TcpScreenUiState(
 
     //contacts
     val chattingUsers: Resource<List<ChattingUser>> = Resource.Loading(),
-    val currentChattingUser: ChattingUser? = null,
+    val currentChattingUser: Resource<ChattingUser?> = Resource.Loading(),
 
     //error handling with dialogs
     val hasDialogErrorOccurred: TcpScreenDialogErrors? = null,

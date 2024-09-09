@@ -2,6 +2,7 @@ package com.ierusalem.androchat.features_local.tcp_conversation.presentation
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Environment
@@ -39,6 +40,7 @@ import com.ierusalem.androchat.core.ui.components.RecordAudioPermissionTextProvi
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
+import com.ierusalem.androchat.core.utils.Json.gson
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.core.utils.generateFileFromUri
 import com.ierusalem.androchat.core.utils.log
@@ -46,12 +48,13 @@ import com.ierusalem.androchat.core.utils.makeCall
 import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.core.utils.openFile
 import com.ierusalem.androchat.core.utils.readableFileSize
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
+import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenNavigation
-import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
-import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.ContactListContent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -147,12 +150,18 @@ class LocalConversationFragment : Fragment() {
         }
     }
 
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
+        selectedUserStringForm?.let {
+            val selectedUser = gson.fromJson(it, ChattingUser::class.java)
+            viewModel.getCurrentChattingUser(selectedUser)
+            viewModel.loadMessages(selectedUser)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val chattingUser = viewModel.state.value.currentChattingUser
-        chattingUser?.let { user ->
-            viewModel.loadMessages(user)
-        }
 
         resourceDirectory = Environment.getExternalStoragePublicDirectory(
             Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}"
@@ -165,6 +174,7 @@ class LocalConversationFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
         return ComposeView(requireContext()).apply {
             setContent {
 
@@ -212,7 +222,9 @@ class LocalConversationFragment : Fragment() {
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
                                                                 )
-                                                            viewModel.sendClientMessage(contactMessageEntity)
+                                                            viewModel.sendClientMessage(
+                                                                contactMessageEntity
+                                                            )
                                                             delay(300)
                                                         }
                                                     }

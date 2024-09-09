@@ -10,7 +10,7 @@ interface TcpScreenNavigation {
     data object WifiEnableRequest : TcpScreenNavigation
     data object ShowFileChooserClick : TcpScreenNavigation
     data object RequestRecordAudioPermission : TcpScreenNavigation
-    data object OnChattingUserClicked : TcpScreenNavigation
+    data class OnChattingUserClicked(val selectUserStringForm:String) : TcpScreenNavigation
     data object RequestLocationPermission : TcpScreenNavigation
 
     data class OnFileItemClick(val message: ChatMessage.FileMessage) : TcpScreenNavigation

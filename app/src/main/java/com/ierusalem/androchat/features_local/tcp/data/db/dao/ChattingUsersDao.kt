@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ChattingUsersDao {
@@ -29,6 +30,9 @@ interface ChattingUsersDao {
 
     @Query("SELECT EXISTS(SELECT * FROM chatting_users WHERE userUniqueId = :userUniqueId)")
     suspend fun isChattingUserExists(userUniqueId: String): Boolean
+
+    @Query("SELECT * FROM chatting_users WHERE userUniqueId = :userUniqueId LIMIT 1")
+    fun getChattingUserByIdFlow(userUniqueId: String): Flow<ChattingUserEntity?>
 
 }
 

@@ -33,7 +33,7 @@ enum class ErrorType{
 fun ErrorScreen(
     error: ErrorType,
     modifier: Modifier = Modifier,
-    onRetryClick: () -> Unit
+    onRetryClick: () -> Unit = {}
 ) {
     when (error) {
         ErrorType.NetworkError -> NetworkError(onRetryClick = onRetryClick)
@@ -45,7 +45,6 @@ fun ErrorScreen(
 fun NetworkError(onRetryClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -132,6 +131,7 @@ fun InvalidResponseError(modifier: Modifier = Modifier) {
 fun ErrorScreenPreview() {
     AndroChatTheme {
         ErrorScreen(
+            modifier = Modifier.fillMaxSize(),
             error = ErrorType.InvalidResponse,
             onRetryClick = {}
         )
@@ -143,6 +143,7 @@ fun ErrorScreenPreview() {
 fun ErrorScreenPreviewDark() {
     AndroChatTheme(isDarkTheme = true) {
         ErrorScreen(
+            modifier = Modifier.fillMaxSize(),
             error = ErrorType.NetworkError,
             onRetryClick = {}
         )

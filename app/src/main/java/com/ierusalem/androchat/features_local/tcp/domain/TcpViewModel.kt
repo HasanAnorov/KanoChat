@@ -1784,11 +1784,18 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun updateCurrentChattingUniqueIds(currentChattingUser: ChattingUser?) {
-        _state.update {
-            it.copy(
-                currentChattingUser = currentChattingUser
-            )
+    fun getCurrentChattingUser(currentChattingUser: ChattingUser) {
+        viewModelScope.launch {
+            messagesRepository.getChattingUserByIdFlow(currentChattingUser.userUniqueId)
+                .collect { user ->
+                    user?.let {
+                        _state.update {
+                            it.copy(
+                                currentChattingUser = Resource.Success(user.toChattingUser())
+                            )
+                        }
+                    }
+                }
         }
     }
 
@@ -1801,8 +1808,7 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.TcpChatItemClicked -> {
-                updateCurrentChattingUniqueIds(event.currentChattingUser)
-                emitNavigation(TcpScreenNavigation.OnChattingUserClicked)
+                emitNavigation(TcpScreenNavigation.OnChattingUserClicked(gson.toJson(event.currentChattingUser)))
             }
 
             TcpScreenEvents.RequestRecordAudioPermission -> {

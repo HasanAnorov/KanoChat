@@ -105,7 +105,10 @@ fun ChatsScreen(
         }
 
         is Resource.Failure -> {
-            ErrorScreen(error = ErrorType.InvalidResponse, onRetryClick = {})
+            ErrorScreen(
+                modifier = Modifier.fillMaxSize(),
+                error = ErrorType.InvalidResponse
+            )
         }
     }
 
@@ -225,3 +228,18 @@ fun ContactsScreenPreviewDark() {
         )
     }
 }
+
+@Preview
+@Composable
+fun ContactsScreenPreviewDarkError() {
+    AndroChatTheme(isDarkTheme = true) {
+        ChatsScreen(
+            modifier = Modifier,
+            eventHandler = {},
+            uiState = TcpScreenUiState(
+                chattingUsers = Resource.Failure("Something went wrong")
+            )
+        )
+    }
+}
+

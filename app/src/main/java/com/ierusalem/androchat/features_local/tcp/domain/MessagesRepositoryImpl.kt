@@ -15,6 +15,10 @@ class MessagesRepositoryImpl @Inject constructor(
     private val chattingUsersDao: ChattingUsersDao
 ) : MessagesRepository {
 
+    override fun getChattingUserByIdFlow(userUniqueId: String): Flow<ChattingUserEntity?> {
+        return chattingUsersDao.getChattingUserByIdFlow(userUniqueId)
+    }
+
     override suspend fun updateVoiceFileMessage(
         messageId: Long,
         newFileState: FileMessageState,

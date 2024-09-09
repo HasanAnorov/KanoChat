@@ -24,6 +24,7 @@ import com.ierusalem.androchat.core.ui.components.FineLocationPermissionTextProv
 import com.ierusalem.androchat.core.ui.components.NearbyWifiDevicesPermissionTextProvider
 import com.ierusalem.androchat.core.ui.components.PermissionDialog
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.openAppSettings
@@ -217,8 +218,14 @@ class TcpFragment : Fragment() {
                 openWifiSettings()
             }
 
-            TcpScreenNavigation.OnChattingUserClicked -> {
-                findNavController().navigate(R.id.action_tcpFragment_to_localConversationFragment)
+            is TcpScreenNavigation.OnChattingUserClicked -> {
+                val bundle = Bundle().apply {
+                    putString(Constants.SELECTED_CHATTING_USER, navigation.selectUserStringForm)
+                }
+                findNavController().navigate(
+                    R.id.action_tcpFragment_to_localConversationFragment,
+                    bundle
+                )
             }
 
             TcpScreenNavigation.OnSettingsClick -> {
