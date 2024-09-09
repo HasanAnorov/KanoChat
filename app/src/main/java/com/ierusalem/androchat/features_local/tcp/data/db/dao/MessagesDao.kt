@@ -36,12 +36,12 @@ interface MessagesDao {
     fun getAllUsersWithLastMessage(): Flow<List<UserWithLastMessage>>
 
     @Query("UPDATE messages SET fileState = :newFileState WHERE id = :messageId")
-    suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState)
+    suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState?)
 
     @Query("UPDATE messages SET fileState = :newFileState, voiceMessageAudioFileDuration = :newDuration WHERE id = :messageId")
     suspend fun updateVoiceFileMessage(
         messageId: Long,
-        newFileState: FileMessageState,
+        newFileState: FileMessageState?,
         newDuration: Long?
     )
 

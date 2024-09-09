@@ -21,7 +21,7 @@ class MessagesRepositoryImpl @Inject constructor(
 
     override suspend fun updateVoiceFileMessage(
         messageId: Long,
-        newFileState: FileMessageState,
+        newFileState: FileMessageState?,
         newDuration: Long?
     ) {
         return messagesDao.updateVoiceFileMessage(
@@ -31,7 +31,7 @@ class MessagesRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState) {
+    override suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState?) {
         messagesDao.updateFileMessage(
             messageId = messageId,
             newFileState = newFileState

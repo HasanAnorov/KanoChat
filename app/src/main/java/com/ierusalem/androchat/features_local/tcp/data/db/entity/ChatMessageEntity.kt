@@ -20,7 +20,7 @@ data class ChatMessageEntity(
     val voiceMessageFileName: String? = null,
     val voiceMessageAudioFileDuration: Long? = null,
     //file message specific parameters
-    val fileState: FileMessageState = FileMessageState.Loading(0),
+    val fileState: FileMessageState? = null,
     val filePath: String? = null,
     val fileSize: String? = null,
     val fileName: String? = null,
@@ -70,7 +70,7 @@ data class ChatMessageEntity(
                     fileName = fileName!!,
                     fileSize = fileSize!!,
                     fileExtension = fileExtension!!,
-                    fileState = fileState,
+                    fileState = fileState!!,
                     messageId = id,
                     peerUsername = peerUsername
                 )

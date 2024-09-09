@@ -10,11 +10,11 @@ import kotlinx.coroutines.flow.Flow
 interface MessagesRepository {
     suspend fun updateVoiceFileMessage(
         messageId: Long,
-        newFileState: FileMessageState,
+        newFileState: FileMessageState?,
         newDuration: Long?
     )
     fun getChattingUserByIdFlow(userUniqueId: String): Flow<ChattingUserEntity?>
-    suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState)
+    suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState?)
     fun getPagedUserMessagesById(userId: String): PagingSource<Int, ChatMessageEntity>
     suspend fun insertChattingUser(chattingUserEntity: ChattingUserEntity): Long
     suspend fun updateAllUsersOnlineStatus(isOnline: Boolean):Int

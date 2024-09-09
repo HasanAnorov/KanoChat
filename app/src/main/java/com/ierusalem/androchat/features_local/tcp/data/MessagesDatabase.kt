@@ -12,7 +12,7 @@ import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEnti
 
 @Database(
     entities = [ChatMessageEntity::class, ChattingUserEntity::class],
-    version = 7,
+    version = 8,
 )
 @TypeConverters(ChatMessageTypeConverter::class, ChattingUserConverter::class)
 abstract class MessagesDatabase: RoomDatabase() {
