@@ -10,7 +10,7 @@ object Constants {
 
     const val DATA_STORE_NAME = "AppDataStore"
 
-    const val FILE_LABEL = "_chat"
+    const val FILE_LABEL = "_fast_chat"
 
     const val PREFERENCE_LANGUAGE = "device_language"
     const val PREFERENCE_BROADCAST_FREQUENCY = "device_broadcast_frequency"

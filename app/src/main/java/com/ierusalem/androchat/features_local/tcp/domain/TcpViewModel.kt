@@ -327,6 +327,15 @@ class TcpViewModel @Inject constructor(
                         } catch (e: IOException) {
                             e.printStackTrace()
                         }
+                    }catch (e: Exception){
+                        e.printStackTrace()
+                        log("createServer while: unknown exception ")
+                        closeClientServerSocket()
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.UnknownException)
+                        updateUserOnlineStatus(
+                            userUniqueId = state.value.peerUserUniqueId,
+                            isOnline = false
+                        )
                     }
                 }
             }
@@ -362,6 +371,12 @@ class TcpViewModel @Inject constructor(
                 userUniqueId = state.value.peerUserUniqueId,
                 isOnline = false
             )
+        }catch (e: Exception){
+            e.printStackTrace()
+            log("createServer: unknown exception ")
+            closerServeSocket()
+            updateHostConnectionStatus(HostConnectionStatus.Failure)
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.UnknownException)
         }
     }
 

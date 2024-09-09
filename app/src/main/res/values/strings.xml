@@ -197,5 +197,8 @@
     <string name="voice_message_sent">Voice Message Sent</string>
     <string name="file_shared">File Shared</string>
     <string name="contact_shared">Contact Shared</string>
+    <string name="password_length_should_be_between_8_16_symbols">Password length should be between 8 – 16 symbols!</string>
+    <string name="unknown_exception_occurred">Uknown exception occurred</string>
+    <string name="unknown_exception_occurred_definition">Something went wrong, please try again later.</string>
 
 </resources>

@@ -51,7 +51,7 @@ fun TcpContent(
                 NetworkingContent(
                     modifier = Modifier.fillMaxSize(),
                     eventHandler = eventHandler,
-                    state = state
+                    uiState = state
                 )
             }
 

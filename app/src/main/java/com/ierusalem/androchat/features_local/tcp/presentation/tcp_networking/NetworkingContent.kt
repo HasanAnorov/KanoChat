@@ -27,14 +27,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -55,8 +62,9 @@ import com.ierusalem.androchat.features_local.tcp.presentation.tcp_networking.co
 fun NetworkingContent(
     modifier: Modifier = Modifier,
     eventHandler: (TcpScreenEvents) -> Unit,
-    state: TcpScreenUiState,
+    uiState: TcpScreenUiState,
 ) {
+    val hotspotPasswordFocusRequester = remember { FocusRequester() }
     LazyColumn(
         modifier = modifier.navigationBarsPadding()
     ) {
@@ -91,18 +99,18 @@ fun NetworkingContent(
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    text = stringResource(id = state.localOnlyHotspotNetworkingStatus.res),
+                                    text = stringResource(id = uiState.localOnlyHotspotNetworkingStatus.res),
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Icon(
                                     modifier = Modifier.padding(start = 8.dp),
-                                    painter = painterResource(id = state.localOnlyHotspotNetworkingStatus.icon),
+                                    painter = painterResource(id = uiState.localOnlyHotspotNetworkingStatus.icon),
                                     contentDescription = null,
-                                    tint = state.localOnlyHotspotNetworkingStatus.getIconColor()
+                                    tint = uiState.localOnlyHotspotNetworkingStatus.getIconColor()
                                 )
                             }
-                            AnimatedVisibility(visible = state.localOnlyHotspotNetworkingStatus != LocalOnlyHotspotStatus.Idle) {
+                            AnimatedVisibility(visible = uiState.localOnlyHotspotNetworkingStatus != LocalOnlyHotspotStatus.Idle) {
                                 Column(
                                     modifier = Modifier
                                         .background(
@@ -127,7 +135,7 @@ fun NetworkingContent(
                                                 .height(IntrinsicSize.Max)
                                                 .fillMaxWidth()
                                                 .padding(top = 8.dp),
-                                            value = state.localOnlyHotspotName.ifEmpty {
+                                            value = uiState.localOnlyHotspotName.ifEmpty {
                                                 stringResource(
                                                     id = R.string.error_occurred
                                                 )
@@ -136,7 +144,7 @@ fun NetworkingContent(
                                             colors = TextFieldDefaults.colors(
                                                 focusedTextColor = MaterialTheme.colorScheme.onSurface,
                                                 unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                                disabledTextColor = if(state.localOnlyHotspotPassword.isEmpty()) Color.Red else MaterialTheme.colorScheme.onSurface,
+                                                disabledTextColor = if (uiState.localOnlyHotspotPassword.isEmpty()) Color.Red else MaterialTheme.colorScheme.onSurface,
                                                 focusedIndicatorColor = Color.Transparent,
                                                 unfocusedIndicatorColor = Color.Transparent,
                                                 disabledIndicatorColor = Color.Transparent
@@ -166,7 +174,7 @@ fun NetworkingContent(
                                                 .height(IntrinsicSize.Max)
                                                 .fillMaxWidth()
                                                 .padding(top = 8.dp),
-                                            value = state.localOnlyHotspotPassword.ifEmpty {
+                                            value = uiState.localOnlyHotspotPassword.ifEmpty {
                                                 stringResource(
                                                     id = R.string.error_occurred
                                                 )
@@ -175,7 +183,7 @@ fun NetworkingContent(
                                             colors = TextFieldDefaults.colors(
                                                 focusedTextColor = MaterialTheme.colorScheme.onSurface,
                                                 unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                                disabledTextColor = if(state.localOnlyHotspotPassword.isEmpty()) Color.Red else MaterialTheme.colorScheme.onSurface,
+                                                disabledTextColor = if (uiState.localOnlyHotspotPassword.isEmpty()) Color.Red else MaterialTheme.colorScheme.onSurface,
                                                 focusedIndicatorColor = Color.Transparent,
                                                 unfocusedIndicatorColor = Color.Transparent,
                                                 disabledIndicatorColor = Color.Transparent
@@ -195,7 +203,13 @@ fun NetworkingContent(
                             )
                             Row(
                                 modifier = Modifier
-                                    .clickable { eventHandler(TcpScreenEvents.DiscoverHotSpotClick) }
+                                    .clickable {
+                                        if (uiState.isValidHotSpotPassword) {
+                                            eventHandler(TcpScreenEvents.DiscoverHotSpotClick)
+                                        } else {
+                                            hotspotPasswordFocusRequester.requestFocus()
+                                        }
+                                    }
                                     .fillMaxWidth()
                                     .padding(
                                         vertical = 10.dp,
@@ -206,15 +220,15 @@ fun NetworkingContent(
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    text = stringResource(id = state.hotspotNetworkingStatus.res),
+                                    text = stringResource(id = uiState.hotspotNetworkingStatus.res),
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Icon(
                                     modifier = Modifier.padding(start = 8.dp),
-                                    painter = painterResource(id = state.hotspotNetworkingStatus.icon),
+                                    painter = painterResource(id = uiState.hotspotNetworkingStatus.icon),
                                     contentDescription = null,
-                                    tint = state.hotspotNetworkingStatus.getIconColor()
+                                    tint = uiState.hotspotNetworkingStatus.getIconColor()
                                 )
                             }
                             HorizontalDivider(
@@ -234,15 +248,15 @@ fun NetworkingContent(
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    text = stringResource(id = state.p2pNetworkingStatus.res),
+                                    text = stringResource(id = uiState.p2pNetworkingStatus.res),
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Icon(
                                     modifier = Modifier.padding(start = 8.dp),
-                                    painter = painterResource(id = state.p2pNetworkingStatus.icon),
+                                    painter = painterResource(id = uiState.p2pNetworkingStatus.icon),
                                     contentDescription = null,
-                                    tint = state.p2pNetworkingStatus.getIconColor()
+                                    tint = uiState.p2pNetworkingStatus.getIconColor()
                                 )
                             }
                         }
@@ -265,7 +279,7 @@ fun NetworkingContent(
                             .height(IntrinsicSize.Max)
                             .fillMaxWidth()
                             .padding(top = 8.dp),
-                        value = state.hotspotName,
+                        value = uiState.hotspotName,
                         textStyle = MaterialTheme.typography.titleMedium,
                         colors = TextFieldDefaults.colors(
                             focusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -280,7 +294,7 @@ fun NetworkingContent(
                             Text(text = stringResource(R.string.enter_hotspot_name))
                         },
                         trailingIcon = {
-                            if (state.isValidHotSpotName) {
+                            if (uiState.isValidHotSpotName) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.check_circle),
                                     contentDescription = null,
@@ -311,6 +325,14 @@ fun NetworkingContent(
                         .padding(horizontal = 10.dp)
                         .padding(bottom = 16.dp)
                 ) {
+                    val hotspotPassword by remember(uiState.hotspotPassword) {
+                        mutableStateOf(
+                            TextFieldValue(
+                                uiState.hotspotPassword,
+                                TextRange(uiState.hotspotPassword.length)
+                            )
+                        )
+                    }
                     Text(
                         text = stringResource(R.string.hotspot_password),
                         fontFamily = MontserratFontFamily,
@@ -320,10 +342,11 @@ fun NetworkingContent(
                     )
                     TextField(
                         modifier = Modifier
+                            .focusRequester(hotspotPasswordFocusRequester)
                             .height(IntrinsicSize.Max)
                             .fillMaxWidth()
                             .padding(top = 8.dp),
-                        value = state.hotspotPassword,
+                        value = hotspotPassword,
                         textStyle = MaterialTheme.typography.titleMedium,
                         colors = TextFieldDefaults.colors(
                             focusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -332,13 +355,13 @@ fun NetworkingContent(
                             unfocusedIndicatorColor = Color.Transparent
                         ),
                         onValueChange = {
-                            eventHandler(TcpScreenEvents.OnHotspotPasswordChanged(it))
+                            eventHandler(TcpScreenEvents.OnHotspotPasswordChanged(it.text))
                         },
                         placeholder = {
                             Text(text = stringResource(R.string.enter_hotspot_password))
                         },
                         trailingIcon = {
-                            if (state.isValidHotSpotPassword) {
+                            if (uiState.isValidHotSpotPassword) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.check_circle),
                                     contentDescription = null,
@@ -359,6 +382,15 @@ fun NetworkingContent(
                         shape = RoundedCornerShape(size = 12.dp),
                         singleLine = true,
                     )
+                    if (!uiState.isValidHotSpotPassword) {
+                        Text(
+                            modifier = Modifier.padding(top = 4.dp),
+                            text = stringResource(R.string.password_length_should_be_between_8_16_symbols),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Red.copy(0.8F),
+                            maxLines = 2,
+                        )
+                    }
                 }
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 8.dp),
@@ -369,8 +401,8 @@ fun NetworkingContent(
                         .padding(horizontal = 10.dp)
                         .padding(top = 8.dp),
                     status = stringResource(R.string.wifi_status),
-                    state = if (state.isWifiOn) R.string.wifi_enabled else R.string.wifi_disabled,
-                    stateColor = if (state.isWifiOn) Color(0xFF35C47C) else Color.Red
+                    state = if (uiState.isWifiOn) R.string.wifi_enabled else R.string.wifi_disabled,
+                    stateColor = if (uiState.isWifiOn) Color(0xFF35C47C) else Color.Red
                 )
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 8.dp),
@@ -380,8 +412,8 @@ fun NetworkingContent(
                     modifier = Modifier
                         .padding(horizontal = 10.dp),
                     status = stringResource(R.string.networking_status),
-                    state = state.generalNetworkingStatus.status,
-                    stateColor = if (state.generalNetworkingStatus != GeneralNetworkingStatus.Idle) Color(
+                    state = uiState.generalNetworkingStatus.status,
+                    stateColor = if (uiState.generalNetworkingStatus != GeneralNetworkingStatus.Idle) Color(
                         0xFF35C47C
                     ) else Color.Red
                 )
@@ -417,7 +449,7 @@ fun NetworkingContent(
                     color = MaterialTheme.colorScheme.background,
                     thickness = 1.dp
                 )
-                if (state.availableWifiNetworks.isNotEmpty()) {
+                if (uiState.availableWifiNetworks.isNotEmpty()) {
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -425,7 +457,7 @@ fun NetworkingContent(
                             .padding(horizontal = 10.dp)
                             .padding(top = 16.dp)
                     ) {
-                        items(state.availableWifiNetworks) { wifiDevice ->
+                        items(uiState.availableWifiNetworks) { wifiDevice ->
                             WifiLazyItem(
                                 modifier = Modifier
                                     .padding(top = 4.dp)
@@ -442,7 +474,7 @@ fun NetworkingContent(
                         }
                     }
                 }
-                when (state.p2pNetworkingStatus) {
+                when (uiState.p2pNetworkingStatus) {
                     P2PNetworkingStatus.Idle -> {
                         Text(
                             modifier = Modifier
@@ -492,7 +524,9 @@ private fun HotspotContentPreview() {
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
             eventHandler = {},
-            state = TcpScreenUiState()
+            uiState = TcpScreenUiState(
+                isValidHotSpotPassword = false
+            )
         )
     }
 }
@@ -506,7 +540,9 @@ private fun HotspotContentPreviewDark() {
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
             eventHandler = {},
-            state = TcpScreenUiState()
+            uiState = TcpScreenUiState(
+                isValidHotSpotPassword = false
+            )
         )
     }
 }

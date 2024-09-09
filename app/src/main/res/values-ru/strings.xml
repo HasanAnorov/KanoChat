@@ -190,5 +190,8 @@
     <string name="voice_message_sent">Голосовое сообщение отправлено</string>
     <string name="file_shared">Файл передан</string>
     <string name="contact_shared">Контакт передан</string>
+    <string name="password_length_should_be_between_8_16_symbols">Длина пароля должна быть от 8 до 16 символов!</string>
+    <string name="unknown_exception_occurred">Произошло неизвестное исключение</string>
+    <string name="unknown_exception_occurred_definition">Что-то пошло не так, попробуйте позже.</string>
 
 </resources>

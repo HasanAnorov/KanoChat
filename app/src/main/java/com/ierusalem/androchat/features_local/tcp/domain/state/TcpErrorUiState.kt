@@ -89,6 +89,10 @@ enum class TcpScreenDialogErrors(
         R.string.illegal_argument_exception_occurred,
         R.string.illegal_argument_exception_occurred_definition,
         R.drawable.info
+    ),
+    UnknownException(
+        R.string.unknown_exception_occurred,
+        R.string.unknown_exception_occurred_definition,
+        R.drawable.info
     )
-
 }
