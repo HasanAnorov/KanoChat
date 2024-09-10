@@ -5,7 +5,6 @@ import androidx.annotation.CheckResult
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 
-//todo add proper comment
 @Stable
 @Immutable
 sealed class Reason(

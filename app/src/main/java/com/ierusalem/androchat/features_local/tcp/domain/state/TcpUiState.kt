@@ -55,7 +55,7 @@ data class TcpScreenUiState(
     val hotspotNetworkingStatus: HotspotNetworkingStatus = HotspotNetworkingStatus.Idle,
     val p2pNetworkingStatus: P2PNetworkingStatus = P2PNetworkingStatus.Idle,
 
-    //general connections state - todo optimize this
+    //general connections state
     val generalConnectionStatus: GeneralConnectionStatus = GeneralConnectionStatus.Idle,
     val hostConnectionStatus: HostConnectionStatus = HostConnectionStatus.Idle,
     val clientConnectionStatus: ClientConnectionStatus = ClientConnectionStatus.Idle,

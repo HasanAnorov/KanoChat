@@ -68,13 +68,14 @@ fun Messages(
                 val chatMessage: ChatMessage? = messages[reversedIndex]
 
                 chatMessage?.let {
-                    // todo: fix this
                     val prevAuthor =
-                        messages.itemSnapshotList.getOrNull(reversedIndex - 1)?.isFromYou
+                        messages.itemSnapshotList.getOrNull(reversedIndex - 1)?.peerUsername
                     val nextAuthor =
-                        messages.itemSnapshotList.getOrNull(reversedIndex + 1)?.isFromYou
-                    val isFirstMessageByAuthor = prevAuthor != chatMessage.isFromYou
-                    val isLastMessageByAuthor = nextAuthor != chatMessage.isFromYou
+                        messages.itemSnapshotList.getOrNull(reversedIndex + 1)?.peerUsername
+
+                    val isFirstMessageByAuthor = prevAuthor != chatMessage.peerUsername
+                    val isLastMessageByAuthor = nextAuthor != chatMessage.peerUsername
+
                     ChatMessageItem(
                         msg = chatMessage,
                         isFirstMessageByAuthor = isFirstMessageByAuthor,

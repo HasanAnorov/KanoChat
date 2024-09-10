@@ -158,7 +158,7 @@ fun RegistrationScreen(
     )
 }
 
-@Preview()
+@Preview
 @Composable
 fun LoginScreen_Preview_Light() {
     AndroChatTheme {
@@ -169,7 +169,7 @@ fun LoginScreen_Preview_Light() {
     }
 }
 
-@Preview()
+@Preview
 @Composable
 fun LoginScreen_Preview_Dark() {
     AndroChatTheme(isDarkTheme = true) {

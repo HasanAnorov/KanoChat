@@ -99,7 +99,7 @@ class LocalActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        //todo - here handle connected devices
+        // handle connected devices here
         val peerListListener = WifiP2pManager.PeerListListener { peerList ->
             val peers = viewModel.state.value.availableWifiNetworks
             val refreshedPeers = peerList.deviceList

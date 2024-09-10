@@ -26,18 +26,6 @@ fun Uri.getMimeType(context: Context): String? {
     return mimeType
 }
 
-fun Uri.getFileSizeInReadableFormat(contentResolver: ContentResolver): String {
-    var fileSize = 0L
-    this.let { returnUri ->
-        contentResolver.query(returnUri, null, null, null, null)
-    }?.use { cursor ->
-        val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-        cursor.moveToFirst()
-        fileSize = cursor.getLong(sizeIndex)
-    }
-    return fileSize.readableFileSize()
-}
-
 fun Uri.getFileNameFromUri(contentResolver: ContentResolver): String {
     var fileName = "file"
     this.let { returnUri ->
@@ -49,17 +37,4 @@ fun Uri.getFileNameFromUri(contentResolver: ContentResolver): String {
         fileName = cursor.getString(nameIndex)
     }
     return fileName
-}
-
-fun Uri.getFileExtensionFromUri(contentResolver: ContentResolver): String {
-    var fileName = "file"
-    this.let { returnUri ->
-        contentResolver.query(returnUri, null, null, null, null)
-    }?.use { cursor ->
-        val nameIndex =
-            cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-        cursor.moveToFirst()
-        fileName = cursor.getString(nameIndex)
-    }
-    return fileName.getExtensionFromFilename()
 }
