@@ -76,7 +76,7 @@ fun ConversationContent(
 
     Scaffold(
         topBar = {
-            when(uiState.currentChattingUser){
+            when (uiState.currentChattingUser) {
                 is Resource.Loading -> {
                     ConversationChannelBar(
                         contact = null,
@@ -84,6 +84,7 @@ fun ConversationContent(
                         scrollBehavior = scrollBehavior,
                     )
                 }
+
                 is Resource.Failure -> {
                     ConversationChannelBar(
                         contact = null,
@@ -91,6 +92,7 @@ fun ConversationContent(
                         scrollBehavior = scrollBehavior,
                     )
                 }
+
                 is Resource.Success -> {
                     ConversationChannelBar(
                         contact = uiState.currentChattingUser.data,
@@ -98,7 +100,7 @@ fun ConversationContent(
                         scrollBehavior = scrollBehavior,
                     )
                 }
-            } 
+            }
         },
         contentWindowInsets = ScaffoldDefaults
             .contentWindowInsets
@@ -120,25 +122,31 @@ fun ConversationContent(
                 .fillMaxSize()
                 .padding(paddingValues),
             content = {
-                when(uiState.currentChattingUser){
+                when (uiState.currentChattingUser) {
                     is Resource.Loading -> {
-                        LoadingScreen(
-                            modifier = Modifier.weight(1F)
-                        )
+                        LoadingScreen(modifier = Modifier.weight(1F), isForChat = true)
                     }
+
                     is Resource.Failure -> {
                         ErrorScreen(
                             modifier = Modifier.weight(1F),
                             error = ErrorType.InvalidResponse
                         )
                     }
+
                     is Resource.Success -> {
                         Messages(
                             messages = uiState.messages.collectAsLazyPagingItems(),
                             modifier = Modifier.weight(1f),
                             scrollState = scrollState,
                             onFileItemClicked = { eventHandler(TcpScreenEvents.OnFileItemClick(it)) },
-                            onContactItemClick = { eventHandler(TcpScreenEvents.OnContactItemClick(it)) },
+                            onContactItemClick = {
+                                eventHandler(
+                                    TcpScreenEvents.OnContactItemClick(
+                                        it
+                                    )
+                                )
+                            },
                             onPlayVoiceMessageClick = {
                                 eventHandler(
                                     TcpScreenEvents.OnPlayVoiceMessageClick(
@@ -205,13 +213,13 @@ fun ConversationChannelBar(
                 }
                 // Number of members
                 contact?.let {
-                    if(it.isOnline){
+                    if (it.isOnline) {
                         Text(
                             text = stringResource(id = R.string.online),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFF35C47C)
                         )
-                    }else{
+                    } else {
                         Text(
                             text = stringResource(id = R.string.offline),
                             style = MaterialTheme.typography.bodySmall,

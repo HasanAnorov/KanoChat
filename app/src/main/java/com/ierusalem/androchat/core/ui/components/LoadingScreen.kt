@@ -5,15 +5,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.ierusalem.androchat.core.ui.animations.AnimatedShimmer
+import com.ierusalem.androchat.core.ui.animations.ChatShimmerItem
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 
 @Composable
-fun LoadingScreen(modifier: Modifier = Modifier) {
+fun LoadingScreen(modifier: Modifier = Modifier, isForChat: Boolean = false) {
     Column(
         modifier = modifier
     ) {
-        repeat(18) {
-            AnimatedShimmer()
+        repeat(17) {
+            if (isForChat) {
+                ChatShimmerItem()
+            } else {
+                AnimatedShimmer()
+            }
         }
     }
 }
