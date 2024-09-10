@@ -66,6 +66,10 @@ object Constants {
     const val VOICE_MESSAGE_FILE_NAME = "audio_"
     const val AUDIO_EXTENSION = ".mp3"
 
+    fun getRandomColor(): Int {
+        return RandomColors().getColor()
+    }
+
     fun getLanguageCode(language: AppLanguage): String {
         return when (language) {
             AppLanguage.English -> ENGLISH_LOCALE

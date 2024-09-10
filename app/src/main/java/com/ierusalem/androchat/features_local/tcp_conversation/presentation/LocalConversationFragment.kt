@@ -67,7 +67,6 @@ class LocalConversationFragment : Fragment() {
 
     private lateinit var resourceDirectory: File
 
-    //todo delegate this to visible_permission_dialogue
     private val readContactsPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             viewModel.onPermissionResult(Manifest.permission.READ_CONTACTS, isGranted)
@@ -185,7 +184,6 @@ class LocalConversationFragment : Fragment() {
 
                 AndroChatTheme {
                     if (uiState.showBottomSheet) {
-                        //todo - delegate composable to file
                         ModalBottomSheet(
                             sheetState = sheetState,
                             onDismissRequest = {

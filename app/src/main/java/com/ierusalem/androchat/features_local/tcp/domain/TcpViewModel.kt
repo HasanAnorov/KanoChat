@@ -39,9 +39,9 @@ import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.Constants.SOCKET_DEFAULT_BUFFER_SIZE
 import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
+import com.ierusalem.androchat.core.utils.Constants.getRandomColor
 import com.ierusalem.androchat.core.utils.Constants.getTimeInHours
 import com.ierusalem.androchat.core.utils.Json.gson
-import com.ierusalem.androchat.core.utils.RandomColors
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
 import com.ierusalem.androchat.core.utils.generateFileFromUri
@@ -197,16 +197,15 @@ class TcpViewModel @Inject constructor(
                     userUniqueId = initialChatModel.userUniqueId,
                     userUniqueName = initialChatModel.userUniqueName
                 )
-                messagesRepository.updateIsUserOnline(
+                updateUserOnlineStatus(
                     userUniqueId = initialChatModel.userUniqueId,
                     isOnline = true
                 )
             } else {
-                val avatarBackgroundColor = RandomColors().getColor()
                 val chattingUserEntity = ChattingUserEntity(
                     userUniqueId = initialChatModel.userUniqueId,
                     userUniqueName = initialChatModel.userUniqueName,
-                    avatarBackgroundColor = avatarBackgroundColor,
+                    avatarBackgroundColor = getRandomColor(),
                     isOnline = true
                 )
                 messagesRepository.insertChattingUser(chattingUserEntity)
@@ -217,7 +216,10 @@ class TcpViewModel @Inject constructor(
 
     private fun updateUserOnlineStatus(userUniqueId: String, isOnline: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            messagesRepository.updateIsUserOnline(userUniqueId = userUniqueId, isOnline = isOnline)
+            messagesRepository.updateIsUserOnline(
+                userUniqueId = userUniqueId,
+                isOnline = isOnline
+            )
         }
     }
 
@@ -381,7 +383,6 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    // todo - check stream closes also
     // network clean up should be carried out in viewmodel
     private fun handleWifiDisabledCase() {
         when (state.value.generalConnectionStatus) {
@@ -919,7 +920,6 @@ class TcpViewModel @Inject constructor(
                 var fileSize: Long = reader.readLong() // read file size
                 log("file size - $fileSize")
 
-                var bytes = 0
                 var bytesForPercentage = 0L
                 val fileSizeForPercentage = fileSize
                 val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
@@ -2037,7 +2037,6 @@ class TcpViewModel @Inject constructor(
 
                 when (state.value.p2pNetworkingStatus) {
                     P2PNetworkingStatus.Idle -> {
-                        //todo check that
                         if (hasOtherNetworkingIsRunning()) {
                             return
                         }

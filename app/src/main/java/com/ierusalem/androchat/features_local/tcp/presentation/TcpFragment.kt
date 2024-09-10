@@ -43,7 +43,6 @@ class TcpFragment : Fragment() {
 
     private val viewModel: TcpViewModel by activityViewModels()
 
-    //todo delegate this to viewmodel and test permission cases
     private lateinit var permissionGuard: PermissionGuardImpl
 
     private val locationPermissionRequest = registerForActivityResult(
