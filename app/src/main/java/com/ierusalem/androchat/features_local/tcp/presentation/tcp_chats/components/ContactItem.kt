@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.core.utils.RandomColors
+import com.ierusalem.androchat.core.utils.Constants.getRandomColor
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 
@@ -241,7 +241,7 @@ fun ContactItemPreview() {
                 userUniqueId = "249141sadfs67df9s7f89s7f",
                 username = "Hasan",
                 isOnline = false,
-                avatarBackgroundColor = RandomColors().getColor(),
+                avatarBackgroundColor = getRandomColor(),
                 lastMessage = null
             ),
             lastMessage = ChatMessageEntity(
@@ -270,7 +270,7 @@ fun ContactItemPreviewDark() {
                 userUniqueId = "249141sadfs67df9s7f89s7f",
                 username = "Hasan",
                 isOnline = true,
-                avatarBackgroundColor = RandomColors().getColor(),
+                avatarBackgroundColor = getRandomColor(),
                 lastMessage = null
             ),
             lastMessage = ChatMessageEntity(

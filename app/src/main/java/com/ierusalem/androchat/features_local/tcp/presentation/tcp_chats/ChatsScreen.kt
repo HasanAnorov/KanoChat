@@ -24,7 +24,7 @@ import com.ierusalem.androchat.core.ui.components.ErrorScreen
 import com.ierusalem.androchat.core.ui.components.ErrorType
 import com.ierusalem.androchat.core.ui.components.LoadingScreen
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.core.utils.RandomColors
+import com.ierusalem.androchat.core.utils.Constants.getRandomColor
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
@@ -142,70 +142,70 @@ fun ContactsScreenPreviewSuccess() {
                             userUniqueId = "123",
                             username = "Ahmed",
                             isOnline = true,
-                            avatarBackgroundColor = RandomColors().getColor(),
+                            avatarBackgroundColor = getRandomColor(),
                             lastMessage = null
                         ),
                         ChattingUser(
                             userUniqueId = "123",
                             username = "Ahmed",
                             isOnline = true,
-                            avatarBackgroundColor = RandomColors().getColor(),
+                            avatarBackgroundColor = getRandomColor(),
                             lastMessage = null
                         ),
                         ChattingUser(
                             userUniqueId = "123",
                             username = "Ahmed",
                             isOnline = false,
-                            avatarBackgroundColor = RandomColors().getColor(),
+                            avatarBackgroundColor = getRandomColor(),
                             lastMessage = null
                         ),
                         ChattingUser(
                             userUniqueId = "123",
                             username = "Ahmed",
                             isOnline = false,
-                            avatarBackgroundColor = RandomColors().getColor(),
+                            avatarBackgroundColor = getRandomColor(),
                             lastMessage = null
                         ),
                         ChattingUser(
                             userUniqueId = "123",
                             username = "Ahmed",
                             isOnline = false,
-                            avatarBackgroundColor = RandomColors().getColor(),
+                            avatarBackgroundColor = getRandomColor(),
                             lastMessage = null
                         ),
                         ChattingUser(
                             userUniqueId = "123",
                             username = "Ahmed",
                             isOnline = false,
-                            avatarBackgroundColor = RandomColors().getColor(),
+                            avatarBackgroundColor = getRandomColor(),
                             lastMessage = null
                         ),
                         ChattingUser(
                             userUniqueId = "123",
                             username = "Ahmed",
                             isOnline = false,
-                            avatarBackgroundColor = RandomColors().getColor(),
+                            avatarBackgroundColor = getRandomColor(),
                             lastMessage = null
                         ),
                         ChattingUser(
                             userUniqueId = "123",
                             username = "Ahmed",
                             isOnline = false,
-                            avatarBackgroundColor = RandomColors().getColor(),
+                            avatarBackgroundColor = getRandomColor(),
                             lastMessage = null
                         ),
                         ChattingUser(
                             userUniqueId = "123",
                             username = "Ahmed",
                             isOnline = false,
-                            avatarBackgroundColor = RandomColors().getColor(),
+                            avatarBackgroundColor = getRandomColor(),
                             lastMessage = null
                         ),
                         ChattingUser(
                             userUniqueId = "123",
                             username = "Ahmed",
                             isOnline = false,
-                            avatarBackgroundColor = RandomColors().getColor(),
+                            avatarBackgroundColor = getRandomColor(),
                             lastMessage = null
                         )
                     )
