@@ -28,6 +28,13 @@ fun Fragment.shortToast(text: String, duration: Int = Toast.LENGTH_SHORT): Toast
     }
 }
 
+fun Fragment.longToast(text: String, duration: Int = Toast.LENGTH_LONG): Toast {
+    return Toast.makeText(requireContext(), text, duration).apply {
+        setGravity(Gravity.CENTER, 0, 0)
+        show()
+    }
+}
+
 fun Fragment.openWifiSettings(){
     val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
     startActivity(intent)

@@ -14,6 +14,8 @@ import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.util.Log
@@ -1164,18 +1166,22 @@ class TcpViewModel @Inject constructor(
     private fun startHotspotNetworking() {
         viewModelScope.launch(Dispatchers.IO) {
             if (permissionGuard.canCreateNetwork()) {
-                if (ServerDefaults.canUseCustomConfig()) {
-                    createGroup()
-                } else {
-                    //fixme clarify error
-                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.AndroidVersion10RequiredForGroupNetworking)
-                }
+                createGroup()
             } else {
                 log("Permissions not granted for location!")
                 // request at leas one time location permission,
                 // this make requestPermissionForRationale return true
                 emitNavigation(TcpScreenNavigation.RequestLocationPermission)
             }
+        }
+    }
+
+    private fun updateStaticHotspotNameAndPassword(name: String, password: String){
+        _state.update {
+            it.copy(
+                staticHotspotName = name,
+                staticHotspotPassword = password
+            )
         }
     }
 
@@ -1187,6 +1193,27 @@ class TcpViewModel @Inject constructor(
             override fun onSuccess() {
                 log("New network created")
                 updateHotspotDiscoveryStatus(HotspotNetworkingStatus.HotspotRunning)
+
+
+                // Delay before requesting group info to ensure group is fully established
+                Handler(Looper.getMainLooper()).postDelayed({
+                    wifiP2PManager.requestGroupInfo(channel) { group ->
+                        if (group != null) {
+                            val ssid = group.networkName    // The SSID of the hotspot
+                            val passphrase = group.passphrase // The password of the hotspot
+                            log("Group SSID: $ssid")
+                            log("Group Passphrase: $passphrase")
+                            if (!ServerDefaults.canUseCustomConfig()){
+                                updateStaticHotspotNameAndPassword(
+                                    name = ssid,
+                                    password = passphrase
+                                )
+                            }
+                        } else {
+                            log("Group info not available")
+                        }
+                    }
+                }, 1000) // Add a 2-second delay
             }
 
             override fun onFailure(reason: Int) {

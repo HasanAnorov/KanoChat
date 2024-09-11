@@ -70,11 +70,6 @@ enum class TcpScreenDialogErrors(
         R.string.other_networking_is_running_cancel_it_to_create_peer_networking,
         R.drawable.info
     ),
-    AndroidVersion10RequiredForGroupNetworking(
-        R.string.your_device_does_not_support_group_networking,
-        R.string.at_least_android_10_is_required_for_group_networking,
-        R.drawable.info
-    ),
     PeerNotConnected(
         R.string.no_peer_to_chat,
         R.string.there_is_no_online_peers_to_chat,

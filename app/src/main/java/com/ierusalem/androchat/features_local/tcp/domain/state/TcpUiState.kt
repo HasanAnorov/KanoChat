@@ -12,6 +12,7 @@ import com.ierusalem.androchat.core.utils.isValidHotspotName
 import com.ierusalem.androchat.core.utils.isValidHotspotPassword
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
+import com.ierusalem.androchat.features_local.tcp.data.server.ServerDefaults
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import kotlinx.coroutines.flow.Flow
@@ -79,4 +80,8 @@ data class TcpScreenUiState(
     //network broad frequency for hotspot networking
     val networkBand: AppBroadcastFrequency = AppBroadcastFrequency.FREQUENCY_2_4_GHZ,
 
-    )
+    val canUseCustomConfigForHotspot: Boolean = ServerDefaults.canUseCustomConfig(),
+
+    val staticHotspotName:String = "",
+    val staticHotspotPassword:String = ""
+)

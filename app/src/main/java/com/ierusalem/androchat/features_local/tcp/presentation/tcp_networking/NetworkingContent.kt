@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +51,7 @@ import com.ierusalem.androchat.core.ui.components.baselineHeight
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.ui.theme.MontserratFontFamily
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralNetworkingStatus
+import com.ierusalem.androchat.features_local.tcp.domain.state.HotspotNetworkingStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.LocalOnlyHotspotStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.P2PNetworkingStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
@@ -204,10 +206,14 @@ fun NetworkingContent(
                             Row(
                                 modifier = Modifier
                                     .clickable {
-                                        if (uiState.isValidHotSpotPassword) {
+                                        if(uiState.canUseCustomConfigForHotspot){
+                                            if (uiState.isValidHotSpotPassword) {
+                                                eventHandler(TcpScreenEvents.DiscoverHotSpotClick)
+                                            } else {
+                                                hotspotPasswordFocusRequester.requestFocus()
+                                            }
+                                        }else{
                                             eventHandler(TcpScreenEvents.DiscoverHotSpotClick)
-                                        } else {
-                                            hotspotPasswordFocusRequester.requestFocus()
                                         }
                                     }
                                     .fillMaxWidth()
@@ -230,6 +236,102 @@ fun NetworkingContent(
                                     contentDescription = null,
                                     tint = uiState.hotspotNetworkingStatus.getIconColor()
                                 )
+                            }
+                            val staticHotspotNameAndPasswordVisibility by rememberSaveable(
+                                uiState.canUseCustomConfigForHotspot,
+                                uiState.hotspotNetworkingStatus
+                            ) {
+                                mutableStateOf(
+                                    !uiState.canUseCustomConfigForHotspot &&
+                                            uiState.hotspotNetworkingStatus != HotspotNetworkingStatus.Idle
+                                )
+                            }
+                            AnimatedVisibility(visible = staticHotspotNameAndPasswordVisibility) {
+                                Column(
+                                    modifier = Modifier
+                                        .background(
+                                            MaterialTheme.colorScheme.surfaceVariant.copy(
+                                                0.3F
+                                            )
+                                        )
+                                        .padding(horizontal = 10.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(bottom = 16.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.hotspot_name),
+                                            fontFamily = MontserratFontFamily,
+                                            modifier = Modifier.baselineHeight(20.dp),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        TextField(
+                                            modifier = Modifier
+                                                .height(IntrinsicSize.Max)
+                                                .fillMaxWidth()
+                                                .padding(top = 8.dp),
+                                            value = uiState.staticHotspotName.ifEmpty {
+                                                stringResource(
+                                                    id = R.string.error_occurred
+                                                )
+                                            },
+                                            textStyle = MaterialTheme.typography.titleMedium,
+                                            colors = TextFieldDefaults.colors(
+                                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                disabledTextColor = if (uiState.staticHotspotName.isEmpty()) Color.Red else MaterialTheme.colorScheme.onSurface,
+                                                focusedIndicatorColor = Color.Transparent,
+                                                unfocusedIndicatorColor = Color.Transparent,
+                                                disabledIndicatorColor = Color.Transparent
+                                            ),
+                                            onValueChange = {},
+                                            placeholder = {},
+                                            shape = RoundedCornerShape(size = 12.dp),
+                                            singleLine = true,
+                                            enabled = false
+                                        )
+                                    }
+                                    HorizontalDivider(
+                                        color = MaterialTheme.colorScheme.background
+                                    )
+                                    Column(
+                                        modifier = Modifier.padding(bottom = 16.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.hotspot_password),
+                                            fontFamily = MontserratFontFamily,
+                                            modifier = Modifier.baselineHeight(20.dp),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        TextField(
+                                            modifier = Modifier
+                                                .height(IntrinsicSize.Max)
+                                                .fillMaxWidth()
+                                                .padding(top = 8.dp),
+                                            value = uiState.staticHotspotPassword.ifEmpty {
+                                                stringResource(
+                                                    id = R.string.error_occurred
+                                                )
+                                            },
+                                            textStyle = MaterialTheme.typography.titleMedium,
+                                            colors = TextFieldDefaults.colors(
+                                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                disabledTextColor = if (uiState.staticHotspotPassword.isEmpty()) Color.Red else MaterialTheme.colorScheme.onSurface,
+                                                focusedIndicatorColor = Color.Transparent,
+                                                unfocusedIndicatorColor = Color.Transparent,
+                                                disabledIndicatorColor = Color.Transparent
+                                            ),
+                                            onValueChange = {},
+                                            placeholder = {},
+                                            shape = RoundedCornerShape(size = 12.dp),
+                                            singleLine = true,
+                                            enabled = false
+                                        )
+                                    }
+                                }
                             }
                             HorizontalDivider(
                                 thickness = 1.dp,
@@ -262,140 +364,142 @@ fun NetworkingContent(
                         }
                     }
                 )
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 10.dp)
-                        .padding(bottom = 16.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.hotspot_name),
-                        fontFamily = MontserratFontFamily,
-                        modifier = Modifier.baselineHeight(20.dp),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    TextField(
+                if(uiState.canUseCustomConfigForHotspot){
+                    Column(
                         modifier = Modifier
-                            .height(IntrinsicSize.Max)
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        value = uiState.hotspotName,
-                        textStyle = MaterialTheme.typography.titleMedium,
-                        colors = TextFieldDefaults.colors(
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        ),
-                        onValueChange = {
-                            eventHandler(TcpScreenEvents.OnHotspotNameChanged(it))
-                        },
-                        placeholder = {
-                            Text(text = stringResource(R.string.enter_hotspot_name))
-                        },
-                        trailingIcon = {
-                            if (uiState.isValidHotSpotName) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.check_circle),
-                                    contentDescription = null,
-                                    tint = Color(0xFF35C47C)
-                                )
-                            } else {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.error_sign),
-                                    contentDescription = null,
-                                    tint = Color.Red
-                                )
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            imeAction = ImeAction.Next,
-                            keyboardType = KeyboardType.Text
-                        ),
-                        shape = RoundedCornerShape(size = 12.dp),
-                        singleLine = true,
-                    )
-                }
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    color = MaterialTheme.colorScheme.background
-                )
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 10.dp)
-                        .padding(bottom = 16.dp)
-                ) {
-                    val hotspotPassword by remember(uiState.hotspotPassword) {
-                        mutableStateOf(
-                            TextFieldValue(
-                                uiState.hotspotPassword,
-                                TextRange(uiState.hotspotPassword.length)
-                            )
-                        )
-                    }
-                    Text(
-                        text = stringResource(R.string.hotspot_password),
-                        fontFamily = MontserratFontFamily,
-                        modifier = Modifier.baselineHeight(20.dp),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    TextField(
-                        modifier = Modifier
-                            .focusRequester(hotspotPasswordFocusRequester)
-                            .height(IntrinsicSize.Max)
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        value = hotspotPassword,
-                        textStyle = MaterialTheme.typography.titleMedium,
-                        colors = TextFieldDefaults.colors(
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        ),
-                        onValueChange = {
-                            eventHandler(TcpScreenEvents.OnHotspotPasswordChanged(it.text))
-                        },
-                        placeholder = {
-                            Text(text = stringResource(R.string.enter_hotspot_password))
-                        },
-                        trailingIcon = {
-                            if (uiState.isValidHotSpotPassword) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.check_circle),
-                                    contentDescription = null,
-                                    tint = Color(0xFF35C47C)
-                                )
-                            } else {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.error_sign),
-                                    contentDescription = null,
-                                    tint = Color.Red
-                                )
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            imeAction = ImeAction.Done,
-                            keyboardType = KeyboardType.Text
-                        ),
-                        shape = RoundedCornerShape(size = 12.dp),
-                        singleLine = true,
-                    )
-                    if (!uiState.isValidHotSpotPassword) {
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 16.dp)
+                    ) {
                         Text(
-                            modifier = Modifier.padding(top = 4.dp),
-                            text = stringResource(R.string.password_length_should_be_between_8_16_symbols),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.Red.copy(0.8F),
-                            maxLines = 2,
+                            text = stringResource(R.string.hotspot_name),
+                            fontFamily = MontserratFontFamily,
+                            modifier = Modifier.baselineHeight(20.dp),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        TextField(
+                            modifier = Modifier
+                                .height(IntrinsicSize.Max)
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            value = uiState.hotspotName,
+                            textStyle = MaterialTheme.typography.titleMedium,
+                            colors = TextFieldDefaults.colors(
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            onValueChange = {
+                                eventHandler(TcpScreenEvents.OnHotspotNameChanged(it))
+                            },
+                            placeholder = {
+                                Text(text = stringResource(R.string.enter_hotspot_name))
+                            },
+                            trailingIcon = {
+                                if (uiState.isValidHotSpotName) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.check_circle),
+                                        contentDescription = null,
+                                        tint = Color(0xFF35C47C)
+                                    )
+                                } else {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.error_sign),
+                                        contentDescription = null,
+                                        tint = Color.Red
+                                    )
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                imeAction = ImeAction.Next,
+                                keyboardType = KeyboardType.Text
+                            ),
+                            shape = RoundedCornerShape(size = 12.dp),
+                            singleLine = true,
                         )
                     }
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        color = MaterialTheme.colorScheme.background
+                    )
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 16.dp)
+                    ) {
+                        val hotspotPassword by remember(uiState.hotspotPassword) {
+                            mutableStateOf(
+                                TextFieldValue(
+                                    uiState.hotspotPassword,
+                                    TextRange(uiState.hotspotPassword.length)
+                                )
+                            )
+                        }
+                        Text(
+                            text = stringResource(R.string.hotspot_password),
+                            fontFamily = MontserratFontFamily,
+                            modifier = Modifier.baselineHeight(20.dp),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        TextField(
+                            modifier = Modifier
+                                .focusRequester(hotspotPasswordFocusRequester)
+                                .height(IntrinsicSize.Max)
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            value = hotspotPassword,
+                            textStyle = MaterialTheme.typography.titleMedium,
+                            colors = TextFieldDefaults.colors(
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            onValueChange = {
+                                eventHandler(TcpScreenEvents.OnHotspotPasswordChanged(it.text))
+                            },
+                            placeholder = {
+                                Text(text = stringResource(R.string.enter_hotspot_password))
+                            },
+                            trailingIcon = {
+                                if (uiState.isValidHotSpotPassword) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.check_circle),
+                                        contentDescription = null,
+                                        tint = Color(0xFF35C47C)
+                                    )
+                                } else {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.error_sign),
+                                        contentDescription = null,
+                                        tint = Color.Red
+                                    )
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                imeAction = ImeAction.Done,
+                                keyboardType = KeyboardType.Text
+                            ),
+                            shape = RoundedCornerShape(size = 12.dp),
+                            singleLine = true,
+                        )
+                        if (!uiState.isValidHotSpotPassword) {
+                            Text(
+                                modifier = Modifier.padding(top = 4.dp),
+                                text = stringResource(R.string.password_length_should_be_between_8_16_symbols),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Red.copy(0.8F),
+                                maxLines = 2,
+                            )
+                        }
+                    }
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        color = MaterialTheme.colorScheme.background
+                    )
                 }
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    color = MaterialTheme.colorScheme.background
-                )
                 StatusProperty(
                     modifier = Modifier
                         .padding(horizontal = 10.dp)

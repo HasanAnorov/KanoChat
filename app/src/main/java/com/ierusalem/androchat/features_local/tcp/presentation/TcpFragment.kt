@@ -27,9 +27,9 @@ import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.core.utils.log
+import com.ierusalem.androchat.core.utils.longToast
 import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.core.utils.openWifiSettings
-import com.ierusalem.androchat.core.utils.shortToast
 import com.ierusalem.androchat.features_local.tcp.data.server.permission.PermissionGuardImpl
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_local.tcp.presentation.components.rememberTcpAllTabs
@@ -232,7 +232,7 @@ class TcpFragment : Fragment() {
             }
 
             is TcpScreenNavigation.OnErrorsOccurred -> {
-                shortToast(getString(navigation.tcpScreenErrors.errorMessage))
+                longToast(getString(navigation.tcpScreenErrors.errorMessage))
             }
 
         }
