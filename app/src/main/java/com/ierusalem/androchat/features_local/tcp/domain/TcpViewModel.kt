@@ -43,6 +43,7 @@ import com.ierusalem.androchat.core.utils.Constants.SOCKET_DEFAULT_BUFFER_SIZE
 import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
 import com.ierusalem.androchat.core.utils.Constants.getRandomColor
 import com.ierusalem.androchat.core.utils.Constants.getTimeInHours
+import com.ierusalem.androchat.core.utils.Constants.isValidVersionForLocalOnlyHotspot
 import com.ierusalem.androchat.core.utils.Json.gson
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
@@ -212,6 +213,27 @@ class TcpViewModel @Inject constructor(
                 settingsState.copy(
                     networkBand = broadcastFrequency
                 )
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission", "NewApi")
+    override fun onCleared() {
+        super.onCleared()
+        log("on cleared")
+        when (state.value.generalNetworkingStatus) {
+            GeneralNetworkingStatus.Idle -> {}
+            GeneralNetworkingStatus.LocalOnlyHotspot -> {
+                //stop local-only hotspot
+                hotspotReservation?.close()
+            }
+
+            GeneralNetworkingStatus.HotspotDiscovery -> {
+                stopHotspotNetworking()
+            }
+
+            GeneralNetworkingStatus.P2PDiscovery -> {
+                stopP2PNetworking()
             }
         }
     }
@@ -1465,6 +1487,7 @@ class TcpViewModel @Inject constructor(
                     )
                 }
             }
+
             Manifest.permission.RECORD_AUDIO -> {
                 _state.update {
                     it.copy(
@@ -1521,7 +1544,9 @@ class TcpViewModel @Inject constructor(
             _state.update {
                 it.copy(
                     isReadContactsGranted = permissionGuard.canAccessContacts(),
-                    isRecordAudioGranted = it.isRecordAudioGranted.apply { value = permissionGuard.canRecordAudio() }
+                    isRecordAudioGranted = it.isRecordAudioGranted.apply {
+                        value = permissionGuard.canRecordAudio()
+                    }
                 )
             }
         }
@@ -1810,55 +1835,51 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "NewApi")
     @Suppress("DEPRECATION")
     private fun startLocalOnlyHotspot() {
 
         updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.LaunchingLocalOnlyHotspot)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val callback = object : LocalOnlyHotspotCallback() {
-                override fun onStarted(reservation: WifiManager.LocalOnlyHotspotReservation?) {
-                    super.onStarted(reservation)
-                    hotspotReservation = reservation
-                    val config: WifiConfiguration? = reservation?.wifiConfiguration
+        val callback = object : LocalOnlyHotspotCallback() {
+            override fun onStarted(reservation: WifiManager.LocalOnlyHotspotReservation?) {
+                super.onStarted(reservation)
+                hotspotReservation = reservation
+                val config: WifiConfiguration? = reservation?.wifiConfiguration
 
-                    log("SSID: ${config?.SSID}, Password: ${config?.preSharedKey}")
+                log("SSID: ${config?.SSID}, Password: ${config?.preSharedKey}")
 
-                    _state.update {
-                        it.copy(
-                            localOnlyHotspotName = config?.SSID ?: "",
-                            localOnlyHotspotPassword = config?.preSharedKey ?: ""
-                        )
-                    }
-
-                    log("HttpProxy: ${config?.httpProxy}  HiddenSSID: ${config?.hiddenSSID}")
-                    log("Local Only Hotspot Started".uppercase())
-                    val ip = connectivityObserver.getWifiServerIpAddress()
-                    log("wifi ip local-only is : $ip")
-
-                    handleNetworkEvents(WiFiNetworkEvent.UpdateGroupOwnerAddress(ip))
-
-                    updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.LocalOnlyHotspotRunning)
+                _state.update {
+                    it.copy(
+                        localOnlyHotspotName = config?.SSID ?: "",
+                        localOnlyHotspotPassword = config?.preSharedKey ?: ""
+                    )
                 }
 
-                override fun onStopped() {
-                    super.onStopped()
-                    log("Local Only Hotspot Stopped".uppercase())
-                    updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
-                }
+                log("HttpProxy: ${config?.httpProxy}  HiddenSSID: ${config?.hiddenSSID}")
+                log("Local Only Hotspot Started".uppercase())
+                val ip = connectivityObserver.getWifiServerIpAddress()
+                log("wifi ip local-only is : $ip")
 
-                override fun onFailed(reason: Int) {
-                    super.onFailed(reason)
-                    log("Local Only Hotspot Failed".uppercase())
-                    updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Failure)
-                }
+                handleNetworkEvents(WiFiNetworkEvent.UpdateGroupOwnerAddress(ip))
+
+                updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.LocalOnlyHotspotRunning)
             }
-            wifiManager.startLocalOnlyHotspot(callback, null)
-        } else {
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.LocalOnlyHotspotNotSupported)
-            updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Failure)
+
+            override fun onStopped() {
+                super.onStopped()
+                log("Local Only Hotspot Stopped".uppercase())
+                updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
+            }
+
+            override fun onFailed(reason: Int) {
+                super.onFailed(reason)
+                log("Local Only Hotspot Failed".uppercase())
+                updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Failure)
+            }
         }
+        wifiManager.startLocalOnlyHotspot(callback, null)
+
     }
 
     private fun updateLocalOnlyHotspotStatus(status: LocalOnlyHotspotStatus) {
@@ -1999,6 +2020,10 @@ class TcpViewModel @Inject constructor(
                 when (state.value.localOnlyHotspotNetworkingStatus) {
                     LocalOnlyHotspotStatus.Idle -> {
                         if (hasOtherNetworkingIsRunning()) {
+                            return
+                        }
+                        if (!isValidVersionForLocalOnlyHotspot()) {
+                            updateHasErrorOccurredDialog(TcpScreenDialogErrors.LocalOnlyHotspotNotSupported)
                             return
                         }
                         createLocalOnlyHotspotNetwork()

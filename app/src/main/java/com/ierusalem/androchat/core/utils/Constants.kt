@@ -1,5 +1,6 @@
 package com.ierusalem.androchat.core.utils
 
+import android.os.Build
 import com.ierusalem.androchat.core.app.AppLanguage
 import java.io.File
 import java.text.SimpleDateFormat
@@ -125,6 +126,10 @@ object Constants {
         val currentSecond = calendar.get(Calendar.SECOND)
         val time = ("${currentHour}_${currentMinute}_$currentSecond")
         return time
+    }
+
+    fun isValidVersionForLocalOnlyHotspot(): Boolean{
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
     }
 
 }

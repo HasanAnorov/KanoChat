@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
@@ -98,8 +100,10 @@ fun SettingsScreen(
                 selectedLanguage = uiState.selectedLanguage
             )
         }
+        val scrollState= rememberScrollState()
         Column(
             modifier = Modifier
+                .verticalScroll(scrollState)
                 .fillMaxSize()
                 .padding(paddingValues),
             content = {
@@ -129,7 +133,7 @@ fun LogoutUi(
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
-            .padding(top = 16.dp)
+            .padding(vertical = 16.dp)
             .fillMaxWidth(),
         onClick = onLogout,
         shape = RoundedCornerShape(16.dp),
