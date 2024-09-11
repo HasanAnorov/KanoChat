@@ -185,12 +185,15 @@ class TcpViewModel @Inject constructor(
         viewModelScope.launch {
             val savedHotspotName = dataStorePreferenceRepository.getHotspotName.first()
             val savedHotspotPassword = dataStorePreferenceRepository.getHotspotPassword.first()
+            val savedPortNumber = dataStorePreferenceRepository.getPortNumber.first()
             _state.update {
                 it.copy(
                     isValidHotSpotName = isValidHotspotName(savedHotspotName),
                     hotspotName = savedHotspotName,
                     isValidHotSpotPassword = isValidHotspotPassword(savedHotspotPassword),
-                    hotspotPassword = savedHotspotPassword
+                    hotspotPassword = savedHotspotPassword,
+                    isValidPortNumber = isValidPortNumber(savedPortNumber),
+                    portNumber = savedPortNumber
                 )
             }
         }
@@ -2079,6 +2082,9 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.OnPortNumberChanged -> {
+                viewModelScope.launch {
+                    dataStorePreferenceRepository.setPortNumber(event.portNumber)
+                }
                 _state.update {
                     it.copy(
                         isValidPortNumber = isValidPortNumber(event.portNumber),

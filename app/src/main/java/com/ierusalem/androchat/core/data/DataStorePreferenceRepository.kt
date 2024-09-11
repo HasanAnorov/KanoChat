@@ -34,6 +34,7 @@ class DataStorePreferenceRepository(context: Context) {
         val PREF_USERNAME = stringPreferencesKey(name = Constants.PREFERENCE_USERNAME)
         val PREF_PASSWORD = stringPreferencesKey(name = Constants.PREFERENCE_PASSWORD)
         val PREF_HOTSPOT_NAME = stringPreferencesKey(name = Constants.PREFERENCE_HOTSPOT_NAME)
+        val PREF_PORT_NUMBER = stringPreferencesKey(name = Constants.PREFERENCE_PORT_NUMBER)
         val PREF_HOTSPOT_PASSWORD =
             stringPreferencesKey(name = Constants.PREFERENCE_HOTSPOT_PASSWORD)
 
@@ -120,9 +121,20 @@ class DataStorePreferenceRepository(context: Context) {
         }
     }
 
+    suspend fun setPortNumber(portNumber:String){
+        dataStore.edit { preferences ->
+            preferences[PREF_PORT_NUMBER] = portNumber
+        }
+    }
+
     val getHotspotPassword: Flow<String> = dataStore.data
         .map { preferences ->
             preferences[PREF_HOTSPOT_PASSWORD] ?: generateRandomPassword(8)
+        }
+
+    val getPortNumber: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PREF_PORT_NUMBER] ?: Constants.DEFAULT_PORT_NUMBER
         }
 
     suspend fun setTheme(isSystemInDarkMode: Boolean) {

@@ -23,6 +23,7 @@ object Constants {
     const val PREFERENCE_PASSWORD = "device_user_password"
     const val PREFERENCE_HOTSPOT_NAME = "device_hotspot_name"
     const val PREFERENCE_HOTSPOT_PASSWORD = "device_hotspot_password"
+    const val PREFERENCE_PORT_NUMBER = "device_port_number"
     const val PREFERENCE_UNIQUE_DEVICE_ID = "device_unique_id"
 
     const val SELECTED_CHATTING_USER = "selected_chatting_user"
