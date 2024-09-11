@@ -20,9 +20,6 @@ import kotlinx.coroutines.flow.flowOf
 
 data class TcpScreenUiState(
 
-    val userUniqueName: String = Constants.UNKNOWN_USER,
-    val peerUniqueName: String = Constants.UNKNOWN_PEER,
-
     val isReadContactsGranted: Boolean = false,
     val showBottomSheet: Boolean = false,
     val contacts: Resource<List<ContactItem>> = Resource.Loading(),
@@ -36,12 +33,15 @@ data class TcpScreenUiState(
     val isValidHotSpotName: Boolean = isValidHotspotName(hotspotName),
     val hotspotPassword: String = generateRandomPassword(length = 8),
     val isValidHotSpotPassword: Boolean = isValidHotspotPassword(hotspotPassword),
-    val portNumber: String = Constants.DEFAULT_PORT_NUMBER,
-    val isValidPortNumber: Boolean = isValidPortNumber(portNumber),
+    val staticHotspotName:String = "",
+    val staticHotspotPassword:String = "",
 
+    //local-only hotspot
     val localOnlyHotspotName: String = "",
     val localOnlyHotspotPassword: String = "",
 
+    val portNumber: String = Constants.DEFAULT_PORT_NUMBER,
+    val isValidPortNumber: Boolean = isValidPortNumber(portNumber),
     val groupOwnerAddress: String = "Not connected",
     val isValidGroupOwnerAddress: Boolean = isValidIpAddress(groupOwnerAddress),
     //this wifi address used for connecting to server by clients, don't use this for host side
@@ -67,7 +67,6 @@ data class TcpScreenUiState(
 
     //chat room messages
     val messages: Flow<PagingData<ChatMessage>> = flowOf(),
-
     //contacts
     val chattingUsers: Resource<List<ChattingUser>> = Resource.Loading(),
     val currentChattingUser: Resource<ChattingUser?> = Resource.Loading(),
@@ -79,9 +78,7 @@ data class TcpScreenUiState(
 
     //network broad frequency for hotspot networking
     val networkBand: AppBroadcastFrequency = AppBroadcastFrequency.FREQUENCY_2_4_GHZ,
-
+    // only devices above or equal to android 10 version can create hotspot  with custom config
     val canUseCustomConfigForHotspot: Boolean = ServerDefaults.canUseCustomConfig(),
 
-    val staticHotspotName:String = "",
-    val staticHotspotPassword:String = ""
 )

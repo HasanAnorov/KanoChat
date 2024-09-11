@@ -134,7 +134,84 @@ class TcpViewModel @Inject constructor(
     private lateinit var clientSocket: Socket
     private lateinit var clientWriter: DataOutputStream
 
-    /** Socket User Initializing Functions*/
+    //local only hotspot
+    private var hotspotReservation: WifiManager.LocalOnlyHotspotReservation? = null
+
+    private val _state: MutableStateFlow<TcpScreenUiState> = MutableStateFlow(TcpScreenUiState())
+    val state: StateFlow<TcpScreenUiState> = _state.asStateFlow()
+
+    val visiblePermissionDialogQueue = mutableStateListOf<String>()
+    val visibleActionDialogQueue = mutableStateListOf<VisibleActionDialogs>()
+
+    private val resourceDirectory = Environment
+        .getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}"
+        )
+
+    init {
+        loadChattingUsers()
+        initializeUserUniqueName()
+        initBroadcastFrequency()
+        initializeHotspotConfigs()
+        listenWifiConnections()
+    }
+
+    /** Initializing Functions*/
+
+    private fun loadChattingUsers() {
+        viewModelScope.launch(Dispatchers.IO) {
+            messagesRepository.getAllUsersWithLastMessages().collect { users ->
+                _state.update {
+                    it.copy(
+                        chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
+                    )
+                }
+            }
+        }
+    }
+
+    private fun initializeUserUniqueName() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val authorUniqueId = dataStorePreferenceRepository.getUniqueDeviceId.first()
+            _state.update {
+                it.copy(
+                    authorUniqueId = authorUniqueId
+                )
+            }
+        }
+    }
+
+    private fun initializeHotspotConfigs() {
+        viewModelScope.launch {
+            val savedHotspotName = dataStorePreferenceRepository.getHotspotName.first()
+            val savedHotspotPassword = dataStorePreferenceRepository.getHotspotPassword.first()
+            _state.update {
+                it.copy(
+                    isValidHotSpotName = isValidHotspotName(savedHotspotName),
+                    hotspotName = savedHotspotName,
+                    isValidHotSpotPassword = isValidHotspotPassword(savedHotspotPassword),
+                    hotspotPassword = savedHotspotPassword
+                )
+            }
+        }
+    }
+
+    private fun initBroadcastFrequency() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val savedBroadcastFrequency =
+                dataStorePreferenceRepository.getBroadcastFrequency.first()
+            val broadcastFrequency = try {
+                AppBroadcastFrequency.valueOf(savedBroadcastFrequency)
+            } catch (e: IllegalArgumentException) {
+                AppBroadcastFrequency.FREQUENCY_2_4_GHZ
+            }
+            _state.update { settingsState ->
+                settingsState.copy(
+                    networkBand = broadcastFrequency
+                )
+            }
+        }
+    }
 
     private fun initializeUser(writer: DataOutputStream) {
         val userUniqueId = runBlocking { dataStorePreferenceRepository.getUniqueDeviceId.first() }
@@ -169,9 +246,40 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    private fun listenWifiConnections() {
+        connectivityObserver.observeWifiState().onEach { connectivityStatus ->
+            when (connectivityStatus) {
+                ConnectivityObserver.Status.Available -> {
+                    updateConnectedWifiAddress(connectivityObserver.getWifiServerIpAddress())
+                }
+
+                ConnectivityObserver.Status.Loosing -> {
+                    updateConnectedWifiAddress("Not Connected")
+                }
+
+                ConnectivityObserver.Status.Lost -> {
+                    updateConnectedWifiAddress("Not Connected")
+                }
+
+                ConnectivityObserver.Status.Unavailable -> {
+                    updateConnectedWifiAddress("Not Connected")
+                }
+            }
+        }.launchIn(viewModelScope)
+    }
+
     fun updateAllUsersOnlineStatus(isOnline: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             messagesRepository.updateAllUsersOnlineStatus(isOnline = isOnline)
+        }
+    }
+
+    private fun updateUserOnlineStatus(userUniqueId: String, isOnline: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            messagesRepository.updateIsUserOnline(
+                userUniqueId = userUniqueId,
+                isOnline = isOnline
+            )
         }
     }
 
@@ -213,15 +321,6 @@ class TcpViewModel @Inject constructor(
                 messagesRepository.insertChattingUser(chattingUserEntity)
             }
 
-        }
-    }
-
-    private fun updateUserOnlineStatus(userUniqueId: String, isOnline: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            messagesRepository.updateIsUserOnline(
-                userUniqueId = userUniqueId,
-                isOnline = isOnline
-            )
         }
     }
 
@@ -276,7 +375,10 @@ class TcpViewModel @Inject constructor(
                             }
 
                             AppMessageType.FILE -> {
-                                receiveFile(reader = reader, receivingSocket = connectedClientSocket)
+                                receiveFile(
+                                    reader = reader,
+                                    receivingSocket = connectedClientSocket
+                                )
                             }
 
                             AppMessageType.UNKNOWN -> {
@@ -332,7 +434,7 @@ class TcpViewModel @Inject constructor(
                         } catch (e: IOException) {
                             e.printStackTrace()
                         }
-                    }catch (e: Exception){
+                    } catch (e: Exception) {
                         e.printStackTrace()
                         log("createServer while: unknown exception ")
                         closeClientServerSocket()
@@ -376,7 +478,7 @@ class TcpViewModel @Inject constructor(
                 userUniqueId = state.value.peerUserUniqueId,
                 isOnline = false
             )
-        }catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
             log("createServer: unknown exception ")
             closerServeSocket()
@@ -659,8 +761,6 @@ class TcpViewModel @Inject constructor(
             handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
         }
     }
-
-    /**Socket Sending Functions*/
 
     private fun sendTextMessage(
         writer: DataOutputStream,
@@ -996,13 +1096,14 @@ class TcpViewModel @Inject constructor(
                         val newFileMessage =
                             fileMessageEntity.copy(fileState = newState, id = messageId)
                         updatePercentageOfReceivingFile(newFileMessage)
-                    }catch (e: SocketException) {
+                    } catch (e: SocketException) {
                         e.printStackTrace()
                         log("Client disconnected (SocketException): ${e.message}")
                         val newState = FileMessageState.Failure
-                        val newFileMessage = fileMessageEntity.copy(fileState = newState, id = messageId)
+                        val newFileMessage =
+                            fileMessageEntity.copy(fileState = newState, id = messageId)
                         updatePercentageOfReceivingFile(newFileMessage)
-                    }finally {
+                    } finally {
                         //set timeout to 0 which is infinite
                         receivingSocket.soTimeout = Constants.INFINITELY_TIMEOUT
                         log("file receiving process finished")
@@ -1014,7 +1115,6 @@ class TcpViewModel @Inject constructor(
             log("file receiving process failed: ${e.message}")
         }
     }
-
 
     private fun receiveVoiceMessage(reader: DataInputStream) {
         log("receiving voice file ...")
@@ -1134,6 +1234,19 @@ class TcpViewModel @Inject constructor(
 
     /** Hotspot networking creation*/
 
+    private fun startHotspotNetworking() {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (permissionGuard.canCreateNetwork()) {
+                createGroup()
+            } else {
+                log("Permissions not granted for location!")
+                // request at leas one time location permission,
+                // this make requestPermissionForRationale return true
+                emitNavigation(TcpScreenNavigation.RequestLocationPermission)
+            }
+        }
+    }
+
     private fun stopHotspotNetworking() {
         //close socket only when serverSocket is initialized
         if (::serverSocket.isInitialized) {
@@ -1163,20 +1276,7 @@ class TcpViewModel @Inject constructor(
         wifiP2PManager.removeGroup(channel, listener)
     }
 
-    private fun startHotspotNetworking() {
-        viewModelScope.launch(Dispatchers.IO) {
-            if (permissionGuard.canCreateNetwork()) {
-                createGroup()
-            } else {
-                log("Permissions not granted for location!")
-                // request at leas one time location permission,
-                // this make requestPermissionForRationale return true
-                emitNavigation(TcpScreenNavigation.RequestLocationPermission)
-            }
-        }
-    }
-
-    private fun updateStaticHotspotNameAndPassword(name: String, password: String){
+    private fun updateStaticHotspotNameAndPassword(name: String, password: String) {
         _state.update {
             it.copy(
                 staticHotspotName = name,
@@ -1203,7 +1303,7 @@ class TcpViewModel @Inject constructor(
                             val passphrase = group.passphrase // The password of the hotspot
                             log("Group SSID: $ssid")
                             log("Group Passphrase: $passphrase")
-                            if (!ServerDefaults.canUseCustomConfig()){
+                            if (!ServerDefaults.canUseCustomConfig()) {
                                 updateStaticHotspotNameAndPassword(
                                     name = ssid,
                                     password = passphrase
@@ -1338,55 +1438,6 @@ class TcpViewModel @Inject constructor(
 
     /******/
 
-    private val _state: MutableStateFlow<TcpScreenUiState> = MutableStateFlow(TcpScreenUiState())
-    val state: StateFlow<TcpScreenUiState> = _state.asStateFlow()
-
-    val visiblePermissionDialogQueue = mutableStateListOf<String>()
-    val visibleActionDialogQueue = mutableStateListOf<VisibleActionDialogs>()
-
-    private var hotspotReservation: WifiManager.LocalOnlyHotspotReservation? = null
-
-    private val resourceDirectory =
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}")
-
-
-    init {
-        initializeUserUniqueName()
-        initBroadcastFrequency()
-        initializeHotspotName()
-        initializeHotspotPassword()
-        listenWifiConnections()
-        loadChattingUsers()
-    }
-
-    private fun initializeUserUniqueName() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val authorUniqueId = dataStorePreferenceRepository.getUniqueDeviceId.first()
-            _state.update {
-                it.copy(
-                    authorUniqueId = authorUniqueId
-                )
-            }
-        }
-    }
-
-    private fun initBroadcastFrequency() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val savedBroadcastFrequency =
-                dataStorePreferenceRepository.getBroadcastFrequency.first()
-            val broadcastFrequency = try {
-                AppBroadcastFrequency.valueOf(savedBroadcastFrequency)
-            } catch (e: IllegalArgumentException) {
-                AppBroadcastFrequency.FREQUENCY_2_4_GHZ
-            }
-            _state.update { settingsState ->
-                settingsState.copy(
-                    networkBand = broadcastFrequency
-                )
-            }
-        }
-    }
-
     fun dismissPermissionDialog() {
         log("dismissPermissionDialog")
         visiblePermissionDialogQueue.forEach {
@@ -1418,7 +1469,6 @@ class TcpViewModel @Inject constructor(
         _state.update {
             it.copy(
                 peerUserUniqueId = initialChatModel.userUniqueId,
-                peerUniqueName = initialChatModel.userUniqueName
             )
         }
     }
@@ -1432,18 +1482,6 @@ class TcpViewModel @Inject constructor(
                     log("timing - $timing")
                     updatePlayTiming(timing, messageId)
                 }
-        }
-    }
-
-    private fun loadChattingUsers() {
-        viewModelScope.launch(Dispatchers.IO) {
-            messagesRepository.getAllUsersWithLastMessages().collect { users ->
-                _state.update {
-                    it.copy(
-                        chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
-                    )
-                }
-            }
         }
     }
 
@@ -1476,52 +1514,6 @@ class TcpViewModel @Inject constructor(
                 )
             }
         }
-    }
-
-    private fun initializeHotspotPassword() {
-        viewModelScope.launch {
-            val savedHotspotPassword = dataStorePreferenceRepository.getHotspotPassword.first()
-            _state.update {
-                it.copy(
-                    isValidHotSpotPassword = isValidHotspotPassword(savedHotspotPassword),
-                    hotspotPassword = savedHotspotPassword
-                )
-            }
-        }
-    }
-
-    private fun initializeHotspotName() {
-        viewModelScope.launch {
-            val savedHotspotName = dataStorePreferenceRepository.getHotspotName.first()
-            _state.update {
-                it.copy(
-                    isValidHotSpotName = isValidHotspotName(savedHotspotName),
-                    hotspotName = savedHotspotName
-                )
-            }
-        }
-    }
-
-    private fun listenWifiConnections() {
-        connectivityObserver.observeWifiState().onEach { connectivityStatus ->
-            when (connectivityStatus) {
-                ConnectivityObserver.Status.Available -> {
-                    updateConnectedWifiAddress(connectivityObserver.getWifiServerIpAddress())
-                }
-
-                ConnectivityObserver.Status.Loosing -> {
-                    updateConnectedWifiAddress("Not Connected")
-                }
-
-                ConnectivityObserver.Status.Lost -> {
-                    updateConnectedWifiAddress("Not Connected")
-                }
-
-                ConnectivityObserver.Status.Unavailable -> {
-                    updateConnectedWifiAddress("Not Connected")
-                }
-            }
-        }.launchIn(viewModelScope)
     }
 
     @SuppressLint("Range")
@@ -1856,6 +1848,38 @@ class TcpViewModel @Inject constructor(
         } else {
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.LocalOnlyHotspotNotSupported)
             updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Failure)
+        }
+    }
+
+    private fun updateLocalOnlyHotspotStatus(status: LocalOnlyHotspotStatus) {
+        when (status) {
+            LocalOnlyHotspotStatus.Idle -> {
+                _state.update {
+                    it.copy(
+                        localOnlyHotspotNetworkingStatus = status,
+                        generalNetworkingStatus = GeneralNetworkingStatus.Idle
+                    )
+                }
+            }
+
+            LocalOnlyHotspotStatus.LaunchingLocalOnlyHotspot,
+            LocalOnlyHotspotStatus.LocalOnlyHotspotRunning -> {
+                _state.update {
+                    it.copy(
+                        localOnlyHotspotNetworkingStatus = status,
+                        generalNetworkingStatus = GeneralNetworkingStatus.LocalOnlyHotspot,
+                    )
+                }
+            }
+
+            LocalOnlyHotspotStatus.Failure -> {
+                _state.update {
+                    it.copy(
+                        localOnlyHotspotNetworkingStatus = status,
+                        generalNetworkingStatus = GeneralNetworkingStatus.Idle
+                    )
+                }
+            }
         }
     }
 
@@ -2350,38 +2374,6 @@ class TcpViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         p2pNetworkingStatus = status,
-                        generalNetworkingStatus = GeneralNetworkingStatus.Idle
-                    )
-                }
-            }
-        }
-    }
-
-    private fun updateLocalOnlyHotspotStatus(status: LocalOnlyHotspotStatus) {
-        when (status) {
-            LocalOnlyHotspotStatus.Idle -> {
-                _state.update {
-                    it.copy(
-                        localOnlyHotspotNetworkingStatus = status,
-                        generalNetworkingStatus = GeneralNetworkingStatus.Idle
-                    )
-                }
-            }
-
-            LocalOnlyHotspotStatus.LaunchingLocalOnlyHotspot,
-            LocalOnlyHotspotStatus.LocalOnlyHotspotRunning -> {
-                _state.update {
-                    it.copy(
-                        localOnlyHotspotNetworkingStatus = status,
-                        generalNetworkingStatus = GeneralNetworkingStatus.LocalOnlyHotspot,
-                    )
-                }
-            }
-
-            LocalOnlyHotspotStatus.Failure -> {
-                _state.update {
-                    it.copy(
-                        localOnlyHotspotNetworkingStatus = status,
                         generalNetworkingStatus = GeneralNetworkingStatus.Idle
                     )
                 }

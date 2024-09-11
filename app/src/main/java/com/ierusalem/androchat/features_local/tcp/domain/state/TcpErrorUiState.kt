@@ -4,20 +4,6 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.ierusalem.androchat.R
 
-enum class TcpCloseDialogReason(@StringRes val reason: Int, @StringRes val description: Int) {
-
-    //This error case will be removed when "saving existing messages" feature will be implemented
-    ExistingMessages(
-        R.string.message_are_not_saved,
-        R.string.you_have_existing_messages_with_your_partner_and_if_you_close_the_this_window_messages_will_not_be_saved
-    ),
-
-    ExistingConnection(
-        R.string.the_connection_will_not_be_saved,
-        R.string.you_have_established_connection_with_your_partner_if_you_close_this_window_the_connection_will_not_be_saved
-    )
-}
-
 enum class TcpScreenErrors(@StringRes val errorMessage: Int) {
     WifiNotEnabled(R.string.wifi_should_be_enabled_to_perform_this_action),
     InvalidPortNumber(R.string.try_to_use_another_port_number_current_port_is_already_in_use_or_invalid),

@@ -64,8 +64,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversationContent(
-    modifier: Modifier = Modifier,
     uiState: TcpScreenUiState,
+    modifier: Modifier = Modifier,
     eventHandler: (TcpScreenEvents) -> Unit,
 ) {
 
