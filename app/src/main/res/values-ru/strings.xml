@@ -193,5 +193,6 @@
     <string name="password_length_should_be_between_8_16_symbols">Длина пароля должна быть от 8 до 16 символов!</string>
     <string name="unknown_exception_occurred">Произошло неизвестное исключение</string>
     <string name="unknown_exception_occurred_definition">Что-то пошло не так, попробуйте позже.</string>
-
+    <string name="failed_to_create_network">Не удалось создать сеть!</string>
+    <string name="failed_to_create_network_definition">Попробуйте обновить Wi-Fi, это поможет создать сеть с новой конфигурацией.</string>
 </resources>

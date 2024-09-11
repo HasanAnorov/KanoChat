@@ -21,6 +21,11 @@ enum class TcpScreenDialogErrors(
         R.string.android_version_8_required_for_local_only_hotspot,
         R.drawable.info
     ),
+    FailedToCreateHotspot(
+        R.string.failed_to_create_network,
+        R.string.failed_to_create_network_definition,
+        R.drawable.wifi_off
+    ),
     ServerCreationWithoutNetworking(
         R.string.please_connect_to_network,
         R.string.you_should_be_on_network_to_connect_to_server,

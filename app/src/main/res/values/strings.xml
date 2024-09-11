@@ -198,7 +198,9 @@
     <string name="file_shared">File Shared</string>
     <string name="contact_shared">Contact Shared</string>
     <string name="password_length_should_be_between_8_16_symbols">Password length should be between 8 – 16 symbols!</string>
-    <string name="unknown_exception_occurred">Uknown exception occurred</string>
+    <string name="unknown_exception_occurred">Unknown exception occurred</string>
     <string name="unknown_exception_occurred_definition">Something went wrong, please try again later.</string>
+    <string name="failed_to_create_network">Failed to create network!</string>
+    <string name="failed_to_create_network_definition">Please try with refreshing wifi, this will help to create network with new configuration.</string>
 
 </resources>

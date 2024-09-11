@@ -27,9 +27,6 @@ object Constants {
 
     const val SELECTED_CHATTING_USER = "selected_chatting_user"
 
-    const val UNKNOWN_USER = "Unknown User"
-    const val UNKNOWN_PEER = "Unknown Peer"
-
     const val UNKNOWN_HOTSPOT_NAME = "TEMP-HOTSPOT"
 
     const val MINIMUM_LOGIN_LENGTH = 3

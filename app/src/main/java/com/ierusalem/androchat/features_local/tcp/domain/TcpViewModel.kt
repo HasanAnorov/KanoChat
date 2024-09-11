@@ -1319,7 +1319,7 @@ class TcpViewModel @Inject constructor(
             override fun onFailure(reason: Int) {
                 val r = Reason.parseReason(reason)
                 log("Unable to create Wifi Direct Group - ${r.displayReason}")
-                //todo - show dialog error message with corresponding reason
+                updateHasErrorOccurredDialog(TcpScreenDialogErrors.FailedToCreateHotspot)
                 updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Failure)
             }
         }
