@@ -216,7 +216,7 @@ fun NetworkingContent(
                                                     hotspotNameFocusRequester.requestFocus()
                                                 }
                                                 else -> {
-                                                    eventHandler(TcpScreenEvents.DiscoverLocalOnlyHotSpotClick)
+                                                    eventHandler(TcpScreenEvents.DiscoverHotSpotClick)
                                                 }
                                             }
                                         }else{
