@@ -67,6 +67,7 @@ fun NetworkingContent(
     uiState: TcpScreenUiState,
 ) {
     val hotspotPasswordFocusRequester = remember { FocusRequester() }
+    val hotspotNameFocusRequester = remember { FocusRequester() }
     LazyColumn(
         modifier = modifier.navigationBarsPadding()
     ) {
@@ -207,10 +208,16 @@ fun NetworkingContent(
                                 modifier = Modifier
                                     .clickable {
                                         if(uiState.canUseCustomConfigForHotspot){
-                                            if (uiState.isValidHotSpotPassword) {
-                                                eventHandler(TcpScreenEvents.DiscoverHotSpotClick)
-                                            } else {
-                                                hotspotPasswordFocusRequester.requestFocus()
+                                            when{
+                                                !uiState.isValidHotSpotPassword -> {
+                                                    hotspotPasswordFocusRequester.requestFocus()
+                                                }
+                                                !uiState.isValidHotSpotName -> {
+                                                    hotspotNameFocusRequester.requestFocus()
+                                                }
+                                                else -> {
+                                                    eventHandler(TcpScreenEvents.DiscoverLocalOnlyHotSpotClick)
+                                                }
                                             }
                                         }else{
                                             eventHandler(TcpScreenEvents.DiscoverHotSpotClick)
@@ -370,6 +377,14 @@ fun NetworkingContent(
                             .padding(horizontal = 10.dp)
                             .padding(bottom = 16.dp)
                     ) {
+                        val hotspotName by remember(uiState.hotspotName) {
+                            mutableStateOf(
+                                TextFieldValue(
+                                    uiState.hotspotName,
+                                    TextRange(uiState.hotspotName.length)
+                                )
+                            )
+                        }
                         Text(
                             text = stringResource(R.string.hotspot_name),
                             fontFamily = MontserratFontFamily,
@@ -379,10 +394,11 @@ fun NetworkingContent(
                         )
                         TextField(
                             modifier = Modifier
+                                .focusRequester(hotspotNameFocusRequester)
                                 .height(IntrinsicSize.Max)
                                 .fillMaxWidth()
                                 .padding(top = 8.dp),
-                            value = uiState.hotspotName,
+                            value = hotspotName,
                             textStyle = MaterialTheme.typography.titleMedium,
                             colors = TextFieldDefaults.colors(
                                 focusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -391,7 +407,7 @@ fun NetworkingContent(
                                 unfocusedIndicatorColor = Color.Transparent
                             ),
                             onValueChange = {
-                                eventHandler(TcpScreenEvents.OnHotspotNameChanged(it))
+                                eventHandler(TcpScreenEvents.OnHotspotNameChanged(it.text))
                             },
                             placeholder = {
                                 Text(text = stringResource(R.string.enter_hotspot_name))
@@ -418,6 +434,15 @@ fun NetworkingContent(
                             shape = RoundedCornerShape(size = 12.dp),
                             singleLine = true,
                         )
+                        if (!uiState.isValidHotSpotName) {
+                            Text(
+                                modifier = Modifier.padding(top = 4.dp),
+                                text = stringResource(R.string.invalid_hotspot_name),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Red.copy(0.8F),
+                                maxLines = 2,
+                            )
+                        }
                     }
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 8.dp),

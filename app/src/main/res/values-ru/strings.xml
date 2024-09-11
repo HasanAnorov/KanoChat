@@ -195,4 +195,6 @@
     <string name="unknown_exception_occurred_definition">Что-то пошло не так, попробуйте позже.</string>
     <string name="failed_to_create_network">Не удалось создать сеть!</string>
     <string name="failed_to_create_network_definition">Попробуйте обновить Wi-Fi, это поможет создать сеть с новой конфигурацией.</string>
+    <string name="invalid_hotspot_name">Длина имени точки доступа должна быть от 5 до 32 символов!</string>
+
 </resources>
