@@ -24,14 +24,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,8 +55,9 @@ import com.ierusalem.androchat.features_local.tcp.presentation.tcp_networking.co
 fun ConnectionsContent(
     modifier: Modifier = Modifier,
     eventHandler: (TcpScreenEvents) -> Unit,
-    state: TcpScreenUiState
+    uiState: TcpScreenUiState
 ) {
+    val portNumberFocusRequester = remember { FocusRequester() }
     LazyColumn(modifier = modifier) {
         item {
             Column(
@@ -71,7 +79,13 @@ fun ConnectionsContent(
                         Column {
                             Row(
                                 modifier = Modifier
-                                    .clickable { eventHandler(TcpScreenEvents.CreateServerClick) }
+                                    .clickable {
+                                        if(uiState.isValidPortNumber){
+                                            eventHandler(TcpScreenEvents.CreateServerClick)
+                                        }else{
+                                            portNumberFocusRequester.requestFocus()
+                                        }
+                                    }
                                     .fillMaxWidth()
                                     .padding(
                                         vertical = 10.dp,
@@ -82,7 +96,7 @@ fun ConnectionsContent(
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    text = stringResource(id = state.hostConnectionStatus.status),
+                                    text = stringResource(id = uiState.hostConnectionStatus.status),
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium
                                 )
@@ -90,7 +104,7 @@ fun ConnectionsContent(
                                     modifier = Modifier.padding(start = 8.dp),
                                     painter = painterResource(id = R.drawable.wifi_tethering),
                                     contentDescription = null,
-                                    tint = state.hostConnectionStatus.getIconColor()
+                                    tint = uiState.hostConnectionStatus.getIconColor()
                                 )
                             }
                             HorizontalDivider(
@@ -110,7 +124,7 @@ fun ConnectionsContent(
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    text = stringResource(id = state.clientConnectionStatus.status),
+                                    text = stringResource(id = uiState.clientConnectionStatus.status),
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium
                                 )
@@ -118,18 +132,25 @@ fun ConnectionsContent(
                                     modifier = Modifier.padding(start = 8.dp),
                                     painter = painterResource(id = R.drawable.wifi_tethering),
                                     contentDescription = null,
-                                    tint = state.clientConnectionStatus.getIconColor()
+                                    tint = uiState.clientConnectionStatus.getIconColor()
                                 )
                             }
                         }
                     }
                 )
-
                 Column(
                     modifier = Modifier
                         .padding(horizontal = 10.dp)
                         .padding(bottom = 16.dp)
                 ) {
+                    val portNumber by remember(uiState.portNumber) {
+                        mutableStateOf(
+                            TextFieldValue(
+                                uiState.portNumber,
+                                TextRange(uiState.portNumber.length)
+                            )
+                        )
+                    }
                     Text(
                         text = stringResource(R.string.proxy_port),
                         fontFamily = MontserratFontFamily,
@@ -139,10 +160,11 @@ fun ConnectionsContent(
                     )
                     TextField(
                         modifier = Modifier
+                            .focusRequester(portNumberFocusRequester)
                             .height(IntrinsicSize.Max)
                             .fillMaxWidth()
                             .padding(top = 8.dp),
-                        value = state.portNumber,
+                        value = portNumber,
                         textStyle = MaterialTheme.typography.titleMedium,
                         colors = TextFieldDefaults.colors(
                             focusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -155,12 +177,12 @@ fun ConnectionsContent(
                         },
 
                         onValueChange = {
-                            if (it.length < 6) {
-                                eventHandler(TcpScreenEvents.OnPortNumberChanged(it))
+                            if (it.text.length < 6) {
+                                eventHandler(TcpScreenEvents.OnPortNumberChanged(it.text))
                             }
                         },
                         trailingIcon = {
-                            if (state.isValidPortNumber) {
+                            if (uiState.isValidPortNumber) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.check_circle),
                                     contentDescription = null,
@@ -216,7 +238,7 @@ fun ConnectionsContent(
                 StatusProperty(
                     modifier = Modifier.padding(horizontal = 10.dp),
                     status = stringResource(R.string.connection_status),
-                    state = state.generalConnectionStatus.status
+                    state = uiState.generalConnectionStatus.status
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.background, thickness = 1.dp)
                 Column(
@@ -232,7 +254,7 @@ fun ConnectionsContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = state.connectedServerAddress.asString(),
+                        text = uiState.connectedServerAddress.asString(),
                         modifier = Modifier.baselineHeight(24.dp),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onBackground
@@ -269,7 +291,7 @@ fun ConnectionsContent(
                     color = MaterialTheme.colorScheme.background,
                     thickness = 1.dp
                 )
-                if (state.connectedWifiNetworks.isNotEmpty()) {
+                if (uiState.connectedWifiNetworks.isNotEmpty()) {
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -277,7 +299,7 @@ fun ConnectionsContent(
                             .padding(top = 16.dp)
                             .height(200.dp)
                     ) {
-                        items(state.connectedWifiNetworks) { wifiDevice ->
+                        items(uiState.connectedWifiNetworks) { wifiDevice ->
                             WifiLazyItem(
                                 modifier = Modifier
                                     .padding(top = 8.dp)
@@ -316,7 +338,7 @@ private fun ClientContentPreview() {
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
             eventHandler = {},
-            state = TcpScreenUiState()
+            uiState = TcpScreenUiState()
         )
     }
 }
@@ -330,7 +352,7 @@ private fun ClientContentPreviewDark() {
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
             eventHandler = {},
-            state = TcpScreenUiState()
+            uiState = TcpScreenUiState()
         )
     }
 }

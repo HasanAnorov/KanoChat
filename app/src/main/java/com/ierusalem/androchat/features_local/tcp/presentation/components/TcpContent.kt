@@ -59,7 +59,7 @@ fun TcpContent(
                 ConnectionsContent(
                     modifier = Modifier.fillMaxSize(),
                     eventHandler = eventHandler,
-                    state = state
+                    uiState = state
                 )
             }
 
