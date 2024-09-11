@@ -329,7 +329,7 @@ class LocalConversationFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        viewModel.checkReadContactsPermission()
+        viewModel.checkRecordAudioAndReadContactsPermission()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

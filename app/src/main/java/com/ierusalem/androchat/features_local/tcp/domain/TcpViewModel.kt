@@ -1462,6 +1462,13 @@ class TcpViewModel @Inject constructor(
                     )
                 }
             }
+            Manifest.permission.RECORD_AUDIO -> {
+                _state.update {
+                    it.copy(
+                        isRecordAudioGranted = it.isRecordAudioGranted.apply { value = isGranted },
+                    )
+                }
+            }
         }
     }
 
@@ -1506,11 +1513,12 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun checkReadContactsPermission() {
+    fun checkRecordAudioAndReadContactsPermission() {
         viewModelScope.launch {
             _state.update {
                 it.copy(
-                    isReadContactsGranted = permissionGuard.canAccessContacts()
+                    isReadContactsGranted = permissionGuard.canAccessContacts(),
+                    isRecordAudioGranted = it.isRecordAudioGranted.apply { value = permissionGuard.canRecordAudio() }
                 )
             }
         }
@@ -1603,7 +1611,6 @@ class TcpViewModel @Inject constructor(
             }
 
             is WiFiNetworkEvent.WifiStateChanged -> {
-                log("on wifi state changed - $networkEvent")
                 _state.update {
                     it.copy(
                         isWifiOn = networkEvent.isWifiOn

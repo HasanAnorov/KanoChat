@@ -92,7 +92,6 @@ class LocalActivity : AppCompatActivity() {
 
     private suspend fun hasUserLoggedIn(): Boolean {
         return withContext(Dispatchers.IO) {
-            log("has logged - ${dataStorePreferenceRepository.hasUserLoggedIn()}")
             dataStorePreferenceRepository.hasUserLoggedIn()
         }
     }

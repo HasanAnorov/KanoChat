@@ -48,7 +48,6 @@ class PermissionGuardImpl(
             }
         }
 
-
     override suspend fun canRecordAudio(): Boolean =
         withContext(context = Dispatchers.Main) {
             return@withContext requiredPermissionsForRecordingAudio.all {
@@ -62,7 +61,6 @@ class PermissionGuardImpl(
                 hasPermission(it)
             }
         }
-
 
     companion object {
 

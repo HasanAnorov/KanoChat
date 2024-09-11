@@ -16,6 +16,7 @@ import com.ierusalem.androchat.features_local.tcp.data.server.ServerDefaults
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 
 data class TcpScreenUiState(
@@ -73,6 +74,8 @@ data class TcpScreenUiState(
 
     //error handling with dialogs
     val hasDialogErrorOccurred: TcpScreenDialogErrors? = null,
+
+    val isRecordAudioGranted: MutableStateFlow<Boolean> = MutableStateFlow(false),
     //to disable view pager's horizontal scrolling
     val isRecording: Boolean = false,
 
@@ -81,4 +84,4 @@ data class TcpScreenUiState(
     // only devices above or equal to android 10 version can create hotspot  with custom config
     val canUseCustomConfigForHotspot: Boolean = ServerDefaults.canUseCustomConfig(),
 
-)
+    )

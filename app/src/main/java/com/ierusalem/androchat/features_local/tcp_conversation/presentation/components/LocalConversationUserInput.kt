@@ -1,7 +1,5 @@
 package com.ierusalem.androchat.features_local.tcp_conversation.presentation.components
 
-import android.Manifest
-import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
@@ -52,6 +50,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -77,7 +76,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import com.devlomi.record_view.OnRecordListener
 import com.devlomi.record_view.RecordButton
 import com.devlomi.record_view.RecordLockView
@@ -89,6 +87,7 @@ import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnection
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenDialogErrors
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
+import kotlinx.coroutines.launch
 
 
 enum class LocalInputSelector {
@@ -145,14 +144,11 @@ fun LocalConversationUserInput(
     ) {
         Column(modifier = modifier) {
             Box(contentAlignment = Alignment.BottomStart) {
+                val coroutineScope = rememberCoroutineScope()
                 AndroidView(
                     modifier = Modifier
                         .fillMaxWidth(),
                     factory = { context ->
-                        val isPermissionGranted = ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.RECORD_AUDIO
-                        ) == PERMISSION_GRANTED
 
                         val parent = FrameLayout(context)
                         LayoutInflater
@@ -164,21 +160,24 @@ fun LocalConversationUserInput(
                                 val recordLockView = findViewById<RecordLockView>(R.id.record_lock)
                                 val recordLockCoverView =
                                     findViewById<ImageView>(R.id.record_lock_cover)
-                                recordButton.isListenForRecord = isPermissionGranted
-                                recordButton.setOnClickListener {
-                                    when {
-                                        !isPermissionGranted -> {
-                                            eventHandler.invoke(TcpScreenEvents.RequestRecordAudioPermission)
-                                        }
 
-                                        uiState.generalConnectionStatus == GeneralConnectionStatus.Idle -> {
-                                            log("no connections found to send voice message, show error dialog")
-                                            log("connection status - ${uiState.generalConnectionStatus}")
-                                            eventHandler(
-                                                TcpScreenEvents.OnDialogErrorOccurred(
-                                                    TcpScreenDialogErrors.PeerNotConnected
-                                                )
-                                            )
+                                coroutineScope.launch {
+                                    uiState.isRecordAudioGranted.collect { isGranted ->
+                                        recordButton.isListenForRecord = (isGranted && uiState.generalConnectionStatus != GeneralConnectionStatus.Idle)
+//                                        recordButton.isListenForRecord = (isGranted )
+                                        recordButton.setOnClickListener {
+                                            when {
+                                                !isGranted -> {
+                                                    eventHandler.invoke(TcpScreenEvents.RequestRecordAudioPermission)
+                                                }
+                                                uiState.generalConnectionStatus == GeneralConnectionStatus.Idle -> {
+                                                    eventHandler(
+                                                        TcpScreenEvents.OnDialogErrorOccurred(
+                                                            TcpScreenDialogErrors.PeerNotConnected
+                                                        )
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
