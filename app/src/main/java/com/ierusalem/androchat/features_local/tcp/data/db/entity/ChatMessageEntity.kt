@@ -53,7 +53,7 @@ data class ChatMessageEntity(
                         formattedTime = formattedTime,
                         voiceFileName = voiceMessageFileName,
                         duration = voiceMessageAudioFileDuration!!,
-                        fileState = FileMessageState.Success,
+                        fileState = fileState ?: FileMessageState.Failure,
                         messageId = id,
                         peerUsername = peerUsername
                     )

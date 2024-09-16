@@ -45,7 +45,14 @@ class SealedClassTypeAdapter<T : Any>(private val kClass: KClass<Any>, private v
         return innerClass.objectInstance as T? ?: x
     }
 
-    override fun write(out: JsonWriter, value: T) {
+    override fun write(out: JsonWriter, value: T?) {
+        log("value is $value")
+        if (value == null) {
+            out.nullValue()  // Handle the null case
+            return
+        }
+
+        // Continue serialization if value is not null
         val jsonString = gson.toJson(value)
         out.beginObject()
         out.name(value.javaClass.canonicalName.splitToSequence(".").last()).jsonValue(jsonString)

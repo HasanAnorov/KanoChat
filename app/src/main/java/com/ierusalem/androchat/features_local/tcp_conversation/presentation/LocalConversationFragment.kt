@@ -49,8 +49,8 @@ import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.core.utils.openFile
 import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp.domain.InitialUserModel
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
-import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
@@ -152,10 +152,14 @@ class LocalConversationFragment : Fragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
-        selectedUserStringForm?.let {
-            val selectedUser = gson.fromJson(it, ChattingUser::class.java)
-            viewModel.getCurrentChattingUser(selectedUser)
-            viewModel.loadMessages(selectedUser)
+        if (selectedUserStringForm != null) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                val selectedUser = gson.fromJson(selectedUserStringForm, InitialUserModel::class.java)
+                viewModel.getCurrentChattingUser(selectedUser)
+                viewModel.loadMessages(selectedUser)
+            }
+        } else {
+            //todo - show corresponding error
         }
     }
 
