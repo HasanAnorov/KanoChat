@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,7 +30,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.core.ui.components.CommonPasswordTextField
 import com.ierusalem.androchat.core.ui.components.CommonTextFieldWithError
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.features_common.auth.login.domain.LoginScreenState
@@ -88,22 +86,6 @@ fun LoginScreen(
                     }
                 )
 
-                CommonPasswordTextField(
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .padding(horizontal = 16.dp),
-                    label = stringResource(id = R.string.password),
-                    value = state.password,
-                    passwordVisibility = state.passwordVisibility,
-                    errorMessage = state.passwordError,
-                    onPasswordVisibilityChanged = {
-                        intentReducer(LoginFormEvents.PasswordVisibilityChanged)
-                    },
-                    onPasswordTextChanged = {
-                        intentReducer(LoginFormEvents.PasswordChanged(it))
-                    }
-                )
-
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -129,30 +111,6 @@ fun LoginScreen(
                             textAlign = TextAlign.Center
                         )
                     },
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    content = {
-                        Text(
-                            text = stringResource(R.string.don_t_have_an_account),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Text(
-                            modifier = Modifier
-                                .padding(start = 4.dp)
-                                .padding(vertical = 6.dp)
-                                .clickable { intentReducer(LoginFormEvents.ToRegister) },
-                            text = stringResource(R.string.register),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
                 )
             }
         )

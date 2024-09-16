@@ -86,10 +86,6 @@ class LoginFragment : Fragment() {
             LoginNavigation.ToLocal -> {
                 findNavController().navigate(R.id.action_loginFragment_to_tcpFragment)
             }
-
-            LoginNavigation.ToRegister -> {
-                findNavController().navigate(R.id.action_loginFragment_to_registrationFragment)
-            }
         }
     }
 

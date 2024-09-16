@@ -41,27 +41,10 @@ class LoginViewModel @Inject constructor(
                 }
             }
 
-            LoginFormEvents.ToRegister -> emitNavigation(LoginNavigation.ToRegister)
             is LoginFormEvents.UsernameChanged -> {
                 _state.update {
                     it.copy(
                         username = event.username
-                    )
-                }
-            }
-
-            is LoginFormEvents.PasswordChanged -> {
-                _state.update {
-                    it.copy(
-                        password = event.password
-                    )
-                }
-            }
-
-            LoginFormEvents.PasswordVisibilityChanged -> {
-                _state.update {
-                    it.copy(
-                        passwordVisibility = !state.value.passwordVisibility
                     )
                 }
             }
@@ -70,11 +53,9 @@ class LoginViewModel @Inject constructor(
 
     private suspend fun loginUser() {
         val usernameResult = validator.validateUsername(state.value.username)
-        val passwordResult = validator.validatePassword(state.value.password)
 
         val hasError = listOf(
             usernameResult,
-            passwordResult,
         ).any {
             !it.successful
         }
@@ -83,7 +64,6 @@ class LoginViewModel @Inject constructor(
             _state.update {
                 it.copy(
                     usernameError = usernameResult.errorMessage,
-                    passwordError = passwordResult.errorMessage,
                 )
             }
             return
@@ -91,15 +71,13 @@ class LoginViewModel @Inject constructor(
         _state.update {
             it.copy(
                 usernameError = null,
-                passwordError = null,
             )
         }
 
         val deviceLogin: String = dataStorePreferenceRepository.getUsername.first()
-        val devicePassword: String = dataStorePreferenceRepository.getPassword.first()
 
-        if (deviceLogin.isNotEmpty() && devicePassword.isNotEmpty()) {
-            if (deviceLogin == state.value.username && devicePassword == state.value.password) {
+        if (deviceLogin.isNotEmpty() ) {
+            if (deviceLogin == state.value.username) {
                 dataStorePreferenceRepository.setLoggingStatus(true)
                 emitNavigation(LoginNavigation.ToLocal)
             } else {
@@ -128,9 +106,6 @@ class LoginViewModel @Inject constructor(
 data class LoginScreenState(
     val username: String = "",
     val usernameError: String? = null,
-    val password: String = "",
-    val passwordError: String? = null,
-    val passwordVisibility: Boolean = false,
 )
 
 data class SnackBarMessage(
