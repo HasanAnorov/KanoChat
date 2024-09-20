@@ -47,8 +47,8 @@ class LoginFragment : Fragment() {
                     visibeSnackbarMessages.forEach { message ->
                         scope.launch {
                             val result = snackbarHostState.showSnackbar(
-                                message = message.message,
-                                actionLabel = message.actionLabel,
+                                message = getString(message.message),
+                                actionLabel = getString(message.actionLabel),
                                 duration = SnackbarDuration.Short,
                             )
                             when (result) {

@@ -13,7 +13,6 @@ import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
-import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.ContactsContract
@@ -36,6 +35,7 @@ import com.ierusalem.androchat.core.app.AppBroadcastFrequency
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
+import com.ierusalem.androchat.core.directory_router.FilesDirectoryService
 import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
@@ -84,6 +84,7 @@ import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -123,7 +124,8 @@ class TcpViewModel @Inject constructor(
     private val audioPlayer: AndroidAudioPlayer,
     private val wifiP2PManager: WifiP2pManager,
     private val channel: WifiP2pManager.Channel,
-    private val messagesRepository: MessagesRepository
+    private val messagesRepository: MessagesRepository,
+    private val filesDirectoryService: FilesDirectoryService,
 ) : ViewModel(), NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
 
     //chatting server side
@@ -145,10 +147,7 @@ class TcpViewModel @Inject constructor(
     val visiblePermissionDialogQueue = mutableStateListOf<String>()
     val visibleActionDialogQueue = mutableStateListOf<VisibleActionDialogs>()
 
-    private val resourceDirectory = Environment
-        .getExternalStoragePublicDirectory(
-            Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}"
-        )
+    private val privateFilesDirectory = filesDirectoryService.getPublicFilesDirectory()
 
     init {
         loadChattingUsers()
@@ -838,7 +837,7 @@ class TcpViewModel @Inject constructor(
 
             try {
                 //Create File object
-                val file = File(resourceDirectory, voiceMessage.voiceMessageFileName!!)
+                val file = File(privateFilesDirectory, voiceMessage.voiceMessageFileName!!)
 
                 //sending file type
                 val type = voiceMessage.type.identifier.code
@@ -968,12 +967,12 @@ class TcpViewModel @Inject constructor(
 
                 try {
 
-                    if (!resourceDirectory.exists()) {
-                        resourceDirectory.mkdir()
+                    if (!privateFilesDirectory.exists()) {
+                        privateFilesDirectory.mkdirs()
                     }
 
                     //Create File object
-                    val file = File(resourceDirectory, fileMessage.fileName!!)
+                    val file = File(privateFilesDirectory, fileMessage.fileName!!)
                     log("sending file info: file size - ${file.length()} - ${file.name}")
 
                     //sending file name
@@ -987,7 +986,8 @@ class TcpViewModel @Inject constructor(
                     var bytes: Int
                     var bytesForPercentage = 0L
                     val fileSizeForPercentage = file.length()
-                    val fileInputStream = FileInputStream(file)
+//                    val fileInputStream = FileInputStream(file)
+                    val fileInputStream = BufferedInputStream(FileInputStream(file))
 
                     // Here we  break file into chunks
                     val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
@@ -1065,7 +1065,8 @@ class TcpViewModel @Inject constructor(
                 val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
 
                 // Create File object
-                val file = getFileByName(fileName = filename, resourceDirectory = resourceDirectory)
+                val file =
+                    getFileByName(fileName = filename, resourceDirectory = privateFilesDirectory)
 
                 // Create FileOutputStream to write the received file
                 val fileMessageEntity = ChatMessageEntity(
@@ -1113,7 +1114,7 @@ class TcpViewModel @Inject constructor(
                             val tempPercentage =
                                 ((bytesForPercentage - bytesRead.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
 
-                            if (percentage != tempPercentage) {
+                            if (fileSize >0 && percentage != tempPercentage) {
                                 log("progress - $percentage")
                                 val newState = FileMessageState.Loading(percentage)
                                 val newFileMessage =
@@ -1177,7 +1178,8 @@ class TcpViewModel @Inject constructor(
                 val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
 
                 //Create File object
-                val file = getFileByName(fileName = fileName, resourceDirectory = resourceDirectory)
+                val file =
+                    getFileByName(fileName = fileName, resourceDirectory = privateFilesDirectory)
 
                 val voiceMessageEntity = ChatMessageEntity(
                     type = AppMessageType.VOICE,
@@ -1841,7 +1843,7 @@ class TcpViewModel @Inject constructor(
         val currentAudioFileName =
             "${Constants.VOICE_MESSAGE_FILE_NAME}${getTimeInHours()}${Constants.AUDIO_EXTENSION}"
 
-        currentAudioFile = File(resourceDirectory, currentAudioFileName).also {
+        currentAudioFile = File(privateFilesDirectory, currentAudioFileName).also {
             audioRecorder.startAudio(it)
         }
     }
@@ -1945,7 +1947,7 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun playAudioFile(voiceMessage: ChatMessage.VoiceMessage) {
-        val audioFile = File(resourceDirectory, voiceMessage.voiceFileName)
+        val audioFile = File(privateFilesDirectory, voiceMessage.voiceFileName)
         when (voiceMessage.audioState) {
             is AudioState.Playing -> {
                 val currentPosition = audioPlayer.pause()
@@ -1975,15 +1977,14 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun createLocalOnlyHotspotNetwork() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             if (permissionGuard.canCreateLocalOnlyHotSpotNetwork()) {
                 startLocalOnlyHotspot()
             } else {
-                permissionGuard.requiredPermissionsForLocalOnlyHotSpot.forEach {
-                    if (!visiblePermissionDialogQueue.contains(it)) {
-                        visiblePermissionDialogQueue.add(it)
-                    }
-                }
+                log("Permissions not granted for location!")
+                // request at leas one time location permission,
+                // this make requestPermissionForRationale return true
+                emitNavigation(TcpScreenNavigation.RequestLocationPermission)
             }
         }
     }
@@ -2422,7 +2423,7 @@ class TcpViewModel @Inject constructor(
                     val file = generateFileFromUri(
                         contentResolver = contentResolver,
                         uri = imageUri,
-                        resourceDirectory = resourceDirectory
+                        resourceDirectory = privateFilesDirectory
                     )
 
                     val fileMessageEntity = ChatMessageEntity(
@@ -2452,7 +2453,7 @@ class TcpViewModel @Inject constructor(
             GeneralConnectionStatus.ConnectedAsClient -> {
                 val fileMessages = mutableListOf<ChatMessageEntity>()
                 medias.forEach { imageUri ->
-                    val file = generateFileFromUri(contentResolver, imageUri, resourceDirectory)
+                    val file = generateFileFromUri(contentResolver, imageUri, privateFilesDirectory)
                     val fileMessageEntity = ChatMessageEntity(
                         type = AppMessageType.FILE,
                         formattedTime = getCurrentTime(),

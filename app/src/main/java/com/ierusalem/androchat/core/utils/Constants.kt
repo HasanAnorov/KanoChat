@@ -21,7 +21,6 @@ object Constants {
     const val PREFERENCE_THEME = "device_theme"
     const val PREFERENCE_LOGGING_STATUS = "device_logging_status"
     const val PREFERENCE_USERNAME = "device_user_username"
-    const val PREFERENCE_PASSWORD = "device_user_password"
     const val PREFERENCE_HOTSPOT_NAME = "device_hotspot_name"
     const val PREFERENCE_HOTSPOT_PASSWORD = "device_hotspot_password"
     const val PREFERENCE_PORT_NUMBER = "device_port_number"

@@ -32,7 +32,6 @@ class DataStorePreferenceRepository(context: Context) {
         val PREF_THEME = booleanPreferencesKey(name = Constants.PREFERENCE_THEME)
         val PREF_LOGGING_STATUS = booleanPreferencesKey(name = Constants.PREFERENCE_LOGGING_STATUS)
         val PREF_USERNAME = stringPreferencesKey(name = Constants.PREFERENCE_USERNAME)
-        val PREF_PASSWORD = stringPreferencesKey(name = Constants.PREFERENCE_PASSWORD)
         val PREF_HOTSPOT_NAME = stringPreferencesKey(name = Constants.PREFERENCE_HOTSPOT_NAME)
         val PREF_PORT_NUMBER = stringPreferencesKey(name = Constants.PREFERENCE_PORT_NUMBER)
         val PREF_HOTSPOT_PASSWORD =
@@ -68,19 +67,8 @@ class DataStorePreferenceRepository(context: Context) {
         }
 
     suspend fun hasUserLoggedIn(): Boolean {
-        return getUsername.first().isNotEmpty() && getPassword.first().isNotEmpty() && getLoggingStatus.first()
+        return getUsername.first().isNotEmpty() && getLoggingStatus.first()
     }
-
-    suspend fun setPassword(password: String) {
-        dataStore.edit { preferences ->
-            preferences[PREF_PASSWORD] = password
-        }
-    }
-
-    val getPassword: Flow<String> = dataStore.data
-        .map { preferences ->
-            preferences[PREF_PASSWORD] ?: ""
-        }
 
     suspend fun setUsername(username: String) {
         dataStore.edit { preferences ->

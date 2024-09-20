@@ -9,6 +9,8 @@ import androidx.room.Room
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
 import com.ierusalem.androchat.core.connectivity.NetworkConnectivityObserver
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
+import com.ierusalem.androchat.core.directory_router.FilesDirectoryService
+import com.ierusalem.androchat.core.directory_router.FilesDirectoryImpl
 import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.FieldValidator
 import com.ierusalem.androchat.core.voice_message.playback.AndroidAudioPlayer
@@ -39,7 +41,7 @@ object AppModule {
         return MessagesRepositoryImpl(messagesDao, chattingUsersDao)
     }
 
-     @Provides
+    @Provides
     @Singleton
     fun provideMessageDatabase(application: Application): MessagesDatabase {
         return Room.databaseBuilder(
@@ -123,5 +125,10 @@ object AppModule {
         }
     }
 
+    @Provides
+    @Singleton
+    fun provideFileDirectoryService(application: Application): FilesDirectoryService {
+        return FilesDirectoryImpl(application)
+    }
 
 }

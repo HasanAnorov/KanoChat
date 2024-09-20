@@ -11,6 +11,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
+import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiDirectBroadcastReceiver
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
@@ -47,6 +48,11 @@ class LocalActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets -> insets }
+
+        val privateResourceDirectory = applicationContext.getExternalFilesDir(
+            "/${Constants.FOLDER_NAME_FOR_RESOURCES}"
+        )
+        log("privateResourceDirectory - $privateResourceDirectory")
 
         //as long as you are saving isOnline in DB, initial value should be false for all users
         viewModel.updateAllUsersOnlineStatus(false)

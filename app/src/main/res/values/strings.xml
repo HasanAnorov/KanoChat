@@ -203,5 +203,8 @@
     <string name="failed_to_create_network">Failed to create network!</string>
     <string name="failed_to_create_network_definition">Please try with refreshing wifi, this will help to create network with new configuration.</string>
     <string name="invalid_hotspot_name">Hotspot name length should be between 5 and 32 symbols!</string>
+    <string name="save_to_downloads">Save to downloads</string>
+    <string name="ok">OK</string>
+    <string name="credentials_didn_t_match">Credentials didn\'t match</string>
 
 </resources>

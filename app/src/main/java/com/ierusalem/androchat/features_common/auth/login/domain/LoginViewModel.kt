@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
@@ -76,7 +77,7 @@ class LoginViewModel @Inject constructor(
 
         val deviceLogin: String = dataStorePreferenceRepository.getUsername.first()
 
-        if (deviceLogin.isNotEmpty() ) {
+        if (deviceLogin.isNotEmpty()) {
             if (deviceLogin == state.value.username) {
                 dataStorePreferenceRepository.setLoggingStatus(true)
                 emitNavigation(LoginNavigation.ToLocal)
@@ -84,19 +85,16 @@ class LoginViewModel @Inject constructor(
                 //show credentials didn't match error
                 visibleSnackbarMessagesQueue.add(
                     SnackBarMessage(
-                        message = "Credentials didn't match",
-                        actionLabel = "OK"
+                        message = R.string.credentials_didn_t_match,
+                        actionLabel = R.string.ok
                     )
                 )
             }
         } else {
-            //there is no saved username or password register
-            visibleSnackbarMessagesQueue.add(
-                SnackBarMessage(
-                    message = "There is no saved username or password. Register first",
-                    actionLabel = "OK"
-                )
-            )
+            //there is no saved username just login
+            dataStorePreferenceRepository.setUsername(state.value.username)
+            dataStorePreferenceRepository.setLoggingStatus(true)
+            emitNavigation(LoginNavigation.ToLocal)
         }
     }
 
@@ -109,6 +107,6 @@ data class LoginScreenState(
 )
 
 data class SnackBarMessage(
-    val message: String,
-    val actionLabel: String,
+    val message: Int,
+    val actionLabel: Int,
 )
