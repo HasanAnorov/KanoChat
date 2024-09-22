@@ -8,10 +8,10 @@ sealed interface ChatMessage {
     val formattedTime: String
     val isFromYou: Boolean
     val messageType: AppMessageType
-    val peerUsername:String
+    val peerUsername: String
 
     data class TextMessage(
-        override val messageId:Long,
+        override val messageId: Long,
         override val formattedTime: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.TEXT,
@@ -29,7 +29,8 @@ sealed interface ChatMessage {
         val fileName: String,
         val fileSize: String,
         val fileExtension: String,
-        val fileState: FileMessageState = FileMessageState.Loading(0)
+        val fileState: FileMessageState = FileMessageState.Loading(0),
+        val isFileMessageAvailable: Boolean
     ) : ChatMessage
 
     data class VoiceMessage(
@@ -56,10 +57,10 @@ sealed interface ChatMessage {
 
 }
 
-sealed interface AudioState{
-    data object Idle: AudioState
-    data class Playing(val timing: Long): AudioState
-    data class Paused(val currentPosition: Int): AudioState
+sealed interface AudioState {
+    data object Idle : AudioState
+    data class Playing(val timing: Long) : AudioState
+    data class Paused(val currentPosition: Int) : AudioState
 }
 
 

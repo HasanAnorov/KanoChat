@@ -11,8 +11,6 @@ object Constants {
 
     const val DATA_STORE_NAME = "AppDataStore"
 
-    const val FILE_LABEL = "_fast_chat"
-
     const val FILE_RECEIVE_TIMEOUT = 10 * 1000
     const val INFINITELY_TIMEOUT = 0
 
@@ -127,7 +125,16 @@ object Constants {
         return time
     }
 
-    fun isValidVersionForLocalOnlyHotspot(): Boolean{
+    fun getSimpleDate(): String {
+        val calendar = Calendar.getInstance()
+        val currentDate = calendar.get(Calendar.DATE)
+        val currentMonth = calendar.get(Calendar.MONTH)
+        val currentYear = calendar.get(Calendar.YEAR)
+        val date = "_${currentDate}_${currentMonth}_${currentYear}"
+        return date
+    }
+
+    fun isValidVersionForLocalOnlyHotspot(): Boolean {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
     }
 

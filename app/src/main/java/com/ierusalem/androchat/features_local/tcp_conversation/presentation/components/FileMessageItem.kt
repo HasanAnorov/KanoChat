@@ -60,7 +60,7 @@ fun FileMessageItem(
         ) {
             when (val state = message.fileState) {
                 is FileMessageState.Loading -> {
-                    if (state.percentage == 100) {
+                    if (message.isFileMessageAvailable) {
                         Box(
                             modifier = Modifier
                                 .size(64.dp)
@@ -213,7 +213,8 @@ private fun PreviewLightFileItemPeer() {
                     filePath = "file_path_uri",
                     isFromYou = false,
                     messageId = 0L,
-                    peerUsername = "Khasan"
+                    peerUsername = "Khasan",
+                    isFileMessageAvailable = true
                 ),
                 onFileItemClick = {}
             )
@@ -236,7 +237,8 @@ private fun PreviewDarkFileItem() {
                     filePath = "file_path_uri",
                     isFromYou = true,
                     messageId = 0L,
-                    peerUsername = "Khasan"
+                    peerUsername = "Khasan",
+                    isFileMessageAvailable = true
                 ),
                 onFileItemClick = {}
             )
@@ -260,7 +262,8 @@ private fun PreviewLightFileItem() {
                     filePath = "file_path_uri",
                     isFromYou = true,
                     messageId = 0L,
-                    peerUsername = "Khasan"
+                    peerUsername = "Khasan",
+                    isFileMessageAvailable = true
                 ),
                 onFileItemClick = {}
             )
@@ -284,7 +287,8 @@ private fun PreviewDarkFileItemPeer() {
                     filePath = "file_path_uri",
                     isFromYou = false,
                     messageId = 0L,
-                    peerUsername = "Khasan"
+                    peerUsername = "Khasan",
+                    isFileMessageAvailable = true
                 ),
                 onFileItemClick = {}
             )

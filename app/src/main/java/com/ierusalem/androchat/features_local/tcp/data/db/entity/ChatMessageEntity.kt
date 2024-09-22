@@ -25,6 +25,7 @@ data class ChatMessageEntity(
     val fileSize: String? = null,
     val fileName: String? = null,
     val fileExtension: String? = null,
+    val isFileAvailable: Boolean = false,
     //contact message specific parameters
     val contactName: String? = null,
     val contactNumber: String? = null
@@ -72,7 +73,8 @@ data class ChatMessageEntity(
                     fileExtension = fileExtension!!,
                     fileState = fileState!!,
                     messageId = id,
-                    peerUsername = peerUsername
+                    peerUsername = peerUsername,
+                    isFileMessageAvailable = isFileAvailable
                 )
             }
 

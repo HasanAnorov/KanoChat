@@ -965,6 +965,8 @@ class TcpViewModel @Inject constructor(
                 val messageId = insertMessage(fileMessage)
                 log("file message id - $messageId")
 
+                var fileInputStream: BufferedInputStream? = null
+
                 try {
 
                     if (!privateFilesDirectory.exists()) {
@@ -987,7 +989,7 @@ class TcpViewModel @Inject constructor(
                     var bytesForPercentage = 0L
                     val fileSizeForPercentage = file.length()
 //                    val fileInputStream = FileInputStream(file)
-                    val fileInputStream = BufferedInputStream(FileInputStream(file))
+                    fileInputStream = BufferedInputStream(FileInputStream(file))
 
                     // Here we  break file into chunks
                     val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
@@ -1010,13 +1012,19 @@ class TcpViewModel @Inject constructor(
                         }
                     }
 
-                    // close the file here
-                    fileInputStream.close()
-
-                    val newState = FileMessageState.Success
-                    val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
-                    updatePercentageOfReceivingFile(newFileMessage)
-                    log("file sent successfully")
+                    // Ensure all bytes were sent
+                    if (bytesForPercentage == fileSizeForPercentage) {
+                        log("All bytes sent correctly.")
+                        val newState = FileMessageState.Success
+                        val newFileMessage = fileMessage.copy(fileState = newState, id = messageId, isFileAvailable = true)
+                        updatePercentageOfReceivingFile(newFileMessage)
+                        log("file sent successfully")
+                    } else {
+                        log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
+                        val newState = FileMessageState.Failure
+                        val newFileMessage = fileMessage.copy(fileState = newState, id = messageId,)
+                        updatePercentageOfReceivingFile(newFileMessage)
+                    }
 
                 } catch (exception: IOException) {
                     exception.printStackTrace()
@@ -1030,6 +1038,9 @@ class TcpViewModel @Inject constructor(
                     val newState = FileMessageState.Failure
                     val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
                     updatePercentageOfReceivingFile(newFileMessage)
+                }finally {
+                    fileInputStream?.close()
+                    delay(1000)
                 }
             }
         }
@@ -1126,7 +1137,7 @@ class TcpViewModel @Inject constructor(
                         log("file received successfully")
                         val newState = FileMessageState.Success
                         val newFileMessage =
-                            fileMessageEntity.copy(fileState = newState, id = messageId)
+                            fileMessageEntity.copy(fileState = newState, id = messageId, isFileAvailable = true)
                         updatePercentageOfReceivingFile(newFileMessage)
                     } catch (e: IOException) {
                         e.printStackTrace()
@@ -2657,10 +2668,14 @@ class TcpViewModel @Inject constructor(
         when (message.type) {
             AppMessageType.FILE -> {
                 viewModelScope.launch(Dispatchers.IO) {
-                    messagesRepository.updateFileMessage(
+                    val updatedId = messagesRepository.updateFileMessage(
                         messageId = message.id,
-                        newFileState = message.fileState
+                        newFileState = message.fileState,
+                        isFileAvailable = message.isFileAvailable
                     )
+                    if(message.isFileAvailable){
+                        log("updated id - $updatedId")
+                    }
                 }
             }
 

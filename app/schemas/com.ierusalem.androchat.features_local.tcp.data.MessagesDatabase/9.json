@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 9,
-    "identityHash": "6111d98357c2afea7c4a1c329638fd09",
+    "identityHash": "06505f0283e9d6f8300241507af1c73a",
     "entities": [
       {
         "tableName": "messages",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `formattedTime` TEXT NOT NULL, `isFromYou` INTEGER NOT NULL, `peerUniqueId` TEXT NOT NULL, `authorUniqueId` TEXT NOT NULL, `text` TEXT, `voiceMessageFileName` TEXT, `voiceMessageAudioFileDuration` INTEGER, `fileState` TEXT NOT NULL, `filePath` TEXT, `fileSize` TEXT, `fileName` TEXT, `fileExtension` TEXT, `contactName` TEXT, `contactNumber` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `formattedTime` TEXT NOT NULL, `isFromYou` INTEGER NOT NULL, `peerUniqueId` TEXT NOT NULL, `authorUniqueId` TEXT NOT NULL, `text` TEXT, `voiceMessageFileName` TEXT, `voiceMessageAudioFileDuration` INTEGER, `fileState` TEXT, `filePath` TEXT, `fileSize` TEXT, `fileName` TEXT, `fileExtension` TEXT, `isFileAvailable` INTEGER NOT NULL, `contactName` TEXT, `contactNumber` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -66,7 +66,7 @@
             "fieldPath": "fileState",
             "columnName": "fileState",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "filePath",
@@ -91,6 +91,12 @@
             "columnName": "fileExtension",
             "affinity": "TEXT",
             "notNull": false
+          },
+          {
+            "fieldPath": "isFileAvailable",
+            "columnName": "isFileAvailable",
+            "affinity": "INTEGER",
+            "notNull": true
           },
           {
             "fieldPath": "contactName",
@@ -156,7 +162,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6111d98357c2afea7c4a1c329638fd09')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '06505f0283e9d6f8300241507af1c73a')"
     ]
   }
 }
