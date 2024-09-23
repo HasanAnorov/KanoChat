@@ -2,6 +2,7 @@ package com.ierusalem.androchat.features_local.tcp.presentation
 
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenErrors
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
+import java.io.File
 
 interface TcpScreenNavigation {
     data object OnNavIconClick : TcpScreenNavigation
@@ -11,7 +12,7 @@ interface TcpScreenNavigation {
     data object RequestRecordAudioPermission : TcpScreenNavigation
     data object RequestLocationPermission : TcpScreenNavigation
     data class OnChattingUserClicked(val selectUserStringForm: String) : TcpScreenNavigation
-    data class OnFileItemClick(val message: ChatMessage.FileMessage) : TcpScreenNavigation
+    data class OnFileItemClick(val message: ChatMessage.FileMessage, val fileDirectory:File) : TcpScreenNavigation
     data class OnErrorsOccurred(val tcpScreenErrors: TcpScreenErrors) : TcpScreenNavigation
     data class OnContactItemClick(val message: ChatMessage.ContactMessage) : TcpScreenNavigation
 }

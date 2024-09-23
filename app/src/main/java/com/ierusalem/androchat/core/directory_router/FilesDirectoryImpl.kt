@@ -18,11 +18,8 @@ class FilesDirectoryImpl(val context: Context) : FilesDirectoryService {
         return publicFilesDirectory
     }
 
-    override fun getPrivateFilesDirectory(): File?{
-        val privateFilesDirectory = context.getExternalFilesDir(
-            Environment.DIRECTORY_DOCUMENTS +
-                    "/${Constants.FOLDER_NAME_FOR_RESOURCES}"
-        )
+    override fun getPrivateFilesDirectory(): File{
+        val privateFilesDirectory = context.filesDir
 
         log("file path - ${privateFilesDirectory?.path}")
         privateFilesDirectory?.let {

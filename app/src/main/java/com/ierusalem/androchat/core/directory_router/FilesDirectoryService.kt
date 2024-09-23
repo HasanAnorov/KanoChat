@@ -4,5 +4,5 @@ import java.io.File
 
 interface FilesDirectoryService {
     fun getPublicFilesDirectory(): File
-    fun getPrivateFilesDirectory(): File?
+    fun getPrivateFilesDirectory(): File
 }

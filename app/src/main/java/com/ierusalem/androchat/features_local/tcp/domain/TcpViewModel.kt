@@ -146,7 +146,7 @@ class TcpViewModel @Inject constructor(
     val visiblePermissionDialogQueue = mutableStateListOf<String>()
     val visibleActionDialogQueue = mutableStateListOf<VisibleActionDialogs>()
 
-    private val privateFilesDirectory = filesDirectoryService.getPublicFilesDirectory()
+    private val privateFilesDirectory = filesDirectoryService.getPrivateFilesDirectory()
 
     init {
         loadChattingUsers()
@@ -875,7 +875,7 @@ class TcpViewModel @Inject constructor(
                             val newState = FileMessageState.Loading(percentage)
                             val newVoiceMessage =
                                 voiceMessage.copy(fileState = newState, id = messageId)
-                            updatePercentageOfReceivingFile(newVoiceMessage)
+                            updatePercentageOfReceivingAudioFile(newVoiceMessage)
                         }
                     }
                 }
@@ -883,20 +883,20 @@ class TcpViewModel @Inject constructor(
                 // Update state to success
                 val newState = FileMessageState.Success
                 val newVoiceMessage = voiceMessage.copy(fileState = newState, id = messageId)
-                updatePercentageOfReceivingFile(newVoiceMessage)
+                updatePercentageOfReceivingAudioFile(newVoiceMessage)
                 log("audio file sent successfully")
             } catch (exception: IOException) {
                 exception.printStackTrace()
                 log("audio file sent failed - IOException")
                 val newState = FileMessageState.Failure
                 val newVoiceMessage = voiceMessage.copy(fileState = newState, id = messageId)
-                updatePercentageOfReceivingFile(newVoiceMessage)
+                updatePercentageOfReceivingAudioFile(newVoiceMessage)
             } catch (error: Exception) {
                 error.printStackTrace()
                 log("audio file sent failed - Exception")
                 val newState = FileMessageState.Failure
                 val newVoiceMessage = voiceMessage.copy(fileState = newState, id = messageId)
-                updatePercentageOfReceivingFile(newVoiceMessage)
+                updatePercentageOfReceivingAudioFile(newVoiceMessage)
             }
         }
     }
@@ -1259,7 +1259,7 @@ class TcpViewModel @Inject constructor(
                             val newState = FileMessageState.Loading(percentage)
                             val newVoiceMessage =
                                 voiceMessageEntity.copy(fileState = newState, id = messageId)
-                            updatePercentageOfReceivingFile(newVoiceMessage)
+                            updatePercentageOfReceivingAudioFile(newVoiceMessage)
 //                            if (percentage != tempPercentage) {
 //                                log("audio progress - $percentage")
 //                                val newState = FileMessageState.Loading(percentage)
@@ -1277,7 +1277,7 @@ class TcpViewModel @Inject constructor(
                             fileState = newState,
                             voiceMessageAudioFileDuration = file.getAudioFileDuration()
                         )
-                        updatePercentageOfReceivingFile(newVoiceMessage)
+                        updatePercentageOfReceivingAudioFile(newVoiceMessage)
                     } catch (e: IOException) {
                         e.printStackTrace()
                         log("audio file receiving failed: ${e.message}")
@@ -2161,7 +2161,10 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.OnFileItemClick -> {
-                emitNavigation(TcpScreenNavigation.OnFileItemClick(event.message))
+                emitNavigation(TcpScreenNavigation.OnFileItemClick(
+                    message = event.message,
+                    fileDirectory = privateFilesDirectory
+                ))
             }
 
             is TcpScreenEvents.UpdateBottomSheetState -> {
@@ -2431,6 +2434,42 @@ class TcpViewModel @Inject constructor(
                         hotspotName = event.hotspotName.trim()
                     )
                 }
+            }
+        }
+    }
+
+    fun handleFilesLauncher(fileUri: Uri){
+        val file = generateFileFromUri(
+            contentResolver = contentResolver,
+            uri = fileUri,
+            resourceDirectory = privateFilesDirectory
+        )
+
+        val fileMessageEntity = ChatMessageEntity(
+            type = AppMessageType.FILE,
+            formattedTime = getCurrentTime(),
+            isFromYou = true,
+            peerUniqueId = state.value.peerUserUniqueId,
+            authorUniqueId = state.value.authorUniqueId,
+
+            filePath = file.path,
+            fileState = FileMessageState.Loading(0),
+            fileName = file.name,
+            fileSize = file.length().readableFileSize(),
+            fileExtension = file.extension,
+        )
+
+        when (state.value.generalConnectionStatus) {
+            GeneralConnectionStatus.Idle -> {
+                /** do nothing here */
+            }
+
+            GeneralConnectionStatus.ConnectedAsClient -> {
+                sendClientMessage(fileMessageEntity)
+            }
+
+            GeneralConnectionStatus.ConnectedAsHost -> {
+                sendHostMessage(fileMessageEntity)
             }
         }
     }
