@@ -135,6 +135,9 @@ fun ConversationContent(
                             modifier = Modifier.weight(1f),
                             scrollState = scrollState,
                             onFileItemClicked = { eventHandler(TcpScreenEvents.OnFileItemClick(it)) },
+                            onSaveToDownloadsClick = {
+                                eventHandler(TcpScreenEvents.OnSaveToDownloadsClick(it))
+                            },
                             onContactItemClick = {
                                 eventHandler(
                                     TcpScreenEvents.OnContactItemClick(

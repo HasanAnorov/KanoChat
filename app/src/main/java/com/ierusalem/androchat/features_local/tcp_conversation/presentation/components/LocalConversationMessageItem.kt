@@ -27,6 +27,7 @@ fun ChatMessageItem(
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
     onFileItemClick: (ChatMessage.FileMessage) -> Unit,
+    onSaveToDownloadsClick: (ChatMessage.FileMessage) -> Unit = {},
     onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
     onPlayVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
@@ -50,6 +51,7 @@ fun ChatMessageItem(
             onPlayVoiceMessageClick = { onPlayVoiceMessageClick(it) },
             onPauseVoiceMessageClick = { onPauseVoiceMessageClick(it) },
             onStopVoiceMessageClick = { onStopVoiceMessageClick(it) },
+            onSaveToDownloadsClick = onSaveToDownloadsClick
         )
     }
 }
@@ -60,6 +62,7 @@ fun AuthorAndMessage(
     chatMessage: ChatMessage,
     isFirstMessageByAuthor: Boolean,
     onFileItemClick: (ChatMessage.FileMessage) -> Unit,
+    onSaveToDownloadsClick: (ChatMessage.FileMessage) -> Unit,
     onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
     onPlayVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
@@ -84,7 +87,11 @@ fun AuthorAndMessage(
             }
 
             is ChatMessage.FileMessage -> {
-                FileMessageItem(message = chatMessage, onFileItemClick = onFileItemClick)
+                FileMessageItem(
+                    message = chatMessage,
+                    onFileItemClick = onFileItemClick,
+                    onSaveToDownloadsClick = onSaveToDownloadsClick
+                )
             }
 
             is ChatMessage.ContactMessage -> {

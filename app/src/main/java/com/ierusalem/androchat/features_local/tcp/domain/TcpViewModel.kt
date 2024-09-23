@@ -3,6 +3,7 @@ package com.ierusalem.androchat.features_local.tcp.domain
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentResolver
+import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
 import android.net.wifi.WifiConfiguration
@@ -13,10 +14,12 @@ import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
+import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.WifiOff
@@ -47,6 +50,7 @@ import com.ierusalem.androchat.core.utils.Constants.getTimeInHours
 import com.ierusalem.androchat.core.utils.Constants.isValidVersionForLocalOnlyHotspot
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
+import com.ierusalem.androchat.core.utils.addLabelBeforeExtension
 import com.ierusalem.androchat.core.utils.generateFileFromUri
 import com.ierusalem.androchat.core.utils.getAudioFileDuration
 import com.ierusalem.androchat.core.utils.getFileByName
@@ -104,6 +108,8 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.io.UTFDataFormatException
 import java.net.ServerSocket
 import java.net.Socket
@@ -2115,6 +2121,10 @@ class TcpViewModel @Inject constructor(
                 playAudioFile(event.message)
             }
 
+            is TcpScreenEvents.OnSaveToDownloadsClick -> {
+                saveFileToDownloads(fileName = event.message.fileName)
+            }
+
             is TcpScreenEvents.TcpChatItemClicked -> {
                 emitNavigation(TcpScreenNavigation.OnChattingUserClicked(Gson().toJson(event.currentChattingUser.toInitialChatModel())))
             }
@@ -2435,6 +2445,43 @@ class TcpViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    private fun saveFileToDownloads(fileName: String) {
+        val file = File(privateFilesDirectory, fileName)
+        val fileNameWithLabel = fileName.addLabelBeforeExtension()
+
+        // Create a custom folder in Downloads directory
+        val downloadsDirectoryWithAppFolder = Environment.DIRECTORY_DOWNLOADS + "/${Constants.FILE_NAME_LABEL}"
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Scoped Storage - Android 10+
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, fileNameWithLabel)
+                put(MediaStore.Downloads.MIME_TYPE, "application/octet-stream")
+                put(MediaStore.Downloads.RELATIVE_PATH, downloadsDirectoryWithAppFolder)
+            }
+
+            val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+
+            uri?.let {
+                val outputStream: OutputStream? = contentResolver.openOutputStream(it)
+                val inputStream: InputStream = file.inputStream()
+
+                outputStream?.use { out ->
+                    inputStream.copyTo(out)
+                }
+
+                inputStream.close()
+                outputStream?.close()
+            }
+        } else {
+            // Legacy method - Android 9 and below
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val destinationFile = File(downloadsDir, fileNameWithLabel)
+
+            file.copyTo(destinationFile, overwrite = true)
         }
     }
 

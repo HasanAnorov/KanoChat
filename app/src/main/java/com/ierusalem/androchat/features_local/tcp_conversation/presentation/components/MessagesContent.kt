@@ -39,6 +39,7 @@ fun Messages(
     scrollState: LazyListState,
     modifier: Modifier = Modifier,
     onFileItemClicked: (ChatMessage.FileMessage) -> Unit,
+    onSaveToDownloadsClick: (ChatMessage.FileMessage) -> Unit = {},
     onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
     onPlayVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
@@ -85,6 +86,7 @@ fun Messages(
                         onPlayVoiceMessageClick = { onPlayVoiceMessageClick(it) },
                         onPauseVoiceMessageClick = { onPauseVoiceMessageClick(it) },
                         onStopVoiceMessageClick = { onStopVoiceMessageClick(it) },
+                        onSaveToDownloadsClick = onSaveToDownloadsClick
                     )
                 }
             }

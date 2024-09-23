@@ -42,6 +42,7 @@ fun FileMessageItem(
     modifier: Modifier = Modifier,
     message: ChatMessage.FileMessage,
     onFileItemClick: (ChatMessage.FileMessage) -> Unit,
+    onSaveToDownloadsClick: (ChatMessage.FileMessage) -> Unit = {}
 ) {
     val backgroundBubbleColor = if (message.isFromYou) {
         MaterialTheme.colorScheme.surfaceVariant
@@ -185,7 +186,10 @@ fun FileMessageItem(
                             content = {
                                 DropdownMenuItem(
                                     text = { Text(text = stringResource(R.string.save_to_downloads)) },
-                                    onClick = { /*TODO*/ }
+                                    onClick = {
+                                        onSaveToDownloadsClick(message)
+                                        optionsMenuVisibility = false
+                                    }
                                 )
                             }
                         )

@@ -39,6 +39,7 @@ sealed interface TcpScreenEvents {
     data class TcpChatItemClicked(val currentChattingUser: ChattingUser) : TcpScreenEvents
 
     data class OnFileItemClick(val message: ChatMessage.FileMessage) : TcpScreenEvents
+    data class OnSaveToDownloadsClick(val message: ChatMessage.FileMessage): TcpScreenEvents
     data class OnContactItemClick(val message: ChatMessage.ContactMessage) : TcpScreenEvents
 
     data object OnVoiceRecordStart : TcpScreenEvents
