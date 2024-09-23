@@ -45,7 +45,6 @@ import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
 import com.ierusalem.androchat.core.utils.Constants.getRandomColor
 import com.ierusalem.androchat.core.utils.Constants.getTimeInHours
 import com.ierusalem.androchat.core.utils.Constants.isValidVersionForLocalOnlyHotspot
-import com.ierusalem.androchat.core.utils.Json.gson
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
 import com.ierusalem.androchat.core.utils.generateFileFromUri
@@ -735,7 +734,7 @@ class TcpViewModel @Inject constructor(
                 }
 
                 AppMessageType.FILE -> {
-                    viewModelScope.launch(Dispatchers.IO) {
+                    viewModelScope.launch {
                         sendFileMessages(writer = clientWriter, messages = listOf(message))
                     }
                 }
@@ -948,30 +947,26 @@ class TcpViewModel @Inject constructor(
         messages: List<ChatMessageEntity>
     ) {
         log("sending file ...")
+        try {
 
-        withContext(Dispatchers.IO) {
+            withContext(Dispatchers.IO) {
+                //sending file type
+                val type = AppMessageType.FILE.identifier.code
+                writer.writeChar(type)
+                log("send file message - $type")
 
-            //sending file type
-            val type = AppMessageType.FILE.identifier.code
-            writer.writeChar(type)
-            log("send file message - $type")
-
-            //sending file count
-            writer.writeInt(messages.size)
-            log("file count - ${messages.size}")
+                //sending file count
+                writer.writeInt(messages.size)
+                log("file count - ${messages.size}")
+            }
 
             messages.forEach { fileMessage ->
 
-                val messageId = insertMessage(fileMessage)
-                log("file message id - $messageId")
-
-                var fileInputStream: BufferedInputStream? = null
+                val messageId = runBlocking(Dispatchers.IO) {
+                    insertMessage(fileMessage)
+                }
 
                 try {
-
-                    if (!privateFilesDirectory.exists()) {
-                        privateFilesDirectory.mkdirs()
-                    }
 
                     //Create File object
                     val file = File(privateFilesDirectory, fileMessage.fileName!!)
@@ -985,44 +980,55 @@ class TcpViewModel @Inject constructor(
                     writer.writeLong(file.length())
                     log("sending file length - ${file.length()}")
 
-                    var bytes: Int
                     var bytesForPercentage = 0L
                     val fileSizeForPercentage = file.length()
-//                    val fileInputStream = FileInputStream(file)
-                    fileInputStream = BufferedInputStream(FileInputStream(file))
 
-                    // Here we  break file into chunks
-                    val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
-                    while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
-                        // Send the file to Server Socket
-                        writer.write(buffer, 0, bytes)
-                        writer.flush()
 
-                        bytesForPercentage += bytes.toLong()
-                        val percentage =
-                            (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-                        val tempPercentage =
-                            ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
-                        if (percentage != tempPercentage) {
-                            log("progress - $percentage")
-                            val newState = FileMessageState.Loading(percentage)
-                            val newFileMessage =
-                                fileMessage.copy(fileState = newState, id = messageId)
-                            updatePercentageOfReceivingFile(newFileMessage)
+                    BufferedInputStream(FileInputStream(file)).use { fileInputStream ->
+                        // Here we  break file into chunks
+                        val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+                        var bytes: Int
+
+                        while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
+                            // Send the file to Server Socket
+                            writer.write(buffer, 0, bytes)
+                            writer.flush()
+
+                            bytesForPercentage += bytes.toLong()
+                            val percentage =
+                                (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                            val tempPercentage =
+                                ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+
+                            if (percentage != tempPercentage) {
+                                log("progress - $percentage")
+                                val newFileMessage =
+                                    fileMessage.copy(
+                                        id = messageId,
+                                        fileState = FileMessageState.Loading(percentage)
+                                    )
+                                updatePercentageOfReceivingFile(newFileMessage)
+                            }
                         }
                     }
 
                     // Ensure all bytes were sent
                     if (bytesForPercentage == fileSizeForPercentage) {
-                        log("All bytes sent correctly.")
-                        val newState = FileMessageState.Success
-                        val newFileMessage = fileMessage.copy(fileState = newState, id = messageId, isFileAvailable = true)
-                        updatePercentageOfReceivingFile(newFileMessage)
-                        log("file sent successfully")
+                        viewModelScope.launch(Dispatchers.IO) {
+                            log("All bytes sent correctly.")
+                            val newState = FileMessageState.Success
+                            val newFileMessage = fileMessage.copy(
+                                id = messageId,
+                                isFileAvailable = true,
+                                fileState = newState
+                            )
+                            updatePercentageOfReceivingFile(newFileMessage)
+                            log("file sent successfully")
+                        }
                     } else {
                         log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
                         val newState = FileMessageState.Failure
-                        val newFileMessage = fileMessage.copy(fileState = newState, id = messageId,)
+                        val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
                         updatePercentageOfReceivingFile(newFileMessage)
                     }
 
@@ -1038,16 +1044,18 @@ class TcpViewModel @Inject constructor(
                     val newState = FileMessageState.Failure
                     val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
                     updatePercentageOfReceivingFile(newFileMessage)
-                }finally {
-                    fileInputStream?.close()
+                } finally {
                     delay(1000)
                 }
             }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            //todo show error
+            log("file sending process failed: ${e.message}")
         }
     }
 
     /** Socket Receiving Functions*/
-
     /**
      * 1. type
      * 2. file count
@@ -1125,7 +1133,7 @@ class TcpViewModel @Inject constructor(
                             val tempPercentage =
                                 ((bytesForPercentage - bytesRead.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
 
-                            if (fileSize >0 && percentage != tempPercentage) {
+                            if (fileSize > 0 && percentage != tempPercentage) {
                                 log("progress - $percentage")
                                 val newState = FileMessageState.Loading(percentage)
                                 val newFileMessage =
@@ -1137,7 +1145,11 @@ class TcpViewModel @Inject constructor(
                         log("file received successfully")
                         val newState = FileMessageState.Success
                         val newFileMessage =
-                            fileMessageEntity.copy(fileState = newState, id = messageId, isFileAvailable = true)
+                            fileMessageEntity.copy(
+                                fileState = newState,
+                                id = messageId,
+                                isFileAvailable = true
+                            )
                         updatePercentageOfReceivingFile(newFileMessage)
                     } catch (e: IOException) {
                         e.printStackTrace()
@@ -1162,6 +1174,7 @@ class TcpViewModel @Inject constructor(
             }
         } catch (e: IOException) {
             e.printStackTrace()
+            //todo show error
             log("file receiving process failed: ${e.message}")
         }
     }
@@ -1403,7 +1416,7 @@ class TcpViewModel @Inject constructor(
         log("host incoming contact message - $receivedMessage")
 
         val contactMessageItem =
-            gson.fromJson(
+            Gson().fromJson(
                 receivedMessage,
                 ContactMessageItem::class.java
             )
@@ -2103,7 +2116,7 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.TcpChatItemClicked -> {
-                emitNavigation(TcpScreenNavigation.OnChattingUserClicked(gson.toJson(event.currentChattingUser.toInitialChatModel())))
+                emitNavigation(TcpScreenNavigation.OnChattingUserClicked(Gson().toJson(event.currentChattingUser.toInitialChatModel())))
             }
 
             TcpScreenEvents.RequestRecordAudioPermission -> {
@@ -2422,7 +2435,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private suspend fun handlePickingMultipleMedia(medias: List<Uri>) {
+    private fun handlePickingMultipleMedia(medias: List<Uri>) {
         when (state.value.generalConnectionStatus) {
             GeneralConnectionStatus.Idle -> {
                 updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
@@ -2452,7 +2465,6 @@ class TcpViewModel @Inject constructor(
                     )
                     fileMessages.add(fileMessageEntity)
                 }
-
                 viewModelScope.launch(Dispatchers.IO) {
                     sendFileMessages(
                         writer = connectedClientWriter,
@@ -2664,33 +2676,23 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun updatePercentageOfReceivingFile(message: ChatMessageEntity) {
-        when (message.type) {
-            AppMessageType.FILE -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    val updatedId = messagesRepository.updateFileMessage(
-                        messageId = message.id,
-                        newFileState = message.fileState,
-                        isFileAvailable = message.isFileAvailable
-                    )
-                    if(message.isFileAvailable){
-                        log("updated id - $updatedId")
-                    }
-                }
-            }
+    private fun updatePercentageOfReceivingFile(fileMessage: ChatMessageEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            messagesRepository.updateFileMessage(
+                messageId = fileMessage.id,
+                newFileState = fileMessage.fileState,
+                isFileAvailable = fileMessage.isFileAvailable
+            )
+        }
+    }
 
-            AppMessageType.VOICE -> {
-                log("updating voice message - $message")
-                viewModelScope.launch(Dispatchers.IO) {
-                    messagesRepository.updateVoiceFileMessage(
-                        messageId = message.id,
-                        newFileState = message.fileState,
-                        newDuration = message.voiceMessageAudioFileDuration
-                    )
-                }
-            }
-
-            else -> return
+    private fun updatePercentageOfReceivingAudioFile(voiceMessage: ChatMessageEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            messagesRepository.updateVoiceFileMessage(
+                messageId = voiceMessage.id,
+                newFileState = voiceMessage.fileState,
+                newDuration = voiceMessage.voiceMessageAudioFileDuration
+            )
         }
     }
 

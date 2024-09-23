@@ -1,6 +1,6 @@
 package com.ierusalem.androchat.core.utils
 
-import com.ierusalem.androchat.core.utils.Constants.getSimpleDate
+import com.ierusalem.androchat.core.utils.Constants.getSimpleTime
 
 /**
  * returns empty string if file extension is not found
@@ -22,9 +22,9 @@ fun String.getFileNameWithoutExtension(): String {
     }
 }
 
-fun String.addLabelBeforeExtension():String{
+fun String.addLabelBeforeExtension(): String {
     val fileNameWithoutExt = this.getFileNameWithoutExtension()
     val fileExtension = this.getExtensionFromFilename()
-    val uniqueFileName = "$fileNameWithoutExt${getSimpleDate()}.$fileExtension"
+    val uniqueFileName = "$fileNameWithoutExt${getSimpleTime()}.$fileExtension"
     return uniqueFileName
 }

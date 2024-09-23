@@ -2,7 +2,9 @@ package com.ierusalem.androchat.features_local.tcp.data.db.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
 import com.ierusalem.androchat.core.app.AppMessageType
+import com.ierusalem.androchat.features_local.tcp.data.db.converters.FileMessageStateConverter
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 
@@ -20,6 +22,7 @@ data class ChatMessageEntity(
     val voiceMessageFileName: String? = null,
     val voiceMessageAudioFileDuration: Long? = null,
     //file message specific parameters
+    @TypeConverters(FileMessageStateConverter::class)
     val fileState: FileMessageState? = null,
     val filePath: String? = null,
     val fileSize: String? = null,

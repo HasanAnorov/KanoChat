@@ -31,11 +31,11 @@ class MessagesRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState?, isFileAvailable: Boolean):Int {
-        return messagesDao.updateFileMessage(
+    override suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState?, isFileAvailable: Boolean) {
+        messagesDao.updateFileMessage(
             messageId = messageId,
-            newFileState = newFileState,
-            isFileAvailable = isFileAvailable
+            isFileAvailable = isFileAvailable,
+            newFileState = newFileState
         )
     }
 

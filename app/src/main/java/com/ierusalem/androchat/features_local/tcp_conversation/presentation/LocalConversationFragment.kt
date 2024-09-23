@@ -32,6 +32,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.google.gson.Gson
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.components.PermissionDialog
@@ -40,7 +41,6 @@ import com.ierusalem.androchat.core.ui.components.RecordAudioPermissionTextProvi
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
-import com.ierusalem.androchat.core.utils.Json.gson
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.core.utils.generateFileFromUri
 import com.ierusalem.androchat.core.utils.log
@@ -154,7 +154,8 @@ class LocalConversationFragment : Fragment() {
         val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
         if (selectedUserStringForm != null) {
             lifecycleScope.launch(Dispatchers.IO) {
-                val selectedUser = gson.fromJson(selectedUserStringForm, InitialUserModel::class.java)
+                val selectedUser =
+                    Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
                 viewModel.getCurrentChattingUser(selectedUser)
                 viewModel.loadMessages(selectedUser)
             }

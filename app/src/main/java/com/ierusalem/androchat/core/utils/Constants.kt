@@ -125,6 +125,15 @@ object Constants {
         return time
     }
 
+    fun getSimpleTime():String{
+        val calendar = Calendar.getInstance()
+        val currentHour = calendar.get(Calendar.HOUR)
+        val currentMinute = calendar.get(Calendar.MINUTE)
+        val currentSecond = calendar.get(Calendar.SECOND)
+        val date = "_${currentSecond}_${currentMinute}_${currentHour}"
+        return date
+    }
+
     fun getSimpleDate(): String {
         val calendar = Calendar.getInstance()
         val currentDate = calendar.get(Calendar.DATE)
