@@ -13,6 +13,7 @@ import androidx.navigation.fragment.findNavController
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.features_common.settings.domain.SettingsViewModel
+import com.ierusalem.androchat.features_local.tcp.presentation.tcp_networking.components.ActionRequestDialog
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -33,8 +34,22 @@ class SettingsFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
+
                 val uiState by viewModel.state.collectAsStateWithLifecycle()
+                val visibleActionDialogQueue = viewModel.visibleActionDialogQueue
+
                 AndroChatTheme(isDarkTheme = uiState.appTheme) {
+                    visibleActionDialogQueue.forEach { actionDialog ->
+                        ActionRequestDialog(
+                            onDismissRequest = actionDialog.onNegativeButtonClick,
+                            onConfirmation = actionDialog.onPositiveButtonClick,
+                            dialogTitle = actionDialog.dialogTitle,
+                            dialogText = actionDialog.dialogMessage,
+                            icon = actionDialog.icon,
+                            positiveButtonRes = actionDialog.positiveButtonText,
+                            negativeButtonRes = actionDialog.negativeButtonText
+                        )
+                    }
                     SettingsScreen(
                         uiState = uiState,
                         eventHandler = viewModel::handleEvents

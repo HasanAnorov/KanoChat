@@ -206,5 +206,7 @@
     <string name="save_to_downloads">Save to downloads</string>
     <string name="ok">OK</string>
     <string name="credentials_didn_t_match">Credentials didn\'t match</string>
+    <string name="logout_message">After logging out, all data will be deleted and cannot be restored.</string>
+    <string name="are_you_sure">Are you sure?</string>
 
 </resources>

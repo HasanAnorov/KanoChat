@@ -47,9 +47,9 @@ import com.ierusalem.androchat.core.utils.makeCall
 import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.core.utils.openFile
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
-import com.ierusalem.androchat.features_local.tcp.domain.InitialUserModel
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
+import com.ierusalem.androchat.features_local.tcp.domain.state.InitialUserModel
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenNavigation
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.ContactListContent

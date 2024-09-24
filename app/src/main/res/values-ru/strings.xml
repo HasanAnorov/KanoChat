@@ -199,5 +199,7 @@
     <string name="save_to_downloads">Сохранить в загрузки</string>
     <string name="ok">ОК</string>
     <string name="credentials_didn_t_match">Учетные данные не совпадают</string>
+    <string name="logout_message">После выхода из системы все данные будут удалены и не подлежат восстановлению.</string>
+    <string name="are_you_sure">Вы уверены?</string>
 
 </resources>

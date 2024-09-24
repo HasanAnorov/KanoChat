@@ -21,10 +21,7 @@ import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.provider.MediaStore
 import android.util.Log
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -33,7 +30,6 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
 import com.google.gson.Gson
-import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppBroadcastFrequency
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.connectivity.ConnectivityObserver
@@ -78,11 +74,13 @@ import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnection
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralNetworkingStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.HostConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.HotspotNetworkingStatus
+import com.ierusalem.androchat.features_local.tcp.domain.state.InitialUserModel
 import com.ierusalem.androchat.features_local.tcp.domain.state.LocalOnlyHotspotStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.P2PNetworkingStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenDialogErrors
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenErrors
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
+import com.ierusalem.androchat.features_local.tcp.domain.state.VisibleActionDialogs
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -2814,29 +2812,3 @@ class TcpViewModel @Inject constructor(
     }
 
 }
-
-sealed interface VisibleActionDialogs {
-
-    val dialogTitle: Int
-    val dialogMessage: Int
-    val icon: ImageVector
-    val positiveButtonText: Int
-    val negativeButtonText: Int
-    val onPositiveButtonClick: () -> Unit
-    val onNegativeButtonClick: () -> Unit
-
-    data class WifiEnableRequest(
-        override val dialogTitle: Int = R.string.wifi_not_enabled,
-        override val dialogMessage: Int = R.string.wifi_not_enabled_message,
-        override val icon: ImageVector = Icons.Default.WifiOff,
-        override val positiveButtonText: Int = R.string.enable,
-        override val negativeButtonText: Int = R.string.dismiss,
-        override val onPositiveButtonClick: () -> Unit = {},
-        override val onNegativeButtonClick: () -> Unit = {}
-    ) : VisibleActionDialogs
-}
-
-data class InitialUserModel(
-    val userUniqueId: String,
-    val userUniqueName: String,
-)

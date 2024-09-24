@@ -1,18 +1,20 @@
 package com.ierusalem.androchat.features_common.settings.domain
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ierusalem.androchat.core.app.AppLanguage
 import com.ierusalem.androchat.core.app.AppBroadcastFrequency
-import com.ierusalem.androchat.core.utils.Constants.getLanguageCode
-import com.ierusalem.androchat.core.utils.Constants.getLanguageFromCode
+import com.ierusalem.androchat.core.app.AppLanguage
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
+import com.ierusalem.androchat.core.utils.Constants.getLanguageCode
+import com.ierusalem.androchat.core.utils.Constants.getLanguageFromCode
 import com.ierusalem.androchat.features_common.settings.presentation.SettingsScreenEvents
 import com.ierusalem.androchat.features_common.settings.presentation.SettingsScreenNavigation
+import com.ierusalem.androchat.features_local.tcp.domain.state.VisibleActionDialogs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +33,8 @@ class SettingsViewModel @Inject constructor(
     private val _state: MutableStateFlow<SettingsState> = MutableStateFlow(SettingsState())
     val state = _state.asStateFlow()
 
+    val visibleActionDialogQueue = mutableStateListOf<VisibleActionDialogs>()
+
     fun initLanguageAndTheme() {
         viewModelScope.launch {
             val isSystemInDarkMode = dataStorePreferenceRepository.getTheme.first()
@@ -46,7 +50,8 @@ class SettingsViewModel @Inject constructor(
 
     fun initBroadcastFrequency() {
         viewModelScope.launch(Dispatchers.IO) {
-            val savedBroadcastFrequency = dataStorePreferenceRepository.getBroadcastFrequency.first()
+            val savedBroadcastFrequency =
+                dataStorePreferenceRepository.getBroadcastFrequency.first()
             val broadcastFrequency = try {
                 AppBroadcastFrequency.valueOf(savedBroadcastFrequency)
             } catch (e: IllegalArgumentException) {
@@ -71,14 +76,32 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private fun logoutUser() {
+        viewModelScope.launch {
+            dataStorePreferenceRepository.setUsername("")
+            dataStorePreferenceRepository.setLoggingStatus(false)
+            emitNavigation(SettingsScreenNavigation.ToLogin)
+        }
+    }
+
+    private fun showLogoutWarningDialog() {
+        val logoutWarningDialog = VisibleActionDialogs.LogoutRequest(
+            onPositiveButtonClick = {
+                logoutUser()
+                visibleActionDialogQueue.removeFirst()
+            },
+            onNegativeButtonClick = {
+                visibleActionDialogQueue.removeFirst()
+            }
+        )
+        visibleActionDialogQueue.add(logoutWarningDialog)
+    }
+
     fun handleEvents(event: SettingsScreenEvents) {
         when (event) {
 
             SettingsScreenEvents.Logout -> {
-                viewModelScope.launch {
-                    dataStorePreferenceRepository.setLoggingStatus(false)
-                    emitNavigation(SettingsScreenNavigation.ToLogin)
-                }
+                showLogoutWarningDialog()
             }
 
             is SettingsScreenEvents.OnBroadcastFrequencyChange -> {
@@ -102,6 +125,7 @@ class SettingsViewModel @Inject constructor(
                     }
                 }
             }
+
             SettingsScreenEvents.NavIconClick -> {
                 emitNavigation(SettingsScreenNavigation.NavIconClick)
             }
@@ -138,7 +162,7 @@ data class SettingsState(
         AppLanguage.English,
         AppLanguage.Russian,
     ),
-    val selectedLanguage: AppLanguage = languagesList.first{it.isSelected},
+    val selectedLanguage: AppLanguage = languagesList.first { it.isSelected },
     val appTheme: Boolean = false,
     val selectedBroadcastFrequency: AppBroadcastFrequency = AppBroadcastFrequency.FREQUENCY_2_4_GHZ
 )
