@@ -78,7 +78,9 @@ fun Fragment.generateFileFromUri(uri: Uri, resourceDirectory: File): File {
     }
 
     val fileName = uri.getFileNameFromUri(contentResolver)
+    log("fileName: $fileName")
     val fileNameWithLabel = fileName.addLabelBeforeExtension()
+    log("fileNameWithLabel - $fileNameWithLabel")
     var file = File(resourceDirectory, fileNameWithLabel)
     if (file.exists()) {
         val fileNameWithoutExt = fileNameWithLabel.getFileNameWithoutExtension()
@@ -88,6 +90,7 @@ fun Fragment.generateFileFromUri(uri: Uri, resourceDirectory: File): File {
                 fileNameWithoutExt,
                 file.extension
             )
+        log("existing file found, new unique file name - $uniqueFileName")
         file = File(uniqueFileName)
     }
 
@@ -97,4 +100,3 @@ fun Fragment.generateFileFromUri(uri: Uri, resourceDirectory: File): File {
     fileOutputStream.close()
     return file
 }
-

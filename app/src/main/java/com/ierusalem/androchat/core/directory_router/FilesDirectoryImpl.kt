@@ -3,7 +3,6 @@ package com.ierusalem.androchat.core.directory_router
 import android.content.Context
 import android.os.Environment
 import com.ierusalem.androchat.core.utils.Constants
-import com.ierusalem.androchat.core.utils.log
 import java.io.File
 
 class FilesDirectoryImpl(val context: Context) : FilesDirectoryService {
@@ -21,11 +20,8 @@ class FilesDirectoryImpl(val context: Context) : FilesDirectoryService {
     override fun getPrivateFilesDirectory(): File{
         val privateFilesDirectory = context.filesDir
 
-        log("file path - ${privateFilesDirectory?.path}")
-        privateFilesDirectory?.let {
-            if(!privateFilesDirectory.exists()){
-                privateFilesDirectory.mkdir()
-            }
+        if(!privateFilesDirectory.exists()){
+            privateFilesDirectory.mkdir()
         }
         return privateFilesDirectory
     }

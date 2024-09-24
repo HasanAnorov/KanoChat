@@ -2486,6 +2486,8 @@ class TcpViewModel @Inject constructor(
     }
 
     fun handleFilesLauncher(fileUri: Uri){
+        log("uri - $fileUri")
+
         val file = generateFileFromUri(
             contentResolver = contentResolver,
             uri = fileUri,
@@ -2499,11 +2501,11 @@ class TcpViewModel @Inject constructor(
             peerUniqueId = state.value.peerUserUniqueId,
             authorUniqueId = state.value.authorUniqueId,
 
-            filePath = file.path,
             fileState = FileMessageState.Loading(0),
             fileName = file.name,
             fileSize = file.length().readableFileSize(),
             fileExtension = file.extension,
+            filePath = file.path,
         )
 
         when (state.value.generalConnectionStatus) {

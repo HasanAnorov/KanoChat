@@ -42,13 +42,16 @@ import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
+import com.ierusalem.androchat.core.utils.generateFileFromUri
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.makeCall
 import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.core.utils.openFile
+import com.ierusalem.androchat.core.utils.readableFileSize
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_local.tcp.domain.InitialUserModel
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
+import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenNavigation
@@ -92,10 +95,39 @@ class LocalConversationFragment : Fragment() {
             Activity.RESULT_OK -> {
                 val intent: Intent = result.data!!
                 val uri = intent.data!!
-                viewModel.handleFilesLauncher(uri)
+                val file = generateFileFromUri(uri, requireContext().filesDir)
+
+                val fileMessageEntity = ChatMessageEntity(
+                    type = AppMessageType.FILE,
+                    formattedTime = getCurrentTime(),
+                    isFromYou = true,
+                    peerUniqueId = viewModel.state.value.peerUserUniqueId,
+                    authorUniqueId = viewModel.state.value.authorUniqueId,
+
+                    filePath = file.path,
+                    fileState = FileMessageState.Loading(0),
+                    fileName = file.name,
+                    fileSize = file.length().readableFileSize(),
+                    fileExtension = file.extension,
+                )
+
+                when (viewModel.state.value.generalConnectionStatus) {
+                    GeneralConnectionStatus.Idle -> {
+                        /** do nothing here */
+                    }
+
+                    GeneralConnectionStatus.ConnectedAsClient -> {
+                        viewModel.sendClientMessage(fileMessageEntity)
+                    }
+
+                    GeneralConnectionStatus.ConnectedAsHost -> {
+                        viewModel.sendHostMessage(fileMessageEntity)
+                    }
+                }
             }
         }
     }
+
 
     private fun showFileChooser() {
         val intent = Intent()

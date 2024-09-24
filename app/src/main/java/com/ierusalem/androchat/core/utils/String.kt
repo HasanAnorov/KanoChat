@@ -23,6 +23,6 @@ fun String.getFileNameWithoutExtension(): String {
 fun String.addLabelBeforeExtension(): String {
     val fileNameWithoutExt = this.getFileNameWithoutExtension()
     val fileExtension = this.getExtensionFromFilename()
-    val uniqueFileName = "$fileNameWithoutExt${Constants.FILE_NAME_LABEL}.$fileExtension"
+    val uniqueFileName = "${fileNameWithoutExt}_${Constants.FILE_NAME_LABEL}.$fileExtension"
     return uniqueFileName
 }
