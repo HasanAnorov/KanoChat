@@ -35,18 +35,18 @@ fun Fragment.longToast(text: String, duration: Int = Toast.LENGTH_LONG): Toast {
     }
 }
 
-fun Fragment.openWifiSettings(){
+fun Fragment.openWifiSettings() {
     val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
     startActivity(intent)
 }
 
-fun Fragment.makeCall(phoneNumber: String){
+fun Fragment.makeCall(phoneNumber: String) {
     val intent = Intent(Intent.ACTION_DIAL)
     intent.setData(Uri.parse("tel:$phoneNumber"))
     startActivity(intent)
 }
 
-fun Fragment.openFile(fileName: String, resourceDirectory: File){
+fun Fragment.openFile(fileName: String, resourceDirectory: File) {
     try {
         val file = File(resourceDirectory, fileName)
         val uri: Uri = FileProvider.getUriForFile(
@@ -78,9 +78,7 @@ fun Fragment.generateFileFromUri(uri: Uri, resourceDirectory: File): File {
     }
 
     val fileName = uri.getFileNameFromUri(contentResolver)
-    log("fileName: $fileName")
     val fileNameWithLabel = fileName.addLabelBeforeExtension()
-    log("fileNameWithLabel - $fileNameWithLabel")
     var file = File(resourceDirectory, fileNameWithLabel)
     if (file.exists()) {
         val fileNameWithoutExt = fileNameWithLabel.getFileNameWithoutExtension()
@@ -90,7 +88,6 @@ fun Fragment.generateFileFromUri(uri: Uri, resourceDirectory: File): File {
                 fileNameWithoutExt,
                 file.extension
             )
-        log("existing file found, new unique file name - $uniqueFileName")
         file = File(uniqueFileName)
     }
 

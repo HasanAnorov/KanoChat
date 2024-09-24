@@ -2171,10 +2171,12 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.OnFileItemClick -> {
-                emitNavigation(TcpScreenNavigation.OnFileItemClick(
-                    message = event.message,
-                    fileDirectory = privateFilesDirectory
-                ))
+                emitNavigation(
+                    TcpScreenNavigation.OnFileItemClick(
+                        message = event.message,
+                        fileDirectory = privateFilesDirectory
+                    )
+                )
             }
 
             is TcpScreenEvents.UpdateBottomSheetState -> {
@@ -2453,7 +2455,8 @@ class TcpViewModel @Inject constructor(
         val fileNameWithLabel = fileName.addLabelBeforeExtension()
 
         // Create a custom folder in Downloads directory
-        val downloadsDirectoryWithAppFolder = Environment.DIRECTORY_DOWNLOADS + "/${Constants.FILE_NAME_LABEL}"
+        val downloadsDirectoryWithAppFolder =
+            Environment.DIRECTORY_DOWNLOADS + "/${Constants.FILE_NAME_LABEL}"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // Scoped Storage - Android 10+
@@ -2463,7 +2466,8 @@ class TcpViewModel @Inject constructor(
                 put(MediaStore.Downloads.RELATIVE_PATH, downloadsDirectoryWithAppFolder)
             }
 
-            val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+            val uri =
+                contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
 
             uri?.let {
                 val outputStream: OutputStream? = contentResolver.openOutputStream(it)
@@ -2478,16 +2482,16 @@ class TcpViewModel @Inject constructor(
             }
         } else {
             // Legacy method - Android 9 and below
-            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val downloadsDir =
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             val destinationFile = File(downloadsDir, fileNameWithLabel)
 
             file.copyTo(destinationFile, overwrite = true)
         }
     }
 
-    fun handleFilesLauncher(fileUri: Uri){
-        log("uri - $fileUri")
-
+    fun handleFilesLauncher(fileUri: Uri) {
+//        val file = getFileFromUri(fileUri, privateFilesDirectory)
         val file = generateFileFromUri(
             contentResolver = contentResolver,
             uri = fileUri,
@@ -2501,11 +2505,11 @@ class TcpViewModel @Inject constructor(
             peerUniqueId = state.value.peerUserUniqueId,
             authorUniqueId = state.value.authorUniqueId,
 
+            filePath = file.path,
             fileState = FileMessageState.Loading(0),
             fileName = file.name,
             fileSize = file.length().readableFileSize(),
             fileExtension = file.extension,
-            filePath = file.path,
         )
 
         when (state.value.generalConnectionStatus) {

@@ -67,7 +67,6 @@ val IP_ADDRESS_REGEX =
     """^(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))$"""
         .toRegex()
 
-
 fun generateFileFromUri(contentResolver: ContentResolver, uri: Uri, resourceDirectory: File): File {
     if (!resourceDirectory.exists()) {
         resourceDirectory.mkdir()
