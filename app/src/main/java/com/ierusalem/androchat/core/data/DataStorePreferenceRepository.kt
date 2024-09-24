@@ -24,6 +24,7 @@ class DataStorePreferenceRepository(context: Context) {
     private val defaultBroadcastFrequency = Constants.DEFAULT_BROADCAST_FREQUENCY
     private val defaultHotspotName = Constants.DEFAULT_HOTSPOT_NAME
     private val defaultUniqueDeviceId = ""
+    private val defaultSessionId = ""
 
     companion object {
         val PREF_LANGUAGE = stringPreferencesKey(name = Constants.PREFERENCE_LANGUAGE)
@@ -39,6 +40,10 @@ class DataStorePreferenceRepository(context: Context) {
 
         val PREF_UNIQUE_DEVICE_ID =
             stringPreferencesKey(name = Constants.PREFERENCE_UNIQUE_DEVICE_ID)
+
+        val PREF_SESSION_ID =
+            stringPreferencesKey(name = Constants.PREFERENCE_SESSION_ID)
+
 
         private var INSTANCE: DataStorePreferenceRepository? = null
 
@@ -81,6 +86,17 @@ class DataStorePreferenceRepository(context: Context) {
             preferences[PREF_USERNAME] ?: ""
         }
 
+    suspend fun setSessionId(sessionId: String) {
+        dataStore.edit { preferences ->
+            preferences[PREF_SESSION_ID] = sessionId
+        }
+    }
+
+    val getSessionId: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PREF_SESSION_ID] ?: defaultSessionId
+        }
+
     suspend fun setUniqueDeviceId(uniqueDeviceId: String) {
         dataStore.edit { preferences ->
             preferences[PREF_UNIQUE_DEVICE_ID] = uniqueDeviceId
@@ -109,7 +125,7 @@ class DataStorePreferenceRepository(context: Context) {
         }
     }
 
-    suspend fun setPortNumber(portNumber:String){
+    suspend fun setPortNumber(portNumber: String) {
         dataStore.edit { preferences ->
             preferences[PREF_PORT_NUMBER] = portNumber
         }

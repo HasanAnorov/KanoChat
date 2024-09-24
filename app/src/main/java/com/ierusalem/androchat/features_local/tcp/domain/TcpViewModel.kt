@@ -176,7 +176,7 @@ class TcpViewModel @Inject constructor(
 
     private fun initializeUserUniqueName() {
         viewModelScope.launch(Dispatchers.IO) {
-            val authorUniqueId = dataStorePreferenceRepository.getUniqueDeviceId.first()
+            val authorUniqueId = dataStorePreferenceRepository.getSessionId.first()
             _state.update {
                 it.copy(
                     authorUniqueId = authorUniqueId
@@ -242,7 +242,7 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun initializeUser(writer: DataOutputStream) {
-        val userUniqueId = runBlocking { dataStorePreferenceRepository.getUniqueDeviceId.first() }
+        val userUniqueId = runBlocking { dataStorePreferenceRepository.getSessionId.first() }
         val userUniqueName = runBlocking { dataStorePreferenceRepository.getUsername.first() }
         val initialChatModel = InitialUserModel(
             userUniqueId = userUniqueId,

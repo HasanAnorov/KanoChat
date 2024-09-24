@@ -47,6 +47,19 @@ class AndroChatApp : Application() {
             }
         }
 
+        GlobalScope.launch(Dispatchers.IO) {
+            dataStorePreferenceRepository.getSessionId.collect{ sessionId ->
+                if (sessionId.isNotEmpty()){
+                    log("session id found: $sessionId")
+                }else{
+                    log("session id not found")
+                    val uniqueID = UUID.randomUUID().toString()
+                    dataStorePreferenceRepository.setSessionId(uniqueID)
+                    log("session id generated: $uniqueID")
+                }
+            }
+        }
+
         GlobalScope.launch {
             dataStorePreferenceRepository.getLanguage.collect { languageCode ->
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
