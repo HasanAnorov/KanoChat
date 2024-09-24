@@ -189,8 +189,8 @@ class LocalConversationFragment : Fragment() {
                                                                     type = AppMessageType.CONTACT,
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
-                                                                    peerUniqueId = viewModel.state.value.peerUserUniqueId,
-                                                                    authorUniqueId = viewModel.state.value.authorUniqueId,
+                                                                    partnerSessionId = viewModel.state.value.peerUserUniqueId,
+                                                                    authorSessionId = viewModel.state.value.authorSessionId,
 
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
@@ -216,8 +216,8 @@ class LocalConversationFragment : Fragment() {
                                                                     type = AppMessageType.CONTACT,
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
-                                                                    peerUniqueId = viewModel.state.value.peerUserUniqueId,
-                                                                    authorUniqueId = viewModel.state.value.authorUniqueId,
+                                                                    partnerSessionId = viewModel.state.value.peerUserUniqueId,
+                                                                    authorSessionId = viewModel.state.value.authorSessionId,
 
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,

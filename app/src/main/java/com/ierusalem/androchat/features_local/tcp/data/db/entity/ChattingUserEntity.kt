@@ -7,15 +7,16 @@ import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 
 @Entity("chatting_users")
 data class ChattingUserEntity(
-    @PrimaryKey val userUniqueId: String,
-    val userUniqueName: String,
+    @PrimaryKey val partnerSessionID: String,
+    val partnerUsername: String,
+    val authorSessionId:String,
     val avatarBackgroundColor: Int,
     val isOnline: Boolean,
 ){
     fun toChattingUser(): ChattingUser{
         return ChattingUser(
-            userUniqueId = userUniqueId,
-            username = userUniqueName,
+            partnerSessionID = partnerSessionID,
+            partnerUsername = partnerUsername,
             avatarBackgroundColor = avatarBackgroundColor,
             lastMessage = null,
             isOnline = isOnline
@@ -24,16 +25,16 @@ data class ChattingUserEntity(
 }
 
 data class UserWithLastMessage(
-    val userUniqueId: String,
-    val userUniqueName: String,
+    val partnerSessionID: String,
+    val partnerUsername: String,
     val avatarBackgroundColor: Int,
     val isOnline: Boolean,
     @Embedded val lastMessage: ChatMessageEntity?
 ){
     fun toChattingUser(): ChattingUser{
         return ChattingUser(
-            userUniqueId = userUniqueId,
-            username = userUniqueName,
+            partnerSessionID = partnerSessionID,
+            partnerUsername = partnerUsername,
             avatarBackgroundColor = avatarBackgroundColor,
             lastMessage = lastMessage,
             isOnline = isOnline

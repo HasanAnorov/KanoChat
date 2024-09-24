@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -92,8 +94,12 @@ class LoginViewModel @Inject constructor(
             }
         } else {
             //there is no saved username just login
-            dataStorePreferenceRepository.setUsername(state.value.username)
-            dataStorePreferenceRepository.setLoggingStatus(true)
+            runBlocking {
+                val uniqueID = UUID.randomUUID().toString()
+                dataStorePreferenceRepository.setSessionId(uniqueID)
+                dataStorePreferenceRepository.setUsername(state.value.username)
+                dataStorePreferenceRepository.setLoggingStatus(true)
+            }
             emitNavigation(LoginNavigation.ToLocal)
         }
     }

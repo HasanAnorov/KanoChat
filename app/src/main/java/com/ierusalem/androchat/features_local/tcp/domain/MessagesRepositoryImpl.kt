@@ -31,7 +31,11 @@ class MessagesRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState?, isFileAvailable: Boolean) {
+    override suspend fun updateFileMessage(
+        messageId: Long,
+        newFileState: FileMessageState?,
+        isFileAvailable: Boolean
+    ) {
         messagesDao.updateFileMessage(
             messageId = messageId,
             isFileAvailable = isFileAvailable,
@@ -39,8 +43,14 @@ class MessagesRepositoryImpl @Inject constructor(
         )
     }
 
-    override fun getPagedUserMessagesById(userId: String): PagingSource<Int, ChatMessageEntity> {
-        return messagesDao.getPagedUserMessagesById(userId)
+    override fun getPagedUserMessagesById(
+        partnerSessionId: String,
+        authorSessionId: String
+    ): PagingSource<Int, ChatMessageEntity> {
+        return messagesDao.getPagedUserMessagesById(
+            peerSessionId = partnerSessionId,
+            authorSessionId = authorSessionId
+        )
     }
 
     override suspend fun insertChattingUser(chattingUserEntity: ChattingUserEntity): Long {
@@ -61,23 +71,26 @@ class MessagesRepositoryImpl @Inject constructor(
         return chattingUsersDao.updateAllUsersOnlineStatus(isOnline)
     }
 
-    override suspend fun updateIsUserOnline(userUniqueId: String, isOnline: Boolean):Int {
+    override suspend fun updateIsUserOnline(userUniqueId: String, isOnline: Boolean): Int {
         return chattingUsersDao.updateUserOnlineStatus(
             userId = userUniqueId,
             isOnline = isOnline
         )
     }
 
-    override suspend fun isUserExist(userUniqueId: String): Boolean {
-        return chattingUsersDao.isChattingUserExists(userUniqueId = userUniqueId)
+    override suspend fun isUserExist(partnerSessionId: String, authorSessionId: String): Boolean {
+        return chattingUsersDao.isChattingUserExists(
+            partnerSessionID = partnerSessionId,
+            authorSessionId = authorSessionId
+        )
     }
 
     override suspend fun insertMessage(message: ChatMessageEntity): Long {
         return messagesDao.insertMessage(message)
     }
 
-    override fun getAllUsersWithLastMessages(): Flow<List<UserWithLastMessage>> {
-        return messagesDao.getAllUsersWithLastMessage()
+    override fun getAllUsersWithLastMessages(authorSessionId: String): Flow<List<UserWithLastMessage>> {
+        return messagesDao.getAllUsersWithLastMessage(authorSessionId = authorSessionId)
     }
 
 }

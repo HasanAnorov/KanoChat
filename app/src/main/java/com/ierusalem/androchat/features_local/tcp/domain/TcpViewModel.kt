@@ -128,7 +128,7 @@ class TcpViewModel @Inject constructor(
     private val wifiP2PManager: WifiP2pManager,
     private val channel: WifiP2pManager.Channel,
     private val messagesRepository: MessagesRepository,
-    private val filesDirectoryService: FilesDirectoryService,
+    filesDirectoryService: FilesDirectoryService,
 ) : ViewModel(), NavigationEventDelegate<TcpScreenNavigation> by DefaultNavigationEventDelegate() {
 
     //chatting server side
@@ -153,8 +153,7 @@ class TcpViewModel @Inject constructor(
     private val privateFilesDirectory = filesDirectoryService.getPrivateFilesDirectory()
 
     init {
-        loadChattingUsers()
-        initializeUserUniqueName()
+        log("init vm")
         initBroadcastFrequency()
         initializeHotspotConfigs()
         listenWifiConnections()
@@ -162,9 +161,12 @@ class TcpViewModel @Inject constructor(
 
     /** Initializing Functions*/
 
-    private fun loadChattingUsers() {
+    fun loadChattingUsers() {
         viewModelScope.launch(Dispatchers.IO) {
-            messagesRepository.getAllUsersWithLastMessages().collect { users ->
+            val authorSessionID = runBlocking { dataStorePreferenceRepository.getSessionId.first() }
+            log("author session id - $authorSessionID")
+            messagesRepository.getAllUsersWithLastMessages(authorSessionID).collect { users ->
+                log("users - $users")
                 _state.update {
                     it.copy(
                         chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
@@ -174,12 +176,11 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun initializeUserUniqueName() {
+    fun initializeAuthorSessionId() {
         viewModelScope.launch(Dispatchers.IO) {
-            val authorUniqueId = dataStorePreferenceRepository.getSessionId.first()
             _state.update {
                 it.copy(
-                    authorUniqueId = authorUniqueId
+                    authorSessionId = dataStorePreferenceRepository.getSessionId.first()
                 )
             }
         }
@@ -245,8 +246,8 @@ class TcpViewModel @Inject constructor(
         val userUniqueId = runBlocking { dataStorePreferenceRepository.getSessionId.first() }
         val userUniqueName = runBlocking { dataStorePreferenceRepository.getUsername.first() }
         val initialChatModel = InitialUserModel(
-            userUniqueId = userUniqueId,
-            userUniqueName = userUniqueName
+            partnerSessionId = userUniqueId,
+            partnerUniqueName = userUniqueName
         )
         val initialChatModelStringForm = customGson.toJson(initialChatModel)
         log("initializing user - $initialChatModelStringForm")
@@ -320,6 +321,8 @@ class TcpViewModel @Inject constructor(
             InitialUserModel::class.java
         )
 
+        log("initial chatting user model - $initialChattingUserModel")
+
         // Call the function that handles user insertion and online status
         handleUserInsertionAndStatus(initialChattingUserModel)
     }
@@ -328,27 +331,30 @@ class TcpViewModel @Inject constructor(
     private fun handleUserInsertionAndStatus(initialChatModel: InitialUserModel) {
         updateInitialChatModel(initialChatModel)
         viewModelScope.launch(Dispatchers.IO) {
-
-            val userExists = messagesRepository.isUserExist(initialChatModel.userUniqueId)
+            val authorSessionId = state.value.authorSessionId
+            log("author session id - $authorSessionId")
+            val userExists = messagesRepository.isUserExist(initialChatModel.partnerSessionId, authorSessionId)
             if (userExists) {
+                log("user exist")
                 messagesRepository.updateChattingUserUniqueName(
-                    userUniqueId = initialChatModel.userUniqueId,
-                    userUniqueName = initialChatModel.userUniqueName
+                    userUniqueId = initialChatModel.partnerSessionId,
+                    userUniqueName = initialChatModel.partnerUniqueName
                 )
                 updateUserOnlineStatus(
-                    userUniqueId = initialChatModel.userUniqueId,
+                    userUniqueId = initialChatModel.partnerSessionId,
                     isOnline = true
                 )
             } else {
+                log("inserting user author session id - ${state.value.authorSessionId}")
                 val chattingUserEntity = ChattingUserEntity(
-                    userUniqueId = initialChatModel.userUniqueId,
-                    userUniqueName = initialChatModel.userUniqueName,
+                    authorSessionId = state.value.authorSessionId,
+                    partnerSessionID = initialChatModel.partnerSessionId,
+                    partnerUsername = initialChatModel.partnerUniqueName,
                     avatarBackgroundColor = getRandomColor(),
                     isOnline = true
                 )
                 messagesRepository.insertChattingUser(chattingUserEntity)
             }
-
         }
     }
 
@@ -1096,8 +1102,8 @@ class TcpViewModel @Inject constructor(
                     type = AppMessageType.FILE,
                     formattedTime = getCurrentTime(),
                     isFromYou = false,
-                    peerUniqueId = state.value.peerUserUniqueId,
-                    authorUniqueId = state.value.authorUniqueId,
+                    partnerSessionId = state.value.peerUserUniqueId,
+                    authorSessionId = state.value.authorSessionId,
                     fileState = FileMessageState.Loading(0),
                     fileName = file.name,
                     fileSize = fileSize.readableFileSize(),
@@ -1213,8 +1219,8 @@ class TcpViewModel @Inject constructor(
                     type = AppMessageType.VOICE,
                     formattedTime = getCurrentTime(),
                     isFromYou = false,
-                    peerUniqueId = state.value.peerUserUniqueId,
-                    authorUniqueId = state.value.authorUniqueId,
+                    partnerSessionId = state.value.peerUserUniqueId,
+                    authorSessionId = state.value.authorSessionId,
                     //message specific fields
                     fileState = FileMessageState.Loading(0),
                     voiceMessageFileName = file.name,
@@ -1406,8 +1412,8 @@ class TcpViewModel @Inject constructor(
             type = AppMessageType.TEXT,
             formattedTime = getCurrentTime(),
             isFromYou = false,
-            peerUniqueId = state.value.peerUserUniqueId,
-            authorUniqueId = state.value.authorUniqueId,
+            partnerSessionId = state.value.peerUserUniqueId,
+            authorSessionId = state.value.authorSessionId,
             text = receivedMessage.toString()
         )
         viewModelScope.launch(Dispatchers.IO) {
@@ -1429,8 +1435,8 @@ class TcpViewModel @Inject constructor(
             type = AppMessageType.CONTACT,
             formattedTime = getCurrentTime(),
             isFromYou = false,
-            peerUniqueId = state.value.peerUserUniqueId,
-            authorUniqueId = state.value.authorUniqueId,
+            partnerSessionId = state.value.peerUserUniqueId,
+            authorSessionId = state.value.authorSessionId,
             contactName = contactMessageItem.contactName,
             contactNumber = contactMessageItem.contactNumber
         )
@@ -1683,7 +1689,7 @@ class TcpViewModel @Inject constructor(
     private fun updateInitialChatModel(initialChatModel: InitialUserModel) {
         _state.update {
             it.copy(
-                peerUserUniqueId = initialChatModel.userUniqueId,
+                peerUserUniqueId = initialChatModel.partnerSessionId,
             )
         }
     }
@@ -1701,6 +1707,7 @@ class TcpViewModel @Inject constructor(
     }
 
     fun loadMessages(chattingUser: InitialUserModel) {
+        val authorSessionId = state.value.authorSessionId
         viewModelScope.launch(Dispatchers.IO) {
             _state.update {
                 it.copy(
@@ -1708,12 +1715,13 @@ class TcpViewModel @Inject constructor(
                         PagingConfig(pageSize = 18, prefetchDistance = 25),
                         pagingSourceFactory = {
                             messagesRepository.getPagedUserMessagesById(
-                                chattingUser.userUniqueId
+                                partnerSessionId = chattingUser.partnerSessionId,
+                                authorSessionId = authorSessionId
                             )
                         }
                     ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
                         value.map { chatMessageEntity ->
-                            chatMessageEntity.toChatMessage(chattingUser.userUniqueName)!!
+                            chatMessageEntity.toChatMessage(chattingUser.partnerUniqueName)!!
                         }
                     }.cachedIn(viewModelScope)
                 )
@@ -1884,8 +1892,8 @@ class TcpViewModel @Inject constructor(
             type = AppMessageType.VOICE,
             formattedTime = getCurrentTime(),
             isFromYou = true,
-            peerUniqueId = state.value.peerUserUniqueId,
-            authorUniqueId = state.value.authorUniqueId,
+            partnerSessionId = state.value.peerUserUniqueId,
+            authorSessionId = state.value.authorSessionId,
             fileState = FileMessageState.Loading(0),
             voiceMessageFileName = currentAudioFile.name,
             voiceMessageAudioFileDuration = currentAudioFile.getAudioFileDuration(),
@@ -2098,7 +2106,7 @@ class TcpViewModel @Inject constructor(
 
     fun getCurrentChattingUser(currentChattingUser: InitialUserModel) {
         viewModelScope.launch(Dispatchers.IO) {
-            messagesRepository.getChattingUserByIdFlow(currentChattingUser.userUniqueId)
+            messagesRepository.getChattingUserByIdFlow(currentChattingUser.partnerSessionId)
                 .collect { user ->
                     user?.let {
                         _state.update {
@@ -2275,8 +2283,8 @@ class TcpViewModel @Inject constructor(
                     type = AppMessageType.TEXT,
                     formattedTime = getCurrentTime(),
                     isFromYou = true,
-                    peerUniqueId = state.value.peerUserUniqueId,
-                    authorUniqueId = state.value.authorUniqueId,
+                    partnerSessionId = state.value.peerUserUniqueId,
+                    authorSessionId = state.value.authorSessionId,
                     text = event.message
                 )
 
@@ -2500,8 +2508,8 @@ class TcpViewModel @Inject constructor(
             type = AppMessageType.FILE,
             formattedTime = getCurrentTime(),
             isFromYou = true,
-            peerUniqueId = state.value.peerUserUniqueId,
-            authorUniqueId = state.value.authorUniqueId,
+            partnerSessionId = state.value.peerUserUniqueId,
+            authorSessionId = state.value.authorSessionId,
 
             filePath = file.path,
             fileState = FileMessageState.Loading(0),
@@ -2544,8 +2552,8 @@ class TcpViewModel @Inject constructor(
                         type = AppMessageType.FILE,
                         formattedTime = getCurrentTime(),
                         isFromYou = true,
-                        peerUniqueId = state.value.peerUserUniqueId,
-                        authorUniqueId = state.value.authorUniqueId,
+                        partnerSessionId = state.value.peerUserUniqueId,
+                        authorSessionId = state.value.authorSessionId,
 
                         fileState = FileMessageState.Loading(0),
                         fileName = file.name,
@@ -2571,8 +2579,8 @@ class TcpViewModel @Inject constructor(
                         type = AppMessageType.FILE,
                         formattedTime = getCurrentTime(),
                         isFromYou = true,
-                        peerUniqueId = state.value.peerUserUniqueId,
-                        authorUniqueId = state.value.authorUniqueId,
+                        partnerSessionId = state.value.peerUserUniqueId,
+                        authorSessionId = state.value.authorSessionId,
 
                         fileState = FileMessageState.Loading(0),
                         fileName = file.name,

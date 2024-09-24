@@ -1,6 +1,7 @@
 package com.ierusalem.androchat.features_local.tcp.presentation
 
 import android.Manifest
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -74,6 +75,13 @@ class TcpFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        log("onAttach")
+        viewModel.initializeAuthorSessionId()
+        viewModel.loadChattingUsers()
     }
 
     @OptIn(ExperimentalFoundationApi::class)

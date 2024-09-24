@@ -14,8 +14,8 @@ data class ChatMessageEntity(
     val type: AppMessageType,
     val formattedTime: String,
     val isFromYou: Boolean,
-    val peerUniqueId: String,
-    val authorUniqueId: String,
+    val partnerSessionId: String,
+    val authorSessionId: String,
     //text message specific parameters
     val text: String? = null,
     //voice message specific parameters

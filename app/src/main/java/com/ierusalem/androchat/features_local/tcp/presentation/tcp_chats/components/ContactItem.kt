@@ -68,7 +68,7 @@ fun TcpContactItem(
                     contentAlignment = Alignment.Center
                 ) {
                     val username = try {
-                        contact.username.first().toString()
+                        contact.partnerUsername.first().toString()
                     } catch (e: Exception) {
                         "?"
                     }
@@ -98,7 +98,7 @@ fun TcpContactItem(
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.titleSmall,
                     fontSize = 16.sp,
-                    text = contact.username,
+                    text = contact.partnerUsername,
                     color = MaterialTheme.colorScheme.onBackground
                 )
 
@@ -238,11 +238,11 @@ fun ContactItemPreview() {
                 .background(MaterialTheme.colorScheme.background),
             onClick = {},
             contact = ChattingUser(
-                userUniqueId = "249141sadfs67df9s7f89s7f",
-                username = "Hasan",
+                partnerSessionID = "249141sadfs67df9s7f89s7f",
+                partnerUsername = "Hasan",
                 isOnline = false,
                 avatarBackgroundColor = getRandomColor(),
-                lastMessage = null
+                lastMessage = null,
             ),
             lastMessage = ChatMessageEntity(
                 id = 324242,
@@ -250,8 +250,8 @@ fun ContactItemPreview() {
                 isFromYou = true,
                 text = "Hello",
                 type = AppMessageType.TEXT,
-                peerUniqueId = "sa79789s7f98s7s",
-                authorUniqueId = "sfsdf"
+                partnerSessionId = "sa79789s7f98s7s",
+                authorSessionId = "sfsdf",
             )
         )
     }
@@ -267,11 +267,11 @@ fun ContactItemPreviewDark() {
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background),
             contact = ChattingUser(
-                userUniqueId = "249141sadfs67df9s7f89s7f",
-                username = "Hasan",
+                partnerSessionID = "249141sadfs67df9s7f89s7f",
+                partnerUsername = "Hasan",
                 isOnline = true,
                 avatarBackgroundColor = getRandomColor(),
-                lastMessage = null
+                lastMessage = null,
             ),
             lastMessage = ChatMessageEntity(
                 id = 324242,
@@ -279,8 +279,8 @@ fun ContactItemPreviewDark() {
                 isFromYou = true,
                 text = "Hello",
                 type = AppMessageType.CONTACT,
-                peerUniqueId = "sa79789s7f98s7s",
-                authorUniqueId = "dsfadtww3r53"
+                partnerSessionId = "sa79789s7f98s7s",
+                authorSessionId = "dsfadtww3r53"
             )
         )
     }

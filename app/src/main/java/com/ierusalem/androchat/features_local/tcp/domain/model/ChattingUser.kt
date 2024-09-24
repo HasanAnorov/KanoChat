@@ -4,14 +4,14 @@ import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEnti
 import com.ierusalem.androchat.features_local.tcp.domain.state.InitialUserModel
 
 data class ChattingUser(
-    var isOnline:Boolean ,
-    val userUniqueId: String,
-    val username: String,
+    var isOnline:Boolean,
+    val partnerSessionID: String,
+    val partnerUsername: String,
     val avatarBackgroundColor: Int,
     val lastMessage: ChatMessageEntity?
 ){
     fun toInitialChatModel() = InitialUserModel(
-        userUniqueId = userUniqueId,
-        userUniqueName = username
+        partnerSessionId = partnerSessionID,
+        partnerUniqueName = partnerUsername
     )
 }

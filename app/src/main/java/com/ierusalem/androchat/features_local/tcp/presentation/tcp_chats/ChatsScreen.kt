@@ -139,74 +139,74 @@ fun ContactsScreenPreviewSuccess() {
                 chattingUsers = Resource.Success(
                     listOf(
                         ChattingUser(
-                            userUniqueId = "123",
-                            username = "Ahmed",
+                            partnerSessionID = "123",
+                            partnerUsername = "Ahmed",
                             isOnline = true,
                             avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null
+                            lastMessage = null,
                         ),
                         ChattingUser(
-                            userUniqueId = "123",
-                            username = "Ahmed",
+                            partnerSessionID = "123",
+                            partnerUsername = "Ahmed",
                             isOnline = true,
                             avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null
+                            lastMessage = null,
                         ),
                         ChattingUser(
-                            userUniqueId = "123",
-                            username = "Ahmed",
+                            partnerSessionID = "123",
+                            partnerUsername = "Ahmed",
                             isOnline = false,
                             avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null
+                            lastMessage = null,
                         ),
                         ChattingUser(
-                            userUniqueId = "123",
-                            username = "Ahmed",
+                            partnerSessionID = "123",
+                            partnerUsername = "Ahmed",
                             isOnline = false,
                             avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null
+                            lastMessage = null,
                         ),
                         ChattingUser(
-                            userUniqueId = "123",
-                            username = "Ahmed",
+                            partnerSessionID = "123",
+                            partnerUsername = "Ahmed",
                             isOnline = false,
                             avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null
+                            lastMessage = null,
                         ),
                         ChattingUser(
-                            userUniqueId = "123",
-                            username = "Ahmed",
+                            partnerSessionID = "123",
+                            partnerUsername = "Ahmed",
                             isOnline = false,
                             avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null
+                            lastMessage = null,
                         ),
                         ChattingUser(
-                            userUniqueId = "123",
-                            username = "Ahmed",
+                            partnerSessionID = "123",
+                            partnerUsername = "Ahmed",
                             isOnline = false,
                             avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null
+                            lastMessage = null,
                         ),
                         ChattingUser(
-                            userUniqueId = "123",
-                            username = "Ahmed",
+                            partnerSessionID = "123",
+                            partnerUsername = "Ahmed",
                             isOnline = false,
                             avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null
+                            lastMessage = null,
                         ),
                         ChattingUser(
-                            userUniqueId = "123",
-                            username = "Ahmed",
+                            partnerSessionID = "123",
+                            partnerUsername = "Ahmed",
                             isOnline = false,
                             avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null
+                            lastMessage = null,
                         ),
                         ChattingUser(
-                            userUniqueId = "123",
-                            username = "Ahmed",
+                            partnerSessionID = "123",
+                            partnerUsername = "Ahmed",
                             isOnline = false,
                             avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null
+                            lastMessage = null,
                         )
                     )
                 )

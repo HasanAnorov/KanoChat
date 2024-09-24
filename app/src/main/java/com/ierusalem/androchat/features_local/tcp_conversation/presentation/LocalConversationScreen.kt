@@ -205,7 +205,7 @@ fun ConversationChannelBar(
                 // Channel name
                 contact?.let {
                     Text(
-                        text = contact.username,
+                        text = contact.partnerUsername,
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -362,11 +362,11 @@ private fun PreviewLocalConversationDark() {
             uiState = TcpScreenUiState(
                 currentChattingUser = Resource.Success(
                     ChattingUser(
-                        userUniqueId = "123",
-                        username = "Ahmed",
+                        partnerSessionID = "123",
+                        partnerUsername = "Ahmed",
                         isOnline = false,
                         avatarBackgroundColor = 0xFF5733,
-                        lastMessage = null
+                        lastMessage = null,
                     )
                 ),
                 messages = flowOf(

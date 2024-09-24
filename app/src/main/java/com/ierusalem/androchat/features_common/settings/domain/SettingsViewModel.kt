@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @HiltViewModel
@@ -77,11 +78,12 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun logoutUser() {
-        viewModelScope.launch {
+        runBlocking {
+            dataStorePreferenceRepository.setSessionId("")
             dataStorePreferenceRepository.setUsername("")
             dataStorePreferenceRepository.setLoggingStatus(false)
-            emitNavigation(SettingsScreenNavigation.ToLogin)
         }
+        emitNavigation(SettingsScreenNavigation.ToLogin)
     }
 
     private fun showLogoutWarningDialog() {
