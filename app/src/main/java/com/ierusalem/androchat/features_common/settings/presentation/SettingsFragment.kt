@@ -7,18 +7,24 @@ import android.view.ViewGroup
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.features_common.settings.domain.SettingsViewModel
+import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_local.tcp.presentation.tcp_networking.components.ActionRequestDialog
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class SettingsFragment : Fragment() {
 
+    private val activityViewModel: TcpViewModel by activityViewModels()
     private val viewModel: SettingsViewModel by viewModels()
 
     override fun onStart() {
@@ -74,8 +80,10 @@ class SettingsFragment : Fragment() {
             }
 
             SettingsScreenNavigation.ToLogin -> {
-                val action = SettingsFragmentDirections.actionSettingsFragmentToLoginFragment()
-                findNavController().navigate(action)
+                lifecycleScope.launch(Dispatchers.IO) {
+                    activityViewModel.logout()
+                }
+                findNavController().navigate(SettingsFragmentDirections.actionSettingsFragmentToLoginFragment())
             }
         }
     }

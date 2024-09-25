@@ -153,10 +153,38 @@ class TcpViewModel @Inject constructor(
     private val privateFilesDirectory = filesDirectoryService.getPrivateFilesDirectory()
 
     init {
-        log("init vm")
         initBroadcastFrequency()
         initializeHotspotConfigs()
         listenWifiConnections()
+    }
+
+    fun logout(){
+        updateHasErrorOccurredDialog(null)
+        when(state.value.generalConnectionStatus){
+            GeneralConnectionStatus.Idle -> {}
+            GeneralConnectionStatus.ConnectedAsHost -> {
+                closeClientServerSocket()
+                closeServeSocket()
+                updateHostConnectionStatus(HostConnectionStatus.Idle)
+            }
+            GeneralConnectionStatus.ConnectedAsClient -> {
+                closeClientSocket()
+                updateClientConnectionStatus(ClientConnectionStatus.Idle)
+            }
+        }
+
+        when(state.value.generalNetworkingStatus){
+            GeneralNetworkingStatus.Idle -> {}
+            GeneralNetworkingStatus.P2PDiscovery -> {
+                stopP2PNetworking()
+            }
+            GeneralNetworkingStatus.HotspotDiscovery -> {
+                stopHotspotNetworking()
+            }
+            GeneralNetworkingStatus.LocalOnlyHotspot -> {
+                stopLocalOnLyHotspot()
+            }
+        }
     }
 
     /** Initializing Functions*/
@@ -262,11 +290,7 @@ class TcpViewModel @Inject constructor(
                 "ahi3646",
                 "sendMessage server: dataOutputStream is closed io exception "
             )
-            handleEvents(
-                TcpScreenEvents.OnDialogErrorOccurred(
-                    TcpScreenDialogErrors.IOException
-                )
-            )
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
             try {
                 writer.close()
             } catch (ex: IOException) {
@@ -333,7 +357,8 @@ class TcpViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val authorSessionId = state.value.authorSessionId
             log("author session id - $authorSessionId")
-            val userExists = messagesRepository.isUserExist(initialChatModel.partnerSessionId, authorSessionId)
+            val userExists =
+                messagesRepository.isUserExist(initialChatModel.partnerSessionId, authorSessionId)
             if (userExists) {
                 log("user exist")
                 messagesRepository.updateChattingUserUniqueName(
@@ -486,7 +511,7 @@ class TcpViewModel @Inject constructor(
         } catch (e: IOException) {
             e.printStackTrace()
             log("createServer: IOException ")
-            closerServeSocket()
+            closeServeSocket()
             updateHostConnectionStatus(HostConnectionStatus.Failure)
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
             updateUserOnlineStatus(
@@ -497,7 +522,7 @@ class TcpViewModel @Inject constructor(
             e.printStackTrace()
             //if a security manager exists and its checkConnect method doesn't allow the operation.
             log("createServer: SecurityException ")
-            closerServeSocket()
+            closeServeSocket()
             updateHostConnectionStatus(HostConnectionStatus.Failure)
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.SecurityException)
             updateUserOnlineStatus(
@@ -508,7 +533,7 @@ class TcpViewModel @Inject constructor(
             e.printStackTrace()
             //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
             log("createServer: IllegalArgumentException ")
-            closerServeSocket()
+            closeServeSocket()
             updateHostConnectionStatus(HostConnectionStatus.Failure)
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.IllegalArgumentException)
             updateUserOnlineStatus(
@@ -518,7 +543,7 @@ class TcpViewModel @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()
             log("createServer: unknown exception ")
-            closerServeSocket()
+            closeServeSocket()
             updateHostConnectionStatus(HostConnectionStatus.Failure)
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.UnknownException)
         }
@@ -544,7 +569,7 @@ class TcpViewModel @Inject constructor(
             GeneralConnectionStatus.ConnectedAsHost -> {
                 log("connected as host")
                 closeClientServerSocket()
-                closerServeSocket()
+                closeServeSocket()
                 updateHostConnectionStatus(HostConnectionStatus.Idle)
                 updateUserOnlineStatus(
                     userUniqueId = state.value.peerUserUniqueId,
@@ -554,7 +579,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun closerServeSocket() {
+    private fun closeServeSocket() {
         if (::serverSocket.isInitialized) {
             serverSocket.close()
         }
@@ -756,7 +781,7 @@ class TcpViewModel @Inject constructor(
             }
         } else {
             log("send client message: client socket is closed ")
-            handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
         }
     }
 
@@ -795,7 +820,7 @@ class TcpViewModel @Inject constructor(
             }
         } else {
             log("send host message: client socket is closed ")
-            handleEvents(TcpScreenEvents.OnDialogErrorOccurred(TcpScreenDialogErrors.EstablishConnectionToSendMessage))
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
         }
     }
 
@@ -816,11 +841,7 @@ class TcpViewModel @Inject constructor(
                 "ahi3646",
                 "sendMessage server: dataOutputStream is closed io exception "
             )
-            handleEvents(
-                TcpScreenEvents.OnDialogErrorOccurred(
-                    TcpScreenDialogErrors.IOException
-                )
-            )
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
             try {
                 writer.close()
             } catch (ex: IOException) {
@@ -933,11 +954,7 @@ class TcpViewModel @Inject constructor(
                 "ahi3646",
                 "sendMessage server: dataOutputStream is closed io exception "
             )
-            handleEvents(
-                TcpScreenEvents.OnDialogErrorOccurred(
-                    TcpScreenDialogErrors.IOException
-                )
-            )
+            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
             try {
                 writer.close()
             } catch (ex: IOException) {
@@ -957,9 +974,10 @@ class TcpViewModel @Inject constructor(
         messages: List<ChatMessageEntity>
     ) {
         log("sending file ...")
-        try {
+        withContext(Dispatchers.IO) {
 
-            withContext(Dispatchers.IO) {
+            try {
+
                 //sending file type
                 val type = AppMessageType.FILE.identifier.code
                 writer.writeChar(type)
@@ -968,100 +986,98 @@ class TcpViewModel @Inject constructor(
                 //sending file count
                 writer.writeInt(messages.size)
                 log("file count - ${messages.size}")
-            }
 
-            messages.forEach { fileMessage ->
+                messages.forEach { fileMessage ->
 
-                val messageId = runBlocking(Dispatchers.IO) {
-                    insertMessage(fileMessage)
-                }
-
-                try {
-
-                    //Create File object
-                    val file = File(privateFilesDirectory, fileMessage.fileName!!)
-                    log("sending file info: file size - ${file.length()} - ${file.name}")
-
-                    //sending file name
-                    writer.writeUTF(fileMessage.fileName)
-                    log("sending file name - ${fileMessage.fileName}")
-
-                    //write length
-                    writer.writeLong(file.length())
-                    log("sending file length - ${file.length()}")
-
-                    var bytesForPercentage = 0L
-                    val fileSizeForPercentage = file.length()
-
-
-                    BufferedInputStream(FileInputStream(file)).use { fileInputStream ->
-                        // Here we  break file into chunks
-                        val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
-                        var bytes: Int
-
-                        while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
-                            // Send the file to Server Socket
-                            writer.write(buffer, 0, bytes)
-                            writer.flush()
-
-                            bytesForPercentage += bytes.toLong()
-                            val percentage =
-                                (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-                            val tempPercentage =
-                                ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
-
-                            if (percentage != tempPercentage) {
-                                log("progress - $percentage")
-                                val newFileMessage =
-                                    fileMessage.copy(
-                                        id = messageId,
-                                        fileState = FileMessageState.Loading(percentage)
-                                    )
-                                updatePercentageOfReceivingFile(newFileMessage)
-                            }
-                        }
+                    val messageId = runBlocking(Dispatchers.IO) {
+                        insertMessage(fileMessage)
                     }
 
-                    // Ensure all bytes were sent
-                    if (bytesForPercentage == fileSizeForPercentage) {
-                        viewModelScope.launch(Dispatchers.IO) {
-                            log("All bytes sent correctly.")
-                            val newState = FileMessageState.Success
-                            val newFileMessage = fileMessage.copy(
-                                id = messageId,
-                                isFileAvailable = true,
-                                fileState = newState
-                            )
-                            updatePercentageOfReceivingFile(newFileMessage)
-                            log("file sent successfully")
+                    try {
+                        //Create File object
+                        val file = File(privateFilesDirectory, fileMessage.fileName!!)
+                        log("sending file info: file size - ${file.length()} - ${file.name}")
+
+                        //sending file name
+                        writer.writeUTF(fileMessage.fileName)
+                        log("sending file name - ${fileMessage.fileName}")
+
+                        //write length
+                        writer.writeLong(file.length())
+                        log("sending file length - ${file.length()}")
+
+                        var bytesForPercentage = 0L
+                        val fileSizeForPercentage = file.length()
+
+                        BufferedInputStream(FileInputStream(file)).use { fileInputStream ->
+                            // Here we  break file into chunks
+                            val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+                            var bytes: Int
+
+                            while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
+                                // Send the file to Server Socket
+                                writer.write(buffer, 0, bytes)
+                                writer.flush()
+
+                                bytesForPercentage += bytes.toLong()
+                                val percentage =
+                                    (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                                val tempPercentage =
+                                    ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+
+                                if (percentage != tempPercentage) {
+                                    log("progress - $percentage")
+                                    val newFileMessage =
+                                        fileMessage.copy(
+                                            id = messageId,
+                                            fileState = FileMessageState.Loading(percentage)
+                                        )
+                                    updatePercentageOfReceivingFile(newFileMessage)
+                                }
+                            }
                         }
-                    } else {
-                        log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
+
+                        // Ensure all bytes were sent
+                        if (bytesForPercentage == fileSizeForPercentage) {
+                            viewModelScope.launch(Dispatchers.IO) {
+                                log("All bytes sent correctly.")
+                                val newState = FileMessageState.Success
+                                val newFileMessage = fileMessage.copy(
+                                    id = messageId,
+                                    isFileAvailable = true,
+                                    fileState = newState
+                                )
+                                updatePercentageOfReceivingFile(newFileMessage)
+                                log("file sent successfully")
+                            }
+                        } else {
+                            log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
+                            val newState = FileMessageState.Failure
+                            val newFileMessage =
+                                fileMessage.copy(fileState = newState, id = messageId)
+                            updatePercentageOfReceivingFile(newFileMessage)
+                        }
+
+                    } catch (exception: IOException) {
+                        exception.printStackTrace()
+                        log("file sent failed IOException")
                         val newState = FileMessageState.Failure
                         val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
                         updatePercentageOfReceivingFile(newFileMessage)
+                    } catch (error: Exception) {
+                        error.printStackTrace()
+                        log("file sent failed - Exception")
+                        val newState = FileMessageState.Failure
+                        val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
+                        updatePercentageOfReceivingFile(newFileMessage)
+                    } finally {
+                        delay(1000)
                     }
-
-                } catch (exception: IOException) {
-                    exception.printStackTrace()
-                    log("file sent failed IOException")
-                    val newState = FileMessageState.Failure
-                    val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
-                    updatePercentageOfReceivingFile(newFileMessage)
-                } catch (error: Exception) {
-                    error.printStackTrace()
-                    log("file sent failed - Exception")
-                    val newState = FileMessageState.Failure
-                    val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
-                    updatePercentageOfReceivingFile(newFileMessage)
-                } finally {
-                    delay(1000)
                 }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                log("file sending process failed: ${e.message}")
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
-            //todo show error
-            log("file sending process failed: ${e.message}")
         }
     }
 
@@ -2120,6 +2136,13 @@ class TcpViewModel @Inject constructor(
     }
 
     @SuppressLint("NewApi")
+    private fun stopLocalOnLyHotspot(){
+        //stop local-only hotspot
+        hotspotReservation?.close()
+        updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
+    }
+
+    @SuppressLint("NewApi")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
             //todo - you did not use the parameter inside on play voice message
@@ -2233,9 +2256,7 @@ class TcpViewModel @Inject constructor(
                     }
 
                     LocalOnlyHotspotStatus.LocalOnlyHotspotRunning -> {
-                        //stop local-only hotspot
-                        hotspotReservation?.close()
-                        updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
+                        stopLocalOnLyHotspot()
                     }
 
                     LocalOnlyHotspotStatus.Failure -> {
@@ -2497,11 +2518,10 @@ class TcpViewModel @Inject constructor(
     }
 
     fun handleFilesLauncher(fileUri: Uri) {
-//        val file = getFileFromUri(fileUri, privateFilesDirectory)
         val file = generateFileFromUri(
             contentResolver = contentResolver,
-            uri = fileUri,
-            resourceDirectory = privateFilesDirectory
+            resourceDirectory = privateFilesDirectory,
+            uri = fileUri
         )
 
         val fileMessageEntity = ChatMessageEntity(
