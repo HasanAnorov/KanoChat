@@ -197,7 +197,7 @@ class TcpViewModel @Inject constructor(
                 log("users - $users")
                 _state.update {
                     it.copy(
-                        chattingUsers = Resource.Success(users.map { user -> user.toChattingUser() })
+                        chattingUsers = Resource.Success(users.sortedBy { user -> !user.isOnline }.map { user -> user.toChattingUser() })
                     )
                 }
             }
