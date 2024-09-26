@@ -17,7 +17,7 @@ interface MessagesDao {
     suspend fun insertMessage(message: ChatMessageEntity): Long
 
     @Query(
-        """
+    """
     SELECT chatting_users.authorSessionId,
            chatting_users.partnerSessionID, 
            chatting_users.partnerUsername, 
@@ -25,10 +25,11 @@ interface MessagesDao {
            chatting_users.isOnline,
            messages.*
     FROM chatting_users 
-    LEFT JOIN messages ON chatting_users.partnerSessionID = messages.partnerSessionId AND chatting_users.authorSessionId = messages.authorSessionId
-    WHERE chatting_users.authorSessionId = :authorSessionId
+    LEFT JOIN messages ON chatting_users.partnerSessionID = messages.partnerSessionId 
+                       AND chatting_users.authorSessionId = messages.authorSessionId
+    WHERE chatting_users.authorSessionId = :authorSessionId 
     AND (messages.id IN (
-        SELECT MAX(id) FROM messages GROUP BY partnerSessionID
+        SELECT MAX(id) FROM messages WHERE authorSessionId = :authorSessionId GROUP BY partnerSessionID
     ) OR messages.id IS NULL)
     """
     )
@@ -47,12 +48,6 @@ interface MessagesDao {
         newFileState: FileMessageState?,
         newDuration: Long?
     )
-
-    @Query("SELECT * FROM messages where id = :messageId")
-    fun getMessageById(messageId: Long): Flow<ChatMessageEntity>
-
-    @Query("SELECT * FROM messages WHERE partnerSessionId = :userId")
-    fun getUserMessagesById(userId: String): Flow<List<ChatMessageEntity>>
 
     @Query("SELECT * FROM messages WHERE partnerSessionId = :peerSessionId AND authorSessionId = :authorSessionId")
     fun getPagedUserMessagesById(peerSessionId: String, authorSessionId: String): PagingSource<Int, ChatMessageEntity>

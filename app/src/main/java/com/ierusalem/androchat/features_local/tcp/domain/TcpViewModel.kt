@@ -157,33 +157,44 @@ class TcpViewModel @Inject constructor(
         initializeHotspotConfigs()
         listenWifiConnections()
     }
+    //todo - there is no need to add delay but i can't fix it without delay
+    fun logout(onFinished: () -> Unit) {
+        viewModelScope.launch {
 
-    fun logout(){
-        updateHasErrorOccurredDialog(null)
-        when(state.value.generalConnectionStatus){
-            GeneralConnectionStatus.Idle -> {}
-            GeneralConnectionStatus.ConnectedAsHost -> {
-                closeClientServerSocket()
-                closeServeSocket()
-                updateHostConnectionStatus(HostConnectionStatus.Idle)
-            }
-            GeneralConnectionStatus.ConnectedAsClient -> {
-                closeClientSocket()
-                updateClientConnectionStatus(ClientConnectionStatus.Idle)
-            }
-        }
+            when (state.value.generalConnectionStatus) {
+                GeneralConnectionStatus.Idle -> {}
+                GeneralConnectionStatus.ConnectedAsHost -> {
+                    closeClientServerSocket()
+                    closeServeSocket()
+                    delay(200)
+                    updateHostConnectionStatus(HostConnectionStatus.Idle)
+                }
 
-        when(state.value.generalNetworkingStatus){
-            GeneralNetworkingStatus.Idle -> {}
-            GeneralNetworkingStatus.P2PDiscovery -> {
-                stopP2PNetworking()
+                GeneralConnectionStatus.ConnectedAsClient -> {
+                    closeClientSocket()
+                    delay(200)
+                    updateClientConnectionStatus(ClientConnectionStatus.Idle)
+                }
             }
-            GeneralNetworkingStatus.HotspotDiscovery -> {
-                stopHotspotNetworking()
+
+            when (state.value.generalNetworkingStatus) {
+                GeneralNetworkingStatus.Idle -> {}
+                GeneralNetworkingStatus.P2PDiscovery -> {
+                    stopP2PNetworking()
+                }
+
+                GeneralNetworkingStatus.HotspotDiscovery -> {
+                    stopHotspotNetworking()
+                }
+
+                GeneralNetworkingStatus.LocalOnlyHotspot -> {
+                    stopLocalOnLyHotspot()
+                }
             }
-            GeneralNetworkingStatus.LocalOnlyHotspot -> {
-                stopLocalOnLyHotspot()
-            }
+            //delay for shutting down servers
+            delay(200)
+            updateHasErrorOccurredDialog(null)
+            onFinished()
         }
     }
 
@@ -194,10 +205,10 @@ class TcpViewModel @Inject constructor(
             val authorSessionID = runBlocking { dataStorePreferenceRepository.getSessionId.first() }
             log("author session id - $authorSessionID")
             messagesRepository.getAllUsersWithLastMessages(authorSessionID).collect { users ->
-                log("users - $users")
                 _state.update {
                     it.copy(
-                        chattingUsers = Resource.Success(users.sortedBy { user -> !user.isOnline }.map { user -> user.toChattingUser() })
+                        chattingUsers = Resource.Success(users.sortedBy { user -> !user.isOnline }
+                            .map { user -> user.toChattingUser() })
                     )
                 }
             }
@@ -355,10 +366,8 @@ class TcpViewModel @Inject constructor(
     private fun handleUserInsertionAndStatus(initialChatModel: InitialUserModel) {
         updateInitialChatModel(initialChatModel)
         viewModelScope.launch(Dispatchers.IO) {
-            val authorSessionId = state.value.authorSessionId
-            log("author session id - $authorSessionId")
             val userExists =
-                messagesRepository.isUserExist(initialChatModel.partnerSessionId, authorSessionId)
+                messagesRepository.isUserExist(initialChatModel.partnerSessionId, state.value.authorSessionId)
             if (userExists) {
                 log("user exist")
                 messagesRepository.updateChattingUserUniqueName(
@@ -370,15 +379,15 @@ class TcpViewModel @Inject constructor(
                     isOnline = true
                 )
             } else {
-                log("inserting user author session id - ${state.value.authorSessionId}")
-                val chattingUserEntity = ChattingUserEntity(
+                val newChattingUser = ChattingUserEntity(
                     authorSessionId = state.value.authorSessionId,
                     partnerSessionID = initialChatModel.partnerSessionId,
                     partnerUsername = initialChatModel.partnerUniqueName,
                     avatarBackgroundColor = getRandomColor(),
                     isOnline = true
                 )
-                messagesRepository.insertChattingUser(chattingUserEntity)
+                log("new user - $newChattingUser")
+                messagesRepository.insertChattingUser(newChattingUser)
             }
         }
     }
@@ -2136,7 +2145,7 @@ class TcpViewModel @Inject constructor(
     }
 
     @SuppressLint("NewApi")
-    private fun stopLocalOnLyHotspot(){
+    private fun stopLocalOnLyHotspot() {
         //stop local-only hotspot
         hotspotReservation?.close()
         updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
@@ -2621,6 +2630,7 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun updateClientConnectionStatus(status: ClientConnectionStatus) {
+
         when (status) {
             ClientConnectionStatus.Idle -> {
                 _state.update {

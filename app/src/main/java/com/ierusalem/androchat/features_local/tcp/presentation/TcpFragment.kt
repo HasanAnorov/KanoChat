@@ -79,7 +79,6 @@ class TcpFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        log("onAttach")
         viewModel.initializeAuthorSessionId()
         viewModel.loadChattingUsers()
     }

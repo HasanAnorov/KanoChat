@@ -12,6 +12,7 @@ import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.utils.Constants.getLanguageCode
 import com.ierusalem.androchat.core.utils.Constants.getLanguageFromCode
+import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_common.settings.presentation.SettingsScreenEvents
 import com.ierusalem.androchat.features_common.settings.presentation.SettingsScreenNavigation
 import com.ierusalem.androchat.features_local.tcp.domain.state.VisibleActionDialogs
@@ -78,12 +79,12 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun logoutUser() {
-        runBlocking {
+        viewModelScope.launch(Dispatchers.IO) {
             dataStorePreferenceRepository.setSessionId("")
             dataStorePreferenceRepository.setUsername("")
             dataStorePreferenceRepository.setLoggingStatus(false)
+            emitNavigation(SettingsScreenNavigation.ToLogin)
         }
-        emitNavigation(SettingsScreenNavigation.ToLogin)
     }
 
     private fun showLogoutWarningDialog() {
