@@ -23,4 +23,5 @@ interface MessagesRepository {
     suspend fun insertMessage(message: ChatMessageEntity): Long
     suspend fun isUserExist(partnerSessionId: String, authorSessionId:String): Boolean
     fun getAllUsersWithLastMessages(authorSessionId: String): Flow<List<UserWithLastMessage>>
+    suspend fun updateFileStateToFailure():Int
 }

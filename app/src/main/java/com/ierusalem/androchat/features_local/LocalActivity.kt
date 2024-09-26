@@ -50,6 +50,7 @@ class LocalActivity : AppCompatActivity() {
 
         //as long as you are saving isOnline in DB, initial value should be false for all users
         viewModel.updateAllUsersOnlineStatus(false)
+        viewModel.updateFileStateToFailure()
 
         intentFilter.apply {
             addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)

@@ -158,6 +158,12 @@ class TcpViewModel @Inject constructor(
         listenWifiConnections()
     }
 
+    fun updateFileStateToFailure(){
+        viewModelScope.launch(Dispatchers.IO) {
+            messagesRepository.updateFileStateToFailure()
+        }
+    }
+
     //todo - there is no need to add delay but i can't fix it without delay
     fun logout(onFinished: () -> Unit) {
         viewModelScope.launch {

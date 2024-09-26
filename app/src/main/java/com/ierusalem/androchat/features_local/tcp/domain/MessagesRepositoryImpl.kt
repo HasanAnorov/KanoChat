@@ -15,6 +15,10 @@ class MessagesRepositoryImpl @Inject constructor(
     private val chattingUsersDao: ChattingUsersDao
 ) : MessagesRepository {
 
+    override suspend fun updateFileStateToFailure(): Int {
+        return messagesDao.updateFileStateToFailure()
+    }
+
     override fun getChattingUserByIdFlow(userUniqueId: String): Flow<ChattingUserEntity?> {
         return chattingUsersDao.getChattingUserByIdFlow(userUniqueId)
     }
