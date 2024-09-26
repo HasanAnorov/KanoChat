@@ -157,6 +157,7 @@ class TcpViewModel @Inject constructor(
         initializeHotspotConfigs()
         listenWifiConnections()
     }
+
     //todo - there is no need to add delay but i can't fix it without delay
     fun logout(onFinished: () -> Unit) {
         viewModelScope.launch {
@@ -367,7 +368,10 @@ class TcpViewModel @Inject constructor(
         updateInitialChatModel(initialChatModel)
         viewModelScope.launch(Dispatchers.IO) {
             val userExists =
-                messagesRepository.isUserExist(initialChatModel.partnerSessionId, state.value.authorSessionId)
+                messagesRepository.isUserExist(
+                    initialChatModel.partnerSessionId,
+                    state.value.authorSessionId
+                )
             if (userExists) {
                 log("user exist")
                 messagesRepository.updateChattingUserUniqueName(
@@ -1048,23 +1052,25 @@ class TcpViewModel @Inject constructor(
 
                         // Ensure all bytes were sent
                         if (bytesForPercentage == fileSizeForPercentage) {
-                            viewModelScope.launch(Dispatchers.IO) {
-                                log("All bytes sent correctly.")
-                                val newState = FileMessageState.Success
-                                val newFileMessage = fileMessage.copy(
-                                    id = messageId,
-                                    isFileAvailable = true,
-                                    fileState = newState
-                                )
+                            log("All bytes sent correctly.")
+                            val newState = FileMessageState.Success
+                            val newFileMessage = fileMessage.copy(
+                                id = messageId,
+                                isFileAvailable = true,
+                                fileState = newState
+                            )
+                            runBlocking {
                                 updatePercentageOfReceivingFile(newFileMessage)
-                                log("file sent successfully")
                             }
+                            log("file sent successfully")
                         } else {
                             log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
                             val newState = FileMessageState.Failure
                             val newFileMessage =
                                 fileMessage.copy(fileState = newState, id = messageId)
-                            updatePercentageOfReceivingFile(newFileMessage)
+                            runBlocking {
+                                updatePercentageOfReceivingFile(newFileMessage)
+                            }
                         }
 
                     } catch (exception: IOException) {
@@ -1177,15 +1183,28 @@ class TcpViewModel @Inject constructor(
                             }
                         }
 
-                        log("file received successfully")
-                        val newState = FileMessageState.Success
-                        val newFileMessage =
-                            fileMessageEntity.copy(
-                                fileState = newState,
-                                id = messageId,
-                                isFileAvailable = true
-                            )
-                        updatePercentageOfReceivingFile(newFileMessage)
+                        // Ensure all bytes were sent
+                        if (bytesForPercentage == fileSizeForPercentage) {
+                            log("All bytes sent correctly.")
+                            val newState = FileMessageState.Success
+                            val newFileMessage = fileMessageEntity.copy(
+                                    fileState = newState,
+                                    id = messageId,
+                                    isFileAvailable = true
+                                )
+                            runBlocking {
+                                updatePercentageOfReceivingFile(newFileMessage)
+                            }
+                            log("file sent successfully")
+                        } else {
+                            log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
+                            val newState = FileMessageState.Failure
+                            val newFileMessage = fileMessageEntity.copy(fileState = newState, id = messageId)
+                            runBlocking {
+                                updatePercentageOfReceivingFile(newFileMessage)
+                            }
+                        }
+
                     } catch (e: IOException) {
                         e.printStackTrace()
                         log("file receiving failed: ${e.message}")
