@@ -435,12 +435,10 @@ class TcpViewModel @Inject constructor(
                             }
 
                             AppMessageType.VOICE -> {
-                                viewModelScope.launch(Dispatchers.IO) {
-                                    receiveVoiceMessage(
-                                        reader = reader,
-                                        receivingSocket = connectedClientSocket
-                                    )
-                                }
+                                receiveVoiceMessage(
+                                    reader = reader,
+                                    receivingSocket = connectedClientSocket
+                                )
                             }
 
                             AppMessageType.CONTACT -> {
@@ -870,18 +868,20 @@ class TcpViewModel @Inject constructor(
     }
 
     /**
-     * 1. type
+     * 1. message type
      * 2. audio file name
-     * 3. length
+     * 3. file length
      * */
     private suspend fun sendVoiceMessage(
         writer: DataOutputStream,
         voiceMessage: ChatMessageEntity
     ) {
-        log("sending voice message ...")
+        log("sending voice message - $voiceMessage ...")
         withContext(Dispatchers.IO) {
 
-            val messageId = insertMessage(voiceMessage)
+            val messageId = runBlocking {
+                insertMessage(voiceMessage)
+            }
             log("audio message id - $messageId")
 
             try {
@@ -891,15 +891,15 @@ class TcpViewModel @Inject constructor(
                 //sending file type
                 val type = voiceMessage.type.identifier.code
                 writer.writeChar(type)
-                log("sending audio file message - $type")
+                log("sending audio message type - $type")
 
                 //sending file name
                 writer.writeUTF(voiceMessage.voiceMessageFileName)
-                log("sending voice file name - ${voiceMessage.voiceMessageFileName}")
+                log("sending audio message name - ${voiceMessage.voiceMessageFileName}")
 
                 //write length
                 writer.writeLong(file.length())
-                log("sending voice file length - ${file.length()}")
+                log("sending audio message file length - ${file.length()}")
 
                 var bytes: Int
                 var bytesForPercentage = 0L
@@ -912,7 +912,7 @@ class TcpViewModel @Inject constructor(
                         // Send the file to Server Socket
                         log("bytes sent - $bytes")
                         writer.write(buffer, 0, bytes)
-                        writer.flush()
+                        //writer.flush()
 
                         bytesForPercentage += bytes.toLong()
                         val percentage =
@@ -930,11 +930,28 @@ class TcpViewModel @Inject constructor(
                     }
                 }
 
-                // Update state to success
-                val newState = FileMessageState.Success
-                val newVoiceMessage = voiceMessage.copy(fileState = newState, id = messageId)
-                updatePercentageOfReceivingAudioFile(newVoiceMessage)
-                log("audio file sent successfully")
+                // Ensure all bytes were sent
+                if (bytesForPercentage == fileSizeForPercentage) {
+                    log("All bytes sent correctly.")
+                    val newState = FileMessageState.Success
+                    val newVoiceMessage = voiceMessage.copy(
+                        id = messageId,
+                        isFileAvailable = true,
+                        fileState = newState,
+                    )
+                    runBlocking {
+                        updatePercentageOfReceivingAudioFile(newVoiceMessage)
+                    }
+                    log("audio file sent successfully")
+                } else {
+                    log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
+                    val newState = FileMessageState.Failure
+                    val newVoiceMessage = voiceMessage.copy(fileState = newState, id = messageId)
+                    updatePercentageOfReceivingAudioFile(newVoiceMessage)
+                    runBlocking {
+                        updatePercentageOfReceivingAudioFile(newVoiceMessage)
+                    }
+                }
             } catch (exception: IOException) {
                 exception.printStackTrace()
                 log("audio file sent failed - IOException")
@@ -1194,14 +1211,14 @@ class TcpViewModel @Inject constructor(
                             log("All bytes sent correctly.")
                             val newState = FileMessageState.Success
                             val newFileMessage = fileMessageEntity.copy(
-                                    fileState = newState,
-                                    id = messageId,
-                                    isFileAvailable = true
-                                )
+                                fileState = newState,
+                                id = messageId,
+                                isFileAvailable = true
+                            )
                             runBlocking {
                                 updatePercentageOfReceivingFile(newFileMessage)
                             }
-                            log("file sent successfully")
+                            log("file received successfully")
                         } else {
                             log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
                             val newState = FileMessageState.Failure
@@ -1240,219 +1257,133 @@ class TcpViewModel @Inject constructor(
     }
 
     /**
-     * 1. type
+     * 1. message type
      * 2. audio file name
-     * 3. length
+     * 3. file length
      * */
-    private suspend fun receiveVoiceMessage(reader: DataInputStream, receivingSocket: Socket) {
+    private fun receiveVoiceMessage(reader: DataInputStream, receivingSocket: Socket) {
         log("receiving voice file ...")
-        withContext(Dispatchers.IO) {
 
-            try {
-                //reading audio file name
-                val fileName = reader.readUTF()
-                log("Expected voice file name - $fileName")
+        try {
+            //reading audio file name
+            val fileName = reader.readUTF()
+            log("Expected audio file name - $fileName")
 
-                // Read the expected file size
-                var audioFileSize: Long = reader.readLong() // read file size
-                log("voice file size - $audioFileSize")
+            // Read the expected file size
+            var audioFileSize: Long = reader.readLong() // read file size
+            log("audio file size - $audioFileSize")
 
-                var bytesForPercentage = 0L
-                val fileSizeForPercentage = audioFileSize
-                val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+            var bytesForPercentage = 0L
+            val fileSizeForPercentage = audioFileSize
+            val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
 
-                //Create File object
-                val file =
-                    getFileByName(fileName = fileName, resourceDirectory = privateFilesDirectory)
+            //Create File object
+            val file =
+                getFileByName(fileName = fileName, resourceDirectory = privateFilesDirectory)
 
-                val voiceMessageEntity = ChatMessageEntity(
-                    type = AppMessageType.VOICE,
-                    formattedTime = getCurrentTime(),
-                    isFromYou = false,
-                    partnerSessionId = state.value.peerUserUniqueId,
-                    authorSessionId = state.value.authorSessionId,
-                    //message specific fields
-                    fileState = FileMessageState.Loading(0),
-                    voiceMessageFileName = file.name,
-                    voiceMessageAudioFileDuration = 0L,
-                )
+            val voiceMessageEntity = ChatMessageEntity(
+                type = AppMessageType.VOICE,
+                formattedTime = getCurrentTime(),
+                isFromYou = false,
+                partnerSessionId = state.value.peerUserUniqueId,
+                authorSessionId = state.value.authorSessionId,
+                //message specific fields
+                fileState = FileMessageState.Loading(0),
+                voiceMessageFileName = file.name,
+                voiceMessageAudioFileDuration = 0L,
+            )
 
-                val messageId = insertMessage(voiceMessageEntity)
-                log("Message id - $messageId")
+            val messageId = runBlocking {
+                insertMessage(voiceMessageEntity)
+            }
 
-                // Using `use` to ensure the fileOutputStream is properly closed
-                FileOutputStream(file).use { fileOutputStream ->
-                    log("writing to file")
-                    try {
-                        receivingSocket.setSoTimeout(Constants.FILE_RECEIVE_TIMEOUT)
-                        while (audioFileSize > 0) {
-                            val bytesRead =
-                                reader.read(buffer, 0, min(buffer.size, audioFileSize.toInt()))
+            // Using `use` to ensure the fileOutputStream is properly closed
+            FileOutputStream(file).use { fileOutputStream ->
+                try {
+                    receivingSocket.setSoTimeout(Constants.FILE_RECEIVE_TIMEOUT)
+                    while (audioFileSize > 0) {
+                        val bytesRead =
+                            reader.read(
+                                buffer,
+                                0,
+                                min(buffer.size, audioFileSize.toInt())
+                            )
+                        log("Read bytes: $bytesRead, Remaining file size: $audioFileSize")
 
-                            // Log the actual bytes read
-                            log("Bytes read - $bytesRead, Remaining file size - $audioFileSize")
-
-                            // Check if the client has disconnected (read() returns -1 when disconnected)
-                            if (bytesRead == -1) {
-                                log("Client disconnected during file transfer")
-                                throw IOException("Client disconnected unexpectedly")
-                            }
-
-                            // Write the file
-                            fileOutputStream.write(buffer, 0, bytesRead)
-                            fileOutputStream.flush()  // Ensure data is written to disk
-                            audioFileSize -= bytesRead.toLong()
-
-                            // Update progress
-//                            bytesForPercentage += bytesRead.toLong()
-//                            val percentage =
-//                                (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-//                            val tempPercentage =
-//                                ((bytesForPercentage - bytesRead.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
-
-                            // Update progress
-                            bytesForPercentage += bytesRead.toLong()
-                            val percentage =
-                                (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-                            log("audio progress - $percentage")
-
-                            val newState = FileMessageState.Loading(percentage)
-                            val newVoiceMessage =
-                                voiceMessageEntity.copy(fileState = newState, id = messageId)
-                            updatePercentageOfReceivingAudioFile(newVoiceMessage)
-//                            if (percentage != tempPercentage) {
-//                                log("audio progress - $percentage")
-//                                val newState = FileMessageState.Loading(percentage)
-//                                val newVoiceMessage =
-//                                    voiceMessageEntity.copy(fileState = newState, id = messageId)
-//                                updatePercentageOfReceivingFile(newVoiceMessage)
-//                            }
-//                            log("last audio file size - $audioFileSize")
+                        // Check if the client has disconnected (read() returns -1 when disconnected)
+                        if (bytesRead == -1) {
+                            log("Client disconnected during file transfer")
+                            throw IOException("Client disconnected unexpectedly")
                         }
 
-                        log("voice file received successfully")
+                        // Write the file
+                        fileOutputStream.write(buffer, 0, bytesRead)
+                        audioFileSize -= bytesRead.toLong()
+
+                        // Update progress
+                        bytesForPercentage += bytesRead.toLong()
+                        val percentage =
+                            (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                        val tempPercentage =
+                            ((bytesForPercentage - bytesRead.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+
+                        if (audioFileSize > 0 && percentage != tempPercentage) {
+                            log("progress - $percentage")
+                            val newState = FileMessageState.Loading(percentage)
+                            val newFileMessage =
+                                voiceMessageEntity.copy(fileState = newState, id = messageId)
+                            updatePercentageOfReceivingAudioFile(newFileMessage)
+                        }
+                    }
+
+                    // Ensure all bytes were sent
+                    if (bytesForPercentage == fileSizeForPercentage) {
+                        log("All bytes sent correctly.")
                         val newState = FileMessageState.Success
                         val newVoiceMessage = voiceMessageEntity.copy(
                             id = messageId,
                             fileState = newState,
-                            voiceMessageAudioFileDuration = file.getAudioFileDuration()
+                            isFileAvailable = true
                         )
-                        updatePercentageOfReceivingAudioFile(newVoiceMessage)
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                        log("audio file receiving failed: ${e.message}")
+                        runBlocking {
+                            updatePercentageOfReceivingAudioFile(newVoiceMessage)
+                        }
+                        log("audio file received successfully")
+                    } else {
+                        log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
                         val newState = FileMessageState.Failure
                         val newFileMessage =
                             voiceMessageEntity.copy(fileState = newState, id = messageId)
-                        updatePercentageOfReceivingFile(newFileMessage)
-                    } catch (e: SocketException) {
-                        e.printStackTrace()
-                        log("Client disconnected (SocketException): ${e.message}")
-                        val newState = FileMessageState.Failure
-                        val newFileMessage =
-                            voiceMessageEntity.copy(fileState = newState, id = messageId)
-                        updatePercentageOfReceivingFile(newFileMessage)
-                    } finally {
-                        //set timeout to 0 which is infinite
-                        receivingSocket.soTimeout = Constants.INFINITELY_TIMEOUT
-                        log("file receiving process finished")
+                        runBlocking {
+                            updatePercentageOfReceivingAudioFile(newFileMessage)
+                        }
                     }
+
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    log("audio file receiving failed: ${e.message}")
+                    val newState = FileMessageState.Failure
+                    val newFileMessage =
+                        voiceMessageEntity.copy(fileState = newState, id = messageId)
+                    updatePercentageOfReceivingFile(newFileMessage)
+                } catch (e: SocketException) {
+                    e.printStackTrace()
+                    log("Client disconnected (SocketException): ${e.message}")
+                    val newState = FileMessageState.Failure
+                    val newFileMessage =
+                        voiceMessageEntity.copy(fileState = newState, id = messageId)
+                    updatePercentageOfReceivingFile(newFileMessage)
+                } finally {
+                    //set timeout to 0 which is infinite
+                    receivingSocket.soTimeout = Constants.INFINITELY_TIMEOUT
+                    log("audio file receiving process finished")
                 }
-            } catch (e: IOException) {
-                e.printStackTrace()
-                log("audio file receiving process failed: ${e.message}")
             }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            log("audio file receiving process failed: ${e.message}")
         }
     }
-//    private suspend fun receiveVoiceMessage(reader: DataInputStream, receivingSocket: Socket) {
-//        log("receiving voice file ...")
-//        withContext(Dispatchers.IO) {
-//            try {
-//                receivingSocket.soTimeout = 15000 //15 seconds
-//                // Read audio file name
-//                val fileName = reader.readUTF()
-//                log("Expected voice file name - $fileName")
-//
-//                // Read the expected file size
-//                var audioFileSize: Long = reader.readLong()
-//                log("voice file size - $audioFileSize")
-//
-//                val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)  // 4096 bytes
-//                var bytesForPercentage = 0L
-//                val fileSizeForPercentage = audioFileSize
-//
-//                // Create File object
-//                val file = getFileByName(fileName = fileName, resourceDirectory = resourceDirectory)
-//
-//                val voiceMessageEntity = ChatMessageEntity(
-//                    type = AppMessageType.VOICE,
-//                    formattedTime = getCurrentTime(),
-//                    isFromYou = false,
-//                    peerUniqueId = state.value.peerUserUniqueId,
-//                    authorUniqueId = state.value.authorUniqueId,
-//                    fileState = FileMessageState.Loading(0),
-//                    voiceMessageFileName = file.name,
-//                    voiceMessageAudioFileDuration = 0L,
-//                )
-//
-//                val messageId = insertMessage(voiceMessageEntity)
-//                log("Message id - $messageId")
-//
-//                // Use 'use' to ensure fileOutputStream is properly closed
-//                FileOutputStream(file).use { fileOutputStream ->
-//                    log("writing to file")
-//
-//                    while (audioFileSize > 0) {
-//                        // Attempt to read up to buffer size
-//                        val bytesRead = reader.read(buffer, 0, min(buffer.size, audioFileSize.toInt()))
-//
-//                        // Log the actual bytes read
-//                        log("Bytes read - $bytesRead, Remaining file size - $audioFileSize")
-//
-//                        // Check if the end of the stream has been reached
-//                        if (bytesRead == -1) {
-//                            log("End of stream reached or client disconnected")
-//                            throw IOException("End of stream or client disconnected unexpectedly")
-//                        }
-//
-//                        // Write to the file
-//                        fileOutputStream.write(buffer, 0, bytesRead)
-//                        fileOutputStream.flush()  // Ensure data is written to disk
-//                        audioFileSize -= bytesRead.toLong()
-//
-//                        // Update progress
-//                        bytesForPercentage += bytesRead.toLong()
-//                        val percentage = (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-//                        log("audio progress - $percentage")
-//
-//                        val newState = FileMessageState.Loading(percentage)
-//                        val newVoiceMessage = voiceMessageEntity.copy(fileState = newState, id = messageId)
-//                        updatePercentageOfReceivingFile(newVoiceMessage)
-//                    }
-//
-//                    val newState = FileMessageState.Success
-//                    val newVoiceMessage = voiceMessageEntity.copy(
-//                        id = messageId,
-//                        fileState = newState,
-//                        voiceMessageAudioFileDuration = file.getAudioFileDuration()
-//                    )
-//                    updatePercentageOfReceivingFile(newVoiceMessage)
-//                    log("voice file received successfully")
-//                }
-//
-//            } catch (e: IOException) {
-//                e.printStackTrace()
-//                log("audio file receiving failed: ${e.message}")
-////                val newState = FileMessageState.Failure
-////                val newFileMessage = voiceMessageEntity.copy(fileState = newState, id = messageId)
-////                updatePercentageOfReceivingFile(newFileMessage)
-//            } finally {
-//                receivingSocket.soTimeout = Constants.INFINITELY_TIMEOUT
-//                log("file receiving process finished")
-//            }
-//        }
-//    }
-
 
     private fun receiveTextMessage(reader: DataInputStream) {
         val receivedMessage = reader.readUTF()
@@ -1953,7 +1884,6 @@ class TcpViewModel @Inject constructor(
             GeneralConnectionStatus.Idle -> {
                 log("recording voice message on idle connection")
                 cancelRecording()
-                updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
             }
 
             GeneralConnectionStatus.ConnectedAsClient -> {

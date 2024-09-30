@@ -164,7 +164,6 @@ fun LocalConversationUserInput(
                                 coroutineScope.launch {
                                     uiState.isRecordAudioGranted.collect { isGranted ->
                                         recordButton.isListenForRecord = (isGranted && uiState.generalConnectionStatus != GeneralConnectionStatus.Idle)
-//                                        recordButton.isListenForRecord = (isGranted )
                                         recordButton.setOnClickListener {
                                             when {
                                                 !isGranted -> {
@@ -188,7 +187,7 @@ fun LocalConversationUserInput(
                                     object : OnRecordListener {
                                         override fun onStart() {
                                             //Start Recording..
-                                            log("onStart")
+                                            log("start recording")
                                             eventHandler(TcpScreenEvents.OnVoiceRecordStart)
                                             recordLockCoverView.visibility = View.VISIBLE
                                         }
