@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -228,7 +230,7 @@ fun VoiceMessageItem(
                             content = {
                                 Icon(
                                     modifier = Modifier.size(24.dp),
-                                    painter = painterResource(id = R.drawable.file_failed),
+                                    imageVector = Icons.Default.ErrorOutline,
                                     contentDescription = null
                                 )
                             }

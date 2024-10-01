@@ -176,6 +176,11 @@ fun LocalConversationUserInput(
                                                         )
                                                     )
                                                 }
+                                                else -> {
+                                                    eventHandler(TcpScreenEvents.OnVoiceRecordFinished)
+                                                    recordLockCoverView.visibility = View.INVISIBLE
+                                                    recordingView.finishRecord()
+                                                }
                                             }
                                         }
                                     }
@@ -233,7 +238,7 @@ fun LocalConversationUserInput(
                                 recordingView.setLessThanSecondAllowed(false)
 
                                 // enable or disable the Growing animation for record Button.
-                                recordingView.setRecordButtonGrowingAnimationEnabled(true)
+                                recordingView.setRecordButtonGrowingAnimationEnabled(false)
 
                                 // change scale up value on Growing animation.
                                 recordButton.setScaleUpTo(1.3f)
@@ -242,7 +247,7 @@ fun LocalConversationUserInput(
                                 recordingView.setSoundEnabled(false)
 
                                 // auto cancelling recording after timeLimit (In millis)
-                                recordingView.setTimeLimit(1 * 60 * 1000) //1 minutes
+                                recordingView.setTimeLimit(121 * 1000) //2 minutes
 
                                 //set send icon
                                 recordButton.setSendIconResource(R.drawable.send)
