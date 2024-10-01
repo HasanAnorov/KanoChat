@@ -158,7 +158,7 @@ class TcpViewModel @Inject constructor(
         listenWifiConnections()
     }
 
-    fun updateFileStateToFailure(){
+    fun updateFileStateToFailure() {
         viewModelScope.launch(Dispatchers.IO) {
             messagesRepository.updateFileStateToFailure()
         }
@@ -640,9 +640,10 @@ class TcpViewModel @Inject constructor(
                         }
 
                         AppMessageType.VOICE -> {
-                            viewModelScope.launch(Dispatchers.IO) {
-                                receiveVoiceMessage(reader = reader, receivingSocket = clientSocket)
-                            }
+                            receiveVoiceMessage(
+                                reader = reader,
+                                receivingSocket = clientSocket
+                            )
                         }
 
                         AppMessageType.CONTACT -> {
@@ -879,19 +880,20 @@ class TcpViewModel @Inject constructor(
         log("sending voice message - $voiceMessage ...")
         withContext(Dispatchers.IO) {
 
-            val messageId = runBlocking {
+            val messageId = runBlocking(Dispatchers.IO) {
                 insertMessage(voiceMessage)
             }
             log("audio message id - $messageId")
 
             try {
-                //Create File object
-                val file = File(privateFilesDirectory, voiceMessage.voiceMessageFileName!!)
 
                 //sending file type
-                val type = voiceMessage.type.identifier.code
+                val type = AppMessageType.VOICE.identifier.code
                 writer.writeChar(type)
                 log("sending audio message type - $type")
+
+                //Create File object
+                val file = File(privateFilesDirectory, voiceMessage.voiceMessageFileName!!)
 
                 //sending file name
                 writer.writeUTF(voiceMessage.voiceMessageFileName)
@@ -901,18 +903,19 @@ class TcpViewModel @Inject constructor(
                 writer.writeLong(file.length())
                 log("sending audio message file length - ${file.length()}")
 
-                var bytes: Int
                 var bytesForPercentage = 0L
                 val fileSizeForPercentage = file.length()
 
-                // Break file into chunks
-                val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
-                FileInputStream(file).use { fileInputStream ->
+                BufferedInputStream(FileInputStream(file)).use { fileInputStream ->
+                    // Here we  break file into chunks
+                    val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+                    var bytes: Int
+
                     while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
                         // Send the file to Server Socket
                         log("bytes sent - $bytes")
                         writer.write(buffer, 0, bytes)
-                        //writer.flush()
+                        writer.flush()
 
                         bytesForPercentage += bytes.toLong()
                         val percentage =
@@ -922,9 +925,10 @@ class TcpViewModel @Inject constructor(
 
                         if (percentage != tempPercentage) {
                             log("audio progress - $percentage")
-                            val newState = FileMessageState.Loading(percentage)
-                            val newVoiceMessage =
-                                voiceMessage.copy(fileState = newState, id = messageId)
+                            val newVoiceMessage = voiceMessage.copy(
+                                id = messageId,
+                                fileState = FileMessageState.Loading(percentage)
+                            )
                             updatePercentageOfReceivingAudioFile(newVoiceMessage)
                         }
                     }
@@ -1011,9 +1015,7 @@ class TcpViewModel @Inject constructor(
     ) {
         log("sending file ...")
         withContext(Dispatchers.IO) {
-
             try {
-
                 //sending file type
                 val type = AppMessageType.FILE.identifier.code
                 writer.writeChar(type)
@@ -1222,7 +1224,8 @@ class TcpViewModel @Inject constructor(
                         } else {
                             log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
                             val newState = FileMessageState.Failure
-                            val newFileMessage = fileMessageEntity.copy(fileState = newState, id = messageId)
+                            val newFileMessage =
+                                fileMessageEntity.copy(fileState = newState, id = messageId)
                             runBlocking {
                                 updatePercentageOfReceivingFile(newFileMessage)
                             }
@@ -1302,11 +1305,10 @@ class TcpViewModel @Inject constructor(
                 try {
                     receivingSocket.setSoTimeout(Constants.FILE_RECEIVE_TIMEOUT)
                     while (audioFileSize > 0) {
-                        val bytesRead =
-                            reader.read(
+                        val bytesRead = reader.read(
                                 buffer,
                                 0,
-                                min(buffer.size, audioFileSize.toInt())
+                                min(buffer.size.toDouble(), audioFileSize.toDouble()).toInt()
                             )
                         log("Read bytes: $bytesRead, Remaining file size: $audioFileSize")
 
@@ -1342,8 +1344,9 @@ class TcpViewModel @Inject constructor(
                         val newState = FileMessageState.Success
                         val newVoiceMessage = voiceMessageEntity.copy(
                             id = messageId,
+                            isFileAvailable = true,
                             fileState = newState,
-                            isFileAvailable = true
+                            voiceMessageAudioFileDuration = file.getAudioFileDuration()
                         )
                         runBlocking {
                             updatePercentageOfReceivingAudioFile(newVoiceMessage)
@@ -1365,14 +1368,13 @@ class TcpViewModel @Inject constructor(
                     val newState = FileMessageState.Failure
                     val newFileMessage =
                         voiceMessageEntity.copy(fileState = newState, id = messageId)
-                    updatePercentageOfReceivingFile(newFileMessage)
+                    updatePercentageOfReceivingAudioFile(newFileMessage)
                 } catch (e: SocketException) {
                     e.printStackTrace()
                     log("Client disconnected (SocketException): ${e.message}")
-                    val newState = FileMessageState.Failure
-                    val newFileMessage =
-                        voiceMessageEntity.copy(fileState = newState, id = messageId)
-                    updatePercentageOfReceivingFile(newFileMessage)
+                    val failureState =
+                        voiceMessageEntity.copy(fileState = FileMessageState.Failure, id = messageId)
+                    updatePercentageOfReceivingAudioFile(failureState)
                 } finally {
                     //set timeout to 0 which is infinite
                     receivingSocket.soTimeout = Constants.INFINITELY_TIMEOUT
@@ -2774,6 +2776,7 @@ class TcpViewModel @Inject constructor(
             messagesRepository.updateVoiceFileMessage(
                 messageId = voiceMessage.id,
                 newFileState = voiceMessage.fileState,
+                isFileAvailable = voiceMessage.isFileAvailable,
                 newDuration = voiceMessage.voiceMessageAudioFileDuration
             )
         }

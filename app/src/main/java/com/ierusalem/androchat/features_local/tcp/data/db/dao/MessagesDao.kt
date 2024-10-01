@@ -45,9 +45,10 @@ interface MessagesDao {
         newFileState: FileMessageState?
     )
 
-    @Query("UPDATE messages SET fileState = :newFileState, voiceMessageAudioFileDuration = :newDuration WHERE id = :messageId")
+    @Query("UPDATE messages SET isFileAvailable = :isFileAvailable, fileState = :newFileState, voiceMessageAudioFileDuration = :newDuration WHERE id = :messageId")
     suspend fun updateVoiceFileMessage(
         messageId: Long,
+        isFileAvailable: Boolean,
         newFileState: FileMessageState?,
         newDuration: Long?
     )

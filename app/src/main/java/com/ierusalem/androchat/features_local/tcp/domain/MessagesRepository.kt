@@ -11,6 +11,7 @@ interface MessagesRepository {
     suspend fun updateVoiceFileMessage(
         messageId: Long,
         newFileState: FileMessageState?,
+        isFileAvailable:Boolean,
         newDuration: Long?
     )
     fun getChattingUserByIdFlow(userUniqueId: String): Flow<ChattingUserEntity?>
