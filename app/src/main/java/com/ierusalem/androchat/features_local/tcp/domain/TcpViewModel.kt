@@ -92,6 +92,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -1306,10 +1307,10 @@ class TcpViewModel @Inject constructor(
                     receivingSocket.setSoTimeout(Constants.FILE_RECEIVE_TIMEOUT)
                     while (audioFileSize > 0) {
                         val bytesRead = reader.read(
-                                buffer,
-                                0,
-                                min(buffer.size.toDouble(), audioFileSize.toDouble()).toInt()
-                            )
+                            buffer,
+                            0,
+                            min(buffer.size.toDouble(), audioFileSize.toDouble()).toInt()
+                        )
                         log("Read bytes: $bytesRead, Remaining file size: $audioFileSize")
 
                         // Check if the client has disconnected (read() returns -1 when disconnected)
@@ -1373,7 +1374,10 @@ class TcpViewModel @Inject constructor(
                     e.printStackTrace()
                     log("Client disconnected (SocketException): ${e.message}")
                     val failureState =
-                        voiceMessageEntity.copy(fileState = FileMessageState.Failure, id = messageId)
+                        voiceMessageEntity.copy(
+                            fileState = FileMessageState.Failure,
+                            id = messageId
+                        )
                     updatePercentageOfReceivingAudioFile(failureState)
                 } finally {
                     //set timeout to 0 which is infinite
@@ -1683,14 +1687,12 @@ class TcpViewModel @Inject constructor(
                 .playTiming
                 .distinctUntilChanged()
                 .collect { timing ->
-                    log("timing - $timing")
                     updatePlayTiming(timing, messageId)
                 }
         }
     }
 
     fun loadMessages(chattingUser: InitialUserModel) {
-        val authorSessionId = state.value.authorSessionId
         viewModelScope.launch(Dispatchers.IO) {
             _state.update {
                 it.copy(
@@ -1699,7 +1701,7 @@ class TcpViewModel @Inject constructor(
                         pagingSourceFactory = {
                             messagesRepository.getPagedUserMessagesById(
                                 partnerSessionId = chattingUser.partnerSessionId,
-                                authorSessionId = authorSessionId
+                                authorSessionId = state.value.authorSessionId
                             )
                         }
                     ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
@@ -1909,36 +1911,75 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun updateIsPlaying(audioState: AudioState, messageId: Long) {
-        // Find the target message
-//        val targetMessage: ChatMessage.VoiceMessage? = state.value.messages.collect{msg ->
-//            msg.
-//        }
-//            .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
-//        // Check if targetMessage is not null
-//        targetMessage?.let { message ->
-//            // Create a copy with the updated isPlaying value
-//            val updatedMessage = message.copy(audioState = audioState)
-//            // Create a new list with the updated message
-//            val newMessages = state.value.messages.map { msg ->
-//                if (msg.messageId == messageId && msg.messageType == AppMessageType.VOICE) {
-//                    updatedMessage
-//                } else if (msg.messageType == AppMessageType.VOICE) {
-//                    (msg as ChatMessage.VoiceMessage).copy(audioState = AudioState.Idle)
+//    fun updateIsPlaying(
+//        messageIdToUpdate: Long,
+//        newAudioState: AudioState
+//    ): Flow<PagingData<ChatMessage>> {
+//        return state.value.messages.map { pagingData ->
+//            pagingData.map { chatMessage ->
+//                if (chatMessage is ChatMessage.VoiceMessage && chatMessage.messageId == messageIdToUpdate) {
+//                    // Return a new instance of VoiceMessage with the updated audio state
+//                    chatMessage.copy(audioState = newAudioState)
 //                } else {
-//                    msg
+//                    chatMessage
 //                }
 //            }
-//            // Update the state with the new list of messages
-//            _state.update { currentState ->
-//                currentState.copy(
-//                    messages = newMessages
-//                )
+//        }
+//    }
+//
+//    private fun updateIsPlaying(audioState: AudioState, messageId: Long) {
+//        // Create a new PagingData flow by mapping through the existing messages
+//        val newPagingDataFlow = state.value.messages.map { pagingData ->
+//
+//            pagingData.map { msg ->
+//                if (msg is ChatMessage.VoiceMessage && msg.messageId == messageId) {
+//                    // Update the audioState of the target message
+//                    msg.copy(audioState = audioState)
+//                } else if (msg is ChatMessage.VoiceMessage) {
+//                    // Set other voice messages to Idle state only if they are not already idle
+//                    if (msg.audioState != AudioState.Idle) {
+//                        msg.copy(audioState = AudioState.Idle)
+//                    } else {
+//                        msg // Return as is to prevent unnecessary recomposition
+//                    }
+//                } else {
+//                    msg // Return other message types as they are
+//                }
 //            }
 //        }
+//
+//        // Update the state only if the messages have changed
+//        _state.update { currentState ->
+//            currentState.copy(messages = newPagingDataFlow)
+//        }
+//    }
+
+    private fun updateIsPlaying(audioState: AudioState, messageId: Long) {
+        // Create a new PagingData flow by mapping through the existing messages
+        val newPagingDataFlow = state.value.messages.map { pagingData ->
+            pagingData.map { msg ->
+                when {
+                    // Only update if the target VoiceMessage state needs to change
+                    msg is ChatMessage.VoiceMessage && msg.messageId == messageId && msg.audioState != audioState -> {
+                        msg.copy(audioState = audioState)
+                    }
+                    // Reset other VoiceMessages to Idle if they are not already Idle
+                    msg is ChatMessage.VoiceMessage && msg.messageId != messageId && msg.audioState != AudioState.Idle -> {
+                        msg.copy(audioState = AudioState.Idle)
+                    }
+                    else -> msg // Return the message unchanged to prevent unnecessary recomposition
+                }
+            }
+        }.distinctUntilChanged()
+
+        // Update the state only if the messages have changed
+        _state.update { currentState ->
+            currentState.copy(messages = newPagingDataFlow)
+        }
     }
 
     private fun updatePlayTiming(timing: Long, messageId: Long) {
+        log("updatePlayTiming: messageId - $messageId, timing - $timing")
         // Find the target message
 //        val targetMessage: ChatMessage.VoiceMessage? = state.value.messages
 //            .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
@@ -1967,6 +2008,15 @@ class TcpViewModel @Inject constructor(
     private fun playAudioFile(voiceMessage: ChatMessage.VoiceMessage) {
         val audioFile = File(privateFilesDirectory, voiceMessage.voiceFileName)
         when (voiceMessage.audioState) {
+            AudioState.Idle -> {
+                audioPlayer.playAudioFile(audioFile) {
+                    log("on finished in vm")
+                    updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
+                }
+                updateIsPlaying(AudioState.Playing(0L), voiceMessage.messageId)
+                startCollectingPlayTiming(voiceMessage.messageId)
+            }
+
             is AudioState.Playing -> {
                 val currentPosition = audioPlayer.pause()
                 currentPosition?.let {
@@ -1981,15 +2031,6 @@ class TcpViewModel @Inject constructor(
                     log("on finished in vm 1")
                     updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
                 }
-            }
-
-            AudioState.Idle -> {
-                audioPlayer.playAudioFile(audioFile) {
-                    log("on finished in vm")
-                    updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
-                }
-                updateIsPlaying(AudioState.Playing(0L), voiceMessage.messageId)
-                startCollectingPlayTiming(voiceMessage.messageId)
             }
         }
     }

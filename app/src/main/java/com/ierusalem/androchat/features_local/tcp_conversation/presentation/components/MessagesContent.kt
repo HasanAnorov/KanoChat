@@ -47,7 +47,6 @@ fun Messages(
 ) {
     val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
-
         LazyColumn(
             reverseLayout = true,
             state = scrollState,
