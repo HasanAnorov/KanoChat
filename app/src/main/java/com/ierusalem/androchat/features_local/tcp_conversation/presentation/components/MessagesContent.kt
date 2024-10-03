@@ -63,7 +63,7 @@ fun Messages(
                     item {
                         Spacer(modifier = Modifier.height(32.dp))
                     }
-                    itemsIndexed(items = messages.messages, key = { _, message -> message.messageId }) { index, message ->
+                    itemsIndexed(items = messages.messages) { index, message ->
                         val prevAuthor = messages.messages.getOrNull(index - 1)?.isFromYou
                         val nextAuthor = messages.messages.getOrNull(index + 1)?.isFromYou
                         val isFirstMessageByAuthor = prevAuthor != message.isFromYou
