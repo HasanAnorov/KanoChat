@@ -24,11 +24,6 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.PagingData
-import androidx.paging.cachedIn
-import androidx.paging.map
 import com.google.gson.Gson
 import com.ierusalem.androchat.core.app.AppBroadcastFrequency
 import com.ierusalem.androchat.core.app.AppMessageType
@@ -39,6 +34,7 @@ import com.ierusalem.androchat.core.ui.navigation.DefaultNavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.NavigationEventDelegate
 import com.ierusalem.androchat.core.ui.navigation.emitNavigation
 import com.ierusalem.androchat.core.utils.Constants
+import com.ierusalem.androchat.core.utils.Constants.MAX_ITEM_PER_PAGE
 import com.ierusalem.androchat.core.utils.Constants.SOCKET_DEFAULT_BUFFER_SIZE
 import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
 import com.ierusalem.androchat.core.utils.Constants.getRandomColor
@@ -66,6 +62,7 @@ import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.Reason
 import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_local.tcp.domain.model.AudioState
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.state.ChatUiState
 import com.ierusalem.androchat.features_local.tcp.domain.state.ClientConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactItem
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactMessageItem
@@ -84,6 +81,7 @@ import com.ierusalem.androchat.features_local.tcp.domain.state.VisibleActionDial
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -92,8 +90,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -152,6 +148,77 @@ class TcpViewModel @Inject constructor(
     val visibleActionDialogQueue = mutableStateListOf<VisibleActionDialogs>()
 
     private val privateFilesDirectory = filesDirectoryService.getPrivateFilesDirectory()
+
+    private val exceptionHandler = CoroutineExceptionHandler { _, _ ->
+        _state.update {
+            it.copy(
+                messages = ChatUiState.Error
+            )
+        }
+    }
+
+    private val messages = mutableSetOf<ChatMessage>()
+    private var page = 1
+
+    fun loadChatMessages() {
+        viewModelScope.launch(exceptionHandler) {
+            showLoading()
+
+            // Proceed if it's the first page or pagination is not exhausted
+            if (page == 1 || state.value.isPaginationExhaust.not()) {
+                messagesRepository.getPagedUserMessagesById(
+                    partnerSessionId = state.value.partnerSessionId,
+                    authorSessionId = state.value.authorSessionId,
+                    page = page
+                )
+                    .collect { result ->
+                        messages.addAll(result.mapNotNull { chatMessageEntity -> chatMessageEntity.toChatMessage() })
+                        if (messages.isNotEmpty()) {
+                            _state.update {
+                                it.copy(
+                                    isPaginationExhaust = result.size != MAX_ITEM_PER_PAGE,
+                                    isLoadingNextPage = false,
+                                )
+                            }
+
+                            // If pagination is not exhausted, increase the page count for the next load
+                            if (state.value.isPaginationExhaust.not()) page++
+
+                            _state.update { currentState ->
+                                currentState.copy(
+                                    messages = ChatUiState.Success(
+                                        messages.toList().sortedByDescending { it.messageId }
+                                    )
+                                )
+                            }
+                        } else {
+                            _state.update {
+                                it.copy(
+                                    messages = ChatUiState.Empty
+                                )
+                            }
+                        }
+                    }
+
+            }
+        }
+    }
+
+    private fun showLoading() {
+        if (page == 1) {
+            _state.update {
+                it.copy(
+                    messages = ChatUiState.Loading
+                )
+            }
+        } else {
+            _state.update {
+                it.copy(
+                    isLoadingNextPage = true
+                )
+            }
+        }
+    }
 
     init {
         initBroadcastFrequency()
@@ -370,9 +437,18 @@ class TcpViewModel @Inject constructor(
         handleUserInsertionAndStatus(initialChattingUserModel)
     }
 
+    private fun updateActivePartnerCredentials(initialChatModel: InitialUserModel) {
+        _state.update {
+            it.copy(
+                activePartnerSessionId = initialChatModel.partnerSessionId,
+                activePartnerUsername = initialChatModel.partnerUniqueName
+            )
+        }
+    }
+
     // Function to handle both inserting the user and updating their online status
     private fun handleUserInsertionAndStatus(initialChatModel: InitialUserModel) {
-        updateInitialChatModel(initialChatModel)
+        updateActivePartnerCredentials(initialChatModel)
         viewModelScope.launch(Dispatchers.IO) {
             val userExists =
                 messagesRepository.isUserExist(
@@ -473,7 +549,7 @@ class TcpViewModel @Inject constructor(
                         closeClientServerSocket()
                         updateHasErrorOccurredDialog(TcpScreenDialogErrors.EOException)
                         updateUserOnlineStatus(
-                            userUniqueId = state.value.peerUserUniqueId,
+                            userUniqueId = state.value.partnerSessionId,
                             isOnline = false
                         )
                         try {
@@ -490,7 +566,7 @@ class TcpViewModel @Inject constructor(
                         closeClientServerSocket()
                         updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
                         updateUserOnlineStatus(
-                            userUniqueId = state.value.peerUserUniqueId,
+                            userUniqueId = state.value.partnerSessionId,
                             isOnline = false
                         )
                         try {
@@ -506,7 +582,7 @@ class TcpViewModel @Inject constructor(
                         closeClientServerSocket()
                         updateHasErrorOccurredDialog(TcpScreenDialogErrors.UTFDataFormatException)
                         updateUserOnlineStatus(
-                            userUniqueId = state.value.peerUserUniqueId,
+                            userUniqueId = state.value.partnerSessionId,
                             isOnline = false
                         )
                         try {
@@ -520,7 +596,7 @@ class TcpViewModel @Inject constructor(
                         closeClientServerSocket()
                         updateHasErrorOccurredDialog(TcpScreenDialogErrors.UnknownException)
                         updateUserOnlineStatus(
-                            userUniqueId = state.value.peerUserUniqueId,
+                            userUniqueId = state.value.partnerSessionId,
                             isOnline = false
                         )
                     }
@@ -533,7 +609,7 @@ class TcpViewModel @Inject constructor(
             updateHostConnectionStatus(HostConnectionStatus.Failure)
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
             updateUserOnlineStatus(
-                userUniqueId = state.value.peerUserUniqueId,
+                userUniqueId = state.value.partnerSessionId,
                 isOnline = false
             )
         } catch (e: SecurityException) {
@@ -544,7 +620,7 @@ class TcpViewModel @Inject constructor(
             updateHostConnectionStatus(HostConnectionStatus.Failure)
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.SecurityException)
             updateUserOnlineStatus(
-                userUniqueId = state.value.peerUserUniqueId,
+                userUniqueId = state.value.partnerSessionId,
                 isOnline = false
             )
         } catch (e: IllegalArgumentException) {
@@ -555,7 +631,7 @@ class TcpViewModel @Inject constructor(
             updateHostConnectionStatus(HostConnectionStatus.Failure)
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.IllegalArgumentException)
             updateUserOnlineStatus(
-                userUniqueId = state.value.peerUserUniqueId,
+                userUniqueId = state.value.partnerSessionId,
                 isOnline = false
             )
         } catch (e: Exception) {
@@ -579,7 +655,7 @@ class TcpViewModel @Inject constructor(
                 closeClientSocket()
                 updateClientConnectionStatus(ClientConnectionStatus.Idle)
                 updateUserOnlineStatus(
-                    userUniqueId = state.value.peerUserUniqueId,
+                    userUniqueId = state.value.partnerSessionId,
                     isOnline = false
                 )
             }
@@ -590,7 +666,7 @@ class TcpViewModel @Inject constructor(
                 closeServeSocket()
                 updateHostConnectionStatus(HostConnectionStatus.Idle)
                 updateUserOnlineStatus(
-                    userUniqueId = state.value.peerUserUniqueId,
+                    userUniqueId = state.value.partnerSessionId,
                     isOnline = false
                 )
             }
@@ -676,7 +752,7 @@ class TcpViewModel @Inject constructor(
                     updateClientConnectionStatus(ClientConnectionStatus.Failure)
                     updateHasErrorOccurredDialog(TcpScreenDialogErrors.EOException)
                     updateUserOnlineStatus(
-                        userUniqueId = state.value.peerUserUniqueId,
+                        userUniqueId = state.value.partnerSessionId,
                         isOnline = false
                     )
                     try {
@@ -694,7 +770,7 @@ class TcpViewModel @Inject constructor(
                     updateClientConnectionStatus(ClientConnectionStatus.Failure)
                     updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
                     updateUserOnlineStatus(
-                        userUniqueId = state.value.peerUserUniqueId,
+                        userUniqueId = state.value.partnerSessionId,
                         isOnline = false
                     )
                     try {
@@ -710,7 +786,7 @@ class TcpViewModel @Inject constructor(
                     updateClientConnectionStatus(ClientConnectionStatus.Failure)
                     updateHasErrorOccurredDialog(TcpScreenDialogErrors.UTFDataFormatException)
                     updateUserOnlineStatus(
-                        userUniqueId = state.value.peerUserUniqueId,
+                        userUniqueId = state.value.partnerSessionId,
                         isOnline = false
                     )
                     try {
@@ -726,7 +802,7 @@ class TcpViewModel @Inject constructor(
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.UnknownHostException)
             updateClientConnectionStatus(ClientConnectionStatus.Failure)
             updateUserOnlineStatus(
-                userUniqueId = state.value.peerUserUniqueId,
+                userUniqueId = state.value.partnerSessionId,
                 isOnline = false
             )
         } catch (exception: IOException) {
@@ -736,7 +812,7 @@ class TcpViewModel @Inject constructor(
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
             updateClientConnectionStatus(ClientConnectionStatus.Failure)
             updateUserOnlineStatus(
-                userUniqueId = state.value.peerUserUniqueId,
+                userUniqueId = state.value.partnerSessionId,
                 isOnline = false
             )
         } catch (e: SecurityException) {
@@ -746,7 +822,7 @@ class TcpViewModel @Inject constructor(
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.SecurityException)
             updateClientConnectionStatus(ClientConnectionStatus.Failure)
             updateUserOnlineStatus(
-                userUniqueId = state.value.peerUserUniqueId,
+                userUniqueId = state.value.partnerSessionId,
                 isOnline = false
             )
         } catch (e: IllegalArgumentException) {
@@ -756,7 +832,7 @@ class TcpViewModel @Inject constructor(
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.IllegalArgumentException)
             updateClientConnectionStatus(ClientConnectionStatus.Failure)
             updateUserOnlineStatus(
-                userUniqueId = state.value.peerUserUniqueId,
+                userUniqueId = state.value.partnerSessionId,
                 isOnline = false
             )
         }
@@ -1159,7 +1235,8 @@ class TcpViewModel @Inject constructor(
                     type = AppMessageType.FILE,
                     formattedTime = getCurrentTime(),
                     isFromYou = false,
-                    partnerSessionId = state.value.peerUserUniqueId,
+                    partnerSessionId = state.value.activePartnerSessionId,
+                    peerUsername = state.value.activePartnerUsername,
                     authorSessionId = state.value.authorSessionId,
                     fileState = FileMessageState.Loading(0),
                     fileName = file.name,
@@ -1289,7 +1366,8 @@ class TcpViewModel @Inject constructor(
                 type = AppMessageType.VOICE,
                 formattedTime = getCurrentTime(),
                 isFromYou = false,
-                partnerSessionId = state.value.peerUserUniqueId,
+                partnerSessionId = state.value.activePartnerSessionId,
+                peerUsername = state.value.activePartnerUsername,
                 authorSessionId = state.value.authorSessionId,
                 //message specific fields
                 fileState = FileMessageState.Loading(0),
@@ -1399,7 +1477,8 @@ class TcpViewModel @Inject constructor(
             type = AppMessageType.TEXT,
             formattedTime = getCurrentTime(),
             isFromYou = false,
-            partnerSessionId = state.value.peerUserUniqueId,
+            partnerSessionId = state.value.activePartnerSessionId,
+            peerUsername = state.value.activePartnerUsername,
             authorSessionId = state.value.authorSessionId,
             text = receivedMessage.toString()
         )
@@ -1422,7 +1501,8 @@ class TcpViewModel @Inject constructor(
             type = AppMessageType.CONTACT,
             formattedTime = getCurrentTime(),
             isFromYou = false,
-            partnerSessionId = state.value.peerUserUniqueId,
+            peerUsername = state.value.activePartnerUsername,
+            partnerSessionId = state.value.activePartnerSessionId,
             authorSessionId = state.value.authorSessionId,
             contactName = contactMessageItem.contactName,
             contactNumber = contactMessageItem.contactNumber
@@ -1676,7 +1756,8 @@ class TcpViewModel @Inject constructor(
     private fun updateInitialChatModel(initialChatModel: InitialUserModel) {
         _state.update {
             it.copy(
-                peerUserUniqueId = initialChatModel.partnerSessionId,
+                partnerSessionId = initialChatModel.partnerSessionId,
+                partnerUsername = initialChatModel.partnerUniqueName
             )
         }
     }
@@ -1689,28 +1770,6 @@ class TcpViewModel @Inject constructor(
                 .collect { timing ->
                     updatePlayTiming(timing, messageId)
                 }
-        }
-    }
-
-    fun loadMessages(chattingUser: InitialUserModel) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _state.update {
-                it.copy(
-                    messages = Pager(
-                        PagingConfig(pageSize = 18, prefetchDistance = 25),
-                        pagingSourceFactory = {
-                            messagesRepository.getPagedUserMessagesById(
-                                partnerSessionId = chattingUser.partnerSessionId,
-                                authorSessionId = state.value.authorSessionId
-                            )
-                        }
-                    ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
-                        value.map { chatMessageEntity ->
-                            chatMessageEntity.toChatMessage(chattingUser.partnerUniqueName)!!
-                        }
-                    }.cachedIn(viewModelScope)
-                )
-            }
         }
     }
 
@@ -1877,7 +1936,8 @@ class TcpViewModel @Inject constructor(
             type = AppMessageType.VOICE,
             formattedTime = getCurrentTime(),
             isFromYou = true,
-            partnerSessionId = state.value.peerUserUniqueId,
+            peerUsername = state.value.activePartnerUsername,
+            partnerSessionId = state.value.activePartnerSessionId,
             authorSessionId = state.value.authorSessionId,
             fileState = FileMessageState.Loading(0),
             voiceMessageFileName = currentAudioFile.name,
@@ -1956,26 +2016,26 @@ class TcpViewModel @Inject constructor(
 
     private fun updateIsPlaying(audioState: AudioState, messageId: Long) {
         // Create a new PagingData flow by mapping through the existing messages
-        val newPagingDataFlow = state.value.messages.map { pagingData ->
-            pagingData.map { msg ->
-                when {
-                    // Only update if the target VoiceMessage state needs to change
-                    msg is ChatMessage.VoiceMessage && msg.messageId == messageId && msg.audioState != audioState -> {
-                        msg.copy(audioState = audioState)
-                    }
-                    // Reset other VoiceMessages to Idle if they are not already Idle
-                    msg is ChatMessage.VoiceMessage && msg.messageId != messageId && msg.audioState != AudioState.Idle -> {
-                        msg.copy(audioState = AudioState.Idle)
-                    }
-                    else -> msg // Return the message unchanged to prevent unnecessary recomposition
-                }
-            }
-        }.distinctUntilChanged()
-
-        // Update the state only if the messages have changed
-        _state.update { currentState ->
-            currentState.copy(messages = newPagingDataFlow)
-        }
+//        val newPagingDataFlow = state.value.messages.map { pagingData ->
+//            pagingData.map { msg ->
+//                when {
+//                    // Only update if the target VoiceMessage state needs to change
+//                    msg is ChatMessage.VoiceMessage && msg.messageId == messageId && msg.audioState != audioState -> {
+//                        msg.copy(audioState = audioState)
+//                    }
+//                    // Reset other VoiceMessages to Idle if they are not already Idle
+//                    msg is ChatMessage.VoiceMessage && msg.messageId != messageId && msg.audioState != AudioState.Idle -> {
+//                        msg.copy(audioState = AudioState.Idle)
+//                    }
+//                    else -> msg // Return the message unchanged to prevent unnecessary recomposition
+//                }
+//            }
+//        }.distinctUntilChanged()
+//
+//        // Update the state only if the messages have changed
+//        _state.update { currentState ->
+//            currentState.copy(messages = newPagingDataFlow)
+//        }
     }
 
     private fun updatePlayTiming(timing: Long, messageId: Long) {
@@ -2127,9 +2187,10 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun getCurrentChattingUser(currentChattingUser: InitialUserModel) {
+    fun getCurrentChattingUser() {
+        log("get current chatting user - ${state.value.partnerSessionId}")
         viewModelScope.launch(Dispatchers.IO) {
-            messagesRepository.getChattingUserByIdFlow(currentChattingUser.partnerSessionId)
+            messagesRepository.getChattingUserByIdFlow(state.value.partnerSessionId)
                 .collect { user ->
                     user?.let {
                         _state.update {
@@ -2149,9 +2210,15 @@ class TcpViewModel @Inject constructor(
         updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
     }
 
+
     @SuppressLint("NewApi")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
+
+            TcpScreenEvents.OnSearchNextPage -> {
+                loadChatMessages()
+            }
+
             //todo - you did not use the parameter inside on play voice message
             is TcpScreenEvents.OnPlayVoiceMessageClick -> {
                 playAudioFile(event.message)
@@ -2162,7 +2229,10 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.TcpChatItemClicked -> {
-                emitNavigation(TcpScreenNavigation.OnChattingUserClicked(Gson().toJson(event.currentChattingUser.toInitialChatModel())))
+                runBlocking {
+                    updateInitialChatModel(event.currentChattingUser.toInitialChatModel())
+                }
+                emitNavigation(TcpScreenNavigation.OnChattingUserClicked)
             }
 
             TcpScreenEvents.RequestRecordAudioPermission -> {
@@ -2311,7 +2381,8 @@ class TcpViewModel @Inject constructor(
                     type = AppMessageType.TEXT,
                     formattedTime = getCurrentTime(),
                     isFromYou = true,
-                    partnerSessionId = state.value.peerUserUniqueId,
+                    partnerSessionId = state.value.activePartnerSessionId,
+                    peerUsername = state.value.activePartnerUsername,
                     authorSessionId = state.value.authorSessionId,
                     text = event.message
                 )
@@ -2535,9 +2606,9 @@ class TcpViewModel @Inject constructor(
             type = AppMessageType.FILE,
             formattedTime = getCurrentTime(),
             isFromYou = true,
-            partnerSessionId = state.value.peerUserUniqueId,
+            partnerSessionId = state.value.activePartnerSessionId,
+            peerUsername = state.value.activePartnerUsername,
             authorSessionId = state.value.authorSessionId,
-
             filePath = file.path,
             fileState = FileMessageState.Loading(0),
             fileName = file.name,
@@ -2579,8 +2650,9 @@ class TcpViewModel @Inject constructor(
                         type = AppMessageType.FILE,
                         formattedTime = getCurrentTime(),
                         isFromYou = true,
-                        partnerSessionId = state.value.peerUserUniqueId,
+                        partnerSessionId = state.value.partnerSessionId,
                         authorSessionId = state.value.authorSessionId,
+                        peerUsername = state.value.partnerUsername,
 
                         fileState = FileMessageState.Loading(0),
                         fileName = file.name,
@@ -2606,8 +2678,9 @@ class TcpViewModel @Inject constructor(
                         type = AppMessageType.FILE,
                         formattedTime = getCurrentTime(),
                         isFromYou = true,
-                        partnerSessionId = state.value.peerUserUniqueId,
+                        partnerSessionId = state.value.partnerSessionId,
                         authorSessionId = state.value.authorSessionId,
+                        peerUsername = state.value.partnerUsername,
 
                         fileState = FileMessageState.Loading(0),
                         fileName = file.name,

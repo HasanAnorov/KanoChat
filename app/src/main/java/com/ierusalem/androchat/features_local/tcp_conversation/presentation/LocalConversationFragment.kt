@@ -32,7 +32,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.google.gson.Gson
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.components.PermissionDialog
@@ -49,7 +48,6 @@ import com.ierusalem.androchat.core.utils.openFile
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
-import com.ierusalem.androchat.features_local.tcp.domain.state.InitialUserModel
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenNavigation
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.ContactListContent
@@ -119,18 +117,12 @@ class LocalConversationFragment : Fragment() {
         }
     }
 
+    //check if this will be recalled on configuration changes
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
-        if (selectedUserStringForm != null) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                val selectedUser =
-                    Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
-                viewModel.getCurrentChattingUser(selectedUser)
-                viewModel.loadMessages(selectedUser)
-            }
-        } else {
-            //todo - show corresponding error
+        lifecycleScope.launch(Dispatchers.IO) {
+            viewModel.getCurrentChattingUser()
+            viewModel.loadChatMessages()
         }
     }
 
@@ -189,15 +181,14 @@ class LocalConversationFragment : Fragment() {
                                                                     type = AppMessageType.CONTACT,
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
-                                                                    partnerSessionId = viewModel.state.value.peerUserUniqueId,
+                                                                    partnerSessionId = viewModel.state.value.activePartnerSessionId,
+                                                                    peerUsername = viewModel.state.value.activePartnerUsername,
                                                                     authorSessionId = viewModel.state.value.authorSessionId,
 
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
                                                                 )
-                                                            viewModel.sendClientMessage(
-                                                                contactMessageEntity
-                                                            )
+                                                            viewModel.sendClientMessage(contactMessageEntity)
                                                             delay(300)
                                                         }
                                                     }
@@ -216,15 +207,13 @@ class LocalConversationFragment : Fragment() {
                                                                     type = AppMessageType.CONTACT,
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
-                                                                    partnerSessionId = viewModel.state.value.peerUserUniqueId,
+                                                                    partnerSessionId = viewModel.state.value.activePartnerSessionId,
+                                                                    peerUsername = viewModel.state.value.activePartnerUsername,
                                                                     authorSessionId = viewModel.state.value.authorSessionId,
-
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
                                                                 )
-                                                            viewModel.sendHostMessage(
-                                                                contactMessageEntity
-                                                            )
+                                                            viewModel.sendHostMessage(contactMessageEntity)
                                                             delay(300)
                                                         }
                                                     }

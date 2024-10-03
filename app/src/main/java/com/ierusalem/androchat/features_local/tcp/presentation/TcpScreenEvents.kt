@@ -8,6 +8,8 @@ import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenDialogEr
 
 sealed interface TcpScreenEvents {
 
+    data object OnSearchNextPage : TcpScreenEvents
+
     data object OnNavIconClick : TcpScreenEvents
     data object OnSettingIconClick : TcpScreenEvents
 

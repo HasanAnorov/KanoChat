@@ -16,6 +16,7 @@ data class ChatMessageEntity(
     val isFromYou: Boolean,
     val partnerSessionId: String,
     val authorSessionId: String,
+    val peerUsername: String,
     //text message specific parameters
     val text: String? = null,
     //voice message specific parameters
@@ -34,7 +35,7 @@ data class ChatMessageEntity(
     val contactNumber: String? = null
 ) {
 
-    fun toChatMessage(peerUsername:String): ChatMessage? {
+    fun toChatMessage(): ChatMessage? {
         return when (type) {
             AppMessageType.TEXT -> {
                 text?.let {
@@ -44,7 +45,7 @@ data class ChatMessageEntity(
                         messageType = type,
                         message = text,
                         messageId = id,
-                        peerUsername = peerUsername
+                        partnerUsername = peerUsername
                     )
                 }
             }
@@ -59,7 +60,7 @@ data class ChatMessageEntity(
                         duration = voiceMessageAudioFileDuration!!,
                         fileState = fileState ?: FileMessageState.Failure,
                         messageId = id,
-                        peerUsername = peerUsername
+                        partnerUsername = peerUsername
                     )
                 }
             }
@@ -76,7 +77,7 @@ data class ChatMessageEntity(
                     fileExtension = fileExtension!!,
                     fileState = fileState!!,
                     messageId = id,
-                    peerUsername = peerUsername,
+                    partnerUsername = peerUsername,
                     isFileMessageAvailable = isFileAvailable
                 )
             }
@@ -89,7 +90,7 @@ data class ChatMessageEntity(
                     contactName = contactName!!,
                     contactNumber = contactNumber!!,
                     messageId = id,
-                    peerUsername = peerUsername
+                    partnerUsername = peerUsername
                 )
             }
 

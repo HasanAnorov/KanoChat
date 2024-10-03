@@ -151,7 +151,7 @@ private fun PreviewMessage() {
                 formattedTime = "12:32",
                 isFromYou = true,
                 messageId = 0L,
-                peerUsername = "Khasan"
+                partnerUsername = "Khasan"
             ),
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,
@@ -174,7 +174,7 @@ private fun PreviewMessageDark() {
                 formattedTime = "12:32",
                 isFromYou = true,
                 messageId = 0L,
-                peerUsername = "Khasan"
+                partnerUsername = "Khasan"
             ),
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,
@@ -197,7 +197,7 @@ private fun PreviewMessagePeer() {
                 formattedTime = "12:32",
                 isFromYou = false,
                 messageId = 0L,
-                peerUsername = "Khasan"
+                partnerUsername = "Khasan"
             ),
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,
@@ -220,7 +220,7 @@ private fun PreviewMessageDarkPeer() {
                 formattedTime = "12:32",
                 isFromYou = false,
                 messageId = 0L,
-                peerUsername = "Khasan"
+                partnerUsername = "Khasan"
             ),
             isFirstMessageByAuthor = false,
             isLastMessageByAuthor = true,

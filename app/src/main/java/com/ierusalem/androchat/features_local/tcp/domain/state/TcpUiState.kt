@@ -1,7 +1,6 @@
 package com.ierusalem.androchat.features_local.tcp.domain.state
 
 import android.net.wifi.p2p.WifiP2pDevice
-import androidx.paging.PagingData
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppBroadcastFrequency
 import com.ierusalem.androchat.core.utils.Constants
@@ -15,9 +14,7 @@ import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.features_local.tcp.data.server.ServerDefaults
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 
 data class TcpScreenUiState(
 
@@ -27,8 +24,13 @@ data class TcpScreenUiState(
 
     //general state
     val isWifiOn: Boolean = false,
-    val peerUserUniqueId: String = "",
     val authorSessionId: String = "",
+
+    val partnerSessionId: String = "",
+    val partnerUsername:String = "",
+
+    val activePartnerSessionId: String = "",
+    val activePartnerUsername:String = "",
 
     val hotspotName: String = Constants.UNKNOWN_HOTSPOT_NAME,
     val isValidHotSpotName: Boolean = isValidHotspotName(hotspotName),
@@ -67,7 +69,10 @@ data class TcpScreenUiState(
     val connectedWifiNetworks: List<WifiP2pDevice> = emptyList(),
 
     //chat room messages
-    val messages: Flow<PagingData<ChatMessage>> = flowOf(),
+    val messages: ChatUiState = ChatUiState.Loading,
+    val isLoadingNextPage: Boolean = false,
+    val isPaginationExhaust: Boolean = false,
+
     //contacts
     val chattingUsers: Resource<List<ChattingUser>> = Resource.Loading(),
     val currentChattingUser: Resource<ChattingUser?> = Resource.Loading(),
@@ -85,3 +90,10 @@ data class TcpScreenUiState(
     val canUseCustomConfigForHotspot: Boolean = ServerDefaults.canUseCustomConfig(),
 
     )
+
+sealed class ChatUiState {
+    data object Empty : ChatUiState()
+    data object Error : ChatUiState()
+    data object Loading : ChatUiState()
+    data class Success(val messages: List<ChatMessage>) : ChatUiState()
+}

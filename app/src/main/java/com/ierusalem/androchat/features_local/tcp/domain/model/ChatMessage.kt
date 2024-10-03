@@ -8,14 +8,14 @@ sealed interface ChatMessage {
     val formattedTime: String
     val isFromYou: Boolean
     val messageType: AppMessageType
-    val peerUsername: String
+    val partnerUsername: String
 
     data class TextMessage(
         override val messageId: Long,
         override val formattedTime: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.TEXT,
-        override val peerUsername: String,
+        override val partnerUsername: String,
         val message: String
     ) : ChatMessage
 
@@ -24,7 +24,7 @@ sealed interface ChatMessage {
         override val formattedTime: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.FILE,
-        override val peerUsername: String,
+        override val partnerUsername: String,
         val filePath: String,
         val fileName: String,
         val fileSize: String,
@@ -38,7 +38,7 @@ sealed interface ChatMessage {
         override val formattedTime: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.VOICE,
-        override val peerUsername: String,
+        override val partnerUsername: String,
         val duration: Long,
         val voiceFileName: String,
         val fileState: FileMessageState = FileMessageState.Loading(0),
@@ -50,7 +50,7 @@ sealed interface ChatMessage {
         override val formattedTime: String,
         override val isFromYou: Boolean,
         override val messageType: AppMessageType = AppMessageType.CONTACT,
-        override val peerUsername: String,
+        override val partnerUsername: String,
         val contactName: String,
         val contactNumber: String
     ) : ChatMessage

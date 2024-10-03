@@ -217,7 +217,7 @@ private fun PreviewLightFileItemPeer() {
                     filePath = "file_path_uri",
                     isFromYou = false,
                     messageId = 0L,
-                    peerUsername = "Khasan",
+                    partnerUsername = "Khasan",
                     isFileMessageAvailable = true
                 ),
                 onFileItemClick = {}
@@ -241,7 +241,7 @@ private fun PreviewDarkFileItem() {
                     filePath = "file_path_uri",
                     isFromYou = true,
                     messageId = 0L,
-                    peerUsername = "Khasan",
+                    partnerUsername = "Khasan",
                     isFileMessageAvailable = true
                 ),
                 onFileItemClick = {}
@@ -266,7 +266,7 @@ private fun PreviewLightFileItem() {
                     filePath = "file_path_uri",
                     isFromYou = true,
                     messageId = 0L,
-                    peerUsername = "Khasan",
+                    partnerUsername = "Khasan",
                     isFileMessageAvailable = true
                 ),
                 onFileItemClick = {}
@@ -291,7 +291,7 @@ private fun PreviewDarkFileItemPeer() {
                     filePath = "file_path_uri",
                     isFromYou = false,
                     messageId = 0L,
-                    peerUsername = "Khasan",
+                    partnerUsername = "Khasan",
                     isFileMessageAvailable = true
                 ),
                 onFileItemClick = {}

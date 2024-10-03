@@ -81,15 +81,15 @@ fun ChatsScreen(
                             .nestedScroll(nestedScrollConnection),
                         verticalArrangement = Arrangement.Top,
                         content = {
-                            itemsIndexed(items = users) { index, contact ->
+                            itemsIndexed(items = users) { index, chattingUser ->
 
                                 TcpContactItem(
-                                    contact = contact,
+                                    contact = chattingUser,
                                     modifier = Modifier,
                                     onClick = {
-                                        eventHandler(TcpScreenEvents.TcpChatItemClicked(contact))
+                                        eventHandler(TcpScreenEvents.TcpChatItemClicked(chattingUser))
                                     },
-                                    lastMessage = contact.lastMessage
+                                    lastMessage = chattingUser.lastMessage
                                 )
                                 if (index < users.lastIndex) {
                                     HorizontalDivider(

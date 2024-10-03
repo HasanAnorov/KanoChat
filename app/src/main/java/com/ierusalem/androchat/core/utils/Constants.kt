@@ -9,6 +9,8 @@ import java.util.Locale
 
 object Constants {
 
+    const val MAX_ITEM_PER_PAGE = 10
+
     const val DATA_STORE_NAME = "AppDataStore"
 
     const val FILE_RECEIVE_TIMEOUT = 10 * 1000
@@ -26,8 +28,6 @@ object Constants {
     const val PREFERENCE_PORT_NUMBER = "device_port_number"
     const val PREFERENCE_UNIQUE_DEVICE_ID = "device_unique_id"
     const val PREFERENCE_SESSION_ID = "device_session_id"
-
-    const val SELECTED_CHATTING_USER = "selected_chatting_user"
 
     const val UNKNOWN_HOTSPOT_NAME = "TEMP-HOTSPOT"
 
@@ -126,24 +126,6 @@ object Constants {
         val currentSecond = calendar.get(Calendar.SECOND)
         val time = ("${currentHour}_${currentMinute}_$currentSecond")
         return time
-    }
-
-    fun getSimpleTime():String{
-        val calendar = Calendar.getInstance()
-        val currentHour = calendar.get(Calendar.HOUR)
-        val currentMinute = calendar.get(Calendar.MINUTE)
-        val currentSecond = calendar.get(Calendar.SECOND)
-        val date = "_${currentSecond}_${currentMinute}_${currentHour}"
-        return date
-    }
-
-    fun getSimpleDate(): String {
-        val calendar = Calendar.getInstance()
-        val currentDate = calendar.get(Calendar.DATE)
-        val currentMonth = calendar.get(Calendar.MONTH)
-        val currentYear = calendar.get(Calendar.YEAR)
-        val date = "_${currentDate}_${currentMonth}_${currentYear}"
-        return date
     }
 
     fun isValidVersionForLocalOnlyHotspot(): Boolean {

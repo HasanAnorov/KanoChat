@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features_local.tcp.data.db.dao
 
-import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -53,7 +52,6 @@ interface MessagesDao {
         newDuration: Long?
     )
 
-    @Query("SELECT * FROM messages WHERE partnerSessionId = :peerSessionId AND authorSessionId = :authorSessionId")
-    fun getPagedUserMessagesById(peerSessionId: String, authorSessionId: String): PagingSource<Int, ChatMessageEntity>
-
+    @Query("SELECT * FROM messages WHERE partnerSessionId = :peerSessionId AND authorSessionId = :authorSessionId ORDER BY id DESC LIMIT :limitPerPage OFFSET :offset ")
+    fun getPagedUserMessagesById(peerSessionId: String, authorSessionId: String, offset: Int, limitPerPage:Int): Flow<List<ChatMessageEntity>>
 }

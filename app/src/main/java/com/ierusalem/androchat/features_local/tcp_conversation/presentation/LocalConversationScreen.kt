@@ -21,6 +21,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,8 +33,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.paging.PagingData
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
@@ -46,8 +48,8 @@ import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.components.NetworkErrorDialog
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.LocalConversationUserInput
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.Messages
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import com.ierusalem.androchat.features_local.tcp.domain.state.ChatUiState
 
 /**
  * Entry point for a conversation screen.
@@ -64,7 +66,7 @@ fun ConversationContent(
     eventHandler: (TcpScreenEvents) -> Unit,
 ) {
 
-    val scrollState = rememberLazyListState()
+    val listState = rememberLazyListState()
     val topBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topBarState)
     val scope = rememberCoroutineScope()
@@ -130,10 +132,23 @@ fun ConversationContent(
                     }
 
                     is Resource.Success -> {
+
+                        val isScrollToEnd by remember {
+                            derivedStateOf {
+                                listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == listState.layoutInfo.totalItemsCount - 1
+                            }
+                        }
+
+                        LaunchedEffect(isScrollToEnd) {
+                            if (isScrollToEnd && uiState.isLoadingNextPage.not() && uiState.isPaginationExhaust.not()) {
+                                eventHandler(TcpScreenEvents.OnSearchNextPage)
+                            }
+                        }
+
                         Messages(
-                            messages = uiState.messages.collectAsLazyPagingItems(),
+                            messages = uiState.messages,
                             modifier = Modifier.weight(1f),
-                            scrollState = scrollState,
+                            scrollState = listState,
                             onFileItemClicked = { eventHandler(TcpScreenEvents.OnFileItemClick(it)) },
                             onSaveToDownloadsClick = {
                                 eventHandler(TcpScreenEvents.OnSaveToDownloadsClick(it))
@@ -165,7 +180,7 @@ fun ConversationContent(
                                         it
                                     )
                                 )
-                            },
+                            }
                         )
                     }
                 }
@@ -179,7 +194,7 @@ fun ConversationContent(
                     eventHandler = eventHandler,
                     resetScroll = {
                         scope.launch {
-                            scrollState.scrollToItem(0)
+                            listState.scrollToItem(0)
                         }
                     },
                 )
@@ -239,112 +254,111 @@ private fun PreviewLocalConversation() {
         ConversationContent(
             uiState = TcpScreenUiState(
                 currentChattingUser = Resource.Loading(),
-                messages = flowOf(
-                    PagingData.from(
-                        listOf(
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 341325321435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 341323451435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 3413251435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 34132514L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = false,
-                                messageId = 341325341435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 34132521231435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 341327451435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = false,
-                                messageId = 341326651435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = false,
-                                messageId = 341325142134635L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 3413255531435L,
-                                peerUsername = "Hasan"
-                            ), ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 3413251454335L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = false,
-                                messageId = 341322345551435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 341321551435L,
-                                peerUsername = "Hasan"
-                            )
+                messages = ChatUiState.Success(
+                    listOf(
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341325321435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.ContactMessage(
+                            formattedTime = "12:02:23",
+                            contactName = "Hasan",
+                            contactNumber = "93 337 36 46",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341323451435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413251435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 34132514L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341325341435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 34132521231435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341327451435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341326651435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341325142134635L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413255531435L,
+                            partnerUsername = "Hasan"
+                        ), ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413251454335L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341322345551435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341321551435L,
+                            partnerUsername = "Hasan"
                         )
                     )
                 )
@@ -369,112 +383,111 @@ private fun PreviewLocalConversationDark() {
                         lastMessage = null,
                     )
                 ),
-                messages = flowOf(
-                    PagingData.from(
-                        listOf(
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 341325321435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 341323451435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 3413251435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 34132514L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = false,
-                                messageId = 341325341435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 34132521231435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 341327451435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = false,
-                                messageId = 341326651435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = false,
-                                messageId = 341325142134635L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 3413255531435L,
-                                peerUsername = "Hasan"
-                            ), ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 3413251454335L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = false,
-                                messageId = 341322345551435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 341321551435L,
-                                peerUsername = "Hasan"
-                            )
+                messages = ChatUiState.Success(
+                    listOf(
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341325321435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.ContactMessage(
+                            formattedTime = "12:02:23",
+                            contactName = "Hasan",
+                            contactNumber = "93 337 36 46",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341323451435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413251435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 34132514L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341325341435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 34132521231435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341327451435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341326651435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341325142134635L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413255531435L,
+                            partnerUsername = "Hasan"
+                        ), ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413251454335L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341322345551435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341321551435L,
+                            partnerUsername = "Hasan"
                         )
                     )
                 )
@@ -484,7 +497,6 @@ private fun PreviewLocalConversationDark() {
     }
 }
 
-
 @Preview
 @Composable
 private fun PreviewLocalConversationDarkFailure() {
@@ -492,112 +504,111 @@ private fun PreviewLocalConversationDarkFailure() {
         ConversationContent(
             uiState = TcpScreenUiState(
                 currentChattingUser = Resource.Failure("Something went wrong"),
-                messages = flowOf(
-                    PagingData.from(
-                        listOf(
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 341325321435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 341323451435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 3413251435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 34132514L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = false,
-                                messageId = 341325341435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 34132521231435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 341327451435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = false,
-                                messageId = 341326651435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = false,
-                                messageId = 341325142134635L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 3413255531435L,
-                                peerUsername = "Hasan"
-                            ), ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 3413251454335L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = false,
-                                messageId = 341322345551435L,
-                                peerUsername = "Hasan"
-                            ),
-                            ChatMessage.TextMessage(
-                                formattedTime = "12:02:23",
-                                message = "Hello",
-                                messageType = AppMessageType.TEXT,
-                                isFromYou = true,
-                                messageId = 341321551435L,
-                                peerUsername = "Hasan"
-                            )
+                messages = ChatUiState.Success(
+                    listOf(
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341325321435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.ContactMessage(
+                            formattedTime = "12:02:23",
+                            contactName = "Hasan",
+                            contactNumber = "93 337 36 46",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341323451435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413251435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 34132514L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341325341435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 34132521231435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341327451435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341326651435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341325142134635L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413255531435L,
+                            partnerUsername = "Hasan"
+                        ), ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413251454335L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341322345551435L,
+                            partnerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341321551435L,
+                            partnerUsername = "Hasan"
                         )
                     )
                 )

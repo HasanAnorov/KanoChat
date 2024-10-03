@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features_local.tcp.domain
 
-import androidx.paging.PagingSource
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.UserWithLastMessage
@@ -16,7 +15,7 @@ interface MessagesRepository {
     )
     fun getChattingUserByIdFlow(userUniqueId: String): Flow<ChattingUserEntity?>
     suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState?, isFileAvailable:Boolean)
-    fun getPagedUserMessagesById(partnerSessionId: String, authorSessionId: String): PagingSource<Int, ChatMessageEntity>
+    fun getPagedUserMessagesById(partnerSessionId: String, authorSessionId: String, page:Int): Flow<List<ChatMessageEntity>>
     suspend fun insertChattingUser(chattingUserEntity: ChattingUserEntity): Long
     suspend fun updateAllUsersOnlineStatus(isOnline: Boolean):Int
     suspend fun updateChattingUserUniqueName(userUniqueId: String, userUniqueName: String):Int

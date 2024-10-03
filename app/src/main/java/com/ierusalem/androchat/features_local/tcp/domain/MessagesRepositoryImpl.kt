@@ -1,10 +1,10 @@
 package com.ierusalem.androchat.features_local.tcp.domain
 
-import androidx.paging.PagingSource
+import com.ierusalem.androchat.core.utils.Constants.MAX_ITEM_PER_PAGE
 import com.ierusalem.androchat.features_local.tcp.data.db.dao.ChattingUsersDao
-import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_local.tcp.data.db.dao.MessagesDao
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.UserWithLastMessage
 import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import kotlinx.coroutines.flow.Flow
@@ -51,11 +51,14 @@ class MessagesRepositoryImpl @Inject constructor(
 
     override fun getPagedUserMessagesById(
         partnerSessionId: String,
-        authorSessionId: String
-    ): PagingSource<Int, ChatMessageEntity> {
+        authorSessionId: String,
+        page: Int,
+    ): Flow<List<ChatMessageEntity>> {
         return messagesDao.getPagedUserMessagesById(
             peerSessionId = partnerSessionId,
-            authorSessionId = authorSessionId
+            authorSessionId = authorSessionId,
+            offset = (page - 1) * MAX_ITEM_PER_PAGE,
+            limitPerPage = MAX_ITEM_PER_PAGE
         )
     }
 
