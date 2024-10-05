@@ -72,7 +72,6 @@ class LocalActivity : AppCompatActivity() {
 
         // Ensure your XML layout contains a NavHostFragment with ID nav_host_fragment
         setContentView(R.layout.activity_local)
-
     }
 
     private fun setupNavigationGraph() {

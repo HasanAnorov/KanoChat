@@ -30,6 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
@@ -60,6 +61,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ConversationContent(
     uiState: TcpScreenUiState,
+    messages: LazyPagingItems<ChatMessage>,
     modifier: Modifier = Modifier,
     eventHandler: (TcpScreenEvents) -> Unit,
 ) {
@@ -131,7 +133,8 @@ fun ConversationContent(
 
                     is Resource.Success -> {
                         Messages(
-                            messages = uiState.messages.collectAsLazyPagingItems(),
+//                            messages = uiState.messages.collectAsLazyPagingItems(),
+                            messages = messages,
                             modifier = Modifier.weight(1f),
                             scrollState = scrollState,
                             onFileItemClicked = { eventHandler(TcpScreenEvents.OnFileItemClick(it)) },
@@ -349,7 +352,92 @@ private fun PreviewLocalConversation() {
                     )
                 )
             ),
-            eventHandler = {}
+            eventHandler = {},
+            messages = flowOf(
+                PagingData.from(
+                    listOf<ChatMessage>(
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341325321435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341323451435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413251435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 34132514L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341325341435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 34132521231435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413255531435L,
+                            peerUsername = "Hasan"
+                        ), ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413251454335L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341322345551435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341321551435L,
+                            peerUsername = "Hasan"
+                        )
+                    )
+                )
+            ).collectAsLazyPagingItems()
         )
     }
 }
@@ -479,7 +567,92 @@ private fun PreviewLocalConversationDark() {
                     )
                 )
             ),
-            eventHandler = {}
+            eventHandler = {},
+            messages = flowOf(
+                PagingData.from(
+                    listOf<ChatMessage>(
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341325321435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341323451435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413251435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 34132514L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341325341435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 34132521231435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413255531435L,
+                            peerUsername = "Hasan"
+                        ), ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413251454335L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341322345551435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341321551435L,
+                            peerUsername = "Hasan"
+                        )
+                    )
+                )
+            ).collectAsLazyPagingItems()
         )
     }
 }
@@ -602,7 +775,92 @@ private fun PreviewLocalConversationDarkFailure() {
                     )
                 )
             ),
-            eventHandler = {}
+            eventHandler = {},
+            messages = flowOf(
+                PagingData.from(
+                    listOf<ChatMessage>(
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341325321435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341323451435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413251435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 34132514L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341325341435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 34132521231435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413255531435L,
+                            peerUsername = "Hasan"
+                        ), ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 3413251454335L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = false,
+                            messageId = 341322345551435L,
+                            peerUsername = "Hasan"
+                        ),
+                        ChatMessage.TextMessage(
+                            formattedTime = "12:02:23",
+                            message = "Hello",
+                            messageType = AppMessageType.TEXT,
+                            isFromYou = true,
+                            messageId = 341321551435L,
+                            peerUsername = "Hasan"
+                        )
+                    )
+                )
+            ).collectAsLazyPagingItems()
         )
     }
 }

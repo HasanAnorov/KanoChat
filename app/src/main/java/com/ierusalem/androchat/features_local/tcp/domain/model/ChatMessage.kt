@@ -1,8 +1,10 @@
 package com.ierusalem.androchat.features_local.tcp.domain.model
 
+import androidx.compose.runtime.Stable
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 
+@Stable
 sealed interface ChatMessage {
     val messageId: Long
     val formattedTime: String

@@ -89,8 +89,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -1692,26 +1694,10 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    fun loadMessages(chattingUser: InitialUserModel) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _state.update {
-                it.copy(
-                    messages = Pager(
-                        PagingConfig(pageSize = 18, prefetchDistance = 25),
-                        pagingSourceFactory = {
-                            messagesRepository.getPagedUserMessagesById(
-                                partnerSessionId = chattingUser.partnerSessionId,
-                                authorSessionId = state.value.authorSessionId
-                            )
-                        }
-                    ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
-                        value.map { chatMessageEntity ->
-                            chatMessageEntity.toChatMessage(chattingUser.partnerUniqueName)!!
-                        }
-                    }.cachedIn(viewModelScope)
-                )
-            }
-        }
+    private var selectedUser: InitialUserModel? = null
+
+    fun setSelectedUser(selectedUser: InitialUserModel) {
+        this.selectedUser = selectedUser
     }
 
     fun checkRecordAudioAndReadContactsPermission() {
@@ -1954,27 +1940,91 @@ class TcpViewModel @Inject constructor(
 //        }
 //    }
 
-    private fun updateIsPlaying(audioState: AudioState, messageId: Long) {
-        // Create a new PagingData flow by mapping through the existing messages
-        val newPagingDataFlow = state.value.messages.map { pagingData ->
-            pagingData.map { msg ->
-                when {
-                    // Only update if the target VoiceMessage state needs to change
-                    msg is ChatMessage.VoiceMessage && msg.messageId == messageId && msg.audioState != audioState -> {
-                        msg.copy(audioState = audioState)
+    private val pagingDataStream by lazy {
+        selectedUser?.let { chattingUser ->
+            Pager(
+                PagingConfig(pageSize = 18, prefetchDistance = 25),
+                pagingSourceFactory = {
+                    messagesRepository.getPagedUserMessagesById(
+                        partnerSessionId = chattingUser.partnerSessionId,
+                        authorSessionId = state.value.authorSessionId
+                    )
+                }
+            ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
+                value.map { chatMessageEntity ->
+                    chatMessageEntity.toChatMessage(chattingUser.partnerUniqueName)!!
+                }
+            }.cachedIn(viewModelScope)
+        } ?: flowOf(PagingData.empty())
+    }
+
+    private val playingMessageStream = MutableStateFlow<Pair<Long, AudioState>?>(null)
+    val messagesStream by lazy {
+        playingMessageStream.combine(pagingDataStream, ::Pair)
+            .map { (playingMessage, pagingData) ->
+                val (messageId, audioState) = playingMessage ?: return@map pagingData
+
+                pagingData.map { msg ->
+                    when {
+                        // Only update if the target VoiceMessage state needs to change
+                        msg is ChatMessage.VoiceMessage && msg.messageId == messageId && msg.audioState != audioState -> {
+                            msg.copy(audioState = audioState)
+                        }
+                        // Reset other VoiceMessages to Idle if they are not already Idle
+                        msg is ChatMessage.VoiceMessage && msg.messageId != messageId && msg.audioState != AudioState.Idle -> {
+                            msg.copy(audioState = AudioState.Idle)
+                        }
+
+                        else -> msg // Return the message unchanged to prevent unnecessary recomposition
                     }
-                    // Reset other VoiceMessages to Idle if they are not already Idle
-                    msg is ChatMessage.VoiceMessage && msg.messageId != messageId && msg.audioState != AudioState.Idle -> {
-                        msg.copy(audioState = AudioState.Idle)
-                    }
-                    else -> msg // Return the message unchanged to prevent unnecessary recomposition
                 }
             }
-        }.distinctUntilChanged()
 
-        // Update the state only if the messages have changed
-        _state.update { currentState ->
-            currentState.copy(messages = newPagingDataFlow)
+//        viewModelScope.launch(Dispatchers.IO) {
+//            _state.update {
+//                it.copy(
+//                    messages = Pager(
+//                        PagingConfig(pageSize = 18, prefetchDistance = 25),
+//                        pagingSourceFactory = {
+//                            messagesRepository.getPagedUserMessagesById(
+//                                partnerSessionId = chattingUser.partnerSessionId,
+//                                authorSessionId = state.value.authorSessionId
+//                            )
+//                        }
+//                    ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
+//                        value.map { chatMessageEntity ->
+//                            chatMessageEntity.toChatMessage(chattingUser.partnerUniqueName)!!
+//                        }
+//                    }.cachedIn(viewModelScope)
+//                )
+//            }
+//        }
+    }
+
+    private fun updateIsPlaying(audioState: AudioState, messageId: Long) {
+        // Create a new PagingData flow by mapping through the existing messages
+//        val newPagingDataFlow = state.value.messages.map { pagingData ->
+//            pagingData.map { msg ->
+//                when {
+//                    // Only update if the target VoiceMessage state needs to change
+//                    msg is ChatMessage.VoiceMessage && msg.messageId == messageId && msg.audioState != audioState -> {
+//                        msg.copy(audioState = audioState)
+//                    }
+//                    // Reset other VoiceMessages to Idle if they are not already Idle
+//                    msg is ChatMessage.VoiceMessage && msg.messageId != messageId && msg.audioState != AudioState.Idle -> {
+//                        msg.copy(audioState = AudioState.Idle)
+//                    }
+//                    else -> msg // Return the message unchanged to prevent unnecessary recomposition
+//                }
+//            }
+//        }.distinctUntilChanged()
+//
+//        // Update the state only if the messages have changed
+//        _state.update { currentState ->
+//            currentState.copy(messages = newPagingDataFlow)
+//        }
+        viewModelScope.launch {
+            playingMessageStream.emit(messageId to audioState)
         }
     }
 

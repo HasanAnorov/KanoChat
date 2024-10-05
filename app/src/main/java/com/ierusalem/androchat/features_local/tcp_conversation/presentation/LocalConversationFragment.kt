@@ -32,6 +32,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.google.gson.Gson
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
@@ -119,24 +120,38 @@ class LocalConversationFragment : Fragment() {
         }
     }
 
+    private lateinit var selectedUser: InitialUserModel
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
-        if (selectedUserStringForm != null) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                val selectedUser =
-                    Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
-                viewModel.getCurrentChattingUser(selectedUser)
-                viewModel.loadMessages(selectedUser)
-            }
-        } else {
-            //todo - show corresponding error
-        }
+//        val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
+//        if (selectedUserStringForm != null) {
+//            lifecycleScope.launch(Dispatchers.IO) {
+////                 selectedUser =
+////                    Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
+//                viewModel.getCurrentChattingUser(selectedUser)
+////                viewModel.loadMessages(selectedUser)
+//            }
+//        } else {
+//            //todo - show corresponding error
+//        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
+        selectedUser =
+            Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
+        viewModel.setSelectedUser(selectedUser)
+        if (selectedUserStringForm != null) {
+            lifecycleScope.launch(Dispatchers.IO) {
 
+                viewModel.getCurrentChattingUser(selectedUser)
+//                viewModel.loadMessages(selectedUser)
+            }
+        } else {
+            //todo - show corresponding error
+        }
         resourceDirectory = Environment.getExternalStoragePublicDirectory(
             Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}"
         )!!
@@ -295,6 +310,7 @@ class LocalConversationFragment : Fragment() {
 
                     ConversationContent(
                         uiState = uiState,
+                        messages = viewModel.messagesStream.collectAsLazyPagingItems(),
                         eventHandler = viewModel::handleEvents
                     )
                 }

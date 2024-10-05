@@ -68,6 +68,7 @@ data class TcpScreenUiState(
 
     //chat room messages
     val messages: Flow<PagingData<ChatMessage>> = flowOf(),
+
     //contacts
     val chattingUsers: Resource<List<ChattingUser>> = Resource.Loading(),
     val currentChattingUser: Resource<ChattingUser?> = Resource.Loading(),
