@@ -14,7 +14,7 @@ interface MessagesRepository {
         isFileAvailable:Boolean,
         newDuration: Long?
     )
-    fun getChattingUserByIdFlow(userUniqueId: String): Flow<ChattingUserEntity?>
+    fun getChattingUserByIdFlow(selectedPartnerSessionId: String): Flow<ChattingUserEntity?>
     suspend fun updateFileMessage(messageId: Long, newFileState: FileMessageState?, isFileAvailable:Boolean)
     fun getPagedUserMessagesById(partnerSessionId: String, authorSessionId: String): PagingSource<Int, ChatMessageEntity>
     suspend fun insertChattingUser(chattingUserEntity: ChattingUserEntity): Long

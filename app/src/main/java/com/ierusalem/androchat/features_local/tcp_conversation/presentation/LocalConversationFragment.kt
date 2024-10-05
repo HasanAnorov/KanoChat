@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -32,14 +31,12 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.google.gson.Gson
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppMessageType
 import com.ierusalem.androchat.core.ui.components.PermissionDialog
 import com.ierusalem.androchat.core.ui.components.ReadContactsPermissionTextProvider
 import com.ierusalem.androchat.core.ui.components.RecordAudioPermissionTextProvider
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.core.utils.Constants
 import com.ierusalem.androchat.core.utils.Constants.getCurrentTime
 import com.ierusalem.androchat.core.utils.executeWithLifecycle
 import com.ierusalem.androchat.core.utils.log
@@ -49,20 +46,16 @@ import com.ierusalem.androchat.core.utils.openFile
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
-import com.ierusalem.androchat.features_local.tcp.domain.state.InitialUserModel
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenNavigation
 import com.ierusalem.androchat.features_local.tcp_conversation.presentation.components.ContactListContent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
 
 class LocalConversationFragment : Fragment() {
 
     private val viewModel: TcpViewModel by activityViewModels()
-
-    private lateinit var resourceDirectory: File
 
     private val readContactsPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -118,24 +111,11 @@ class LocalConversationFragment : Fragment() {
         }
     }
 
-    private lateinit var selectedUser: InitialUserModel
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
-        selectedUser =
-            Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
-        viewModel.setSelectedUser(selectedUser)
-        if (selectedUserStringForm != null) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                viewModel.getCurrentChattingUser(selectedUser)
-            }
-        } else {
-            //todo - show corresponding error
+        lifecycleScope.launch(Dispatchers.IO) {
+            viewModel.getCurrentChattingUser()
         }
-        resourceDirectory = Environment.getExternalStoragePublicDirectory(
-            Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}"
-        )!!
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -158,7 +138,7 @@ class LocalConversationFragment : Fragment() {
                         ModalBottomSheet(
                             sheetState = sheetState,
                             onDismissRequest = {
-                                viewModel.handleEvents(TcpScreenEvents.UpdateBottomSheetState(false))
+                                viewModel.toggleBottomSheetVisibility(false)
                             },
                             windowInsets = WindowInsets(0, 0, 0, 0),
                             content = {
@@ -174,20 +154,17 @@ class LocalConversationFragment : Fragment() {
 
                                                 GeneralConnectionStatus.ConnectedAsClient -> {
                                                     lifecycleScope.launch(Dispatchers.IO) {
-                                                        viewModel.handleEvents(
-                                                            TcpScreenEvents.UpdateBottomSheetState(
-                                                                false
-                                                            )
-                                                        )
+                                                        viewModel.toggleBottomSheetVisibility(false)
                                                         selectedContacts.forEach { contact ->
                                                             val contactMessageEntity =
                                                                 ChatMessageEntity(
                                                                     type = AppMessageType.CONTACT,
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
-                                                                    partnerSessionId = viewModel.state.value.peerUserUniqueId,
-                                                                    authorSessionId = viewModel.state.value.authorSessionId,
-
+                                                                    partnerSessionId = uiState.activePartnerSessionId,
+                                                                    partnerName = uiState.activePartnerUsername,
+                                                                    authorSessionId = uiState.authorSessionId,
+                                                                    //message specific values
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
                                                                 )
@@ -201,20 +178,17 @@ class LocalConversationFragment : Fragment() {
 
                                                 GeneralConnectionStatus.ConnectedAsHost -> {
                                                     lifecycleScope.launch(Dispatchers.IO) {
-                                                        viewModel.handleEvents(
-                                                            TcpScreenEvents.UpdateBottomSheetState(
-                                                                false
-                                                            )
-                                                        )
+                                                        viewModel.toggleBottomSheetVisibility(false)
                                                         selectedContacts.forEach { contact ->
                                                             val contactMessageEntity =
                                                                 ChatMessageEntity(
                                                                     type = AppMessageType.CONTACT,
                                                                     formattedTime = getCurrentTime(),
                                                                     isFromYou = true,
-                                                                    partnerSessionId = viewModel.state.value.peerUserUniqueId,
-                                                                    authorSessionId = viewModel.state.value.authorSessionId,
-
+                                                                    partnerSessionId = uiState.activePartnerSessionId,
+                                                                    partnerName = uiState.activePartnerUsername,
+                                                                    authorSessionId = uiState.authorSessionId,
+                                                                    //message specific values
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
                                                                 )
@@ -291,7 +265,7 @@ class LocalConversationFragment : Fragment() {
 
                     ConversationContent(
                         uiState = uiState,
-                        messages = viewModel.messagesStream.collectAsLazyPagingItems(),
+                        messages = viewModel.loadMessagesStream().collectAsLazyPagingItems(),
                         eventHandler = viewModel::handleEvents
                     )
                 }
@@ -334,7 +308,7 @@ class LocalConversationFragment : Fragment() {
             is TcpScreenNavigation.OnFileItemClick -> {
                 openFile(
                     fileName = navigation.message.fileName,
-                    resourceDirectory = navigation.fileDirectory
+                    filePath = navigation.filePath
                 )
             }
         }

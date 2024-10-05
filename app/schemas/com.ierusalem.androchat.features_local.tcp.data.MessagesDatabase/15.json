@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 15,
-    "identityHash": "e87291fa984547cb1bce6d142a9fec18",
+    "identityHash": "3a61f446bde360fc9957a66aa032d916",
     "entities": [
       {
         "tableName": "messages",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `formattedTime` TEXT NOT NULL, `isFromYou` INTEGER NOT NULL, `partnerSessionId` TEXT NOT NULL, `authorSessionId` TEXT NOT NULL, `peerUsername` TEXT NOT NULL, `text` TEXT, `voiceMessageFileName` TEXT, `voiceMessageAudioFileDuration` INTEGER, `fileState` TEXT, `filePath` TEXT, `fileSize` TEXT, `fileName` TEXT, `fileExtension` TEXT, `isFileAvailable` INTEGER NOT NULL, `contactName` TEXT, `contactNumber` TEXT, `isUpdated` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `formattedTime` TEXT NOT NULL, `isFromYou` INTEGER NOT NULL, `partnerSessionId` TEXT NOT NULL, `partnerName` TEXT NOT NULL, `authorSessionId` TEXT NOT NULL, `text` TEXT, `voiceMessageFileName` TEXT, `voiceMessageAudioFileDuration` INTEGER, `fileState` TEXT, `filePath` TEXT, `fileSize` TEXT, `fileName` TEXT, `fileExtension` TEXT, `isFileAvailable` INTEGER NOT NULL, `contactName` TEXT, `contactNumber` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -39,14 +39,14 @@
             "notNull": true
           },
           {
-            "fieldPath": "authorSessionId",
-            "columnName": "authorSessionId",
+            "fieldPath": "partnerName",
+            "columnName": "partnerName",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "peerUsername",
-            "columnName": "peerUsername",
+            "fieldPath": "authorSessionId",
+            "columnName": "authorSessionId",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -115,12 +115,6 @@
             "columnName": "contactNumber",
             "affinity": "TEXT",
             "notNull": false
-          },
-          {
-            "fieldPath": "isUpdated",
-            "columnName": "isUpdated",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -180,7 +174,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e87291fa984547cb1bce6d142a9fec18')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3a61f446bde360fc9957a66aa032d916')"
     ]
   }
 }

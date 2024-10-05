@@ -19,8 +19,8 @@ class MessagesRepositoryImpl @Inject constructor(
         return messagesDao.updateFileStateToFailure()
     }
 
-    override fun getChattingUserByIdFlow(userUniqueId: String): Flow<ChattingUserEntity?> {
-        return chattingUsersDao.getChattingUserByIdFlow(userUniqueId)
+    override fun getChattingUserByIdFlow(selectedPartnerSessionId: String): Flow<ChattingUserEntity?> {
+        return chattingUsersDao.getChattingUserByIdFlow(selectedPartnerSessionId)
     }
 
     override suspend fun updateVoiceFileMessage(

@@ -15,6 +15,7 @@ data class ChatMessageEntity(
     val formattedTime: String,
     val isFromYou: Boolean,
     val partnerSessionId: String,
+    val partnerName:String,
     val authorSessionId: String,
     //text message specific parameters
     val text: String? = null,
@@ -34,38 +35,33 @@ data class ChatMessageEntity(
     val contactNumber: String? = null
 ) {
 
-    fun toChatMessage(peerUsername:String): ChatMessage? {
+    fun toChatMessage(): ChatMessage {
         return when (type) {
             AppMessageType.TEXT -> {
-                text?.let {
-                    ChatMessage.TextMessage(
-                        formattedTime = formattedTime,
-                        isFromYou = isFromYou,
-                        messageType = type,
-                        message = text,
-                        messageId = id,
-                        peerUsername = peerUsername
-                    )
-                }
+                ChatMessage.TextMessage(
+                    formattedTime = formattedTime,
+                    isFromYou = isFromYou,
+                    messageType = type,
+                    message = text!!,
+                    messageId = id,
+                    peerUsername = partnerName
+                )
             }
 
             AppMessageType.VOICE -> {
-                voiceMessageFileName?.let {
-                    ChatMessage.VoiceMessage(
-                        messageType = type,
-                        isFromYou = isFromYou,
-                        formattedTime = formattedTime,
-                        voiceFileName = voiceMessageFileName,
-                        duration = voiceMessageAudioFileDuration!!,
-                        fileState = fileState ?: FileMessageState.Failure,
-                        messageId = id,
-                        peerUsername = peerUsername
-                    )
-                }
+                ChatMessage.VoiceMessage(
+                    messageType = type,
+                    isFromYou = isFromYou,
+                    formattedTime = formattedTime,
+                    voiceFileName = voiceMessageFileName!!,
+                    duration = voiceMessageAudioFileDuration!!,
+                    fileState = fileState ?: FileMessageState.Failure,
+                    messageId = id,
+                    peerUsername = partnerName
+                )
             }
 
             AppMessageType.FILE -> {
-
                 ChatMessage.FileMessage(
                     isFromYou = isFromYou,
                     formattedTime = formattedTime,
@@ -76,7 +72,7 @@ data class ChatMessageEntity(
                     fileExtension = fileExtension!!,
                     fileState = fileState!!,
                     messageId = id,
-                    peerUsername = peerUsername,
+                    peerUsername = partnerName,
                     isFileMessageAvailable = isFileAvailable
                 )
             }
@@ -89,12 +85,18 @@ data class ChatMessageEntity(
                     contactName = contactName!!,
                     contactNumber = contactNumber!!,
                     messageId = id,
-                    peerUsername = peerUsername
+                    peerUsername = partnerName
                 )
             }
 
             else -> {
-                null
+                ChatMessage.UnknownMessage(
+                    isFromYou = isFromYou,
+                    formattedTime = formattedTime,
+                    messageType = type,
+                    messageId = id,
+                    peerUsername = partnerName
+                )
             }
         }
     }

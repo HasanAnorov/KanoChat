@@ -57,6 +57,14 @@ sealed interface ChatMessage {
         val contactNumber: String
     ) : ChatMessage
 
+    data class UnknownMessage(
+        override val messageId: Long,
+        override val formattedTime: String,
+        override val isFromYou: Boolean,
+        override val messageType: AppMessageType = AppMessageType.CONTACT,
+        override val peerUsername: String,
+    ): ChatMessage
+
 }
 
 sealed interface AudioState {

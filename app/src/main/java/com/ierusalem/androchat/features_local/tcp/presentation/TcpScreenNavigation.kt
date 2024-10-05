@@ -11,8 +11,8 @@ interface TcpScreenNavigation {
     data object ShowFileChooserClick : TcpScreenNavigation
     data object RequestRecordAudioPermission : TcpScreenNavigation
     data object RequestLocationPermission : TcpScreenNavigation
-    data class OnChattingUserClicked(val selectUserStringForm: String) : TcpScreenNavigation
-    data class OnFileItemClick(val message: ChatMessage.FileMessage, val fileDirectory:File) : TcpScreenNavigation
+    data object OnChattingUserClicked : TcpScreenNavigation
+    data class OnFileItemClick(val message: ChatMessage.FileMessage, val filePath:File) : TcpScreenNavigation
     data class OnErrorsOccurred(val tcpScreenErrors: TcpScreenErrors) : TcpScreenNavigation
     data class OnContactItemClick(val message: ChatMessage.ContactMessage) : TcpScreenNavigation
 }

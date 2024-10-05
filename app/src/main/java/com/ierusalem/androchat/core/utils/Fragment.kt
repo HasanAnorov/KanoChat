@@ -10,9 +10,7 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.utils.Constants.FILE_PROVIDER_AUTHORITY
-import com.ierusalem.androchat.core.utils.Constants.generateUniqueFileName
 import java.io.File
-import java.io.FileOutputStream
 
 fun Fragment.openAppSettings() {
     Intent(
@@ -46,9 +44,9 @@ fun Fragment.makeCall(phoneNumber: String) {
     startActivity(intent)
 }
 
-fun Fragment.openFile(fileName: String, resourceDirectory: File) {
+fun Fragment.openFile(fileName: String, filePath: File) {
     try {
-        val file = File(resourceDirectory, fileName)
+        val file = File(filePath, fileName)
         val uri: Uri = FileProvider.getUriForFile(
             requireContext(),
             FILE_PROVIDER_AUTHORITY,
@@ -68,32 +66,4 @@ fun Fragment.openFile(fileName: String, resourceDirectory: File) {
         log("can not open a file !")
         e.printStackTrace()
     }
-}
-
-fun Fragment.generateFileFromUri(uri: Uri, resourceDirectory: File): File {
-    val contentResolver = activity!!.contentResolver
-
-    if (!resourceDirectory.exists()) {
-        resourceDirectory.mkdir()
-    }
-
-    val fileName = uri.getFileNameFromUri(contentResolver)
-    val fileNameWithLabel = fileName.addLabelBeforeExtension()
-    var file = File(resourceDirectory, fileNameWithLabel)
-    if (file.exists()) {
-        val fileNameWithoutExt = fileNameWithLabel.getFileNameWithoutExtension()
-        val uniqueFileName =
-            generateUniqueFileName(
-                resourceDirectory.toString(),
-                fileNameWithoutExt,
-                file.extension
-            )
-        file = File(uniqueFileName)
-    }
-
-    val inputStream = requireContext().contentResolver.openInputStream(uri)
-    val fileOutputStream = FileOutputStream(file)
-    inputStream?.copyTo(fileOutputStream)
-    fileOutputStream.close()
-    return file
 }

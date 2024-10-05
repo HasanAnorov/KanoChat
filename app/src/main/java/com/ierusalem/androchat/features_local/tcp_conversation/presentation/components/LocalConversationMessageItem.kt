@@ -33,7 +33,7 @@ fun ChatMessageItem(
     onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
 ) {
-    
+
     val spaceBetweenAuthors = if (isLastMessageByAuthor) Modifier.padding(top = 8.dp) else Modifier
     Row(
         modifier = spaceBetweenAuthors,
@@ -99,6 +99,10 @@ fun AuthorAndMessage(
                     message = chatMessage,
                     onContactNumberClick = onContactItemClick
                 )
+            }
+
+            is ChatMessage.UnknownMessage -> {
+                /** ignore case */
             }
         }
         if (isFirstMessageByAuthor) {

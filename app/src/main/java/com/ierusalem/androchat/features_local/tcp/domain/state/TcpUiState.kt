@@ -27,8 +27,9 @@ data class TcpScreenUiState(
 
     //general state
     val isWifiOn: Boolean = false,
-    val peerUserUniqueId: String = "",
-    val peerUserName: String = "",
+    val activePartnerSessionId: String = "",
+    val activePartnerUsername: String = "",
+
     val authorSessionId: String = "",
 
     val hotspotName: String = Constants.UNKNOWN_HOTSPOT_NAME,

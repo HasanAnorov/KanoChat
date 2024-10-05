@@ -23,7 +23,7 @@ sealed interface TcpScreenEvents {
     data class OnHotspotNameChanged(val hotspotName: String) : TcpScreenEvents
     data class OnHotspotPasswordChanged(val hotspotPassword: String) : TcpScreenEvents
 
-    data class SendMessageRequest(val message: String) : TcpScreenEvents
+    data class SendTextMessageRequest(val message: String) : TcpScreenEvents
 
     data class OnDialogErrorOccurred(val error: TcpScreenDialogErrors?) : TcpScreenEvents
 

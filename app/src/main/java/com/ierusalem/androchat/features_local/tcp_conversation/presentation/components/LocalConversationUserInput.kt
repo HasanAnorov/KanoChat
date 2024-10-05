@@ -177,7 +177,6 @@ fun LocalConversationUserInput(
                                                     )
                                                 }
                                                 else -> {
-                                                    eventHandler(TcpScreenEvents.OnVoiceRecordFinished)
                                                     recordLockCoverView.visibility = View.INVISIBLE
                                                     recordingView.finishRecord()
                                                 }
@@ -298,7 +297,7 @@ fun LocalConversationUserInput(
                 },
                 sendMessageEnabled = textState.text.isNotBlank(),
                 onMessageSent = {
-                    eventHandler(TcpScreenEvents.SendMessageRequest(textState.text))
+                    eventHandler(TcpScreenEvents.SendTextMessageRequest(textState.text))
                     // Reset text field and close keyboard
                     textState = TextFieldValue()
                     // Move scroll to bottom
