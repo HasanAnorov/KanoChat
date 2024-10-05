@@ -9,8 +9,8 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import com.ierusalem.androchat.R
-import com.ierusalem.androchat.core.constants.Constants.FILE_PROVIDER_AUTHORITY
-import com.ierusalem.androchat.core.constants.Constants.generateUniqueFileName
+import com.ierusalem.androchat.core.utils.Constants.FILE_PROVIDER_AUTHORITY
+import com.ierusalem.androchat.core.utils.Constants.generateUniqueFileName
 import java.io.File
 import java.io.FileOutputStream
 
@@ -28,13 +28,25 @@ fun Fragment.shortToast(text: String, duration: Int = Toast.LENGTH_SHORT): Toast
     }
 }
 
-fun Fragment.makeCall(phoneNumber: String){
+fun Fragment.longToast(text: String, duration: Int = Toast.LENGTH_LONG): Toast {
+    return Toast.makeText(requireContext(), text, duration).apply {
+        setGravity(Gravity.CENTER, 0, 0)
+        show()
+    }
+}
+
+fun Fragment.openWifiSettings() {
+    val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
+    startActivity(intent)
+}
+
+fun Fragment.makeCall(phoneNumber: String) {
     val intent = Intent(Intent.ACTION_DIAL)
     intent.setData(Uri.parse("tel:$phoneNumber"))
     startActivity(intent)
 }
 
-fun Fragment.openFile(fileName: String, resourceDirectory: File){
+fun Fragment.openFile(fileName: String, resourceDirectory: File) {
     try {
         val file = File(resourceDirectory, fileName)
         val uri: Uri = FileProvider.getUriForFile(
@@ -85,4 +97,3 @@ fun Fragment.generateFileFromUri(uri: Uri, resourceDirectory: File): File {
     fileOutputStream.close()
     return file
 }
-

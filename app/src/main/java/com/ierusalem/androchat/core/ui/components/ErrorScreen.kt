@@ -23,13 +23,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.features.home.presentation.contacts.ErrorType
+
+enum class ErrorType{
+    NetworkError,
+    InvalidResponse
+}
 
 @Composable
 fun ErrorScreen(
     error: ErrorType,
     modifier: Modifier = Modifier,
-    onRetryClick: () -> Unit
+    onRetryClick: () -> Unit = {}
 ) {
     when (error) {
         ErrorType.NetworkError -> NetworkError(onRetryClick = onRetryClick)
@@ -41,7 +45,6 @@ fun ErrorScreen(
 fun NetworkError(onRetryClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -128,6 +131,7 @@ fun InvalidResponseError(modifier: Modifier = Modifier) {
 fun ErrorScreenPreview() {
     AndroChatTheme {
         ErrorScreen(
+            modifier = Modifier.fillMaxSize(),
             error = ErrorType.InvalidResponse,
             onRetryClick = {}
         )
@@ -139,6 +143,7 @@ fun ErrorScreenPreview() {
 fun ErrorScreenPreviewDark() {
     AndroChatTheme(isDarkTheme = true) {
         ErrorScreen(
+            modifier = Modifier.fillMaxSize(),
             error = ErrorType.NetworkError,
             onRetryClick = {}
         )

@@ -1,7 +1,5 @@
 package com.ierusalem.androchat.core.utils
 
-import com.ierusalem.androchat.core.constants.Constants
-
 class FieldValidator {
 
     fun validateUsername(login: String): ValidationResult {
@@ -13,7 +11,7 @@ class FieldValidator {
 
             login.length < Constants.MINIMUM_LOGIN_LENGTH -> ValidationResult(
                 successful = false,
-                errorMessage = "Username should be than 3 words!"
+                errorMessage = "Username should be more than 3 words!"
             )
 
             else -> ValidationResult(
@@ -36,13 +34,13 @@ class FieldValidator {
 
             password.length < Constants.MINIMUM_LOGIN_LENGTH -> ValidationResult(
                 successful = false,
-                errorMessage = "Login should be than 3 characters!"
+                errorMessage = "Login should be more than 3 characters!"
             )
 
             !containsLetterAndDigits -> {
                 ValidationResult(
                     successful = false,
-                    errorMessage = "Password must be include digits and letters"
+                    errorMessage = "Password must include digits and letters"
                 )
             }
 

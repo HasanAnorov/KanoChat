@@ -1,10 +1,11 @@
 package com.ierusalem.androchat.core.utils
 
+import android.content.ContentResolver
+import android.net.Uri
 import android.util.Log
-import com.ierusalem.androchat.core.constants.Constants
-import com.ierusalem.androchat.core.constants.Constants.generateUniqueFileName
-import com.ierusalem.androchat.features_tcp.server.IP_ADDRESS_REGEX
+import com.ierusalem.androchat.core.utils.Constants.generateUniqueFileName
 import java.io.File
+import java.io.FileOutputStream
 import java.util.Random
 
 fun log(message: String) {
@@ -52,5 +53,41 @@ fun getFileByName(fileName: String, resourceDirectory: File): File {
         log("unique file name - $uniqueFileName")
         file = File(uniqueFileName)
     }
+    return file
+}
+
+/**
+ * What the f*ck is this
+ * https://stackoverflow.com/questions/10006459/regular-expression-for-ip-address-validation
+ *
+ * Tests if a given string is an IP address
+ */
+@JvmField
+val IP_ADDRESS_REGEX =
+    """^(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))$"""
+        .toRegex()
+
+fun generateFileFromUri(contentResolver: ContentResolver, uri: Uri, resourceDirectory: File): File {
+    if (!resourceDirectory.exists()) {
+        resourceDirectory.mkdir()
+    }
+    val fileName = uri.getFileNameFromUri(contentResolver)
+    val fileNameWithLabel = fileName.addLabelBeforeExtension()
+    var file = File(resourceDirectory, fileNameWithLabel)
+    if (file.exists()) {
+        val fileNameWithoutExt = fileNameWithLabel.getFileNameWithoutExtension()
+        val uniqueFileName =
+            generateUniqueFileName(
+                resourceDirectory.toString(),
+                fileNameWithoutExt,
+                file.extension
+            )
+        file = File(uniqueFileName)
+    }
+
+    val inputStream = contentResolver.openInputStream(uri)
+    val fileOutputStream = FileOutputStream(file)
+    inputStream?.copyTo(fileOutputStream)
+    fileOutputStream.close()
     return file
 }

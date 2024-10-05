@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.hiltAndroid)
     alias(libs.plugins.devtoolsKsp)
     alias(libs.plugins.pluginSerialization)
+    id ("androidx.navigation.safeargs.kotlin")
 }
 
 android {
@@ -78,6 +79,7 @@ dependencies {
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.appcompat)
     implementation(libs.firebase.crashlytics.buildtools)
+    implementation(libs.androidx.activity)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -95,6 +97,7 @@ dependencies {
 
     //kotlin json serializer
     implementation(libs.kotlinx.serialization.json)
+    implementation (libs.kotlin.reflect)
 
     //recording view
     implementation(libs.recordview)
@@ -109,6 +112,10 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
-    implementation (libs.kotlin.reflect)
+    //paging
+    implementation (libs.androidx.paging.runtime)
+    implementation (libs.androidx.paging.compose)
+    // Add this dependency for using PagingSource with Room
+    implementation (libs.androidx.room.paging)
 
 }

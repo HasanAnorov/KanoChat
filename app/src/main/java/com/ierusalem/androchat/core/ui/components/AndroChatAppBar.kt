@@ -1,8 +1,6 @@
 package com.ierusalem.androchat.core.ui.components
 
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,7 +28,7 @@ fun AndroChatAppBar(
     modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     onNavIconPressed: () -> Unit = { },
-    navIcon: ImageVector = Icons.Default.Menu,
+    navIcon: ImageVector? = null,
     colors: TopAppBarColors = TopAppBarDefaults.centerAlignedTopAppBarColors(),
     title: @Composable () -> Unit,
     actions: @Composable RowScope.() -> Unit = {}
@@ -42,16 +40,18 @@ fun AndroChatAppBar(
         colors = colors,
         scrollBehavior = scrollBehavior,
         navigationIcon = {
-            IconButton(
-                onClick = onNavIconPressed,
-                content = {
-                    Icon(
-                        imageVector = navIcon,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        contentDescription = null
-                    )
-                }
-            )
+            navIcon?.let {
+                IconButton(
+                    onClick = onNavIconPressed,
+                    content = {
+                        Icon(
+                            imageVector = navIcon,
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            contentDescription = null
+                        )
+                    }
+                )
+            }
         }
     )
 }
