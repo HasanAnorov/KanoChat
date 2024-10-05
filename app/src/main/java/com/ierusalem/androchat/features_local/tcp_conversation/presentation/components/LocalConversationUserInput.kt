@@ -177,7 +177,6 @@ fun LocalConversationUserInput(
                                                     )
                                                 }
                                                 else -> {
-                                                    eventHandler(TcpScreenEvents.OnVoiceRecordFinished)
                                                     recordLockCoverView.visibility = View.INVISIBLE
                                                     recordingView.finishRecord()
                                                 }
