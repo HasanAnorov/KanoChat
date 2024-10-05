@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--@author A.H.I "andro" on 09/03/2024-->
+
+<resources>
+
+    <!-- Temp strings-->
+    <string name="functionality_not_available">Функционал недоступен!</string>
+    <string name="close">ЗАКРЫВАТЬ</string>
+
+    <string name="chats">Чаты</string>
+
+    <!-- Conversation strings-->
+    <string name="jumpBottom">Перейти вниз</string>
+    <string name="send">Отправлять</string>
+    <string name="textfield_hint">Сообщение здесь</string>
+    <string name="open_with">Открыть с</string>
+    <string name="please_install_a_file_manager">Пожалуйста, установите файловый менеджер!</string>
+    <string name="no_application_found_to_open_this_file">Не найдено приложение для открытия этого файла</string>
+    <string name="give_permission">Давать разрешение!</string>
+
+    <!-- App Bar status strings-->
+    <string name="connected">Подключено</string>
+
+    <!-- Accessibility descriptions -->
+    <string name="emoji_selector_desc">Выбор эмодзи</string>
+    <string name="emoji_selector_bt_desc">Показать выбор эмодзи</string>
+    <string name="attach_photo_desc">Прикрепить фото</string>
+    <string name="videochat_desc">Начать видеочат</string>
+    <string name="text_field_desc">Ввод текста</string>
+    <string name="search">Поиск</string>
+    <string name="touch_and_hold_to_record">Нажмите и удерживайте, чтобы записать</string>
+    <string name="record_message">Записать голосовое сообщение</string>
+
+    <!-- Auth strings-->
+    <string name="log_in">Войти</string>
+    <string name="have_an_account">Есть учетная запись?</string>
+    <string name="register">Зарегистрироваться</string>
+    <string name="password_confirmation">Подтверждение пароля</string>
+    <string name="password">Пароль</string>
+    <string name="username">Имя пользователя</string>
+    <string name="register_to_continue">Зарегистрируйтесь, чтобы продолжить</string>
+    <string name="welcome">Добро пожаловать</string>
+    <string name="don_t_have_an_account">Нет учетной записи?</string>
+    <string name="login">Войти</string>
+    <string name="log_in_to_continue">Войдите, чтобы продолжить</string>
+    <string name="welcome_back">Добро пожаловать</string>
+
+    <!-- Setting strings-->
+    <string name="settings">Настройки</string>
+    <string name="english">Английский</string>
+    <string name="russian">Русский</string>
+    <string name="language">Язык</string>
+    <string name="app_theme">Тема приложения</string>
+    <string name="general">Общий</string>
+    <string name="logout">Выйти</string>
+    <string name="select_app_language">Выберите язык приложения</string>
+    <string name="cancel">Отмена</string>
+    <string name="save">Сохранить</string>
+    <string name="confirm">Подтверждать</string>
+    <string name="broadcast_frequency">Частота вещания</string>
+    <string name="_2_4_hz">2.4 ГГц</string>
+    <string name="_2_4_hz_desc">Медленнее, но совместимо с каждым устройством</string>
+    <string name="_5_hz">5 ГГц</string>
+    <string name="_5_hz_desc">Быстрее, но совместимо не со всеми устройствами</string>
+
+    <!-- Local connection strings-->
+    <string name="local_connection">Локальное соединение</string>
+
+    <!-- Nearby Connection strings-->
+    <string name="connections">Соединения</string>
+    <string name="create_a_server">Создать сервер</string>
+    <string name="creating_a_server">Создание сервера</string>
+    <string name="server_created_waiting_for_clients">Сервер создан, ожидает клиентов…</string>
+    <string name="connecting_to_server">Подключение к серверу</string>
+    <string name="connected_to_a_server">Подключено к серверу</string>
+    <string name="discovering_not_started">Не удалось обнаружить сети Wi-Fi.\n повторите попытку!</string>
+    <string name="available_wifi_networks">Доступные сети Wi-Fi</string>
+    <string name="click_discover_button_to_search_for_available_wifi_networks">Нажмите кнопку «Обнаружить», чтобы найти доступные сети Wi-Fi!</string>
+    <string name="something_went_wrong_while_discovering_wifi_networks">Что-то пошло не так при обнаружении сетей Wi-Fi!</string>
+    <string name="wifi_status">"Состояние Wi-Fi: "</string>
+    <string name="proxy_port">Порт прокси</string>
+
+    <!-- Connections strings-->
+    <string name="not_running">Не запущен</string>
+    <string name="not_connected">Не подключен</string>
+    <string name="wifi_enabled">Wi-Fi включен</string>
+    <string name="wifi_disabled">Wi-Fi отключен</string>
+    <string name="connect">Подлключить</string>
+    <string name="connections_details">Подробности о соединениях</string>
+    <string name="connection_status">Состояние соединения: </string>
+    <string name="server_address">Адрес сервера</string>
+    <string name="connected_devices_will_display_here">Здесь будут отображаться подключенные устройства</string>
+    <string name="connections_are_not_established_yet">Подключения еще не установлены!</string>
+    <string name="ready_to_record_voice_message">Разрешение предоставлено! Нажмите на микрофон, чтобы записать голосовое сообщение</string>
+    <string name="record_audio_denied">Вы навсегда отклонили разрешение на использование микрофона. \nВы можете перейти в настройки приложения, чтобы предоставить его.</string>
+    <string name="record_audio_permission_request">Этому приложению необходим доступ к вашему микрофону. Пожалуйста, даруйте это!</string>
+    <string name="nearby_wifi_devices_denied">Вы навсегда отклонили разрешение на доступ к близлежащим устройствам Wi-Fi. \nВы можете перейти в настройки приложения, чтобы предоставить его.</string>
+    <string name="nearby_wifi_devices_permission_request">Этому приложению требуется доступ к близлежащим устройствам Wi-Fi. Пожалуйста, предоставьте его!</string>
+    <string name="coarse_location_denied">Вы навсегда отклонили разрешение на доступ к приблизительному местоположению. \nВы можете перейти в настройки приложения, чтобы предоставить его.</string>
+    <string name="coarse_location_permission_request">Этому приложению требуется доступ к приблизительному местоположению. Пожалуйста, предоставьте его!</string>
+    <string name="fine_location_denied">Вы навсегда отклонили разрешение на доступ к точному местоположению. \nВы можете перейти в настройки приложения, чтобы предоставить его.</string>
+    <string name="fine_location_permission_request">Этому приложению требуется доступ к точному местоположению. Пожалуйста, предоставьте его!</string>
+
+    <!-- TcpScreen Errors strings-->
+    <string name="couldn_t_connect_to_chosen_wifi_device">Не удалось подключиться к выбранному устройству Wi-Fi!</string>
+    <string name="wifi_should_be_enabled_to_perform_this_action">Для выполнения этого действия Wi-Fi должен быть включен!</string>
+    <string name="try_to_use_another_port_number_current_port_is_already_in_use_or_invalid">Попробуйте использовать другой номер порта, текущий порт уже используется или недействителен!</string>
+
+    <!--    TcpScreenDialog Errors strings-->
+    <string name="network_error_occurred">Произошла сетевая ошибка</string>Сетевое соединение с вашим пиром было прервано. Проверьте соединение и повторите попытку.
+    <string name="your_network_connection_was_interrupted_check_your_connection_and_try_again">Network connection with your peer has been interrupted. Check your connection and try again.</string>
+    <string name="close_lowercase">Закрывать</string>
+    <string name="incoming_messages_are_not_in_utf_8_format_the_data_do_not_represent_a_valid_modified_utf_8_encoding_of_a_string">Входящие сообщения не в формате UTF-8, данные не представляют собой допустимую модифицированную кодировку строки UTF-8.</string>
+    <string name="the_ip_address_of_the_host_could_not_be_determined">IP-адрес хоста не удалось определить</string>
+    <string name="invalid_host_ip_address">Неверный IP-адрес хоста</string>
+    <string name="could_not_establish_connection_with_your_partner_please_try_to_reconnect_and_try_again">Не удалось установить соединение с вашим партнером. Попробуйте подключиться повторно и повторите попытку!</string>
+    <string name="no_one_to_chat">Не с кем пообщаться</string>
+    <string name="you_have_existing_messages_with_your_partner_and_if_you_close_the_this_window_messages_will_not_be_saved">У вас есть сообщения с вашим партнером, и если вы закроете это окно, сообщения не будут сохранены.</string>
+    <string name="message_are_not_saved">Сообщения не сохраняются</string>
+    <string name="you_have_established_connection_with_your_partner_if_you_close_this_window_the_connection_will_not_be_saved">Вы установили соединение с партнером, если вы закроете это окно, соединение не сохранится.</string>
+    <string name="the_connection_will_not_be_saved">Соединение не будет сохранено</string>
+    <string name="don_t_ask_me_again">Не спрашивай меня больше</string>
+
+    <!-- Networking strings-->
+    <string name="networking">Сеть</string>
+    <string name="start_local_only_hotspot">Запустить только локальную точку доступа</string>
+    <string name="group_networking">Групповая сеть</string>
+    <string name="peer_networking">Одноранговая сеть</string>
+    <string name="hotspot_name">Имя точки доступа</string>
+    <string name="networking_status">Статус сети:</string>
+    <string name="stop_local_only_hotspot">Остановить локальную точку доступа</string>
+    <string name="enter_hotspot_name">Введите название точки доступа</string>
+    <string name="hotspot_password">Пароль точки доступа</string>
+    <string name="enter_hotspot_password">Введите пароль точки доступа</string>
+
+    <!-- Contact sharing string-->
+    <string name="share">Делиться</string>
+    <string name="contact">контакт</string>
+    <string name="contacts_lowercase">контакты</string>
+    <string name="OK">Хорошо</string>
+    <string name="permission_required">Требуется разрешение</string>
+    <string name="contacts_denied">Вы навсегда отклонили разрешение на чтение контактов. \Вы можете перейти в настройки приложения, чтобы предоставить его.</string>
+    <string name="contacts_permission_request">Чтобы поделиться этим приложением, необходим доступ к вашим контактам! Пожалуйста, даруйте это!</string>
+
+    <!-- Empty screen strings-->
+    <string name="no_data_found">Данные не найдены!</string>
+
+    <!-- Dialog Errors strings-->
+    <string name="couldn_t_create_a_server">Не удалось создать сервер</string>
+    <string name="couldn_t_connect_to_server">Не удалось подключиться к серверу</string>
+    <string name="launching_hotspot">Запускаем точку доступа…</string>
+    <string name="couldn_t_launch_hotspot">Не удалось запустить точку доступа</string>
+    <string name="peer_networking_is_running">Одноранговая сеть работает</string>
+    <string name="group_networking_is_running">Групповая сеть работает</string>
+    <string name="stop_peer_networking">Остановить одноранговую сеть</string>
+    <string name="stop_group_networking">Остановить групповую сеть</string>
+    <string name="your_device_does_not_support_group_networking">Ваше устройство не поддерживает групповую сеть</string>
+    <string name="at_least_android_10_is_required_for_group_networking">ля групповой работы в сети требуется Андроид версия 10 или меньше</string>
+    <string name="there_is_no_online_peers_to_chat">Нет пользователей в сети для общения!</string>
+    <string name="connected_as_host">Подключено как хост</string>
+    <string name="connected_as_client">Подключился как клиент</string>
+    <string name="no_peer_to_chat">Нет собеседника для общения!</string>
+    <string name="current_connected_wifi_server_ip_address_is_not_a_valid">Текущий IP-адрес подключенного Wi-Fi-сервера недействителен.</string>
+    <string name="please_connect_to_network">Пожалуйста, подключитесь к сети!</string>
+    <string name="you_should_be_on_network_to_connect_to_server">Для создания или подключения к серверу вам необходимо подключиться к сети.</string>
+    <string name="android_version_8_required">Требуется Android версии 8+!</string>
+    <string name="android_version_8_required_for_local_only_hotspot">Версия Android вашего устройства ниже 8. Обновите версию Android, чтобы использовать Local-Only Hotspot</string>
+    <string name="local_only_group_networking_is_running">Работает только локальная групповая сеть</string>
+    <string name="other_networking_is_running">Другая сеть работает!</string>
+    <string name="other_networking_is_running_cancel_it_to_create_peer_networking">Остановите текущую сеть, чтобы запустить новую!</string>
+    <string name="enable">Включить</string>
+    <string name="dismiss">Отклонить</string>
+    <string name="wifi_not_enabled">Wi-Fi не включен</string>
+    <string name="wifi_not_enabled_message">Wi-Fi должен быть включен для выполнения этого действия</string>
+
+    <string name="unknown_user">Неизвестный пользователь</string>
+    <string name="offline">Оффлайн</string>
+    <string name="online">Онлайн</string>
+    <string name="no_messages_yet">Сообщений пока нет.</string>
+    <string name="no_messages_in_your_inbox_yet_start_chatting_with_people_around_you">Пока что в вашем почтовом ящике нет сообщений! Начните общаться с людьми вокруг вас.</string>
+    <string name="create_network">Создать сеть</string>
+    <string name="security_exception_occurred">Произошло исключение безопасности</string>
+    <string name="security_exception_occurred_definition">Существует менеджер безопасности, и его метод checkConnect не разрешает операцию.</string>
+    <string name="illegal_argument_exception_occurred_definition">Параметр порта находится вне указанного диапазона допустимых значений порта, который находится между 0 и 65535 включительно.</string>
+    <string name="illegal_argument_exception_occurred">Исключение недопустимого аргумента</string>
+    <string name="local_only_hotspot_name">Имя локальной точки доступа</string>
+    <string name="local_only_hotspot_password">Пароль локальной точки доступа</string>
+    <string name="error_occurred">Произошла ошибка</string>
+    <string name="voice_message_sent">Голосовое сообщение отправлено</string>
+    <string name="file_shared">Файл передан</string>
+    <string name="contact_shared">Контакт передан</string>
+    <string name="password_length_should_be_between_8_16_symbols">Длина пароля должна быть от 8 до 16 символов!</string>
+    <string name="unknown_exception_occurred">Произошло неизвестное исключение</string>
+    <string name="unknown_exception_occurred_definition">Что-то пошло не так, попробуйте позже.</string>
+    <string name="failed_to_create_network">Не удалось создать сеть!</string>
+    <string name="failed_to_create_network_definition">Попробуйте обновить Wi-Fi, это поможет создать сеть с новой конфигурацией.</string>
+    <string name="invalid_hotspot_name">Длина имени точки доступа должна быть от 5 до 32 символов!</string>
+    <string name="save_to_downloads">Сохранить в загрузки</string>
+    <string name="ok">ОК</string>
+    <string name="credentials_didn_t_match">Учетные данные не совпадают</string>
+    <string name="logout_message">После выхода из системы все данные будут удалены и не подлежат восстановлению.</string>
+    <string name="are_you_sure">Вы уверены?</string>
+
+</resources>

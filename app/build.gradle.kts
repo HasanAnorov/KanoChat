@@ -1,6 +1,10 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    alias(libs.plugins.hiltAndroid)
+    alias(libs.plugins.devtoolsKsp)
+    alias(libs.plugins.pluginSerialization)
+    id ("androidx.navigation.safeargs.kotlin")
 }
 
 android {
@@ -30,28 +34,32 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_19
-        targetCompatibility = JavaVersion.VERSION_19
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
     kotlinOptions {
-        jvmTarget = "19"
+        jvmTarget = "1.8"
     }
     buildFeatures {
-        compose = true
         viewBinding = true
+        compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.10"
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/INDEX.LIST"
         }
     }
 }
 
 dependencies {
-
+    implementation (libs.landscapist.glide)
     implementation (libs.androidx.ui.viewbinding)
     implementation(libs.androidx.compose.runtime.livedata)
     implementation (libs.androidx.ui.text.google.fonts)
@@ -70,6 +78,8 @@ dependencies {
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.appcompat)
+    implementation(libs.firebase.crashlytics.buildtools)
+    implementation(libs.androidx.activity)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -77,4 +87,35 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    //datastore used for preferences
+    implementation (libs.androidx.datastore.preferences)
+
+    //hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
+
+    //kotlin json serializer
+    implementation(libs.kotlinx.serialization.json)
+    implementation (libs.kotlin.reflect)
+
+    //recording view
+    implementation(libs.recordview)
+
+    //gson
+    implementation (libs.converter.gson)
+
+    //image loading - coil
+    implementation(libs.coil.compose)
+
+    // room
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    //paging
+    implementation (libs.androidx.paging.runtime)
+    implementation (libs.androidx.paging.compose)
+    // Add this dependency for using PagingSource with Room
+    implementation (libs.androidx.room.paging)
+
 }
