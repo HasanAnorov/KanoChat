@@ -2108,6 +2108,14 @@ class TcpViewModel @Inject constructor(
         updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
     }
 
+    fun updateBottomSheetVisibility(shouldBeShown: Boolean) {
+        _state.update {
+            it.copy(
+                showBottomSheet = shouldBeShown
+            )
+        }
+    }
+
     @SuppressLint("NewApi")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
@@ -2175,11 +2183,7 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.UpdateBottomSheetState -> {
-                _state.update {
-                    it.copy(
-                        showBottomSheet = event.shouldBeShown
-                    )
-                }
+                updateBottomSheetVisibility(event.shouldBeShown)
             }
 
             TcpScreenEvents.ReadContacts -> {

@@ -1,7 +1,6 @@
 package com.ierusalem.androchat.features_local.tcp.domain.state
 
 import android.net.wifi.p2p.WifiP2pDevice
-import androidx.paging.PagingData
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.app.AppBroadcastFrequency
 import com.ierusalem.androchat.core.utils.Constants
@@ -13,11 +12,8 @@ import com.ierusalem.androchat.core.utils.isValidHotspotPassword
 import com.ierusalem.androchat.core.utils.isValidIpAddress
 import com.ierusalem.androchat.core.utils.isValidPortNumber
 import com.ierusalem.androchat.features_local.tcp.data.server.ServerDefaults
-import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 
 data class TcpScreenUiState(
 
@@ -66,10 +62,6 @@ data class TcpScreenUiState(
     //wifi peers list and connected wifi peers list
     val availableWifiNetworks: List<WifiP2pDevice> = emptyList(),
     val connectedWifiNetworks: List<WifiP2pDevice> = emptyList(),
-
-    //todo - fix this
-    //chat room messages
-    val messages: Flow<PagingData<ChatMessage>> = flowOf(),
 
     //contacts
     val chattingUsers: Resource<List<ChattingUser>> = Resource.Loading(),

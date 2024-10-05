@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -56,13 +55,10 @@ import com.ierusalem.androchat.features_local.tcp_conversation.presentation.comp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
 
 class LocalConversationFragment : Fragment() {
 
     private val viewModel: TcpViewModel by activityViewModels()
-
-    private lateinit var resourceDirectory: File
 
     private val readContactsPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -123,19 +119,11 @@ class LocalConversationFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
-        selectedUser =
-            Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
+        selectedUser = Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
         viewModel.setSelectedUser(selectedUser)
-        if (selectedUserStringForm != null) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                viewModel.getCurrentChattingUser(selectedUser)
-            }
-        } else {
-            //todo - show corresponding error
+        lifecycleScope.launch(Dispatchers.IO) {
+            viewModel.getCurrentChattingUser(selectedUser)
         }
-        resourceDirectory = Environment.getExternalStoragePublicDirectory(
-            Environment.DIRECTORY_DOWNLOADS + "/${Constants.FOLDER_NAME_FOR_RESOURCES}"
-        )!!
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -158,7 +146,7 @@ class LocalConversationFragment : Fragment() {
                         ModalBottomSheet(
                             sheetState = sheetState,
                             onDismissRequest = {
-                                viewModel.handleEvents(TcpScreenEvents.UpdateBottomSheetState(false))
+                                viewModel.updateBottomSheetVisibility(false)
                             },
                             windowInsets = WindowInsets(0, 0, 0, 0),
                             content = {
@@ -174,11 +162,7 @@ class LocalConversationFragment : Fragment() {
 
                                                 GeneralConnectionStatus.ConnectedAsClient -> {
                                                     lifecycleScope.launch(Dispatchers.IO) {
-                                                        viewModel.handleEvents(
-                                                            TcpScreenEvents.UpdateBottomSheetState(
-                                                                false
-                                                            )
-                                                        )
+                                                        viewModel.updateBottomSheetVisibility(false)
                                                         selectedContacts.forEach { contact ->
                                                             val contactMessageEntity =
                                                                 ChatMessageEntity(
@@ -201,11 +185,7 @@ class LocalConversationFragment : Fragment() {
 
                                                 GeneralConnectionStatus.ConnectedAsHost -> {
                                                     lifecycleScope.launch(Dispatchers.IO) {
-                                                        viewModel.handleEvents(
-                                                            TcpScreenEvents.UpdateBottomSheetState(
-                                                                false
-                                                            )
-                                                        )
+                                                        viewModel.updateBottomSheetVisibility(false)
                                                         selectedContacts.forEach { contact ->
                                                             val contactMessageEntity =
                                                                 ChatMessageEntity(
