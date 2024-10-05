@@ -28,14 +28,15 @@ data class TcpScreenUiState(
     //general state
     val isWifiOn: Boolean = false,
     val peerUserUniqueId: String = "",
+    val peerUserName: String = "",
     val authorSessionId: String = "",
 
     val hotspotName: String = Constants.UNKNOWN_HOTSPOT_NAME,
     val isValidHotSpotName: Boolean = isValidHotspotName(hotspotName),
     val hotspotPassword: String = generateRandomPassword(length = 8),
     val isValidHotSpotPassword: Boolean = isValidHotspotPassword(hotspotPassword),
-    val staticHotspotName:String = "",
-    val staticHotspotPassword:String = "",
+    val staticHotspotName: String = "",
+    val staticHotspotPassword: String = "",
 
     //local-only hotspot
     val localOnlyHotspotName: String = "",
@@ -66,6 +67,7 @@ data class TcpScreenUiState(
     val availableWifiNetworks: List<WifiP2pDevice> = emptyList(),
     val connectedWifiNetworks: List<WifiP2pDevice> = emptyList(),
 
+    //todo - fix this
     //chat room messages
     val messages: Flow<PagingData<ChatMessage>> = flowOf(),
 
@@ -84,5 +86,4 @@ data class TcpScreenUiState(
     val networkBand: AppBroadcastFrequency = AppBroadcastFrequency.FREQUENCY_2_4_GHZ,
     // only devices above or equal to android 10 version can create hotspot  with custom config
     val canUseCustomConfigForHotspot: Boolean = ServerDefaults.canUseCustomConfig(),
-
-    )
+)

@@ -2,7 +2,6 @@ package com.ierusalem.androchat.features_local.tcp_conversation.presentation
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Environment
@@ -98,7 +97,6 @@ class LocalConversationFragment : Fragment() {
         }
     }
 
-
     private fun showFileChooser() {
         val intent = Intent()
             .setType("*/*")
@@ -122,21 +120,6 @@ class LocalConversationFragment : Fragment() {
 
     private lateinit var selectedUser: InitialUserModel
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-//        val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
-//        if (selectedUserStringForm != null) {
-//            lifecycleScope.launch(Dispatchers.IO) {
-////                 selectedUser =
-////                    Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
-//                viewModel.getCurrentChattingUser(selectedUser)
-////                viewModel.loadMessages(selectedUser)
-//            }
-//        } else {
-//            //todo - show corresponding error
-//        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
@@ -145,9 +128,7 @@ class LocalConversationFragment : Fragment() {
         viewModel.setSelectedUser(selectedUser)
         if (selectedUserStringForm != null) {
             lifecycleScope.launch(Dispatchers.IO) {
-
                 viewModel.getCurrentChattingUser(selectedUser)
-//                viewModel.loadMessages(selectedUser)
             }
         } else {
             //todo - show corresponding error
