@@ -33,6 +33,27 @@ fun Fragment.longToast(text: String, duration: Int = Toast.LENGTH_LONG): Toast {
     }
 }
 
+fun Fragment.showFileChooser(onLaunch:(Intent) -> Unit) {
+    val intent = Intent()
+        .setType("*/*")
+        .setAction(Intent.ACTION_GET_CONTENT)
+    intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+    intent.addCategory(Intent.CATEGORY_OPENABLE)
+    intent.flags =
+        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+
+    try {
+        onLaunch(intent)
+    } catch (e: Exception) {
+        Toast.makeText(
+            requireContext(),
+            getString(R.string.please_install_a_file_manager),
+            Toast.LENGTH_SHORT
+        ).show()
+        e.printStackTrace()
+    }
+}
+
 fun Fragment.openWifiSettings() {
     val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
     startActivity(intent)

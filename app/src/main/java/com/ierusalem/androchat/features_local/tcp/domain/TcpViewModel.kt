@@ -161,6 +161,52 @@ class TcpViewModel @Inject constructor(
         listenWifiConnections()
     }
 
+    private var selectedUser: InitialUserModel? = null
+
+    fun setSelectedUser(selectedUser: InitialUserModel) {
+        this.selectedUser = selectedUser
+    }
+
+    private val pagingDataStream by lazy {
+        selectedUser?.let { chattingUser ->
+            Pager(
+                PagingConfig(pageSize = 18, prefetchDistance = 25),
+                pagingSourceFactory = {
+                    messagesRepository.getPagedUserMessagesById(
+                        partnerSessionId = chattingUser.partnerSessionId,
+                        authorSessionId = state.value.authorSessionId
+                    )
+                }
+            ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
+                value.map { chatMessageEntity ->
+                    chatMessageEntity.toChatMessage(chattingUser.partnerUniqueName)!!
+                }
+            }.cachedIn(viewModelScope)
+        } ?: flowOf(PagingData.empty())
+    }
+
+    private val playingMessageStream = MutableStateFlow<Pair<Long, AudioState>?>(null)
+    val messagesStream by lazy {
+        playingMessageStream.combine(pagingDataStream, ::Pair)
+            .map { (playingMessage, pagingData) ->
+                val (messageId, audioState) = playingMessage ?: return@map pagingData
+                pagingData.map { msg ->
+                    when {
+                        // Only update if the target VoiceMessage state needs to change
+                        msg is ChatMessage.VoiceMessage && msg.messageId == messageId -> {
+                            msg.copy(audioState = audioState)
+                        }
+                        // Reset other VoiceMessages to Idle if they are not already Idle
+                        msg is ChatMessage.VoiceMessage && msg.messageId != messageId -> {
+                            msg.copy(audioState = AudioState.Idle)
+                        }
+
+                        else -> msg // Return the message unchanged to prevent unnecessary recomposition
+                    }
+                }
+            }
+    }
+
     fun updateFileStateToFailure() {
         viewModelScope.launch(Dispatchers.IO) {
             messagesRepository.updateFileStateToFailure()
@@ -1695,12 +1741,6 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private var selectedUser: InitialUserModel? = null
-
-    fun setSelectedUser(selectedUser: InitialUserModel) {
-        this.selectedUser = selectedUser
-    }
-
     fun checkRecordAudioAndReadContactsPermission() {
         viewModelScope.launch {
             _state.update {
@@ -1835,7 +1875,11 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private lateinit var currentAudioFile: File
+    /**
+     * Voice message recording functions
+     * */
+
+    private lateinit var currentRecordingAudioFile: File
 
     private fun updateIsRecording(isRecording: Boolean) {
         _state.update {
@@ -1850,7 +1894,7 @@ class TcpViewModel @Inject constructor(
         val currentAudioFileName =
             "${Constants.VOICE_MESSAGE_FILE_NAME}${getTimeInHours()}${Constants.AUDIO_EXTENSION}"
 
-        currentAudioFile = File(privateFilesDirectory, currentAudioFileName).also {
+        currentRecordingAudioFile = File(privateFilesDirectory, currentAudioFileName).also {
             audioRecorder.startAudio(it)
         }
     }
@@ -1866,8 +1910,8 @@ class TcpViewModel @Inject constructor(
             partnerSessionId = state.value.peerUserUniqueId,
             authorSessionId = state.value.authorSessionId,
             fileState = FileMessageState.Loading(0),
-            voiceMessageFileName = currentAudioFile.name,
-            voiceMessageAudioFileDuration = currentAudioFile.getAudioFileDuration(),
+            voiceMessageFileName = currentRecordingAudioFile.name,
+            voiceMessageAudioFileDuration = currentRecordingAudioFile.getAudioFileDuration(),
         )
 
         when (state.value.generalConnectionStatus) {
@@ -1889,53 +1933,15 @@ class TcpViewModel @Inject constructor(
     private fun cancelRecording() {
         updateIsRecording(false)
         audioRecorder.stopAudio()
-        if (currentAudioFile.exists()) {
-            val isDeleted = currentAudioFile.delete()
+        if (currentRecordingAudioFile.exists()) {
+            val isDeleted = currentRecordingAudioFile.delete()
             log("is cancelled audio deleted - $isDeleted")
         } else {
             log("file does not exist but cancel record called")
         }
     }
 
-    private val pagingDataStream by lazy {
-        selectedUser?.let { chattingUser ->
-            Pager(
-                PagingConfig(pageSize = 18, prefetchDistance = 25),
-                pagingSourceFactory = {
-                    messagesRepository.getPagedUserMessagesById(
-                        partnerSessionId = chattingUser.partnerSessionId,
-                        authorSessionId = state.value.authorSessionId
-                    )
-                }
-            ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
-                value.map { chatMessageEntity ->
-                    chatMessageEntity.toChatMessage(chattingUser.partnerUniqueName)!!
-                }
-            }.cachedIn(viewModelScope)
-        } ?: flowOf(PagingData.empty())
-    }
-
-    private val playingMessageStream = MutableStateFlow<Pair<Long, AudioState>?>(null)
-    val messagesStream by lazy {
-        playingMessageStream.combine(pagingDataStream, ::Pair)
-            .map { (playingMessage, pagingData) ->
-                val (messageId, audioState) = playingMessage ?: return@map pagingData
-                pagingData.map { msg ->
-                    when {
-                        // Only update if the target VoiceMessage state needs to change
-                        msg is ChatMessage.VoiceMessage && msg.messageId == messageId -> {
-                            msg.copy(audioState = audioState)
-                        }
-                        // Reset other VoiceMessages to Idle if they are not already Idle
-                        msg is ChatMessage.VoiceMessage && msg.messageId != messageId -> {
-                            msg.copy(audioState = AudioState.Idle)
-                        }
-
-                        else -> msg // Return the message unchanged to prevent unnecessary recomposition
-                    }
-                }
-            }
-    }
+    /*****/
 
     /**
      * Voice message playing functions

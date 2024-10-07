@@ -156,7 +156,7 @@
     <string name="stop_peer_networking">Остановить одноранговую сеть</string>
     <string name="stop_group_networking">Остановить групповую сеть</string>
     <string name="your_device_does_not_support_group_networking">Ваше устройство не поддерживает групповую сеть</string>
-    <string name="at_least_android_10_is_required_for_group_networking">ля групповой работы в сети требуется Андроид версия 10 или меньше</string>
+    <string name="at_least_android_10_is_required_for_group_networking">Для группового общения требуется Android 10 и выше.</string>
     <string name="there_is_no_online_peers_to_chat">Нет пользователей в сети для общения!</string>
     <string name="connected_as_host">Подключено как хост</string>
     <string name="connected_as_client">Подключился как клиент</string>

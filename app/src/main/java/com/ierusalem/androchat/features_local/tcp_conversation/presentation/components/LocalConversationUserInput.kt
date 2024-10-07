@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -133,7 +135,10 @@ fun LocalConversationUserInput(
     val multiplePhotoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(),
         onResult = { medias ->
-            eventHandler(TcpScreenEvents.HandlePickingMultipleMedia(medias))
+            if (medias.isNotEmpty()) {
+                // Media selection was successful
+                eventHandler(TcpScreenEvents.HandlePickingMultipleMedia(medias))
+            }
             dismissKeyboard()
         }
     )
@@ -567,7 +572,7 @@ fun EmojiSelector(
             .semantics { contentDescription = a11yLabel }
     ) {
         Row(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            EmojiTable(onTextAdded, modifier = Modifier.padding(8.dp))
+            EmojiTable(onTextAdded, modifier = Modifier.padding(8.dp).height(240.dp))
         }
     }
 }
@@ -577,14 +582,14 @@ fun EmojiTable(
     onTextAdded: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier.fillMaxWidth()) {
-        repeat(4) { x ->
+    // Make the table scrollable using LazyColumn
+    LazyColumn(modifier = modifier.fillMaxWidth()) {
+        items(emojis.chunked(EMOJI_COLUMNS)) { rowEmojis ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                repeat(EMOJI_COLUMNS) { y ->
-                    val emoji = emojis[x * EMOJI_COLUMNS + y]
+                rowEmojis.forEach { emoji ->
                     Text(
                         modifier = Modifier
                             .clickable(onClick = { onTextAdded(emoji) })
@@ -602,9 +607,40 @@ fun EmojiTable(
     }
 }
 
-private const val EMOJI_COLUMNS = 10
+
+private const val EMOJI_COLUMNS = 20
 
 private val emojis = listOf(
+    "\ud83d\udc4b", // Waving Hand
+    "\ud83e\udd1a", // Raised Back of Hand
+    "\u270b",       // Raised Hand
+    "\ud83d\udd90", // Hand With Fingers Splayed
+    "\ud83d\udd96", // Vulcan Salute
+    "\ud83d\udc4c", // OK Hand
+    "\ud83e\udd0c", // Pinched Fingers
+    "\ud83e\udd0f", // Pinching Hand
+    "\u270c",       // Victory Hand
+    "\ud83e\udd1e", // Crossed Fingers
+    "\ud83e\udd1f", // Love-You Gesture
+    "\ud83e\udd18", // Sign of the Horns
+    "\ud83e\udd19", // Call Me Hand
+    "\ud83d\udc48", // Backhand Index Pointing Left
+    "\ud83d\udc49", // Backhand Index Pointing Right
+    "\ud83d\udc46", // Backhand Index Pointing Up
+    "\ud83d\udc47", // Backhand Index Pointing Down
+    "\ud83d\udc4d", // Thumbs Up
+    "\ud83d\udc4e", // Thumbs Down
+    "\u270a",       // Raised Fist
+    "\ud83d\udc4a", // Oncoming Fist
+    "\ud83e\udd1b", // Left-Facing Fist
+    "\ud83e\udd1c", // Right-Facing Fist
+    "\ud83d\udc50", // Open Hands
+    "\ud83d\ude4c", // Raising Hands
+    "\ud83d\udc4f", // Clapping Hands
+    "\ud83e\udd32", // Palms Up Together
+    "\ud83d\ude4f", // Folded Hands
+    "\ud83d\udd95",  // Middle Finger
+    /** face emojis */
     "\ud83d\ude00", // Grinning Face
     "\ud83d\ude01", // Grinning Face With Smiling Eyes
     "\ud83d\ude02", // Face With Tears of Joy
