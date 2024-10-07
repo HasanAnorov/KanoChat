@@ -1690,7 +1690,7 @@ class TcpViewModel @Inject constructor(
                 .playTiming
                 .distinctUntilChanged()
                 .collect { timing ->
-                    updatePlayTiming(timing, messageId)
+                    playingMessageStream.emit(messageId to AudioState.Playing(timing))
                 }
         }
     }
@@ -1937,48 +1937,51 @@ class TcpViewModel @Inject constructor(
             }
     }
 
-    private fun updateIsPlaying(audioState: AudioState, messageId: Long) {
-        viewModelScope.launch {
-            playingMessageStream.emit(messageId to audioState)
-        }
-    }
-
-    private fun updatePlayTiming(timing: Long, messageId: Long) {
-        viewModelScope.launch {
-            playingMessageStream.emit(messageId to AudioState.Playing(timing))
-        }
-    }
+    /**
+     * Voice message playing functions
+     * */
 
     private var currentPlayingAudioFile: File? = null
 
     private fun playAudioFile(voiceMessage: ChatMessage.VoiceMessage) {
-        log("play audio - state was : ${voiceMessage.audioState}")
         currentPlayingAudioFile = File(privateFilesDirectory, voiceMessage.voiceFileName)
         audioPlayer.playAudioFile(currentPlayingAudioFile!!) {
-            updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
+            viewModelScope.launch {
+                playingMessageStream.emit(voiceMessage.messageId to AudioState.Idle)
+            }
         }
         startCollectingPlayTiming(voiceMessage.messageId)
     }
 
     private fun resumeAudioFile(voiceMessage: ChatMessage.VoiceMessage){
         val voiceMessageId = voiceMessage.messageId
-        val duration = voiceMessage.duration
         val position = (voiceMessage.audioState as AudioState.Paused).currentPosition
-        val timing = if (duration > 0) {
-            (position.toFloat() / duration * 100).toLong()
-        } else {
-            0L
-        }
-        log("starting resume duration $duration")
-        log("starting resume position $position")
-        log("starting resume timing $timing")
         currentPlayingAudioFile?.let { playingAudioFile ->
             audioPlayer.resumeAudioFile(playingAudioFile, position) {
-                updateIsPlaying(AudioState.Idle, voiceMessageId)
+                viewModelScope.launch {
+                    playingMessageStream.emit(voiceMessageId to AudioState.Idle)
+                }
             }
             startCollectingPlayTiming(voiceMessageId)
         }
     }
+
+    private fun pauseAudioFile(voiceMessageId:Long){
+        audioPlayer.pause()?.let { position ->
+            viewModelScope.launch {
+                playingMessageStream.emit(voiceMessageId to AudioState.Paused(position))
+            }
+        }
+    }
+
+    private fun stopAudioFile(voiceMessageId:Long){
+        audioPlayer.stop()
+        viewModelScope.launch {
+            playingMessageStream.emit(voiceMessageId to AudioState.Idle)
+        }
+    }
+
+    /******/
 
     private fun createLocalOnlyHotspotNetwork() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -2065,6 +2068,13 @@ class TcpViewModel @Inject constructor(
         }
     }
 
+    @SuppressLint("NewApi")
+    private fun stopLocalOnLyHotspot() {
+        //stop local-only hotspot
+        hotspotReservation?.close()
+        updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
+    }
+
     fun getCurrentChattingUser(currentChattingUser: InitialUserModel) {
         viewModelScope.launch(Dispatchers.IO) {
             messagesRepository.getChattingUserByIdFlow(currentChattingUser.partnerSessionId)
@@ -2078,13 +2088,6 @@ class TcpViewModel @Inject constructor(
                     }
                 }
         }
-    }
-
-    @SuppressLint("NewApi")
-    private fun stopLocalOnLyHotspot() {
-        //stop local-only hotspot
-        hotspotReservation?.close()
-        updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
     }
 
     fun updateBottomSheetVisibility(shouldBeShown: Boolean) {
@@ -2120,14 +2123,11 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.OnPauseVoiceMessageClick -> {
-                audioPlayer.pause()?.let { position ->
-                    updateIsPlaying(AudioState.Paused(position), event.message.messageId)
-                }
+                pauseAudioFile(event.messageId)
             }
 
             is TcpScreenEvents.OnStopVoiceMessageClick -> {
-                updateIsPlaying(AudioState.Idle, event.message.messageId)
-                audioPlayer.stop()
+                stopAudioFile(event.messageId)
             }
 
             is TcpScreenEvents.OnSaveToDownloadsClick -> {

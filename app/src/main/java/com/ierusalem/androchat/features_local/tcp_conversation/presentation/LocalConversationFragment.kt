@@ -114,16 +114,12 @@ class LocalConversationFragment : Fragment() {
         }
     }
 
-    private lateinit var selectedUser: InitialUserModel
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
-        selectedUser = Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
+        val selectedUser = Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
         viewModel.setSelectedUser(selectedUser)
-        lifecycleScope.launch(Dispatchers.IO) {
-            viewModel.getCurrentChattingUser(selectedUser)
-        }
+        viewModel.getCurrentChattingUser(selectedUser)
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -205,7 +201,6 @@ class LocalConversationFragment : Fragment() {
                                                         }
                                                     }
                                                 }
-
                                             }
                                         }
                                     )

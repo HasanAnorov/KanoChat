@@ -54,14 +54,46 @@ fun FileMessageItem(
         color = backgroundBubbleColor,
         shape = if (message.isFromYou) ChatBubbleShapeEnd else ChatBubbleShapeStart,
     ) {
-        Row(
-            modifier = Modifier.padding(8.dp),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            when (val state = message.fileState) {
-                is FileMessageState.Loading -> {
-                    if (message.isFileMessageAvailable) {
+        Box(modifier = Modifier.clickable { }) {
+            Row(
+                modifier = Modifier.padding(8.dp),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                when (val state = message.fileState) {
+                    is FileMessageState.Loading -> {
+                        if (message.isFileMessageAvailable) {
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .border(
+                                        1.5.dp,
+                                        MaterialTheme.colorScheme.tertiary,
+                                        CircleShape
+                                    )
+                                    .clip(CircleShape)
+                                    .clickable(
+                                        onClick = {
+                                            onFileItemClick(message)
+                                        }
+                                    )
+                                    .background(MaterialTheme.colorScheme.background)
+                                    .align(Alignment.Top),
+                                contentAlignment = Alignment.Center,
+                                content = {
+                                    Icon(
+                                        modifier = Modifier.size(28.dp),
+                                        painter = painterResource(id = R.drawable.file_text),
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                        } else {
+                            CircularProgressBar(percentage = (state.percentage.toFloat() / 100))
+                        }
+                    }
+
+                    FileMessageState.Success -> {
                         Box(
                             modifier = Modifier
                                 .size(64.dp)
@@ -87,116 +119,86 @@ fun FileMessageItem(
                                 )
                             }
                         )
-                    } else {
-                        CircularProgressBar(percentage = (state.percentage.toFloat() / 100))
                     }
-                }
 
-                FileMessageState.Success -> {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .border(
-                                1.5.dp,
-                                MaterialTheme.colorScheme.tertiary,
-                                CircleShape
-                            )
-                            .clip(CircleShape)
-                            .clickable(
-                                onClick = {
-                                    onFileItemClick(message)
-                                }
-                            )
-                            .background(MaterialTheme.colorScheme.background)
-                            .align(Alignment.Top),
-                        contentAlignment = Alignment.Center,
-                        content = {
-                            Icon(
-                                modifier = Modifier.size(28.dp),
-                                painter = painterResource(id = R.drawable.file_text),
-                                contentDescription = null
-                            )
-                        }
-                    )
-                }
-
-                FileMessageState.Failure -> {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .border(
-                                1.5.dp,
-                                MaterialTheme.colorScheme.tertiary,
-                                CircleShape
-                            )
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.background)
-                            .align(Alignment.Top),
-                        contentAlignment = Alignment.Center,
-                        content = {
-                            Icon(
-                                modifier = Modifier.size(28.dp),
-                                painter = painterResource(id = R.drawable.file_failed),
-                                contentDescription = null
-                            )
-                        }
-                    )
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .weight(1F),
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = message.fileName,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-                Text(
-                    modifier = Modifier.padding(top = 4.dp),
-                    text = message.fileSize,
-                    color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Text(
-                    text = message.formattedTime,
-                    color = MaterialTheme.colorScheme.outline.copy(0.8F),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-            when (message.fileState) {
-                FileMessageState.Success -> {
-                    var optionsMenuVisibility by rememberSaveable {
-                        mutableStateOf(false)
-                    }
-                    Box(modifier = Modifier.align(Alignment.Top)) {
-                        IconButton(
-                            onClick = { optionsMenuVisibility = !optionsMenuVisibility },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = null
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = optionsMenuVisibility,
-                            onDismissRequest = { optionsMenuVisibility = false },
+                    FileMessageState.Failure -> {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .border(
+                                    1.5.dp,
+                                    MaterialTheme.colorScheme.tertiary,
+                                    CircleShape
+                                )
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.background)
+                                .align(Alignment.Top),
+                            contentAlignment = Alignment.Center,
                             content = {
-                                DropdownMenuItem(
-                                    text = { Text(text = stringResource(R.string.save_to_downloads)) },
-                                    onClick = {
-                                        onSaveToDownloadsClick(message)
-                                        optionsMenuVisibility = false
-                                    }
+                                Icon(
+                                    modifier = Modifier.size(28.dp),
+                                    painter = painterResource(id = R.drawable.file_failed),
+                                    contentDescription = null
                                 )
                             }
                         )
                     }
                 }
+                Column(
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .weight(1F),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = message.fileName,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                    Text(
+                        modifier = Modifier.padding(top = 4.dp),
+                        text = message.fileSize,
+                        color = MaterialTheme.colorScheme.onBackground.copy(0.8F),
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        text = message.formattedTime,
+                        color = MaterialTheme.colorScheme.outline.copy(0.8F),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                when (message.fileState) {
+                    FileMessageState.Success -> {
+                        var optionsMenuVisibility by rememberSaveable {
+                            mutableStateOf(false)
+                        }
+                        Box(modifier = Modifier.align(Alignment.Top)) {
+                            IconButton(
+                                onClick = { optionsMenuVisibility = !optionsMenuVisibility },
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = null
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = optionsMenuVisibility,
+                                onDismissRequest = { optionsMenuVisibility = false },
+                                content = {
+                                    DropdownMenuItem(
+                                        text = { Text(text = stringResource(R.string.save_to_downloads)) },
+                                        onClick = {
+                                            onSaveToDownloadsClick(message)
+                                            optionsMenuVisibility = false
+                                        }
+                                    )
+                                }
+                            )
+                        }
+                    }
 
-                else -> {}
+                    else -> {}
+                }
             }
         }
     }

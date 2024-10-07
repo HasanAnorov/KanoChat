@@ -3,7 +3,6 @@ package com.ierusalem.androchat.core.voice_message.playback
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.core.net.toUri
-import com.ierusalem.androchat.core.utils.log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
@@ -40,7 +39,6 @@ class AndroidAudioPlayer(private val context: Context) : AudioPlayer {
             start()
         }
         mediaPlayer?.setOnCompletionListener {
-            log("finished")
             stop()
             onFinished()
         }
@@ -51,7 +49,6 @@ class AndroidAudioPlayer(private val context: Context) : AudioPlayer {
         mediaPlayer?.start()
         mediaPlayer?.seekTo(currentPosition)
         mediaPlayer?.setOnCompletionListener {
-            log("finished")
             stop()
             onFinished()
         }

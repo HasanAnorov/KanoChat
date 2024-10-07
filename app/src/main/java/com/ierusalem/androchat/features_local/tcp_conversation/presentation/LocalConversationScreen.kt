@@ -164,14 +164,14 @@ fun ConversationContent(
                             onPauseVoiceMessageClick = {
                                 eventHandler(
                                     TcpScreenEvents.OnPauseVoiceMessageClick(
-                                        it
+                                        it.messageId
                                     )
                                 )
                             },
                             onStopVoiceMessageClick = {
                                 eventHandler(
                                     TcpScreenEvents.OnStopVoiceMessageClick(
-                                        it
+                                        it.messageId
                                     )
                                 )
                             },

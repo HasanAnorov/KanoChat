@@ -2,6 +2,7 @@ package com.ierusalem.androchat.features_local.tcp_conversation.presentation.com
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,7 +40,7 @@ fun VoiceMessageItem(
     modifier: Modifier = Modifier,
     message: ChatMessage.VoiceMessage,
     onPlayClick: () -> Unit,
-    onResumeClick:() -> Unit = {},
+    onResumeClick: () -> Unit = {},
     onPauseClick: () -> Unit,
     onStopClick: () -> Unit,
 ) {
@@ -52,8 +53,9 @@ fun VoiceMessageItem(
         color = backgroundBubbleColor,
         shape = if (message.isFromYou) ChatBubbleShapeEnd else ChatBubbleShapeStart,
     ) {
-        Column(modifier.padding(8.dp)) {
+        Column(modifier = modifier.clickable { }) {
             Row(
+                modifier = Modifier.padding(8.dp),
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -86,6 +88,7 @@ fun VoiceMessageItem(
                             )
                         }
                     }
+
                     FileMessageState.Success -> {
                         IconButton(
                             onClick = {
@@ -93,9 +96,11 @@ fun VoiceMessageItem(
                                     is AudioState.Playing -> {
                                         onPauseClick()
                                     }
+
                                     is AudioState.Paused -> {
                                         onResumeClick()
                                     }
+
                                     AudioState.Idle -> {
                                         onPlayClick()
                                     }
@@ -217,6 +222,7 @@ fun VoiceMessageItem(
                             AudioState.Idle -> {}
                         }
                     }
+
                     FileMessageState.Failure -> {
                         Box(
                             modifier = Modifier

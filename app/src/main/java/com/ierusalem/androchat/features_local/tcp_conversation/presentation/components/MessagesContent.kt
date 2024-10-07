@@ -33,6 +33,10 @@ import kotlinx.coroutines.launch
 
 const val ConversationTestTag = "ConversationTestTag"
 
+private val JumpToBottomThreshold = 56.dp
+val ChatBubbleShapeStart = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+val ChatBubbleShapeEnd = RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
+
 @Composable
 fun Messages(
     messages: LazyPagingItems<ChatMessage>,
@@ -124,10 +128,6 @@ fun Messages(
         )
     }
 }
-
-private val JumpToBottomThreshold = 56.dp
-val ChatBubbleShapeStart = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
-val ChatBubbleShapeEnd = RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
 
 @Preview
 @Composable

@@ -1,5 +1,6 @@
 package com.ierusalem.androchat.features_local.tcp_conversation.presentation.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -125,6 +126,7 @@ fun LocalClickableMessage(
     )
     Column(
         modifier = Modifier
+            .clickable {  }
             .padding(16.dp)
             .width(IntrinsicSize.Max)
     ) {
