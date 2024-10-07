@@ -2113,11 +2113,9 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.OnPauseVoiceMessageClick -> {
-                val currentPosition = audioPlayer.pause()
-                currentPosition?.let {
-                    updateIsPlaying(AudioState.Paused(currentPosition), event.message.messageId)
+                audioPlayer.pause()?.let { position ->
+                    updateIsPlaying(AudioState.Paused(position), event.message.messageId)
                 }
-                log("paused at - $currentPosition")
             }
 
             is TcpScreenEvents.OnStopVoiceMessageClick -> {

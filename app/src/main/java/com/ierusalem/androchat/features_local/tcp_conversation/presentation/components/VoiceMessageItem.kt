@@ -87,7 +87,6 @@ fun VoiceMessageItem(
                         }
                     }
                     FileMessageState.Success -> {
-                        log("in ui audio state - ${message.audioState}")
                         IconButton(
                             onClick = {
                                 when (message.audioState) {

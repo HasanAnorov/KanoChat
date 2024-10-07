@@ -56,7 +56,7 @@ fun Messages(
                 .fillMaxSize()
         ) {
             item {
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
             items(
@@ -90,6 +90,10 @@ fun Messages(
                         onSaveToDownloadsClick = onSaveToDownloadsClick
                     )
                 }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
         }
