@@ -1957,18 +1957,26 @@ class TcpViewModel @Inject constructor(
         audioPlayer.playAudioFile(currentPlayingAudioFile!!) {
             updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
         }
-        updateIsPlaying(AudioState.Playing(0L), voiceMessage.messageId)
         startCollectingPlayTiming(voiceMessage.messageId)
     }
 
-    private fun resumeAudioFile(pausedTiming: Int, voiceMessageId:Long){
-        log("starting resume on $pausedTiming")
+    private fun resumeAudioFile(voiceMessage: ChatMessage.VoiceMessage){
+        val voiceMessageId = voiceMessage.messageId
+        val duration = voiceMessage.duration
+        val position = (voiceMessage.audioState as AudioState.Paused).currentPosition
+        val timing = if (duration > 0) {
+            (position.toFloat() / duration * 100).toLong()
+        } else {
+            0L
+        }
+        log("starting resume duration $duration")
+        log("starting resume position $position")
+        log("starting resume timing $timing")
         currentPlayingAudioFile?.let { playingAudioFile ->
-            updateIsPlaying(AudioState.Playing(pausedTiming.toLong()), voiceMessageId)
-            startCollectingPlayTiming(voiceMessageId)
-            audioPlayer.resumeAudioFile(playingAudioFile, pausedTiming) {
+            audioPlayer.resumeAudioFile(playingAudioFile, position) {
                 updateIsPlaying(AudioState.Idle, voiceMessageId)
             }
+            startCollectingPlayTiming(voiceMessageId)
         }
     }
 
@@ -2108,8 +2116,7 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.OnResumeVoiceMessageClick -> {
-                val timing = (event.message.audioState as AudioState.Paused).currentPosition
-                resumeAudioFile(timing, event.message.messageId)
+                resumeAudioFile(event.message)
             }
 
             is TcpScreenEvents.OnPauseVoiceMessageClick -> {
