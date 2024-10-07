@@ -42,6 +42,7 @@ fun Messages(
     onSaveToDownloadsClick: (ChatMessage.FileMessage) -> Unit = {},
     onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
     onPlayVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
+    onResumeVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit = {},
     onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
 ) {
@@ -82,6 +83,7 @@ fun Messages(
                         isLastMessageByAuthor = isLastMessageByAuthor,
                         onFileItemClick = onFileItemClicked,
                         onContactItemClick = onContactItemClick,
+                        onResumeVoiceMessageClick = {onResumeVoiceMessageClick(it)},
                         onPlayVoiceMessageClick = { onPlayVoiceMessageClick(it) },
                         onPauseVoiceMessageClick = { onPauseVoiceMessageClick(it) },
                         onStopVoiceMessageClick = { onStopVoiceMessageClick(it) },

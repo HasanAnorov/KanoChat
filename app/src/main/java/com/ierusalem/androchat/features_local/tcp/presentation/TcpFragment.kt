@@ -209,6 +209,7 @@ class TcpFragment : Fragment() {
     private fun executeNavigation(navigation: TcpScreenNavigation) {
         when (navigation) {
 
+            //todo - add this to visiblePermissionDialogueQueue
             TcpScreenNavigation.RequestLocationPermission -> {
                 locationPermissionRequest.launch(
                     permissionGuard.requiredPermissionsForWifi.toTypedArray()
@@ -219,6 +220,7 @@ class TcpFragment : Fragment() {
                 openWifiSettings()
             }
 
+            //todo - no need to send bundle
             is TcpScreenNavigation.OnChattingUserClicked -> {
                 val bundle = Bundle().apply {
                     putString(Constants.SELECTED_CHATTING_USER, navigation.selectUserStringForm)
@@ -236,7 +238,6 @@ class TcpFragment : Fragment() {
             is TcpScreenNavigation.OnErrorsOccurred -> {
                 longToast(getString(navigation.tcpScreenErrors.errorMessage))
             }
-
         }
     }
 

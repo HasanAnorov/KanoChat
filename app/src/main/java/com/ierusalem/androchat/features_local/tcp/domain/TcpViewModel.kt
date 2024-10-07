@@ -366,8 +366,6 @@ class TcpViewModel @Inject constructor(
             InitialUserModel::class.java
         )
 
-        log("initial chatting user model - $initialChattingUserModel")
-
         // Call the function that handles user insertion and online status
         handleUserInsertionAndStatus(initialChattingUserModel)
     }
@@ -551,7 +549,8 @@ class TcpViewModel @Inject constructor(
             )
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
-            //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
+            //if the port parameter is outside the specified range of valid port values,
+            // which is between 0 and 65535, inclusive.
             log("createServer: IllegalArgumentException ")
             closeServeSocket()
             updateHostConnectionStatus(HostConnectionStatus.Failure)
@@ -753,7 +752,8 @@ class TcpViewModel @Inject constructor(
             )
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
-            //if the port parameter is outside the specified range of valid port values, which is between 0 and 65535, inclusive.
+            //if the port parameter is outside the specified range of valid port values,
+            // which is between 0 and 65535, inclusive.
             log("connectToServer: IllegalArgumentException".uppercase())
             updateHasErrorOccurredDialog(TcpScreenDialogErrors.IllegalArgumentException)
             updateClientConnectionStatus(ClientConnectionStatus.Failure)
@@ -1679,6 +1679,7 @@ class TcpViewModel @Inject constructor(
         _state.update {
             it.copy(
                 peerUserUniqueId = initialChatModel.partnerSessionId,
+                peerUserName = initialChatModel.partnerUniqueName
             )
         }
     }
@@ -1831,7 +1832,6 @@ class TcpViewModel @Inject constructor(
                 handleWifiDisabledCase()
                 updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Idle)
             }
-
         }
     }
 
@@ -1897,49 +1897,6 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-//    fun updateIsPlaying(
-//        messageIdToUpdate: Long,
-//        newAudioState: AudioState
-//    ): Flow<PagingData<ChatMessage>> {
-//        return state.value.messages.map { pagingData ->
-//            pagingData.map { chatMessage ->
-//                if (chatMessage is ChatMessage.VoiceMessage && chatMessage.messageId == messageIdToUpdate) {
-//                    // Return a new instance of VoiceMessage with the updated audio state
-//                    chatMessage.copy(audioState = newAudioState)
-//                } else {
-//                    chatMessage
-//                }
-//            }
-//        }
-//    }
-//
-//    private fun updateIsPlaying(audioState: AudioState, messageId: Long) {
-//        // Create a new PagingData flow by mapping through the existing messages
-//        val newPagingDataFlow = state.value.messages.map { pagingData ->
-//
-//            pagingData.map { msg ->
-//                if (msg is ChatMessage.VoiceMessage && msg.messageId == messageId) {
-//                    // Update the audioState of the target message
-//                    msg.copy(audioState = audioState)
-//                } else if (msg is ChatMessage.VoiceMessage) {
-//                    // Set other voice messages to Idle state only if they are not already idle
-//                    if (msg.audioState != AudioState.Idle) {
-//                        msg.copy(audioState = AudioState.Idle)
-//                    } else {
-//                        msg // Return as is to prevent unnecessary recomposition
-//                    }
-//                } else {
-//                    msg // Return other message types as they are
-//                }
-//            }
-//        }
-//
-//        // Update the state only if the messages have changed
-//        _state.update { currentState ->
-//            currentState.copy(messages = newPagingDataFlow)
-//        }
-//    }
-
     private val pagingDataStream by lazy {
         selectedUser?.let { chattingUser ->
             Pager(
@@ -1963,15 +1920,14 @@ class TcpViewModel @Inject constructor(
         playingMessageStream.combine(pagingDataStream, ::Pair)
             .map { (playingMessage, pagingData) ->
                 val (messageId, audioState) = playingMessage ?: return@map pagingData
-
                 pagingData.map { msg ->
                     when {
                         // Only update if the target VoiceMessage state needs to change
-                        msg is ChatMessage.VoiceMessage && msg.messageId == messageId && msg.audioState != audioState -> {
+                        msg is ChatMessage.VoiceMessage && msg.messageId == messageId -> {
                             msg.copy(audioState = audioState)
                         }
                         // Reset other VoiceMessages to Idle if they are not already Idle
-                        msg is ChatMessage.VoiceMessage && msg.messageId != messageId && msg.audioState != AudioState.Idle -> {
+                        msg is ChatMessage.VoiceMessage && msg.messageId != messageId -> {
                             msg.copy(audioState = AudioState.Idle)
                         }
 
@@ -1979,108 +1935,39 @@ class TcpViewModel @Inject constructor(
                     }
                 }
             }
-
-//        viewModelScope.launch(Dispatchers.IO) {
-//            _state.update {
-//                it.copy(
-//                    messages = Pager(
-//                        PagingConfig(pageSize = 18, prefetchDistance = 25),
-//                        pagingSourceFactory = {
-//                            messagesRepository.getPagedUserMessagesById(
-//                                partnerSessionId = chattingUser.partnerSessionId,
-//                                authorSessionId = state.value.authorSessionId
-//                            )
-//                        }
-//                    ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
-//                        value.map { chatMessageEntity ->
-//                            chatMessageEntity.toChatMessage(chattingUser.partnerUniqueName)!!
-//                        }
-//                    }.cachedIn(viewModelScope)
-//                )
-//            }
-//        }
     }
 
     private fun updateIsPlaying(audioState: AudioState, messageId: Long) {
-        // Create a new PagingData flow by mapping through the existing messages
-//        val newPagingDataFlow = state.value.messages.map { pagingData ->
-//            pagingData.map { msg ->
-//                when {
-//                    // Only update if the target VoiceMessage state needs to change
-//                    msg is ChatMessage.VoiceMessage && msg.messageId == messageId && msg.audioState != audioState -> {
-//                        msg.copy(audioState = audioState)
-//                    }
-//                    // Reset other VoiceMessages to Idle if they are not already Idle
-//                    msg is ChatMessage.VoiceMessage && msg.messageId != messageId && msg.audioState != AudioState.Idle -> {
-//                        msg.copy(audioState = AudioState.Idle)
-//                    }
-//                    else -> msg // Return the message unchanged to prevent unnecessary recomposition
-//                }
-//            }
-//        }.distinctUntilChanged()
-//
-//        // Update the state only if the messages have changed
-//        _state.update { currentState ->
-//            currentState.copy(messages = newPagingDataFlow)
-//        }
         viewModelScope.launch {
             playingMessageStream.emit(messageId to audioState)
         }
     }
 
     private fun updatePlayTiming(timing: Long, messageId: Long) {
-        log("updatePlayTiming: messageId - $messageId, timing - $timing")
-        // Find the target message
-//        val targetMessage: ChatMessage.VoiceMessage? = state.value.messages
-//            .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
-//        // Check if targetMessage is not null
-//        targetMessage?.let {
-//            val newAudioState = AudioState.Playing(timing)
-//            // Create a copy with the updated isPlaying value
-//            val updatedMessage = it.copy(audioState = newAudioState)
-//            // Get the current list of messages
-//            val messages = state.value.messages
-//            // Find the index of the target message
-//            val targetMessageIndex = messages.indexOf(targetMessage)
-//            // Create a new list with the updated message
-//            val newMessages = messages.toMutableList().apply {
-//                set(targetMessageIndex, updatedMessage)
-//            }
-//            // Update the state with the new list of messages
-//            _state.update { currentState ->
-//                currentState.copy(
-//                    messages = newMessages
-//                )
-//            }
-//        }
+        viewModelScope.launch {
+            playingMessageStream.emit(messageId to AudioState.Playing(timing))
+        }
     }
 
+    private var currentPlayingAudioFile: File? = null
+
     private fun playAudioFile(voiceMessage: ChatMessage.VoiceMessage) {
-        val audioFile = File(privateFilesDirectory, voiceMessage.voiceFileName)
-        when (voiceMessage.audioState) {
-            AudioState.Idle -> {
-                audioPlayer.playAudioFile(audioFile) {
-                    log("on finished in vm")
-                    updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
-                }
-                updateIsPlaying(AudioState.Playing(0L), voiceMessage.messageId)
-                startCollectingPlayTiming(voiceMessage.messageId)
-            }
+        log("play audio - state was : ${voiceMessage.audioState}")
+        currentPlayingAudioFile = File(privateFilesDirectory, voiceMessage.voiceFileName)
+        audioPlayer.playAudioFile(currentPlayingAudioFile!!) {
+            updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
+        }
+        updateIsPlaying(AudioState.Playing(0L), voiceMessage.messageId)
+        startCollectingPlayTiming(voiceMessage.messageId)
+    }
 
-            is AudioState.Playing -> {
-                val currentPosition = audioPlayer.pause()
-                currentPosition?.let {
-                    updateIsPlaying(AudioState.Paused(currentPosition), voiceMessage.messageId)
-                }
-            }
-
-            is AudioState.Paused -> {
-                log("starting resume on ${voiceMessage.audioState.currentPosition}")
-                startCollectingPlayTiming(voiceMessage.messageId)
-                audioPlayer.resumeAudioFile(audioFile, voiceMessage.audioState.currentPosition) {
-                    log("on finished in vm 1")
-                    updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
-                }
+    private fun resumeAudioFile(pausedTiming: Int, voiceMessageId:Long){
+        log("starting resume on $pausedTiming")
+        currentPlayingAudioFile?.let { playingAudioFile ->
+            updateIsPlaying(AudioState.Playing(pausedTiming.toLong()), voiceMessageId)
+            startCollectingPlayTiming(voiceMessageId)
+            audioPlayer.resumeAudioFile(playingAudioFile, pausedTiming) {
+                updateIsPlaying(AudioState.Idle, voiceMessageId)
             }
         }
     }
@@ -2091,8 +1978,6 @@ class TcpViewModel @Inject constructor(
                 startLocalOnlyHotspot()
             } else {
                 log("Permissions not granted for location!")
-                // request at leas one time location permission,
-                // this make requestPermissionForRationale return true
                 emitNavigation(TcpScreenNavigation.RequestLocationPermission)
             }
         }
@@ -2101,17 +1986,16 @@ class TcpViewModel @Inject constructor(
     @SuppressLint("MissingPermission", "NewApi")
     @Suppress("DEPRECATION")
     private fun startLocalOnlyHotspot() {
-
         updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.LaunchingLocalOnlyHotspot)
-
         val callback = object : LocalOnlyHotspotCallback() {
             override fun onStarted(reservation: WifiManager.LocalOnlyHotspotReservation?) {
                 super.onStarted(reservation)
+                log("Local Only Hotspot Started")
+
                 hotspotReservation = reservation
+
                 val config: WifiConfiguration? = reservation?.wifiConfiguration
-
                 log("SSID: ${config?.SSID}, Password: ${config?.preSharedKey}")
-
                 _state.update {
                     it.copy(
                         localOnlyHotspotName = config?.SSID ?: "",
@@ -2119,30 +2003,26 @@ class TcpViewModel @Inject constructor(
                     )
                 }
 
-                log("HttpProxy: ${config?.httpProxy}  HiddenSSID: ${config?.hiddenSSID}")
-                log("Local Only Hotspot Started".uppercase())
                 val ip = connectivityObserver.getWifiServerIpAddress()
                 log("wifi ip local-only is : $ip")
 
                 handleNetworkEvents(WiFiNetworkEvent.UpdateGroupOwnerAddress(ip))
-
                 updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.LocalOnlyHotspotRunning)
             }
 
             override fun onStopped() {
                 super.onStopped()
-                log("Local Only Hotspot Stopped".uppercase())
+                log("Local Only Hotspot Stopped")
                 updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
             }
 
             override fun onFailed(reason: Int) {
                 super.onFailed(reason)
-                log("Local Only Hotspot Failed".uppercase())
+                log("Local Only Hotspot Failed")
                 updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Failure)
             }
         }
         wifiManager.startLocalOnlyHotspot(callback, null)
-
     }
 
     private fun updateLocalOnlyHotspotStatus(status: LocalOnlyHotspotStatus) {
@@ -2199,24 +2079,37 @@ class TcpViewModel @Inject constructor(
         updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
     }
 
+    fun updateBottomSheetVisibility(shouldBeShown: Boolean) {
+        _state.update {
+            it.copy(
+                showBottomSheet = shouldBeShown
+            )
+        }
+    }
+
     @SuppressLint("NewApi")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
-            //todo - you did not use the parameter inside on play voice message
+
+            TcpScreenEvents.OnVoiceRecordStart -> {
+                startRecording()
+            }
+
+            TcpScreenEvents.OnVoiceRecordFinished -> {
+                finishRecording()
+            }
+
+            TcpScreenEvents.OnVoiceRecordCancelled -> {
+                cancelRecording()
+            }
+
             is TcpScreenEvents.OnPlayVoiceMessageClick -> {
                 playAudioFile(event.message)
             }
 
-            is TcpScreenEvents.OnSaveToDownloadsClick -> {
-                saveFileToDownloads(fileName = event.message.fileName)
-            }
-
-            is TcpScreenEvents.TcpChatItemClicked -> {
-                emitNavigation(TcpScreenNavigation.OnChattingUserClicked(Gson().toJson(event.currentChattingUser.toInitialChatModel())))
-            }
-
-            TcpScreenEvents.RequestRecordAudioPermission -> {
-                emitNavigation(TcpScreenNavigation.RequestRecordAudioPermission)
+            is TcpScreenEvents.OnResumeVoiceMessageClick -> {
+                val timing = (event.message.audioState as AudioState.Paused).currentPosition
+                resumeAudioFile(timing, event.message.messageId)
             }
 
             is TcpScreenEvents.OnPauseVoiceMessageClick -> {
@@ -2232,16 +2125,16 @@ class TcpViewModel @Inject constructor(
                 audioPlayer.stop()
             }
 
-            TcpScreenEvents.OnVoiceRecordStart -> {
-                startRecording()
+            is TcpScreenEvents.OnSaveToDownloadsClick -> {
+                saveFileToDownloads(fileName = event.message.fileName)
             }
 
-            TcpScreenEvents.OnVoiceRecordFinished -> {
-                finishRecording()
+            is TcpScreenEvents.TcpChatItemClicked -> {
+                emitNavigation(TcpScreenNavigation.OnChattingUserClicked(Gson().toJson(event.currentChattingUser.toInitialChatModel())))
             }
 
-            TcpScreenEvents.OnVoiceRecordCancelled -> {
-                cancelRecording()
+            TcpScreenEvents.RequestRecordAudioPermission -> {
+                emitNavigation(TcpScreenNavigation.RequestRecordAudioPermission)
             }
 
             is TcpScreenEvents.OnConnectToWifiClick -> {
@@ -2266,11 +2159,7 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.UpdateBottomSheetState -> {
-                _state.update {
-                    it.copy(
-                        showBottomSheet = event.shouldBeShown
-                    )
-                }
+                updateBottomSheetVisibility(event.shouldBeShown)
             }
 
             TcpScreenEvents.ReadContacts -> {
