@@ -133,7 +133,6 @@ fun ConversationContent(
 
                     is Resource.Success -> {
                         Messages(
-//                            messages = uiState.messages.collectAsLazyPagingItems(),
                             messages = messages,
                             modifier = Modifier.weight(1f),
                             scrollState = scrollState,
@@ -151,6 +150,13 @@ fun ConversationContent(
                             onPlayVoiceMessageClick = {
                                 eventHandler(
                                     TcpScreenEvents.OnPlayVoiceMessageClick(
+                                        it
+                                    )
+                                )
+                            },
+                            onResumeVoiceMessageClick = {
+                                eventHandler(
+                                    TcpScreenEvents.OnResumeVoiceMessageClick(
                                         it
                                     )
                                 )

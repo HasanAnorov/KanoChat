@@ -30,6 +30,7 @@ fun ChatMessageItem(
     onSaveToDownloadsClick: (ChatMessage.FileMessage) -> Unit = {},
     onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
     onPlayVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
+    onResumeVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit = {},
     onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
 ) {
@@ -49,6 +50,7 @@ fun ChatMessageItem(
             onFileItemClick = onFileItemClick,
             onContactItemClick = onContactItemClick,
             onPlayVoiceMessageClick = { onPlayVoiceMessageClick(it) },
+            onResumeVoiceMessageClick = {onResumeVoiceMessageClick(it)},
             onPauseVoiceMessageClick = { onPauseVoiceMessageClick(it) },
             onStopVoiceMessageClick = { onStopVoiceMessageClick(it) },
             onSaveToDownloadsClick = onSaveToDownloadsClick
@@ -65,6 +67,7 @@ fun AuthorAndMessage(
     onSaveToDownloadsClick: (ChatMessage.FileMessage) -> Unit,
     onContactItemClick: (ChatMessage.ContactMessage) -> Unit,
     onPlayVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
+    onResumeVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
 ) {
@@ -82,6 +85,7 @@ fun AuthorAndMessage(
                     message = chatMessage,
                     onPlayClick = { onPlayVoiceMessageClick(chatMessage) },
                     onPauseClick = { onPauseVoiceMessageClick(chatMessage) },
+                    onResumeClick = { onResumeVoiceMessageClick(chatMessage) },
                     onStopClick = { onStopVoiceMessageClick(chatMessage) },
                 )
             }

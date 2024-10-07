@@ -39,6 +39,7 @@ fun VoiceMessageItem(
     modifier: Modifier = Modifier,
     message: ChatMessage.VoiceMessage,
     onPlayClick: () -> Unit,
+    onResumeClick:() -> Unit = {},
     onPauseClick: () -> Unit,
     onStopClick: () -> Unit,
 ) {
@@ -86,14 +87,17 @@ fun VoiceMessageItem(
                         }
                     }
                     FileMessageState.Success -> {
+                        log("in ui audio state - ${message.audioState}")
                         IconButton(
                             onClick = {
                                 when (message.audioState) {
                                     is AudioState.Playing -> {
                                         onPauseClick()
                                     }
-
-                                    else -> {
+                                    is AudioState.Paused -> {
+                                        onResumeClick()
+                                    }
+                                    AudioState.Idle -> {
                                         onPlayClick()
                                     }
                                 }

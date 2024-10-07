@@ -47,6 +47,7 @@ sealed interface TcpScreenEvents {
     data object OnVoiceRecordCancelled : TcpScreenEvents
 
     data class OnPlayVoiceMessageClick(val message: ChatMessage.VoiceMessage) : TcpScreenEvents
+    data class OnResumeVoiceMessageClick(val message: ChatMessage.VoiceMessage) : TcpScreenEvents
     data class OnPauseVoiceMessageClick(val message: ChatMessage.VoiceMessage) : TcpScreenEvents
     data class OnStopVoiceMessageClick(val message: ChatMessage.VoiceMessage) : TcpScreenEvents
 

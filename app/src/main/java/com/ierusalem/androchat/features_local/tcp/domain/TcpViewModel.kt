@@ -1920,15 +1920,14 @@ class TcpViewModel @Inject constructor(
         playingMessageStream.combine(pagingDataStream, ::Pair)
             .map { (playingMessage, pagingData) ->
                 val (messageId, audioState) = playingMessage ?: return@map pagingData
-
                 pagingData.map { msg ->
                     when {
                         // Only update if the target VoiceMessage state needs to change
-                        msg is ChatMessage.VoiceMessage && msg.messageId == messageId && msg.audioState != audioState -> {
+                        msg is ChatMessage.VoiceMessage && msg.messageId == messageId -> {
                             msg.copy(audioState = audioState)
                         }
                         // Reset other VoiceMessages to Idle if they are not already Idle
-                        msg is ChatMessage.VoiceMessage && msg.messageId != messageId && msg.audioState != AudioState.Idle -> {
+                        msg is ChatMessage.VoiceMessage && msg.messageId != messageId -> {
                             msg.copy(audioState = AudioState.Idle)
                         }
 
@@ -1945,58 +1944,30 @@ class TcpViewModel @Inject constructor(
     }
 
     private fun updatePlayTiming(timing: Long, messageId: Long) {
-        log("updatePlayTiming: messageId - $messageId, timing - $timing")
-        // Find the target message
-//        val targetMessage: ChatMessage.VoiceMessage? = state.value.messages
-//            .find { it.messageId == messageId && it.messageType == AppMessageType.VOICE } as? ChatMessage.VoiceMessage
-//        // Check if targetMessage is not null
-//        targetMessage?.let {
-//            val newAudioState = AudioState.Playing(timing)
-//            // Create a copy with the updated isPlaying value
-//            val updatedMessage = it.copy(audioState = newAudioState)
-//            // Get the current list of messages
-//            val messages = state.value.messages
-//            // Find the index of the target message
-//            val targetMessageIndex = messages.indexOf(targetMessage)
-//            // Create a new list with the updated message
-//            val newMessages = messages.toMutableList().apply {
-//                set(targetMessageIndex, updatedMessage)
-//            }
-//            // Update the state with the new list of messages
-//            _state.update { currentState ->
-//                currentState.copy(
-//                    messages = newMessages
-//                )
-//            }
-//        }
+        viewModelScope.launch {
+            playingMessageStream.emit(messageId to AudioState.Playing(timing))
+        }
     }
 
+    private var currentPlayingAudioFile: File? = null
+
     private fun playAudioFile(voiceMessage: ChatMessage.VoiceMessage) {
-        val audioFile = File(privateFilesDirectory, voiceMessage.voiceFileName)
-        when (voiceMessage.audioState) {
-            AudioState.Idle -> {
-                audioPlayer.playAudioFile(audioFile) {
-                    log("on finished in vm")
-                    updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
-                }
-                updateIsPlaying(AudioState.Playing(0L), voiceMessage.messageId)
-                startCollectingPlayTiming(voiceMessage.messageId)
-            }
+        log("play audio - state was : ${voiceMessage.audioState}")
+        currentPlayingAudioFile = File(privateFilesDirectory, voiceMessage.voiceFileName)
+        audioPlayer.playAudioFile(currentPlayingAudioFile!!) {
+            updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
+        }
+        updateIsPlaying(AudioState.Playing(0L), voiceMessage.messageId)
+        startCollectingPlayTiming(voiceMessage.messageId)
+    }
 
-            is AudioState.Playing -> {
-                val currentPosition = audioPlayer.pause()
-                currentPosition?.let {
-                    updateIsPlaying(AudioState.Paused(currentPosition), voiceMessage.messageId)
-                }
-            }
-
-            is AudioState.Paused -> {
-                log("starting resume on ${voiceMessage.audioState.currentPosition}")
-                startCollectingPlayTiming(voiceMessage.messageId)
-                audioPlayer.resumeAudioFile(audioFile, voiceMessage.audioState.currentPosition) {
-                    log("on finished in vm 1")
-                    updateIsPlaying(AudioState.Idle, voiceMessage.messageId)
-                }
+    private fun resumeAudioFile(pausedTiming: Int, voiceMessageId:Long){
+        log("starting resume on $pausedTiming")
+        currentPlayingAudioFile?.let { playingAudioFile ->
+            updateIsPlaying(AudioState.Playing(pausedTiming.toLong()), voiceMessageId)
+            startCollectingPlayTiming(voiceMessageId)
+            audioPlayer.resumeAudioFile(playingAudioFile, pausedTiming) {
+                updateIsPlaying(AudioState.Idle, voiceMessageId)
             }
         }
     }
@@ -2119,21 +2090,26 @@ class TcpViewModel @Inject constructor(
     @SuppressLint("NewApi")
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
-            //todo - you did not use the parameter inside on play voice message
+
+            TcpScreenEvents.OnVoiceRecordStart -> {
+                startRecording()
+            }
+
+            TcpScreenEvents.OnVoiceRecordFinished -> {
+                finishRecording()
+            }
+
+            TcpScreenEvents.OnVoiceRecordCancelled -> {
+                cancelRecording()
+            }
+
             is TcpScreenEvents.OnPlayVoiceMessageClick -> {
                 playAudioFile(event.message)
             }
 
-            is TcpScreenEvents.OnSaveToDownloadsClick -> {
-                saveFileToDownloads(fileName = event.message.fileName)
-            }
-
-            is TcpScreenEvents.TcpChatItemClicked -> {
-                emitNavigation(TcpScreenNavigation.OnChattingUserClicked(Gson().toJson(event.currentChattingUser.toInitialChatModel())))
-            }
-
-            TcpScreenEvents.RequestRecordAudioPermission -> {
-                emitNavigation(TcpScreenNavigation.RequestRecordAudioPermission)
+            is TcpScreenEvents.OnResumeVoiceMessageClick -> {
+                val timing = (event.message.audioState as AudioState.Paused).currentPosition
+                resumeAudioFile(timing, event.message.messageId)
             }
 
             is TcpScreenEvents.OnPauseVoiceMessageClick -> {
@@ -2149,16 +2125,16 @@ class TcpViewModel @Inject constructor(
                 audioPlayer.stop()
             }
 
-            TcpScreenEvents.OnVoiceRecordStart -> {
-                startRecording()
+            is TcpScreenEvents.OnSaveToDownloadsClick -> {
+                saveFileToDownloads(fileName = event.message.fileName)
             }
 
-            TcpScreenEvents.OnVoiceRecordFinished -> {
-                finishRecording()
+            is TcpScreenEvents.TcpChatItemClicked -> {
+                emitNavigation(TcpScreenNavigation.OnChattingUserClicked(Gson().toJson(event.currentChattingUser.toInitialChatModel())))
             }
 
-            TcpScreenEvents.OnVoiceRecordCancelled -> {
-                cancelRecording()
+            TcpScreenEvents.RequestRecordAudioPermission -> {
+                emitNavigation(TcpScreenNavigation.RequestRecordAudioPermission)
             }
 
             is TcpScreenEvents.OnConnectToWifiClick -> {
