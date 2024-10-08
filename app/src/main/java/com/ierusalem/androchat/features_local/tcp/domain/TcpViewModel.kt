@@ -227,11 +227,13 @@ class TcpViewModel @Inject constructor(
                     closeServeSocket()
                     delay(200)
                     updateHostConnectionStatus(HostConnectionStatus.Idle)
+                    updateClientConnectionStatus(ClientConnectionStatus.Idle)
                 }
 
                 GeneralConnectionStatus.ConnectedAsClient -> {
                     closeClientSocket()
                     delay(200)
+                    updateHostConnectionStatus(HostConnectionStatus.Idle)
                     updateClientConnectionStatus(ClientConnectionStatus.Idle)
                 }
             }
@@ -266,8 +268,11 @@ class TcpViewModel @Inject constructor(
             messagesRepository.getAllUsersWithLastMessages(authorSessionID).collect { users ->
                 _state.update {
                     it.copy(
-                        chattingUsers = Resource.Success(users.sortedBy { user -> !user.isOnline }
-                            .map { user -> user.toChattingUser() })
+                        chattingUsers = Resource.Success(
+                            users
+                                .sortedBy { user -> !user.isOnline }
+                                .map { user -> user.toChattingUser() }
+                        )
                     )
                 }
             }
@@ -416,25 +421,22 @@ class TcpViewModel @Inject constructor(
             InitialUserModel::class.java
         )
 
+        updateInitialChatModel(initialChattingUserModel)
+
         // Call the function that handles user insertion and online status
         handleUserInsertionAndStatus(initialChattingUserModel)
     }
 
     // Function to handle both inserting the user and updating their online status
     private fun handleUserInsertionAndStatus(initialChatModel: InitialUserModel) {
-        updateInitialChatModel(initialChatModel)
         viewModelScope.launch(Dispatchers.IO) {
-            val userExists =
+            val isUserExist =
                 messagesRepository.isUserExist(
                     initialChatModel.partnerSessionId,
                     state.value.authorSessionId
                 )
-            if (userExists) {
+            if (isUserExist) {
                 log("user exist")
-                messagesRepository.updateChattingUserUniqueName(
-                    userUniqueId = initialChatModel.partnerSessionId,
-                    userUniqueName = initialChatModel.partnerUniqueName
-                )
                 updateUserOnlineStatus(
                     userUniqueId = initialChatModel.partnerSessionId,
                     isOnline = true
@@ -1133,13 +1135,12 @@ class TcpViewModel @Inject constructor(
                         // Ensure all bytes were sent
                         if (bytesForPercentage == fileSizeForPercentage) {
                             log("All bytes sent correctly.")
-                            val newState = FileMessageState.Success
                             val newFileMessage = fileMessage.copy(
                                 id = messageId,
                                 isFileAvailable = true,
-                                fileState = newState
+                                fileState = FileMessageState.Success
                             )
-                            runBlocking {
+                            runBlocking(Dispatchers.IO) {
                                 updatePercentageOfReceivingFile(newFileMessage)
                             }
                             log("file sent successfully")
@@ -1268,7 +1269,7 @@ class TcpViewModel @Inject constructor(
 
                         // Ensure all bytes were sent
                         if (bytesForPercentage == fileSizeForPercentage) {
-                            log("All bytes sent correctly.")
+                            log("All bytes received correctly.")
                             val newState = FileMessageState.Success
                             val newFileMessage = fileMessageEntity.copy(
                                 fileState = newState,
@@ -1400,7 +1401,7 @@ class TcpViewModel @Inject constructor(
 
                     // Ensure all bytes were sent
                     if (bytesForPercentage == fileSizeForPercentage) {
-                        log("All bytes sent correctly.")
+                        log("All bytes received correctly.")
                         val newState = FileMessageState.Success
                         val newVoiceMessage = voiceMessageEntity.copy(
                             id = messageId,
