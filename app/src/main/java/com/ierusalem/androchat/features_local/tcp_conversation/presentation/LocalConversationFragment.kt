@@ -99,8 +99,10 @@ class LocalConversationFragment : Fragment() {
         super.onCreate(savedInstanceState)
         val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
         val selectedUser = Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
-        viewModel.setSelectedUser(selectedUser)
-        viewModel.getCurrentChattingUser(selectedUser)
+        lifecycleScope.launch(Dispatchers.IO) {
+            viewModel.setSelectedUser(selectedUser)
+            viewModel.getCurrentChattingUser(selectedUser)
+        }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)

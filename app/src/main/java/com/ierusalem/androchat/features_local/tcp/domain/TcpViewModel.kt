@@ -85,6 +85,7 @@ import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -92,6 +93,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -161,19 +163,21 @@ class TcpViewModel @Inject constructor(
         listenWifiConnections()
     }
 
-    private var selectedUser: InitialUserModel? = null
+    private val _selectedUser = MutableStateFlow<InitialUserModel?>(null)
+    private val playingMessageStream = MutableStateFlow<Pair<Long, AudioState>?>(null)
 
     fun setSelectedUser(selectedUser: InitialUserModel) {
-        this.selectedUser = selectedUser
+        _selectedUser.value = selectedUser
     }
 
-    private val pagingDataStream by lazy {
-        selectedUser?.let { chattingUser ->
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val pagingDataStream = _selectedUser.flatMapLatest { chattingUser ->
+        chattingUser?.let {
             Pager(
                 PagingConfig(pageSize = 18, prefetchDistance = 25),
                 pagingSourceFactory = {
                     messagesRepository.getPagedUserMessagesById(
-                        partnerSessionId = chattingUser.partnerSessionId,
+                        partnerSessionId = it.partnerSessionId,
                         authorSessionId = state.value.authorSessionId
                     )
                 }
@@ -185,7 +189,6 @@ class TcpViewModel @Inject constructor(
         } ?: flowOf(PagingData.empty())
     }
 
-    private val playingMessageStream = MutableStateFlow<Pair<Long, AudioState>?>(null)
     val messagesStream by lazy {
         playingMessageStream.combine(pagingDataStream, ::Pair)
             .map { (playingMessage, pagingData) ->
@@ -464,6 +467,9 @@ class TcpViewModel @Inject constructor(
             }
             while (!serverSocket.isClosed) {
                 connectedClientSocket = serverSocket.accept()
+
+                connectedClientSocket.keepAlive = true
+
                 connectedClientWriter =
                     DataOutputStream(connectedClientSocket.getOutputStream())
                 //here we sending the unique device id to the client
@@ -858,7 +864,6 @@ class TcpViewModel @Inject constructor(
         if (!connectedClientSocket.isClosed) {
             when (message.type) {
                 AppMessageType.TEXT -> {
-                    log("send host message - $connectedClientSocket --- ${connectedClientSocket.isClosed}")
                     viewModelScope.launch(Dispatchers.IO) {
                         sendTextMessage(writer = connectedClientWriter, textMessage = message)
                     }
@@ -1974,7 +1979,7 @@ class TcpViewModel @Inject constructor(
         startCollectingPlayTiming(voiceMessage.messageId)
     }
 
-    private fun resumeAudioFile(voiceMessage: ChatMessage.VoiceMessage){
+    private fun resumeAudioFile(voiceMessage: ChatMessage.VoiceMessage) {
         val voiceMessageId = voiceMessage.messageId
         val position = (voiceMessage.audioState as AudioState.Paused).currentPosition
         currentPlayingAudioFile?.let { playingAudioFile ->
@@ -1987,7 +1992,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun pauseAudioFile(voiceMessageId:Long){
+    private fun pauseAudioFile(voiceMessageId: Long) {
         audioPlayer.pause()?.let { position ->
             viewModelScope.launch {
                 playingMessageStream.emit(voiceMessageId to AudioState.Paused(position))
@@ -1995,7 +2000,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun stopAudioFile(voiceMessageId:Long){
+    private fun stopAudioFile(voiceMessageId: Long) {
         audioPlayer.stop()
         viewModelScope.launch {
             playingMessageStream.emit(voiceMessageId to AudioState.Idle)
@@ -2096,19 +2101,17 @@ class TcpViewModel @Inject constructor(
         updateLocalOnlyHotspotStatus(LocalOnlyHotspotStatus.Idle)
     }
 
-    fun getCurrentChattingUser(currentChattingUser: InitialUserModel) {
-        viewModelScope.launch(Dispatchers.IO) {
-            messagesRepository.getChattingUserByIdFlow(currentChattingUser.partnerSessionId)
-                .collect { user ->
-                    user?.let {
-                        _state.update {
-                            it.copy(
-                                currentChattingUser = Resource.Success(user.toChattingUser())
-                            )
-                        }
+    suspend fun getCurrentChattingUser(currentChattingUser: InitialUserModel) {
+        messagesRepository.getChattingUserByIdFlow(currentChattingUser.partnerSessionId)
+            .collect { user ->
+                user?.let {
+                    _state.update {
+                        it.copy(
+                            currentChattingUser = Resource.Success(user.toChattingUser())
+                        )
                     }
                 }
-        }
+            }
     }
 
     fun updateBottomSheetVisibility(shouldBeShown: Boolean) {
