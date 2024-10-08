@@ -26,6 +26,7 @@ data class TcpScreenUiState(
     val peerUserUniqueId: String = "",
     val peerUserName: String = "",
     val authorSessionId: String = "",
+    val authorUsername: String = "",
 
     val hotspotName: String = Constants.UNKNOWN_HOTSPOT_NAME,
     val isValidHotSpotName: Boolean = isValidHotspotName(hotspotName),

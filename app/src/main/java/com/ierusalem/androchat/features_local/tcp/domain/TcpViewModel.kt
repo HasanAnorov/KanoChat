@@ -179,7 +179,7 @@ class TcpViewModel @Inject constructor(
                 }
             ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
                 value.map { chatMessageEntity ->
-                    chatMessageEntity.toChatMessage(chattingUser.partnerUniqueName)!!
+                    chatMessageEntity.toChatMessage()
                 }
             }.cachedIn(viewModelScope)
         } ?: flowOf(PagingData.empty())
@@ -275,7 +275,8 @@ class TcpViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _state.update {
                 it.copy(
-                    authorSessionId = dataStorePreferenceRepository.getSessionId.first()
+                    authorSessionId = dataStorePreferenceRepository.getSessionId.first(),
+                    authorUsername = dataStorePreferenceRepository.getUsername.first()
                 )
             }
         }
@@ -441,7 +442,8 @@ class TcpViewModel @Inject constructor(
                     partnerSessionID = initialChatModel.partnerSessionId,
                     partnerUsername = initialChatModel.partnerUniqueName,
                     avatarBackgroundColor = getRandomColor(),
-                    isOnline = true
+                    isOnline = true,
+                    createdAt = getCurrentTime()
                 )
                 log("new user - $newChattingUser")
                 messagesRepository.insertChattingUser(newChattingUser)
@@ -678,7 +680,6 @@ class TcpViewModel @Inject constructor(
                 val reader = DataInputStream(BufferedInputStream(clientSocket.getInputStream()))
 
                 try {
-
                     val messageType = AppMessageType.fromChar(reader.readChar())
                     log("client server incoming message type - $messageType ")
 
@@ -857,6 +858,7 @@ class TcpViewModel @Inject constructor(
         if (!connectedClientSocket.isClosed) {
             when (message.type) {
                 AppMessageType.TEXT -> {
+                    log("send host message - $connectedClientSocket --- ${connectedClientSocket.isClosed}")
                     viewModelScope.launch(Dispatchers.IO) {
                         sendTextMessage(writer = connectedClientWriter, textMessage = message)
                     }
@@ -895,7 +897,6 @@ class TcpViewModel @Inject constructor(
         writer: DataOutputStream,
         textMessage: ChatMessageEntity
     ) {
-        log("sending text message from client - $textMessage")
         try {
             writer.writeChar(textMessage.type.identifier.code)
             writer.writeUTF(textMessage.text)
@@ -1208,7 +1209,10 @@ class TcpViewModel @Inject constructor(
                     formattedTime = getCurrentTime(),
                     isFromYou = false,
                     partnerSessionId = state.value.peerUserUniqueId,
+                    partnerName = state.value.peerUserName,
                     authorSessionId = state.value.authorSessionId,
+                    authorUsername = state.value.authorUsername,
+                    //message specific fields
                     fileState = FileMessageState.Loading(0),
                     fileName = file.name,
                     fileSize = fileSize.readableFileSize(),
@@ -1338,7 +1342,9 @@ class TcpViewModel @Inject constructor(
                 formattedTime = getCurrentTime(),
                 isFromYou = false,
                 partnerSessionId = state.value.peerUserUniqueId,
+                partnerName = state.value.peerUserName,
                 authorSessionId = state.value.authorSessionId,
+                authorUsername = state.value.authorUsername,
                 //message specific fields
                 fileState = FileMessageState.Loading(0),
                 voiceMessageFileName = file.name,
@@ -1448,7 +1454,10 @@ class TcpViewModel @Inject constructor(
             formattedTime = getCurrentTime(),
             isFromYou = false,
             partnerSessionId = state.value.peerUserUniqueId,
+            partnerName = state.value.peerUserName,
             authorSessionId = state.value.authorSessionId,
+            authorUsername = state.value.authorUsername,
+            //message specific fields
             text = receivedMessage.toString()
         )
         viewModelScope.launch(Dispatchers.IO) {
@@ -1471,7 +1480,10 @@ class TcpViewModel @Inject constructor(
             formattedTime = getCurrentTime(),
             isFromYou = false,
             partnerSessionId = state.value.peerUserUniqueId,
+            partnerName = state.value.peerUserName,
             authorSessionId = state.value.authorSessionId,
+            authorUsername = state.value.authorUsername,
+            //message specific fields
             contactName = contactMessageItem.contactName,
             contactNumber = contactMessageItem.contactNumber
         )
@@ -1908,7 +1920,10 @@ class TcpViewModel @Inject constructor(
             formattedTime = getCurrentTime(),
             isFromYou = true,
             partnerSessionId = state.value.peerUserUniqueId,
+            partnerName = state.value.peerUserName,
             authorSessionId = state.value.authorSessionId,
+            authorUsername = state.value.authorUsername,
+            //message specific fields
             fileState = FileMessageState.Loading(0),
             voiceMessageFileName = currentRecordingAudioFile.name,
             voiceMessageAudioFileDuration = currentRecordingAudioFile.getAudioFileDuration(),
@@ -2262,7 +2277,10 @@ class TcpViewModel @Inject constructor(
                     formattedTime = getCurrentTime(),
                     isFromYou = true,
                     partnerSessionId = state.value.peerUserUniqueId,
+                    partnerName = state.value.peerUserName,
                     authorSessionId = state.value.authorSessionId,
+                    authorUsername = state.value.authorUsername,
+                    //message specific fields
                     text = event.message
                 )
 
@@ -2486,8 +2504,10 @@ class TcpViewModel @Inject constructor(
             formattedTime = getCurrentTime(),
             isFromYou = true,
             partnerSessionId = state.value.peerUserUniqueId,
+            partnerName = state.value.peerUserName,
             authorSessionId = state.value.authorSessionId,
-
+            authorUsername = state.value.authorUsername,
+            //message specific fields
             filePath = file.path,
             fileState = FileMessageState.Loading(0),
             fileName = file.name,
@@ -2530,8 +2550,10 @@ class TcpViewModel @Inject constructor(
                         formattedTime = getCurrentTime(),
                         isFromYou = true,
                         partnerSessionId = state.value.peerUserUniqueId,
+                        partnerName = state.value.peerUserName,
                         authorSessionId = state.value.authorSessionId,
-
+                        authorUsername = state.value.authorUsername,
+                        //message specific fields
                         fileState = FileMessageState.Loading(0),
                         fileName = file.name,
                         fileSize = file.length().readableFileSize(),
@@ -2557,8 +2579,10 @@ class TcpViewModel @Inject constructor(
                         formattedTime = getCurrentTime(),
                         isFromYou = true,
                         partnerSessionId = state.value.peerUserUniqueId,
+                        partnerName = state.value.peerUserName,
                         authorSessionId = state.value.authorSessionId,
-
+                        authorUsername = state.value.authorUsername,
+                        //message specific fields
                         fileState = FileMessageState.Loading(0),
                         fileName = file.name,
                         fileSize = file.length().readableFileSize(),

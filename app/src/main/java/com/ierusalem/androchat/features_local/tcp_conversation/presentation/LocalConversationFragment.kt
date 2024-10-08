@@ -147,7 +147,9 @@ class LocalConversationFragment : Fragment() {
                                                                     isFromYou = true,
                                                                     partnerSessionId = viewModel.state.value.peerUserUniqueId,
                                                                     authorSessionId = viewModel.state.value.authorSessionId,
-
+                                                                    partnerName = viewModel.state.value.peerUserName,
+                                                                    authorUsername = viewModel.state.value.authorUsername,
+                                                                    //message specific fields
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
                                                                 )
@@ -170,7 +172,9 @@ class LocalConversationFragment : Fragment() {
                                                                     isFromYou = true,
                                                                     partnerSessionId = viewModel.state.value.peerUserUniqueId,
                                                                     authorSessionId = viewModel.state.value.authorSessionId,
-
+                                                                    partnerName = viewModel.state.value.peerUserName,
+                                                                    authorUsername = viewModel.state.value.authorUsername,
+                                                                    //message specific fields
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
                                                                 )

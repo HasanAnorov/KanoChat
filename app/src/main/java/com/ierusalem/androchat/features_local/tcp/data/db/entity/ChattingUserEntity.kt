@@ -12,6 +12,7 @@ data class ChattingUserEntity(
     val authorSessionId:String,
     val avatarBackgroundColor: Int,
     val isOnline: Boolean,
+    val createdAt: String
 ){
     fun toChattingUser(): ChattingUser{
         return ChattingUser(

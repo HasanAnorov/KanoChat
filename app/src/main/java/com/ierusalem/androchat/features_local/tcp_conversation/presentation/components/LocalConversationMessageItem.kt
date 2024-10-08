@@ -35,7 +35,7 @@ fun ChatMessageItem(
     onPauseVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
     onStopVoiceMessageClick: (ChatMessage.VoiceMessage) -> Unit,
 ) {
-    
+
     val spaceBetweenAuthors = if (isLastMessageByAuthor) Modifier.padding(top = 8.dp) else Modifier
     Row(
         modifier = spaceBetweenAuthors,
@@ -51,7 +51,7 @@ fun ChatMessageItem(
             onFileItemClick = onFileItemClick,
             onContactItemClick = onContactItemClick,
             onPlayVoiceMessageClick = { onPlayVoiceMessageClick(it) },
-            onResumeVoiceMessageClick = {onResumeVoiceMessageClick(it)},
+            onResumeVoiceMessageClick = { onResumeVoiceMessageClick(it) },
             onPauseVoiceMessageClick = { onPauseVoiceMessageClick(it) },
             onStopVoiceMessageClick = { onStopVoiceMessageClick(it) },
             onSaveToDownloadsClick = onSaveToDownloadsClick
@@ -105,6 +105,10 @@ fun AuthorAndMessage(
                     onContactNumberClick = onContactItemClick
                 )
             }
+
+            is ChatMessage.UnknownMessage -> {
+                /** ignore case */
+            }
         }
         if (isFirstMessageByAuthor) {
             // Last bubble before next author
@@ -126,7 +130,7 @@ fun LocalClickableMessage(
     )
     Column(
         modifier = Modifier
-            .clickable {  }
+            .clickable { }
             .padding(16.dp)
             .width(IntrinsicSize.Max)
     ) {
