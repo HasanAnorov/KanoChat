@@ -65,10 +65,10 @@ class LocalActivity : AppCompatActivity() {
             .build()
 
         val periodicWorkRequest = PeriodicWorkRequestBuilder<UpdaterWorker>(
-            repeatInterval = 1,
-            repeatIntervalTimeUnit = TimeUnit.HOURS,
+            repeatInterval = 15,
+            repeatIntervalTimeUnit = TimeUnit.MINUTES,
             flexTimeInterval = 15,
-            flexTimeIntervalUnit = TimeUnit.MINUTES
+            flexTimeIntervalUnit = TimeUnit.SECONDS
         )
             .setBackoffCriteria(
                 backoffPolicy = BackoffPolicy.LINEAR,
