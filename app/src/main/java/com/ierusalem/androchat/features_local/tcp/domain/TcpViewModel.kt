@@ -1654,12 +1654,7 @@ class TcpViewModel @Inject constructor(
                 wifiP2PManager.discoverPeers(channel, listener)
             } else {
                 log("Permissions not granted!")
-                permissionGuard.requiredPermissionsForWifi.forEach { permission ->
-                    onPermissionResult(
-                        permission = permission,
-                        isGranted = false
-                    )
-                }
+                emitNavigation(TcpScreenNavigation.RequestLocationPermission)
             }
         }
     }
