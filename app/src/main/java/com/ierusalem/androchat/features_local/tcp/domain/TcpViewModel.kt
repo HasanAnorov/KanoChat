@@ -456,7 +456,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun createServer(portNumber: Int) {
+    private suspend fun createServer(portNumber: Int) = withContext(Dispatchers.IO) {
         log("creating server ...")
         log("group address - ${state.value.groupOwnerAddress} \ncreating server ...")
         updateHostConnectionStatus(HostConnectionStatus.Creating)
@@ -518,6 +518,7 @@ class TcpViewModel @Inject constructor(
                             }
 
                             AppMessageType.UNKNOWN -> {
+                                /**Ignore case*/
                                 /**Ignore case*/
                                 log("create server unknown message char - ${reader.readChar()}")
                             }
@@ -672,153 +673,154 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun connectToServer(serverIpAddress: String, serverPort: Int) {
-        log("connecting to server - $serverIpAddress:$serverPort")
-        try {
-            //create client socket
-            clientSocket = Socket(serverIpAddress, serverPort)
-            clientWriter = DataOutputStream(clientSocket.getOutputStream())
-            log("client writer initialized - $clientWriter")
-            initializeUser(writer = clientWriter)
+    private suspend fun connectToServer(serverIpAddress: String, serverPort: Int) =
+        withContext(Dispatchers.IO) {
+            log("connecting to server - $serverIpAddress:$serverPort")
+            try {
+                //create client socket
+                clientSocket = Socket(serverIpAddress, serverPort)
+                clientWriter = DataOutputStream(clientSocket.getOutputStream())
+                log("client writer initialized - $clientWriter")
+                initializeUser(writer = clientWriter)
 
-            updateClientConnectionStatus(ClientConnectionStatus.Connected)
+                updateClientConnectionStatus(ClientConnectionStatus.Connected)
 
-            //received outcome messages here
-            while (!clientSocket.isClosed) {
-                val reader = DataInputStream(BufferedInputStream(clientSocket.getInputStream()))
+                //received outcome messages here
+                while (!clientSocket.isClosed) {
+                    val reader = DataInputStream(BufferedInputStream(clientSocket.getInputStream()))
 
-                try {
-                    val messageType = AppMessageType.fromChar(reader.readChar())
-                    log("client server incoming message type - $messageType ")
+                    try {
+                        val messageType = AppMessageType.fromChar(reader.readChar())
+                        log("client server incoming message type - $messageType ")
 
-                    when (messageType) {
-                        AppMessageType.INITIAL -> {
-                            setupUserData(reader = reader)
-                        }
+                        when (messageType) {
+                            AppMessageType.INITIAL -> {
+                                setupUserData(reader = reader)
+                            }
 
-                        AppMessageType.VOICE -> {
-                            receiveVoiceMessage(
-                                reader = reader,
-                                receivingSocket = clientSocket
-                            )
-                        }
+                            AppMessageType.VOICE -> {
+                                receiveVoiceMessage(
+                                    reader = reader,
+                                    receivingSocket = clientSocket
+                                )
+                            }
 
-                        AppMessageType.CONTACT -> {
-                            viewModelScope.launch(Dispatchers.IO) {
-                                receiveContactMessage(reader = reader)
+                            AppMessageType.CONTACT -> {
+                                viewModelScope.launch(Dispatchers.IO) {
+                                    receiveContactMessage(reader = reader)
+                                }
+                            }
+
+                            AppMessageType.TEXT -> {
+                                viewModelScope.launch(Dispatchers.IO) {
+                                    receiveTextMessage(reader = reader)
+                                }
+                            }
+
+                            AppMessageType.FILE -> {
+                                receiveFile(reader = reader, receivingSocket = clientSocket)
+                            }
+
+                            AppMessageType.UNKNOWN -> {
+                                /**Ignore case*/
+                                log("connect to server unknown message char - ${reader.readChar()}")
                             }
                         }
-
-                        AppMessageType.TEXT -> {
-                            viewModelScope.launch(Dispatchers.IO) {
-                                receiveTextMessage(reader = reader)
-                            }
+                    } catch (e: EOFException) {
+                        e.printStackTrace()
+                        //if the IP address of the host could not be determined.
+                        log("connectToServer: EOFException ")
+                        closeClientSocket()
+                        updateClientConnectionStatus(ClientConnectionStatus.Failure)
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.EOException)
+                        updateUserOnlineStatus(
+                            userUniqueId = state.value.peerUserUniqueId,
+                            isOnline = false
+                        )
+                        try {
+                            reader.close()
+                        } catch (e: IOException) {
+                            e.printStackTrace()
                         }
-
-                        AppMessageType.FILE -> {
-                            receiveFile(reader = reader, receivingSocket = clientSocket)
-                        }
-
-                        AppMessageType.UNKNOWN -> {
-                            /**Ignore case*/
-                            log("connect to server unknown message char - ${reader.readChar()}")
-                        }
-                    }
-                } catch (e: EOFException) {
-                    e.printStackTrace()
-                    //if the IP address of the host could not be determined.
-                    log("connectToServer: EOFException ")
-                    closeClientSocket()
-                    updateClientConnectionStatus(ClientConnectionStatus.Failure)
-                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.EOException)
-                    updateUserOnlineStatus(
-                        userUniqueId = state.value.peerUserUniqueId,
-                        isOnline = false
-                    )
-                    try {
-                        reader.close()
                     } catch (e: IOException) {
                         e.printStackTrace()
-                    }
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                    //the stream has been closed and the contained
-                    // input stream does not support reading after close,
-                    // or another I/O error occurs
-                    log("connectToServer: ioexception ")
-                    closeClientSocket()
-                    updateClientConnectionStatus(ClientConnectionStatus.Failure)
-                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
-                    updateUserOnlineStatus(
-                        userUniqueId = state.value.peerUserUniqueId,
-                        isOnline = false
-                    )
-                    try {
-                        reader.close()
-                    } catch (e: IOException) {
+                        //the stream has been closed and the contained
+                        // input stream does not support reading after close,
+                        // or another I/O error occurs
+                        log("connectToServer: ioexception ")
+                        closeClientSocket()
+                        updateClientConnectionStatus(ClientConnectionStatus.Failure)
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+                        updateUserOnlineStatus(
+                            userUniqueId = state.value.peerUserUniqueId,
+                            isOnline = false
+                        )
+                        try {
+                            reader.close()
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                        }
+                    } catch (e: UTFDataFormatException) {
                         e.printStackTrace()
-                    }
-                } catch (e: UTFDataFormatException) {
-                    e.printStackTrace()
-                    //if the bytes do not represent a valid modified UTF-8 encoding of a string.
-                    log("connectToServer: UTFDataFormatException exception ")
-                    closeClientSocket()
-                    updateClientConnectionStatus(ClientConnectionStatus.Failure)
-                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.UTFDataFormatException)
-                    updateUserOnlineStatus(
-                        userUniqueId = state.value.peerUserUniqueId,
-                        isOnline = false
-                    )
-                    try {
-                        reader.close()
-                    } catch (e: IOException) {
-                        e.printStackTrace()
+                        //if the bytes do not represent a valid modified UTF-8 encoding of a string.
+                        log("connectToServer: UTFDataFormatException exception ")
+                        closeClientSocket()
+                        updateClientConnectionStatus(ClientConnectionStatus.Failure)
+                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.UTFDataFormatException)
+                        updateUserOnlineStatus(
+                            userUniqueId = state.value.peerUserUniqueId,
+                            isOnline = false
+                        )
+                        try {
+                            reader.close()
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                        }
                     }
                 }
+            } catch (exception: UnknownHostException) {
+                exception.printStackTrace()
+                log("unknown host exception".uppercase())
+                updateHasErrorOccurredDialog(TcpScreenDialogErrors.UnknownHostException)
+                updateClientConnectionStatus(ClientConnectionStatus.Failure)
+                updateUserOnlineStatus(
+                    userUniqueId = state.value.peerUserUniqueId,
+                    isOnline = false
+                )
+            } catch (exception: IOException) {
+                exception.printStackTrace()
+                //could not connect to a server
+                log("connectToServer: IOException ".uppercase())
+                updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+                updateClientConnectionStatus(ClientConnectionStatus.Failure)
+                updateUserOnlineStatus(
+                    userUniqueId = state.value.peerUserUniqueId,
+                    isOnline = false
+                )
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+                //if a security manager exists and its checkConnect method doesn't allow the operation.
+                log("connectToServer: SecurityException".uppercase())
+                updateHasErrorOccurredDialog(TcpScreenDialogErrors.SecurityException)
+                updateClientConnectionStatus(ClientConnectionStatus.Failure)
+                updateUserOnlineStatus(
+                    userUniqueId = state.value.peerUserUniqueId,
+                    isOnline = false
+                )
+            } catch (e: IllegalArgumentException) {
+                e.printStackTrace()
+                //if the port parameter is outside the specified range of valid port values,
+                // which is between 0 and 65535, inclusive.
+                log("connectToServer: IllegalArgumentException".uppercase())
+                updateHasErrorOccurredDialog(TcpScreenDialogErrors.IllegalArgumentException)
+                updateClientConnectionStatus(ClientConnectionStatus.Failure)
+                updateUserOnlineStatus(
+                    userUniqueId = state.value.peerUserUniqueId,
+                    isOnline = false
+                )
             }
-        } catch (exception: UnknownHostException) {
-            exception.printStackTrace()
-            log("unknown host exception".uppercase())
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.UnknownHostException)
-            updateClientConnectionStatus(ClientConnectionStatus.Failure)
-            updateUserOnlineStatus(
-                userUniqueId = state.value.peerUserUniqueId,
-                isOnline = false
-            )
-        } catch (exception: IOException) {
-            exception.printStackTrace()
-            //could not connect to a server
-            log("connectToServer: IOException ".uppercase())
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
-            updateClientConnectionStatus(ClientConnectionStatus.Failure)
-            updateUserOnlineStatus(
-                userUniqueId = state.value.peerUserUniqueId,
-                isOnline = false
-            )
-        } catch (e: SecurityException) {
-            e.printStackTrace()
-            //if a security manager exists and its checkConnect method doesn't allow the operation.
-            log("connectToServer: SecurityException".uppercase())
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.SecurityException)
-            updateClientConnectionStatus(ClientConnectionStatus.Failure)
-            updateUserOnlineStatus(
-                userUniqueId = state.value.peerUserUniqueId,
-                isOnline = false
-            )
-        } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
-            //if the port parameter is outside the specified range of valid port values,
-            // which is between 0 and 65535, inclusive.
-            log("connectToServer: IllegalArgumentException".uppercase())
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IllegalArgumentException)
-            updateClientConnectionStatus(ClientConnectionStatus.Failure)
-            updateUserOnlineStatus(
-                userUniqueId = state.value.peerUserUniqueId,
-                isOnline = false
-            )
-        }
 
-    }
+        }
 
     /**Socket Sending Functions*/
 
@@ -1069,111 +1071,107 @@ class TcpViewModel @Inject constructor(
     private suspend fun sendFileMessages(
         writer: DataOutputStream,
         messages: List<ChatMessageEntity>
-    ) {
+    ) = withContext(Dispatchers.IO) {
         log("sending file ...")
-        withContext(Dispatchers.IO) {
-            try {
-                //sending file type
-                val type = AppMessageType.FILE.identifier.code
-                writer.writeChar(type)
-                log("send file message - $type")
+        try {
+            //sending file type
+            val type = AppMessageType.FILE.identifier.code
+            writer.writeChar(type)
+            log("send file message - $type")
 
-                //sending file count
-                writer.writeInt(messages.size)
-                log("file count - ${messages.size}")
+            //sending file count
+            writer.writeInt(messages.size)
+            log("file count - ${messages.size}")
 
-                messages.forEach { fileMessage ->
+            messages.forEach { fileMessage ->
 
-                    val messageId = runBlocking(Dispatchers.IO) {
-                        insertMessage(fileMessage)
-                    }
-
-                    try {
-                        //Create File object
-                        val file = File(privateFilesDirectory, fileMessage.fileName!!)
-                        log("sending file info: file size - ${file.length()} - ${file.name}")
-
-                        //sending file name
-                        writer.writeUTF(fileMessage.fileName)
-                        log("sending file name - ${fileMessage.fileName}")
-
-                        //write length
-                        writer.writeLong(file.length())
-                        log("sending file length - ${file.length()}")
-
-                        var bytesForPercentage = 0L
-                        val fileSizeForPercentage = file.length()
-
-                        BufferedInputStream(FileInputStream(file)).use { fileInputStream ->
-                            // Here we  break file into chunks
-                            val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
-                            var bytes: Int
-
-                            while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
-                                // Send the file to Server Socket
-                                writer.write(buffer, 0, bytes)
-                                writer.flush()
-
-                                bytesForPercentage += bytes.toLong()
-                                val percentage =
-                                    (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-                                val tempPercentage =
-                                    ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
-
-                                if (percentage != tempPercentage) {
-                                    log("progress - $percentage")
-                                    val newFileMessage =
-                                        fileMessage.copy(
-                                            id = messageId,
-                                            fileState = FileMessageState.Loading(percentage)
-                                        )
-                                    updatePercentageOfReceivingFile(newFileMessage)
-                                }
-                            }
-                        }
-
-                        // Ensure all bytes were sent
-                        if (bytesForPercentage == fileSizeForPercentage) {
-                            log("All bytes sent correctly.")
-                            val newFileMessage = fileMessage.copy(
-                                id = messageId,
-                                isFileAvailable = true,
-                                fileState = FileMessageState.Success
-                            )
-                            runBlocking(Dispatchers.IO) {
-                                updatePercentageOfReceivingFile(newFileMessage)
-                            }
-                            log("file sent successfully")
-                        } else {
-                            log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
-                            val newState = FileMessageState.Failure
-                            val newFileMessage =
-                                fileMessage.copy(fileState = newState, id = messageId)
-                            runBlocking {
-                                updatePercentageOfReceivingFile(newFileMessage)
-                            }
-                        }
-
-                    } catch (exception: IOException) {
-                        exception.printStackTrace()
-                        log("file sent failed IOException")
-                        val newState = FileMessageState.Failure
-                        val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
-                        updatePercentageOfReceivingFile(newFileMessage)
-                    } catch (error: Exception) {
-                        error.printStackTrace()
-                        log("file sent failed - Exception")
-                        val newState = FileMessageState.Failure
-                        val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
-                        updatePercentageOfReceivingFile(newFileMessage)
-                    } finally {
-                        delay(1000)
-                    }
+                val messageId = runBlocking(Dispatchers.IO) {
+                    insertMessage(fileMessage)
                 }
-            } catch (e: IOException) {
-                e.printStackTrace()
-                log("file sending process failed: ${e.message}")
+
+                try {
+                    //Create File object
+                    val file = File(privateFilesDirectory, fileMessage.fileName!!)
+                    log("sending file info: file size - ${file.length()} - ${file.name}")
+
+                    //sending file name
+                    writer.writeUTF(fileMessage.fileName)
+                    log("sending file name - ${fileMessage.fileName}")
+
+                    //write length
+                    writer.writeLong(file.length())
+                    log("sending file length - ${file.length()}")
+
+                    var bytesForPercentage = 0L
+                    val fileSizeForPercentage = file.length()
+
+                    BufferedInputStream(FileInputStream(file)).use { fileInputStream ->
+                        // Here we  break file into chunks
+                        val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+                        var bytes: Int
+
+                        while ((fileInputStream.read(buffer).also { bytes = it }) != -1) {
+                            // Send the file to Server Socket
+                            writer.write(buffer, 0, bytes)
+                            writer.flush()
+
+                            bytesForPercentage += bytes.toLong()
+                            val percentage =
+                                (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                            val tempPercentage =
+                                ((bytesForPercentage - bytes.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+
+                            if (percentage != tempPercentage) {
+                                log("progress - $percentage")
+                                val newFileMessage =
+                                    fileMessage.copy(
+                                        id = messageId,
+                                        fileState = FileMessageState.Loading(percentage)
+                                    )
+                                updatePercentageOfReceivingFile(newFileMessage)
+                            }
+                        }
+                    }
+
+                    // Ensure all bytes were sent
+                    if (bytesForPercentage == fileSizeForPercentage) {
+                        log("All bytes sent correctly.")
+                        val newFileMessage = fileMessage.copy(
+                            id = messageId,
+                            isFileAvailable = true,
+                            fileState = FileMessageState.Success
+                        )
+                        updatePercentageOfReceivingFile(newFileMessage)
+                        log("file sent successfully")
+                    } else {
+                        log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
+                        val newState = FileMessageState.Failure
+                        val newFileMessage =
+                            fileMessage.copy(fileState = newState, id = messageId)
+                        runBlocking {
+                            updatePercentageOfReceivingFile(newFileMessage)
+                        }
+                    }
+
+                } catch (exception: IOException) {
+                    exception.printStackTrace()
+                    log("file sent failed IOException")
+                    val newState = FileMessageState.Failure
+                    val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
+                    updatePercentageOfReceivingFile(newFileMessage)
+                } catch (error: Exception) {
+                    error.printStackTrace()
+                    log("file sent failed - Exception")
+                    val newState = FileMessageState.Failure
+                    val newFileMessage = fileMessage.copy(fileState = newState, id = messageId)
+                    updatePercentageOfReceivingFile(newFileMessage)
+                } finally {
+                    delay(1000)
+                }
             }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            log("file sending process failed: ${e.message}")
         }
     }
 
@@ -1184,139 +1182,146 @@ class TcpViewModel @Inject constructor(
      * 3. file name
      * 4. file length
      * */
-    private fun receiveFile(reader: DataInputStream, receivingSocket: Socket) {
-        log("receiving file ...")
+    private suspend fun receiveFile(reader: DataInputStream, receivingSocket: Socket) =
+        withContext(Dispatchers.IO) {
+            log("receiving file ...")
 
-        try {
-            // Reading file count
-            val fileCount = reader.readInt()
-            log("file count - $fileCount")
+            try {
+                // Reading file count
+                val fileCount = reader.readInt()
+                log("file count - $fileCount")
 
-            for (i in 0 until fileCount) {
-                // Reading file name
-                val filename = reader.readUTF()
-                log("Expected file name - $filename")
+                for (i in 0 until fileCount) {
+                    // Reading file name
+                    val filename = reader.readUTF()
+                    log("Expected file name - $filename")
 
-                // Read the expected file size
-                var fileSize: Long = reader.readLong() // read file size
-                log("file size - $fileSize")
+                    // Read the expected file size
+                    var fileSize: Long = reader.readLong() // read file size
+                    log("file size - $fileSize")
 
-                var bytesForPercentage = 0L
-                val fileSizeForPercentage = fileSize
-                val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
+                    var bytesForPercentage = 0L
+                    val fileSizeForPercentage = fileSize
+                    val buffer = ByteArray(SOCKET_DEFAULT_BUFFER_SIZE)
 
-                // Create File object
-                val file =
-                    getFileByName(fileName = filename, resourceDirectory = privateFilesDirectory)
+                    // Create File object
+                    val file =
+                        getFileByName(
+                            fileName = filename,
+                            resourceDirectory = privateFilesDirectory
+                        )
 
-                // Create FileOutputStream to write the received file
-                val fileMessageEntity = ChatMessageEntity(
-                    type = AppMessageType.FILE,
-                    formattedTime = getCurrentTime(),
-                    isFromYou = false,
-                    partnerSessionId = state.value.peerUserUniqueId,
-                    partnerName = state.value.peerUserName,
-                    authorSessionId = state.value.authorSessionId,
-                    authorUsername = state.value.authorUsername,
-                    //message specific fields
-                    fileState = FileMessageState.Loading(0),
-                    fileName = file.name,
-                    fileSize = fileSize.readableFileSize(),
-                    fileExtension = file.extension,
-                    filePath = file.path,
-                )
+                    // Create FileOutputStream to write the received file
+                    val fileMessageEntity = ChatMessageEntity(
+                        type = AppMessageType.FILE,
+                        formattedTime = getCurrentTime(),
+                        isFromYou = false,
+                        partnerSessionId = state.value.peerUserUniqueId,
+                        partnerName = state.value.peerUserName,
+                        authorSessionId = state.value.authorSessionId,
+                        authorUsername = state.value.authorUsername,
+                        //message specific fields
+                        fileState = FileMessageState.Loading(0),
+                        fileName = file.name,
+                        fileSize = fileSize.readableFileSize(),
+                        fileExtension = file.extension,
+                        filePath = file.path,
+                    )
 
-                val messageId = runBlocking(Dispatchers.IO) {
-                    insertMessage(fileMessageEntity)
-                }
+                    val messageId = runBlocking(Dispatchers.IO) {
+                        insertMessage(fileMessageEntity)
+                    }
 
-                // Using `use` to ensure the fileOutputStream is properly closed
-                FileOutputStream(file).use { fileOutputStream ->
-                    try {
-                        receivingSocket.setSoTimeout(Constants.FILE_RECEIVE_TIMEOUT)
-                        while (fileSize > 0) {
-                            val bytesRead = reader.read(
-                                buffer,
-                                0,
-                                min(buffer.size.toDouble(), fileSize.toDouble()).toInt()
-                            )
+                    // Using `use` to ensure the fileOutputStream is properly closed
+                    FileOutputStream(file).use { fileOutputStream ->
+                        try {
+                            receivingSocket.setSoTimeout(Constants.FILE_RECEIVE_TIMEOUT)
+                            while (fileSize > 0) {
+                                val bytesRead = reader.read(
+                                    buffer,
+                                    0,
+                                    min(buffer.size.toDouble(), fileSize.toDouble()).toInt()
+                                )
 
-                            // Check if the client has disconnected (read() returns -1 when disconnected)
-                            if (bytesRead == -1) {
-                                log("Client disconnected during file transfer")
-                                throw IOException("Client disconnected unexpectedly")
+                                // Check if the client has disconnected (read() returns -1 when disconnected)
+                                if (bytesRead == -1) {
+                                    log("Client disconnected during file transfer")
+                                    throw IOException("Client disconnected unexpectedly")
+                                }
+
+                                // Write the file
+                                fileOutputStream.write(buffer, 0, bytesRead)
+                                fileSize -= bytesRead.toLong()
+
+                                // Update progress
+                                bytesForPercentage += bytesRead.toLong()
+                                val percentage =
+                                    (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
+                                val tempPercentage =
+                                    ((bytesForPercentage - bytesRead.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
+
+                                if (fileSize > 0 && percentage != tempPercentage) {
+                                    log("progress - $percentage")
+                                    val newState = FileMessageState.Loading(percentage)
+                                    val newFileMessage =
+                                        fileMessageEntity.copy(fileState = newState, id = messageId)
+                                    updatePercentageOfReceivingFile(newFileMessage)
+                                }
                             }
 
-                            // Write the file
-                            fileOutputStream.write(buffer, 0, bytesRead)
-                            fileSize -= bytesRead.toLong()
-
-                            // Update progress
-                            bytesForPercentage += bytesRead.toLong()
-                            val percentage =
-                                (bytesForPercentage.toDouble() / fileSizeForPercentage.toDouble() * 100).toInt()
-                            val tempPercentage =
-                                ((bytesForPercentage - bytesRead.toLong()) / fileSizeForPercentage.toDouble() * 100).toInt()
-
-                            if (fileSize > 0 && percentage != tempPercentage) {
-                                log("progress - $percentage")
-                                val newState = FileMessageState.Loading(percentage)
+                            // Ensure all bytes were sent
+                            if (bytesForPercentage == fileSizeForPercentage) {
+                                log("All bytes received correctly.")
+                                val newState = FileMessageState.Success
+                                val newFileMessage = fileMessageEntity.copy(
+                                    fileState = newState,
+                                    id = messageId,
+                                    isFileAvailable = true
+                                )
+                                runBlocking {
+                                    updatePercentageOfReceivingFile(newFileMessage)
+                                }
+                                log("file received successfully")
+                            } else {
+                                log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
+                                val newState = FileMessageState.Failure
                                 val newFileMessage =
                                     fileMessageEntity.copy(fileState = newState, id = messageId)
-                                updatePercentageOfReceivingFile(newFileMessage)
+                                runBlocking {
+                                    updatePercentageOfReceivingFile(newFileMessage)
+                                }
                             }
-                        }
 
-                        // Ensure all bytes were sent
-                        if (bytesForPercentage == fileSizeForPercentage) {
-                            log("All bytes received correctly.")
-                            val newState = FileMessageState.Success
-                            val newFileMessage = fileMessageEntity.copy(
-                                fileState = newState,
-                                id = messageId,
-                                isFileAvailable = true
-                            )
-                            runBlocking {
-                                updatePercentageOfReceivingFile(newFileMessage)
-                            }
-                            log("file received successfully")
-                        } else {
-                            log("Mismatch: Sent $bytesForPercentage out of $fileSizeForPercentage")
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                            log("file receiving failed: ${e.message}")
                             val newState = FileMessageState.Failure
                             val newFileMessage =
                                 fileMessageEntity.copy(fileState = newState, id = messageId)
-                            runBlocking {
-                                updatePercentageOfReceivingFile(newFileMessage)
-                            }
+                            updatePercentageOfReceivingFile(newFileMessage)
+                        } catch (e: SocketException) {
+                            e.printStackTrace()
+                            log("Client disconnected (SocketException): ${e.message}")
+                            val newState = FileMessageState.Failure
+                            val newFileMessage =
+                                fileMessageEntity.copy(fileState = newState, id = messageId)
+                            updatePercentageOfReceivingFile(newFileMessage)
+                        } finally {
+                            //set timeout to 0 which is infinite
+                            receivingSocket.soTimeout = Constants.INFINITELY_TIMEOUT
                         }
-
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                        log("file receiving failed: ${e.message}")
-                        val newState = FileMessageState.Failure
-                        val newFileMessage =
-                            fileMessageEntity.copy(fileState = newState, id = messageId)
-                        updatePercentageOfReceivingFile(newFileMessage)
-                    } catch (e: SocketException) {
-                        e.printStackTrace()
-                        log("Client disconnected (SocketException): ${e.message}")
-                        val newState = FileMessageState.Failure
-                        val newFileMessage =
-                            fileMessageEntity.copy(fileState = newState, id = messageId)
-                        updatePercentageOfReceivingFile(newFileMessage)
-                    } finally {
-                        //set timeout to 0 which is infinite
-                        receivingSocket.soTimeout = Constants.INFINITELY_TIMEOUT
-                        log("file receiving process finished")
                     }
                 }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                log("file receiving process failed: ${e.message}")
+                try {
+                    reader.close()
+                }catch (e: Exception){
+                    e.printStackTrace()
+                }
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
-            //todo show error
-            log("file receiving process failed: ${e.message}")
         }
-    }
 
     /**
      * 1. message type
@@ -2775,14 +2780,12 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun updatePercentageOfReceivingFile(fileMessage: ChatMessageEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            messagesRepository.updateFileMessage(
-                messageId = fileMessage.id,
-                newFileState = fileMessage.fileState,
-                isFileAvailable = fileMessage.isFileAvailable
-            )
-        }
+    private suspend fun updatePercentageOfReceivingFile(fileMessage: ChatMessageEntity) {
+        messagesRepository.updateFileMessage(
+            messageId = fileMessage.id,
+            newFileState = fileMessage.fileState,
+            isFileAvailable = fileMessage.isFileAvailable
+        )
     }
 
     private fun updatePercentageOfReceivingAudioFile(voiceMessage: ChatMessageEntity) {

@@ -9,6 +9,8 @@ import java.util.Locale
 
 object Constants {
 
+    const val UPDATER_WORKER_NAME = "updater_unique_worker_name"
+
     const val DATA_STORE_NAME = "AppDataStore"
 
     const val FILE_RECEIVE_TIMEOUT = 10 * 1000
