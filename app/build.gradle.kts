@@ -118,4 +118,18 @@ dependencies {
     // Add this dependency for using PagingSource with Room
     implementation (libs.androidx.room.paging)
 
+    //chucker
+    debugImplementation(libs.library)
+    releaseImplementation(libs.library.no.op)
+
+    //retrofit
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
+
+    //work manager
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation (libs.androidx.hilt.work)
+
 }

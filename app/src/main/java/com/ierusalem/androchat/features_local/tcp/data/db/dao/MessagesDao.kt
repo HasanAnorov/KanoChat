@@ -16,6 +16,9 @@ interface MessagesDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity): Long
 
+    @Query("SELECT COUNT(*) FROM messages WHERE isUpdated = 0")
+    suspend fun getUnUpdatedMessagesCount(): Int
+
     @Query("UPDATE messages SET fileState = 'failure' WHERE isFileAvailable = 0")
     suspend fun updateFileStateToFailure(): Int
 

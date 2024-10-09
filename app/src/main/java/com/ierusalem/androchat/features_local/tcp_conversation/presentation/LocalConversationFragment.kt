@@ -45,6 +45,7 @@ import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.makeCall
 import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.core.utils.openFile
+import com.ierusalem.androchat.core.utils.showFileChooser
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
@@ -86,6 +87,7 @@ class LocalConversationFragment : Fragment() {
             }
 
             Activity.RESULT_OK -> {
+                log("onActivityResult: RESULT OK")
                 val intent: Intent = result.data!!
                 val uri = intent.data!!
                 viewModel.handleFilesLauncher(uri)
@@ -93,35 +95,12 @@ class LocalConversationFragment : Fragment() {
         }
     }
 
-    private fun showFileChooser() {
-        val intent = Intent()
-            .setType("*/*")
-            .setAction(Intent.ACTION_GET_CONTENT)
-        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
-        intent.flags =
-            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-
-        try {
-            getFilesLauncher.launch(intent)
-        } catch (e: Exception) {
-            Toast.makeText(
-                requireContext(),
-                getString(R.string.please_install_a_file_manager),
-                Toast.LENGTH_SHORT
-            ).show()
-            e.printStackTrace()
-        }
-    }
-
-    private lateinit var selectedUser: InitialUserModel
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val selectedUserStringForm = arguments?.getString(Constants.SELECTED_CHATTING_USER)
-        selectedUser = Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
-        viewModel.setSelectedUser(selectedUser)
+        val selectedUser = Gson().fromJson(selectedUserStringForm, InitialUserModel::class.java)
         lifecycleScope.launch(Dispatchers.IO) {
+            viewModel.setSelectedUser(selectedUser)
             viewModel.getCurrentChattingUser(selectedUser)
         }
     }
@@ -138,7 +117,6 @@ class LocalConversationFragment : Fragment() {
 
                 val uiState by viewModel.state.collectAsState()
                 val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-
                 val visiblePermissionDialogQueue = viewModel.visiblePermissionDialogQueue
 
                 AndroChatTheme {
@@ -171,7 +149,9 @@ class LocalConversationFragment : Fragment() {
                                                                     isFromYou = true,
                                                                     partnerSessionId = viewModel.state.value.peerUserUniqueId,
                                                                     authorSessionId = viewModel.state.value.authorSessionId,
-
+                                                                    partnerName = viewModel.state.value.peerUserName,
+                                                                    authorUsername = viewModel.state.value.authorUsername,
+                                                                    //message specific fields
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
                                                                 )
@@ -194,7 +174,9 @@ class LocalConversationFragment : Fragment() {
                                                                     isFromYou = true,
                                                                     partnerSessionId = viewModel.state.value.peerUserUniqueId,
                                                                     authorSessionId = viewModel.state.value.authorSessionId,
-
+                                                                    partnerName = viewModel.state.value.peerUserName,
+                                                                    authorUsername = viewModel.state.value.authorUsername,
+                                                                    //message specific fields
                                                                     contactName = contact.contactName,
                                                                     contactNumber = contact.phoneNumber,
                                                                 )
@@ -205,7 +187,6 @@ class LocalConversationFragment : Fragment() {
                                                         }
                                                     }
                                                 }
-
                                             }
                                         }
                                     )
@@ -300,7 +281,9 @@ class LocalConversationFragment : Fragment() {
             }
 
             TcpScreenNavigation.ShowFileChooserClick -> {
-                showFileChooser()
+                showFileChooser { launchingIntent ->
+                    getFilesLauncher.launch(launchingIntent)
+                }
             }
 
             TcpScreenNavigation.RequestRecordAudioPermission -> {

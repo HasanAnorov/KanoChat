@@ -13,9 +13,6 @@ interface ChattingUsersDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertChattingUser(chattingUserEntity: ChattingUserEntity):Long
 
-    @Query("UPDATE chatting_users SET partnerUsername = :newName WHERE partnerSessionID = :userId")
-    suspend fun updateUserUniqueName(userId: String, newName: String): Int
-
     @Query("UPDATE chatting_users SET isOnline = :isOnline WHERE partnerSessionID = :userId")
     suspend fun updateUserOnlineStatus(userId: String, isOnline: Boolean): Int
 

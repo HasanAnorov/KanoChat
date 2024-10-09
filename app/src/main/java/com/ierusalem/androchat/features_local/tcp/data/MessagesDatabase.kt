@@ -11,10 +11,10 @@ import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEnti
 
 @Database(
     entities = [ChatMessageEntity::class, ChattingUserEntity::class],
-    version =12,
+    version = 16,
 )
 @TypeConverters(FileMessageStateConverter::class)
-abstract class MessagesDatabase: RoomDatabase() {
+abstract class MessagesDatabase : RoomDatabase() {
     abstract val messagesDao: MessagesDao
     abstract val chattingUsersDao: ChattingUsersDao
 }

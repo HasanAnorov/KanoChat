@@ -33,6 +33,10 @@ import kotlinx.coroutines.launch
 
 const val ConversationTestTag = "ConversationTestTag"
 
+private val JumpToBottomThreshold = 56.dp
+val ChatBubbleShapeStart = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+val ChatBubbleShapeEnd = RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
+
 @Composable
 fun Messages(
     messages: LazyPagingItems<ChatMessage>,
@@ -56,7 +60,7 @@ fun Messages(
                 .fillMaxSize()
         ) {
             item {
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
             items(
@@ -92,6 +96,10 @@ fun Messages(
                 }
             }
 
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
         }
         // Jump to bottom button shows up when user scrolls past a threshold.
         // Convert to pixels:
@@ -120,10 +128,6 @@ fun Messages(
         )
     }
 }
-
-private val JumpToBottomThreshold = 56.dp
-val ChatBubbleShapeStart = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
-val ChatBubbleShapeEnd = RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
 
 @Preview
 @Composable

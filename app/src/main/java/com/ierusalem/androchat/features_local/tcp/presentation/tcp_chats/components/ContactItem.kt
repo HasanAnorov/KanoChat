@@ -252,6 +252,8 @@ fun ContactItemPreview() {
                 type = AppMessageType.TEXT,
                 partnerSessionId = "sa79789s7f98s7s",
                 authorSessionId = "sfsdf",
+                partnerName = "Dave",
+                authorUsername = "Hasan"
             )
         )
     }
@@ -280,7 +282,9 @@ fun ContactItemPreviewDark() {
                 text = "Hello",
                 type = AppMessageType.CONTACT,
                 partnerSessionId = "sa79789s7f98s7s",
-                authorSessionId = "dsfadtww3r53"
+                authorSessionId = "dsfadtww3r53",
+                partnerName = "Dave",
+                authorUsername = "Hasan"
             )
         )
     }

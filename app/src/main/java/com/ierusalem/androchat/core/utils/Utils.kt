@@ -72,10 +72,10 @@ fun generateFileFromUri(contentResolver: ContentResolver, uri: Uri, resourceDire
         resourceDirectory.mkdir()
     }
     val fileName = uri.getFileNameFromUri(contentResolver)
-    val fileNameWithLabel = fileName.addLabelBeforeExtension()
-    var file = File(resourceDirectory, fileNameWithLabel)
+
+    var file = File(resourceDirectory, fileName)
     if (file.exists()) {
-        val fileNameWithoutExt = fileNameWithLabel.getFileNameWithoutExtension()
+        val fileNameWithoutExt = fileName.getFileNameWithoutExtension()
         val uniqueFileName =
             generateUniqueFileName(
                 resourceDirectory.toString(),

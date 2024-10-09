@@ -63,16 +63,6 @@ class MessagesRepositoryImpl @Inject constructor(
         return chattingUsersDao.insertChattingUser(chattingUserEntity)
     }
 
-    override suspend fun updateChattingUserUniqueName(
-        userUniqueId: String,
-        userUniqueName: String
-    ): Int {
-        return chattingUsersDao.updateUserUniqueName(
-            userId = userUniqueId,
-            newName = userUniqueName
-        )
-    }
-
     override suspend fun updateAllUsersOnlineStatus(isOnline: Boolean): Int {
         return chattingUsersDao.updateAllUsersOnlineStatus(isOnline)
     }

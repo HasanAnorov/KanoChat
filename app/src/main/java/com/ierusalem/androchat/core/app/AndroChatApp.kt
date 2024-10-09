@@ -3,12 +3,20 @@ package com.ierusalem.androchat.core.app
 import android.app.Application
 import android.app.LocaleManager
 import android.app.UiModeManager
+import android.content.Context
 import android.os.Build
 import android.os.LocaleList
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import androidx.work.Configuration
+import androidx.work.ListenableWorker
+import androidx.work.WorkerFactory
+import androidx.work.WorkerParameters
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.emulator_detection.EmulatorDetector
+import com.ierusalem.androchat.core.updater.UpdaterRepository
+import com.ierusalem.androchat.core.updater.UpdaterWorker
 import com.ierusalem.androchat.core.utils.log
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -19,10 +27,19 @@ import java.util.UUID
 import javax.inject.Inject
 
 @HiltAndroidApp
-class AndroChatApp : Application() {
+class AndroChatApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var dataStorePreferenceRepository: DataStorePreferenceRepository
+
+    @Inject
+    lateinit var updaterWorkerFactory: UpdaterWorkerFactory
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setMinimumLoggingLevel(Log.DEBUG)
+            .setWorkerFactory(updaterWorkerFactory)
+            .build()
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {
@@ -80,5 +97,15 @@ class AndroChatApp : Application() {
             }
         }
 
+    }
+}
+
+class UpdaterWorkerFactory @Inject constructor(private val updaterRepository: UpdaterRepository): WorkerFactory(){
+    override fun createWorker(
+        appContext: Context,
+        workerClassName: String,
+        workerParameters: WorkerParameters
+    ): ListenableWorker {
+        return UpdaterWorker(updaterRepository, appContext, workerParameters)
     }
 }
