@@ -33,9 +33,10 @@ data class ChatMessageEntity(
     val isFileAvailable: Boolean = false,
     //contact message specific parameters
     val contactName: String? = null,
-    val contactNumber: String? = null
+    val contactNumber: String? = null,
+    //uncaring parameter
+    val isUpdated: Boolean = false
 ) {
-
     fun toChatMessage(): ChatMessage {
         return when (type) {
             AppMessageType.TEXT -> {
@@ -64,7 +65,6 @@ data class ChatMessageEntity(
             }
 
             AppMessageType.FILE -> {
-
                 ChatMessage.FileMessage(
                     isFromYou = isFromYou,
                     formattedTime = formattedTime,

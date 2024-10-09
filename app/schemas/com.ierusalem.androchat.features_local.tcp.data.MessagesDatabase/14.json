@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 14,
-    "identityHash": "7eeef9016e6692491d24360eb7167ebb",
+    "identityHash": "c53529a253432084647ee43ef4278b52",
     "entities": [
       {
         "tableName": "messages",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `formattedTime` TEXT NOT NULL, `isFromYou` INTEGER NOT NULL, `partnerSessionId` TEXT NOT NULL, `partnerName` TEXT NOT NULL, `authorSessionId` TEXT NOT NULL, `authorUsername` TEXT NOT NULL, `text` TEXT, `voiceMessageFileName` TEXT, `voiceMessageAudioFileDuration` INTEGER, `fileState` TEXT, `filePath` TEXT, `fileSize` TEXT, `fileName` TEXT, `fileExtension` TEXT, `isFileAvailable` INTEGER NOT NULL, `contactName` TEXT, `contactNumber` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `formattedTime` TEXT NOT NULL, `isFromYou` INTEGER NOT NULL, `partnerSessionId` TEXT NOT NULL, `partnerName` TEXT NOT NULL, `authorSessionId` TEXT NOT NULL, `authorUsername` TEXT NOT NULL, `text` TEXT, `voiceMessageFileName` TEXT, `voiceMessageAudioFileDuration` INTEGER, `fileState` TEXT, `filePath` TEXT, `fileSize` TEXT, `fileName` TEXT, `fileExtension` TEXT, `isFileAvailable` INTEGER NOT NULL, `contactName` TEXT, `contactNumber` TEXT, `isUpdated` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -121,6 +121,12 @@
             "columnName": "contactNumber",
             "affinity": "TEXT",
             "notNull": false
+          },
+          {
+            "fieldPath": "isUpdated",
+            "columnName": "isUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -186,7 +192,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7eeef9016e6692491d24360eb7167ebb')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c53529a253432084647ee43ef4278b52')"
     ]
   }
 }

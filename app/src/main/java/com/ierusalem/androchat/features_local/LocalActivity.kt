@@ -64,11 +64,13 @@ class LocalActivity : AppCompatActivity() {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
+        //min interval time unit is - 15 minutes
+        //mn flex interval time unit is - 5 minutes
         val periodicWorkRequest = PeriodicWorkRequestBuilder<UpdaterWorker>(
-            repeatInterval = 15,
+            repeatInterval = 20,
             repeatIntervalTimeUnit = TimeUnit.MINUTES,
-            flexTimeInterval = 15,
-            flexTimeIntervalUnit = TimeUnit.SECONDS
+            flexTimeInterval = 5,
+            flexTimeIntervalUnit = TimeUnit.MINUTES
         )
             .setBackoffCriteria(
                 backoffPolicy = BackoffPolicy.LINEAR,

@@ -39,9 +39,11 @@ pluginSerialization = "1.7.10"
 firebaseCrashlyticsBuildtools = "3.0.2"
 activity = "1.9.1"
 workRuntimeKtx = "2.9.1"
+hiltWork = "1.2.0"
 
 [libraries]
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
+androidx-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hiltWork" }
 
 androidx-compose-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata" }
 androidx-compose-material-iconsExtended = { module = "androidx.compose.material:material-icons-extended" }

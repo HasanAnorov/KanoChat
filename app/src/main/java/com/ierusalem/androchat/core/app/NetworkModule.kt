@@ -7,6 +7,7 @@ import com.google.gson.GsonBuilder
 import com.ierusalem.androchat.core.updater.UpdaterRepository
 import com.ierusalem.androchat.core.updater.UpdaterRepositoryImpl
 import com.ierusalem.androchat.core.updater.UpdaterService
+import com.ierusalem.androchat.features_local.tcp.data.db.dao.MessagesDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,7 +22,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    const val BASE_URL = ""
+    private const val BASE_URL = "https://chat.mytelgram.me/"
 
     @Provides
     @Singleton
@@ -69,14 +70,18 @@ object NetworkModule {
     @Singleton
     fun providerUpdaterService(
         retrofit: Retrofit
-    ):UpdaterService = retrofit.create(UpdaterService::class.java)
+    ): UpdaterService = retrofit.create(UpdaterService::class.java)
 
     @Provides
     @Singleton
     fun provideUpdaterRepository(
-        updaterService: UpdaterService
+        updaterService: UpdaterService,
+        messagesDao: MessagesDao,
     ): UpdaterRepository {
-        return UpdaterRepositoryImpl(updaterService)
+        return UpdaterRepositoryImpl(
+            messagesDao = messagesDao,
+            updaterService = updaterService
+        )
     }
 
 }

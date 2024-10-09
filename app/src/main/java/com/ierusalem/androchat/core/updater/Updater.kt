@@ -1,20 +1,26 @@
 package com.ierusalem.androchat.core.updater
 
 import android.content.Context
+import android.util.Log
+import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.ierusalem.androchat.core.utils.log
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.delay
 
-class UpdaterWorker(
-    context: Context,
-    workerParameters: WorkerParameters
+@HiltWorker
+class UpdaterWorker @AssistedInject constructor(
+    @Assisted private val updaterRepository: UpdaterRepository,
+    @Assisted context: Context,
+    @Assisted workerParameters: WorkerParameters
 ): CoroutineWorker(context, workerParameters) {
 
     override suspend fun doWork(): Result {
-        log("work is in progress ...")
+        Log.d("worker", "work is in progress ...")
+        Log.d("worker", "un updated messages count is - ${updaterRepository.getUnUpdatedMessagesCount()}")
         delay(2000)
-        log("work is finished")
+        Log.d("worker", "work is finished")
         return Result.success()
     }
 
