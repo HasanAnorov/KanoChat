@@ -60,9 +60,9 @@ class LocalActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets -> insets }
 
-        val workerConstraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
+//        val workerConstraints = Constraints.Builder()
+//            .setRequiredNetworkType(NetworkType.CONNECTED)
+//            .build()
 
         /**
         * min interval time unit is - 15 minutes
@@ -73,15 +73,15 @@ class LocalActivity : AppCompatActivity() {
         val periodicWorkRequest = PeriodicWorkRequestBuilder<UpdaterWorker>(
             repeatInterval = 20,
             repeatIntervalTimeUnit = TimeUnit.MINUTES,
-            flexTimeInterval = 3,
-            flexTimeIntervalUnit = TimeUnit.MINUTES
+//            flexTimeInterval = 3,
+//            flexTimeIntervalUnit = TimeUnit.MINUTES
         )
             .setBackoffCriteria(
                 backoffPolicy = BackoffPolicy.LINEAR,
                 backoffDelay = 15,
                 timeUnit = TimeUnit.SECONDS
             )
-            .setConstraints(workerConstraints)
+//            .setConstraints(workerConstraints)
             .build()
 
         val workManager = WorkManager.getInstance(applicationContext)
@@ -96,7 +96,7 @@ class LocalActivity : AppCompatActivity() {
             workManager.getWorkInfosForUniqueWorkFlow(UPDATER_WORKER_NAME)
                 .collectLatest { workInfo ->
                     workInfo.forEach { info ->
-                        log("worker - ${info.state}")
+                        log("info - ${info.state}")
                     }
                 }
         }

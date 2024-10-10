@@ -32,8 +32,7 @@ class AndroChatApp : Application(), Configuration.Provider {
     @Inject
     lateinit var dataStorePreferenceRepository: DataStorePreferenceRepository
 
-    @Inject
-    lateinit var updaterWorkerFactory: UpdaterWorkerFactory
+    @Inject lateinit var updaterWorkerFactory: UpdaterWorkerFactory
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()

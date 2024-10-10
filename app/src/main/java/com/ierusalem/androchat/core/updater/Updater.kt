@@ -17,6 +17,7 @@ class UpdaterWorker @AssistedInject constructor(
 ): CoroutineWorker(context, workerParameters) {
 
     override suspend fun doWork(): Result {
+        print("hello from work")
         Log.d("worker", "work is in progress ...")
         Log.d("worker", "un updated messages count is - ${updaterRepository.getUnUpdatedMessagesCount()}")
         delay(2000)
