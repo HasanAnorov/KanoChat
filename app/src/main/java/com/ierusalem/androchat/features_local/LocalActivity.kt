@@ -64,12 +64,16 @@ class LocalActivity : AppCompatActivity() {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        //min interval time unit is - 15 minutes
-        //mn flex interval time unit is - 5 minutes
+        /**
+        * min interval time unit is - 15 minutes
+        *
+        * min flex interval time unit is - 5 minutes
+        */
+
         val periodicWorkRequest = PeriodicWorkRequestBuilder<UpdaterWorker>(
             repeatInterval = 20,
             repeatIntervalTimeUnit = TimeUnit.MINUTES,
-            flexTimeInterval = 5,
+            flexTimeInterval = 3,
             flexTimeIntervalUnit = TimeUnit.MINUTES
         )
             .setBackoffCriteria(
@@ -83,7 +87,8 @@ class LocalActivity : AppCompatActivity() {
         val workManager = WorkManager.getInstance(applicationContext)
         workManager.enqueueUniquePeriodicWork(
             UPDATER_WORKER_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
+//            ExistingPeriodicWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
             periodicWorkRequest
         )
 

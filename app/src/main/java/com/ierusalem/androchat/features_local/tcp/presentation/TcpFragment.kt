@@ -78,7 +78,6 @@ class TcpFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        log("tcp on create")
         viewModel.initializeAuthorSessionId()
         viewModel.loadChattingUsers()
     }
