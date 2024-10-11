@@ -19,6 +19,9 @@ interface MessagesDao {
     @Query("SELECT COUNT(*) FROM messages WHERE isUpdated = 0")
     suspend fun getUnUpdatedMessagesCount(): Int
 
+    @Query("SELECT * FROM messages WHERE isUpdated = 0 ORDER BY id LIMIT :limit OFFSET :offset")
+    suspend fun getUnSentMessagesByChunks(limit: Int = 10, offset: Int): List<ChatMessageEntity>
+
     @Query("UPDATE messages SET fileState = 'failure' WHERE isFileAvailable = 0")
     suspend fun updateFileStateToFailure(): Int
 

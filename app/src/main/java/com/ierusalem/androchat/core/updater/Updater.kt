@@ -7,7 +7,6 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.delay
 
 @HiltWorker
 class UpdaterWorker @AssistedInject constructor(
@@ -15,14 +14,15 @@ class UpdaterWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParameters: WorkerParameters
 ): CoroutineWorker(context, workerParameters) {
-
     override suspend fun doWork(): Result {
-        print("hello from work")
         Log.d("worker", "work is in progress ...")
-        Log.d("worker", "un updated messages count is - ${updaterRepository.getUnUpdatedMessagesCount()}")
-        delay(2000)
-        Log.d("worker", "work is finished")
-        return Result.success()
+        if(updaterRepository.getUnUpdatedMessagesCount()>0){
+
+            return Result.success()
+        }else{
+            Log.d("worker", "work is finished, no messages to upload!")
+            return Result.success()
+        }
     }
 
 }

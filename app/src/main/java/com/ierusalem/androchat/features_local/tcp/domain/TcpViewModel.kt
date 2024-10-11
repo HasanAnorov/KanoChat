@@ -328,7 +328,6 @@ class TcpViewModel @Inject constructor(
     @SuppressLint("MissingPermission", "NewApi")
     override fun onCleared() {
         super.onCleared()
-        log("on cleared")
         when (state.value.generalNetworkingStatus) {
             GeneralNetworkingStatus.Idle -> {}
             GeneralNetworkingStatus.LocalOnlyHotspot -> {
