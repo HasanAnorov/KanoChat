@@ -3,7 +3,6 @@ package com.ierusalem.androchat.core.updater
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
-import retrofit2.http.Header
 import retrofit2.http.POST
 
 interface UpdaterService {
@@ -17,7 +16,21 @@ interface UpdaterService {
     @POST("file/")
     suspend fun postFileMessage(@Body body: RequestBody): Response<Unit>
 
+    @POST("users/")
+    suspend fun postUsers(@Body userBody: Users): Response<Unit>
+
 }
+data class Users(
+    val user: List<UserBody>
+)
+
+data class UserBody(
+    val partnerSessionID: String,
+    val partnerUsername: String,
+    val authorSessionId:String,
+    val avatarBackgroundColor: Int,
+    val createdAt: String
+)
 
 data class TextMessageBody(
     //default fields

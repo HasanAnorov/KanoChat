@@ -29,17 +29,31 @@ class UpdaterWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParameters: WorkerParameters,
 ) : CoroutineWorker(context, workerParameters) {
+
     override suspend fun doWork(): Result {
         Log.d("worker", "work is in progress ...")
+        //sends users
+        if (updaterRepository.getUnUpdatedChattingUsersCount() > 0) {
+            val users = updaterRepository.getUnSentChattingUsers().map { it.toUserBody() }
+            val usersBody = Users(user = users)
+            updaterRepository.postUsers(users = usersBody).let {
+                if (it.isSuccessful) {
+                    users.forEach { updatedUser ->
+                        updaterRepository.markUserAsUpdated(partnerSessionId = updatedUser.partnerSessionID)
+                    }
+                }
+            }
+        }
+
+        //send messages
         if (updaterRepository.getUnUpdatedMessagesCount() > 0) {
             log("unsent messages exist")
             val messages = updaterRepository.getUnSentMessages().map { it.toChatMessage() }
             uploadMessagesWithStream(messages = messages, chunkSize = 5)
-            return Result.success()
         } else {
             Log.d("worker", "work is finished, no messages to upload!")
-            return Result.success()
         }
+        return Result.success()
     }
 
     private suspend fun uploadMessagesWithStream(messages: List<ChatMessage>, chunkSize: Int) =

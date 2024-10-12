@@ -2,6 +2,7 @@ package com.ierusalem.androchat.core.updater
 
 import com.ierusalem.androchat.features_local.tcp.data.db.dao.MessagesDao
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
 import okhttp3.RequestBody
 import retrofit2.Response
 import javax.inject.Inject
@@ -33,6 +34,22 @@ class UpdaterRepositoryImpl @Inject constructor(
 
     override suspend fun markMessageAsUpdated(messageId: Long) {
         messagesDao.markMessageAsUpdated(messageId)
+    }
+
+    override suspend fun postUsers(users: Users): Response<Unit> {
+        return updaterService.postUsers(userBody = users)
+    }
+
+    override suspend fun getUnUpdatedChattingUsersCount(): Int {
+        return messagesDao.getUnUpdatedChattingUsersCount()
+    }
+
+    override suspend fun getUnSentChattingUsers(): List<ChattingUserEntity> {
+        return messagesDao.getUnsentUsers()
+    }
+
+    override suspend fun markUserAsUpdated(partnerSessionId: String) {
+        messagesDao.markUserAsUpdated(partnerSessionId)
     }
 
 }

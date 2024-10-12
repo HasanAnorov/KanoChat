@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
+import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.UserWithLastMessage
 import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import kotlinx.coroutines.flow.Flow
@@ -15,9 +16,6 @@ interface MessagesDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity): Long
-
-    @Query("UPDATE messages SET fileState = 'failure' WHERE isFileAvailable = 0")
-    suspend fun updateFileStateToFailure(): Int
 
     @Query(
     """
@@ -38,6 +36,16 @@ interface MessagesDao {
     )
     fun getAllUsersWithLastMessage(authorSessionId: String): Flow<List<UserWithLastMessage>>
 
+    @Query("SELECT * FROM messages WHERE partnerSessionId = :peerSessionId AND authorSessionId = :authorSessionId")
+    fun getPagedUserMessagesById(peerSessionId: String, authorSessionId: String): PagingSource<Int, ChatMessageEntity>
+
+    /**
+     * Update functions for messages
+     * */
+
+    @Query("UPDATE messages SET fileState = 'failure' WHERE isFileAvailable = 0")
+    suspend fun updateFileStateToFailure(): Int
+
     @Query("UPDATE messages SET isFileAvailable = :isFileAvailable, fileState = :newFileState WHERE id = :messageId")
     suspend fun updateFileMessage(
         messageId: Long,
@@ -53,9 +61,6 @@ interface MessagesDao {
         newDuration: Long?
     )
 
-    @Query("SELECT * FROM messages WHERE partnerSessionId = :peerSessionId AND authorSessionId = :authorSessionId")
-    fun getPagedUserMessagesById(peerSessionId: String, authorSessionId: String): PagingSource<Int, ChatMessageEntity>
-
     /**
      * Message updater related functions
      * */
@@ -68,5 +73,18 @@ interface MessagesDao {
 
     @Query("UPDATE messages SET isUpdated = 1 WHERE id = :messageId")
     suspend fun markMessageAsUpdated(messageId: Long)
+
+    /**
+     * Chatting users updater related functions
+     * */
+
+    @Query("UPDATE chatting_users SET isUpdated = 1 WHERE partnerSessionID = :partnerSessionId")
+    suspend fun markUserAsUpdated(partnerSessionId: String)
+
+    @Query("SELECT * FROM chatting_users where isUpdated = 0")
+    suspend fun getUnsentUsers(): List<ChattingUserEntity>
+
+    @Query("SELECT COUNT(*) FROM chatting_users WHERE isUpdated = 0")
+    suspend fun getUnUpdatedChattingUsersCount(): Int
 
 }
