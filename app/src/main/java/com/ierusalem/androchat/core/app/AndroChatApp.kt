@@ -14,6 +14,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
+import com.ierusalem.androchat.core.directory_router.FilesDirectoryService
 import com.ierusalem.androchat.core.emulator_detection.EmulatorDetector
 import com.ierusalem.androchat.core.updater.UpdaterRepository
 import com.ierusalem.androchat.core.updater.UpdaterWorker
@@ -32,7 +33,8 @@ class AndroChatApp : Application(), Configuration.Provider {
     @Inject
     lateinit var dataStorePreferenceRepository: DataStorePreferenceRepository
 
-    @Inject lateinit var updaterWorkerFactory: UpdaterWorkerFactory
+    @Inject
+    lateinit var updaterWorkerFactory: UpdaterWorkerFactory
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -51,10 +53,10 @@ class AndroChatApp : Application(), Configuration.Provider {
         }
 
         GlobalScope.launch(Dispatchers.IO) {
-            dataStorePreferenceRepository.getUniqueDeviceId.collect{ uniqueDeviceId ->
-                if (uniqueDeviceId.isNotEmpty()){
+            dataStorePreferenceRepository.getUniqueDeviceId.collect { uniqueDeviceId ->
+                if (uniqueDeviceId.isNotEmpty()) {
                     log("unique device id found: $uniqueDeviceId")
-                }else{
+                } else {
                     log("unique device id not found")
                     val uniqueID = UUID.randomUUID().toString()
                     dataStorePreferenceRepository.setUniqueDeviceId(uniqueID)
@@ -99,12 +101,20 @@ class AndroChatApp : Application(), Configuration.Provider {
     }
 }
 
-class UpdaterWorkerFactory @Inject constructor(private val updaterRepository: UpdaterRepository): WorkerFactory(){
+class UpdaterWorkerFactory @Inject constructor(
+    private val updaterRepository: UpdaterRepository,
+    private val filesDirectoryService: FilesDirectoryService,
+) : WorkerFactory() {
     override fun createWorker(
         appContext: Context,
         workerClassName: String,
         workerParameters: WorkerParameters
     ): ListenableWorker {
-        return UpdaterWorker(updaterRepository, appContext, workerParameters)
+        return UpdaterWorker(
+            updaterRepository = updaterRepository,
+            filesDirectoryService = filesDirectoryService,
+            context = appContext,
+            workerParameters = workerParameters
+        )
     }
 }

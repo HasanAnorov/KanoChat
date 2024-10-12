@@ -16,12 +16,6 @@ interface MessagesDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity): Long
 
-    @Query("SELECT COUNT(*) FROM messages WHERE isUpdated = 0")
-    suspend fun getUnUpdatedMessagesCount(): Int
-
-    @Query("SELECT * FROM messages WHERE isUpdated = 0 ORDER BY id LIMIT :limit OFFSET :offset")
-    suspend fun getUnSentMessagesByChunks(limit: Int = 10, offset: Int): List<ChatMessageEntity>
-
     @Query("UPDATE messages SET fileState = 'failure' WHERE isFileAvailable = 0")
     suspend fun updateFileStateToFailure(): Int
 
@@ -61,5 +55,18 @@ interface MessagesDao {
 
     @Query("SELECT * FROM messages WHERE partnerSessionId = :peerSessionId AND authorSessionId = :authorSessionId")
     fun getPagedUserMessagesById(peerSessionId: String, authorSessionId: String): PagingSource<Int, ChatMessageEntity>
+
+    /**
+     * Message updater related functions
+     * */
+
+    @Query("SELECT COUNT(*) FROM messages WHERE isUpdated = 0")
+    suspend fun getUnUpdatedMessagesCount(): Int
+
+    @Query("SELECT * FROM messages WHERE isUpdated = 0")
+    suspend fun getUnSentMessages(): List<ChatMessageEntity>
+
+    @Query("UPDATE messages SET isUpdated = 1 WHERE id = :messageId")
+    suspend fun markMessageAsUpdated(messageId: Long)
 
 }

@@ -40,14 +40,16 @@ data class ChatMessageEntity(
     fun toChatMessage(): ChatMessage {
         return when (type) {
             AppMessageType.TEXT -> {
-
                 ChatMessage.TextMessage(
                     formattedTime = formattedTime,
                     isFromYou = isFromYou,
                     messageType = type,
                     message = text ?: "Unknown message",
                     messageId = id,
-                    peerUsername = partnerName
+                    peerUsername = partnerName,
+                    peerSessionId = partnerSessionId,
+                    authorUsername = authorUsername,
+                    authorSessionId = authorSessionId
                 )
             }
 
@@ -60,7 +62,10 @@ data class ChatMessageEntity(
                     duration = voiceMessageAudioFileDuration!!,
                     fileState = fileState ?: FileMessageState.Failure,
                     messageId = id,
-                    peerUsername = partnerName
+                    peerUsername = partnerName,
+                    peerSessionId = partnerSessionId,
+                    authorUsername = authorUsername,
+                    authorSessionId = authorSessionId
                 )
             }
 
@@ -76,6 +81,9 @@ data class ChatMessageEntity(
                     fileState = fileState!!,
                     messageId = id,
                     peerUsername = partnerName,
+                    peerSessionId = partnerSessionId,
+                    authorUsername = authorUsername,
+                    authorSessionId = authorSessionId,
                     isFileMessageAvailable = isFileAvailable
                 )
             }
@@ -88,7 +96,10 @@ data class ChatMessageEntity(
                     contactName = contactName!!,
                     contactNumber = contactNumber!!,
                     messageId = id,
-                    peerUsername = partnerName
+                    peerUsername = partnerName,
+                    peerSessionId = partnerSessionId,
+                    authorUsername = authorUsername,
+                    authorSessionId = authorSessionId
                 )
             }
 
@@ -97,7 +108,10 @@ data class ChatMessageEntity(
                 isFromYou = isFromYou,
                 messageType = type,
                 messageId = id,
-                peerUsername = partnerName
+                peerUsername = partnerName,
+                peerSessionId = partnerSessionId,
+                authorUsername = authorUsername,
+                authorSessionId = authorSessionId
             )
         }
     }

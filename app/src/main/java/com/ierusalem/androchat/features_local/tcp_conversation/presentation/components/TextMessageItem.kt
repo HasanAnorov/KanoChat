@@ -34,7 +34,10 @@ private fun PreviewLocalChatItemBubble() {
                 message = "Assalom alekum aka yaxshimisiz",
                 isFromYou = true,
                 messageId = 0L,
-                peerUsername = "Khasan"
+                peerUsername = "Khasan",
+                peerSessionId = "3242",
+                authorUsername = "Alex",
+                authorSessionId = "242"
             )
         )
     }
@@ -50,7 +53,10 @@ private fun PreviewLocalChatItemBubblePeer() {
                 message = "Assalom alekum aka yaxshimisiz",
                 isFromYou = false,
                 messageId = 0L,
-                peerUsername = "Khasan"
+                peerUsername = "Khasan",
+                peerSessionId = "3242",
+                authorUsername = "Alex",
+                authorSessionId = "242"
             )
         )
     }
@@ -66,7 +72,10 @@ private fun PreviewLocalChatItemBubbleDark() {
                 message = "Assalom alekum aka yaxshimisiz",
                 isFromYou = true,
                 messageId = 0L,
-                peerUsername = "Khasan"
+                peerUsername = "Khasan",
+                peerSessionId = "3242",
+                authorUsername = "Alex",
+                authorSessionId = "242"
             )
         )
     }
@@ -82,7 +91,10 @@ private fun PreviewLocalChatItemBubbleDarkPeer() {
                 message = "Assalom alekum aka yaxshimisiz",
                 isFromYou = false,
                 messageId = 0L,
-                peerUsername = "Khasan"
+                peerUsername = "Khasan",
+                peerSessionId = "3242",
+                authorUsername = "Alex",
+                authorSessionId = "242"
             )
         )
     }
