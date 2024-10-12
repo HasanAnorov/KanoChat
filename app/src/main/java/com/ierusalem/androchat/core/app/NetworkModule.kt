@@ -4,6 +4,7 @@ import android.app.Application
 import com.chuckerteam.chucker.api.ChuckerCollector
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.google.gson.GsonBuilder
+import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.updater.UpdaterRepository
 import com.ierusalem.androchat.core.updater.UpdaterRepositoryImpl
 import com.ierusalem.androchat.core.updater.UpdaterService
@@ -77,10 +78,12 @@ object NetworkModule {
     fun provideUpdaterRepository(
         updaterService: UpdaterService,
         messagesDao: MessagesDao,
+        dataStorePreferenceRepository: DataStorePreferenceRepository
     ): UpdaterRepository {
         return UpdaterRepositoryImpl(
             messagesDao = messagesDao,
-            updaterService = updaterService
+            updaterService = updaterService,
+            dataStorePreferenceRepository = dataStorePreferenceRepository
         )
     }
 
