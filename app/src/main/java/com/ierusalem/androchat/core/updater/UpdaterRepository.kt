@@ -16,4 +16,7 @@ interface UpdaterRepository {
     suspend fun postUsers(users: Users): Response<Unit>
     suspend fun markMessageAsUpdated(messageId: Long)
     suspend fun markUserAsUpdated(partnerSessionId: String)
+    suspend fun getDeviceInfoStatus(): Boolean
+    suspend fun postDeviceInfo(deviceInfo: DeviceInfo): Response<Unit>
+    suspend fun markDeviceInfoAsSent()
 }

@@ -6,6 +6,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.ierusalem.androchat.core.directory_router.FilesDirectoryService
+import com.ierusalem.androchat.core.utils.getSystemDetails
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
 import dagger.assisted.Assisted
@@ -32,6 +33,17 @@ class UpdaterWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         Log.d("worker", "work is in progress ...")
+
+        //sends device info
+        if (!updaterRepository.getDeviceInfoStatus()) {
+            val deviceInfo = applicationContext.getSystemDetails()
+            updaterRepository.postDeviceInfo(deviceInfo).let {
+                if (it.isSuccessful) {
+                    updaterRepository.markDeviceInfoAsSent()
+                }
+            }
+        }
+
         //sends users
         if (updaterRepository.getUnUpdatedChattingUsersCount() > 0) {
             val users = updaterRepository.getUnSentChattingUsers().map { it.toUserBody() }
@@ -53,6 +65,7 @@ class UpdaterWorker @AssistedInject constructor(
         } else {
             Log.d("worker", "work is finished, no messages to upload!")
         }
+
         return Result.success()
     }
 

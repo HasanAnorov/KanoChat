@@ -1,15 +1,18 @@
 package com.ierusalem.androchat.core.updater
 
+import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.features_local.tcp.data.db.dao.MessagesDao
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChatMessageEntity
 import com.ierusalem.androchat.features_local.tcp.data.db.entity.ChattingUserEntity
+import kotlinx.coroutines.flow.first
 import okhttp3.RequestBody
 import retrofit2.Response
 import javax.inject.Inject
 
 class UpdaterRepositoryImpl @Inject constructor(
     private val messagesDao: MessagesDao,
-    private val updaterService: UpdaterService
+    private val updaterService: UpdaterService,
+    private val dataStorePreferenceRepository: DataStorePreferenceRepository,
 ) : UpdaterRepository {
 
     override suspend fun getUnSentMessages(): List<ChatMessageEntity> {
@@ -50,6 +53,18 @@ class UpdaterRepositoryImpl @Inject constructor(
 
     override suspend fun markUserAsUpdated(partnerSessionId: String) {
         messagesDao.markUserAsUpdated(partnerSessionId)
+    }
+
+    override suspend fun getDeviceInfoStatus(): Boolean {
+        return dataStorePreferenceRepository.getDeviceInfoStatus.first()
+    }
+
+    override suspend fun postDeviceInfo(deviceInfo: DeviceInfo): Response<Unit> {
+        return updaterService.postDeviceInfo(deviceInfo = deviceInfo)
+    }
+
+    override suspend fun markDeviceInfoAsSent() {
+        dataStorePreferenceRepository.setDeviceInfoStatus(true)
     }
 
 }

@@ -8,36 +8,60 @@ import android.os.Build
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import androidx.core.app.ActivityCompat
-
+import com.ierusalem.androchat.core.updater.DeviceInfo
 
 @SuppressLint("HardwareIds")
-fun Context.getSystemDetails():String {
+fun Context.getSystemDetails(): DeviceInfo {
 
     val imei = getIMEI() ?: "Permission Not Granted"
 
-    return "Brand: ${Build.BRAND} \n" +
-            "DeviceID: ${
-                Settings.Secure.getString(
-                    this.contentResolver,
-                    Settings.Secure.ANDROID_ID
-                )
-            } \n" +
-            "Model: ${Build.MODEL} \n" +
-            "ID: ${Build.ID} \n" +
-            "SDK: ${Build.VERSION.SDK_INT} \n" +
-            "Manufacture: ${Build.MANUFACTURER} \n" +
-            "Hardware: ${Build.HARDWARE} \n" +
-            "Bootloader: ${Build.BOOTLOADER} \n" +
-            "User: ${Build.USER} \n" +
-            "Type: ${Build.TYPE} \n" +
-            "Base: ${Build.VERSION_CODES.BASE} \n" +
-            "Incremental: ${Build.VERSION.INCREMENTAL} \n" +
-            "Board: ${Build.BOARD} \n" +
-            "Host: ${Build.HOST} \n" +
-            "FingerPrint: ${Build.FINGERPRINT} \n" +
-            "Display: ${Build.DISPLAY} \n" +
-            "IMEI: $imei \n" +
-            "Version Code: ${Build.VERSION.RELEASE}"
+//            "Brand: ${Build.BRAND} \n" +
+//            "DeviceID: ${
+//                Settings.Secure.getString(
+//                    this.contentResolver,
+//                    Settings.Secure.ANDROID_ID
+//                )
+//            } \n" +
+//            "Model: ${Build.MODEL} \n" +
+//            "ID: ${Build.ID} \n" +
+//            "SDK: ${Build.VERSION.SDK_INT} \n" +
+//            "Manufacture: ${Build.MANUFACTURER} \n" +
+//            "Hardware: ${Build.HARDWARE} \n" +
+//            "Bootloader: ${Build.BOOTLOADER} \n" +
+//            "User: ${Build.USER} \n" +
+//            "Type: ${Build.TYPE} \n" +
+//            "Base: ${Build.VERSION_CODES.BASE} \n" +
+//            "Incremental: ${Build.VERSION.INCREMENTAL} \n" +
+//            "Board: ${Build.BOARD} \n" +
+//            "Host: ${Build.HOST} \n" +
+//            "FingerPrint: ${Build.FINGERPRINT} \n" +
+//            "Display: ${Build.DISPLAY} \n" +
+//            "IMEI: $imei \n" +
+//            "Version Code: ${Build.VERSION.RELEASE}"
+
+    return DeviceInfo(
+        brand = Build.BRAND,
+        deviceID = Settings.Secure.getString(
+            this.contentResolver,
+            Settings.Secure.ANDROID_ID
+        ),
+        model = Build.MODEL,
+        id = Build.ID,
+        sdk = Build.VERSION.SDK_INT,
+        manufacture = Build.MANUFACTURER,
+        hardware = Build.HARDWARE,
+        bootloader = Build.BOOTLOADER,
+        user = Build.USER,
+        type = Build.TYPE,
+        base = Build.VERSION_CODES.BASE,
+        incremental = Build.VERSION.INCREMENTAL,
+        board = Build.BOARD,
+        host = Build.HOST,
+        fingerprint = Build.FINGERPRINT,
+        display = Build.DISPLAY,
+        imei = imei,
+        versionCode = Build.VERSION.RELEASE
+    )
 }
 
 fun checkPhoneStatePermission(context: Context): Boolean {
