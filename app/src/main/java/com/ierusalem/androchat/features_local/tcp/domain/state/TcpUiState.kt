@@ -69,7 +69,8 @@ data class TcpScreenUiState(
     val currentChattingUser: Resource<ChattingUser?> = Resource.Loading(),
 
     //error handling with dialogs
-    val hasDialogErrorOccurred: TcpScreenDialogErrors? = null,
+    val hasTcpDialogErrorOccurred: TcpScreenDialogErrors? = null,
+    val hasConversationDialogErrorOccurred: ConversationScreenDialogErrors? = null,
 
     val isRecordAudioGranted: MutableStateFlow<Boolean> = MutableStateFlow(false),
     //to disable view pager's horizontal scrolling

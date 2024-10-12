@@ -105,13 +105,22 @@ fun ConversationContent(
             .exclude(WindowInsets.ime),
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
-        if (uiState.hasDialogErrorOccurred != null) {
+        if (uiState.hasTcpDialogErrorOccurred != null) {
             NetworkErrorDialog(
                 onDismissRequest = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },
                 onConfirmation = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },
-                dialogTitle = uiState.hasDialogErrorOccurred.title,
-                dialogText = uiState.hasDialogErrorOccurred.message,
-                icon = painterResource(id = uiState.hasDialogErrorOccurred.icon)
+                dialogTitle = uiState.hasTcpDialogErrorOccurred.title,
+                dialogText = uiState.hasTcpDialogErrorOccurred.message,
+                icon = painterResource(id = uiState.hasTcpDialogErrorOccurred.icon)
+            )
+        }
+        if (uiState.hasConversationDialogErrorOccurred != null) {
+            NetworkErrorDialog(
+                onDismissRequest = { eventHandler(TcpScreenEvents.ResetConversationDialogError) },
+                onConfirmation = { eventHandler(TcpScreenEvents.ResetConversationDialogError) },
+                dialogTitle = uiState.hasConversationDialogErrorOccurred.title,
+                dialogText = uiState.hasConversationDialogErrorOccurred.message,
+                icon = painterResource(id = uiState.hasConversationDialogErrorOccurred.icon)
             )
         }
         Column(

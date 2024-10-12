@@ -38,13 +38,13 @@ fun TcpScreen(
             .fillMaxSize()
             .imePadding()
     ) { pv ->
-        if (uiState.hasDialogErrorOccurred != null) {
+        if (uiState.hasTcpDialogErrorOccurred != null) {
             NetworkErrorDialog(
                 onDismissRequest = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },
                 onConfirmation = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },
-                dialogTitle = uiState.hasDialogErrorOccurred.title,
-                dialogText = uiState.hasDialogErrorOccurred.message,
-                icon = painterResource(id = uiState.hasDialogErrorOccurred.icon)
+                dialogTitle = uiState.hasTcpDialogErrorOccurred.title,
+                dialogText = uiState.hasTcpDialogErrorOccurred.message,
+                icon = painterResource(id = uiState.hasTcpDialogErrorOccurred.icon)
             )
         }
 

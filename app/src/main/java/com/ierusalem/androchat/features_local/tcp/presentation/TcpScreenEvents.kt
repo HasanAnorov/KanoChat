@@ -26,6 +26,7 @@ sealed interface TcpScreenEvents {
     data class SendMessageRequest(val message: String) : TcpScreenEvents
 
     data class OnDialogErrorOccurred(val error: TcpScreenDialogErrors?) : TcpScreenEvents
+    data object ResetConversationDialogError: TcpScreenEvents
 
     data class HandlePickingMultipleMedia(val medias: List<Uri>) : TcpScreenEvents
 
