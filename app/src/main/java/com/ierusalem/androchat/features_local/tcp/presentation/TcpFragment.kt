@@ -80,7 +80,7 @@ class TcpFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel.initializeAuthorSessionId()
-        viewModel.loadChattingUsers()
+        //viewModel.loadChattingUsers()
     }
 
     @OptIn(ExperimentalFoundationApi::class)
@@ -189,7 +189,8 @@ class TcpFragment : Fragment() {
                         eventHandler = viewModel::handleEvents,
                         allTabs = allTabs,
                         pagerState = pagerState,
-                        onTabChanged = { handleTabSelected(it) }
+                        onTabChanged = { handleTabSelected(it) },
+                        chattingUsers = viewModel.chattingUsersStream.collectAsStateWithLifecycle().value
                     )
                 }
             }

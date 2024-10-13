@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
+import com.ierusalem.androchat.core.utils.Resource
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpView
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
@@ -20,6 +22,7 @@ import com.ierusalem.androchat.features_local.tcp.presentation.tcp_networking.Ne
 fun TcpContent(
     modifier: Modifier = Modifier,
     state: TcpScreenUiState,
+    chattingUsers: Resource<List<ChattingUser>>,
     allTabs: SnapshotStateList<TcpView>,
     pagerState: PagerState,
     onCreateNetworkClick: () -> Unit = {},
@@ -42,7 +45,7 @@ fun TcpContent(
                 ChatsScreen(
                     modifier = Modifier.fillMaxSize(),
                     eventHandler = eventHandler,
-                    uiState = state,
+                    chattingUsers = chattingUsers,
                     onCreateNetworkClick = onCreateNetworkClick
                 )
             }

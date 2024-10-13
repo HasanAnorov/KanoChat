@@ -64,8 +64,7 @@ data class TcpScreenUiState(
     val availableWifiNetworks: List<WifiP2pDevice> = emptyList(),
     val connectedWifiNetworks: List<WifiP2pDevice> = emptyList(),
 
-    //contacts
-    val chattingUsers: Resource<List<ChattingUser>> = Resource.Loading(),
+    //users
     val currentChattingUser: Resource<ChattingUser?> = Resource.Loading(),
 
     //error handling with dialogs
@@ -75,6 +74,7 @@ data class TcpScreenUiState(
     val isRecordAudioGranted: MutableStateFlow<Boolean> = MutableStateFlow(false),
     //to disable view pager's horizontal scrolling
     val isRecording: Boolean = false,
+
 
     //network broad frequency for hotspot networking
     val networkBand: AppBroadcastFrequency = AppBroadcastFrequency.FREQUENCY_2_4_GHZ,

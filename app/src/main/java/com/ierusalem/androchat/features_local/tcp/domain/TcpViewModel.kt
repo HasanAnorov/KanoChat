@@ -66,6 +66,7 @@ import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.Reason
 import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_local.tcp.domain.model.AudioState
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import com.ierusalem.androchat.features_local.tcp.domain.state.ClientConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactItem
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactMessageItem
@@ -89,6 +90,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -100,6 +102,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -261,24 +264,16 @@ class TcpViewModel @Inject constructor(
     }
 
     /** Initializing Functions*/
-
-    fun loadChattingUsers() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val authorSessionID = runBlocking { dataStorePreferenceRepository.getSessionId.first() }
-            log("author session id - $authorSessionID")
-            messagesRepository.getAllUsersWithLastMessages(authorSessionID).collect { users ->
-                _state.update {
-                    it.copy(
-                        chattingUsers = Resource.Success(
-                            users
-                                .sortedBy { user -> !user.isOnline }
-                                .map { user -> user.toChattingUser() }
-                        )
-                    )
-                }
-            }
-        }
-    }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val chattingUsersStream : StateFlow<Resource<List<ChattingUser>>> =
+        dataStorePreferenceRepository.getSessionId.flatMapLatest { sessionId ->
+            messagesRepository.getAllUsersWithLastMessages(sessionId)
+        }.map {
+            Resource.Success(
+                it.sortedBy { user -> !user.isOnline }
+                    .map { user -> user.toChattingUser() }
+            )
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Resource.Loading())
 
     fun initializeAuthorSessionId() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -458,7 +453,7 @@ class TcpViewModel @Inject constructor(
 
     private suspend fun createServer(portNumber: Int) = withContext(Dispatchers.IO) {
         log("creating server ...")
-        log("group address - ${state.value.groupOwnerAddress} \ncreating server ...")
+        log("group address - ${state.value.groupOwnerAddress} ")
         updateHostConnectionStatus(HostConnectionStatus.Creating)
 
         try {
@@ -1324,7 +1319,7 @@ class TcpViewModel @Inject constructor(
                 log("file receiving process failed: ${e.message}")
                 try {
                     reader.close()
-                }catch (e: Exception){
+                } catch (e: Exception) {
                     e.printStackTrace()
                 }
             }
@@ -2790,7 +2785,7 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    private fun updateHasConversationErrorOccurredDialog(dialog: ConversationScreenDialogErrors?){
+    private fun updateHasConversationErrorOccurredDialog(dialog: ConversationScreenDialogErrors?) {
         _state.update {
             it.copy(
                 hasConversationDialogErrorOccurred = dialog
