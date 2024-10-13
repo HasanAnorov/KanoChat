@@ -40,7 +40,6 @@ fun TcpContent(
             allTabs[page]
         }
         when (screen) {
-
             TcpView.CHATS -> {
                 ChatsScreen(
                     modifier = Modifier.fillMaxSize(),
@@ -65,7 +64,6 @@ fun TcpContent(
                     uiState = state
                 )
             }
-
         }
     }
 }

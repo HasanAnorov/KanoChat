@@ -220,10 +220,8 @@ class TcpViewModel @Inject constructor(
         }
     }
 
-    //todo - there is no need to add delay but i can't fix it without delay
     fun logout(onFinished: () -> Unit) {
         viewModelScope.launch {
-
             when (state.value.generalConnectionStatus) {
                 GeneralConnectionStatus.Idle -> {}
                 GeneralConnectionStatus.ConnectedAsHost -> {
@@ -265,7 +263,7 @@ class TcpViewModel @Inject constructor(
 
     /** Initializing Functions*/
     @OptIn(ExperimentalCoroutinesApi::class)
-    val chattingUsersStream : StateFlow<Resource<List<ChattingUser>>> =
+    val chattingUsersStream: StateFlow<Resource<List<ChattingUser>>> =
         dataStorePreferenceRepository.getSessionId.flatMapLatest { sessionId ->
             messagesRepository.getAllUsersWithLastMessages(sessionId)
         }.map {
