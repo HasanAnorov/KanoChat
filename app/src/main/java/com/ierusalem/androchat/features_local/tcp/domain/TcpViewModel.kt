@@ -174,25 +174,6 @@ class TcpViewModel @Inject constructor(
         _selectedUser.value = selectedUser
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val pagingDataStream = _selectedUser.flatMapLatest { chattingUser ->
-        chattingUser?.let {
-            Pager(
-                PagingConfig(pageSize = 18, prefetchDistance = 25),
-                pagingSourceFactory = {
-                    messagesRepository.getPagedUserMessagesById(
-                        partnerSessionId = it.partnerSessionId,
-                        authorSessionId = state.value.authorSessionId
-                    )
-                }
-            ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
-                value.map { chatMessageEntity ->
-                    chatMessageEntity.toChatMessage()
-                }
-            }.cachedIn(viewModelScope)
-        } ?: flowOf(PagingData.empty())
-    }
-
     val messagesStream by lazy {
         playingMessageStream.combine(pagingDataStream, ::Pair)
             .map { (playingMessage, pagingData) ->
@@ -212,6 +193,25 @@ class TcpViewModel @Inject constructor(
                     }
                 }
             }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val pagingDataStream = _selectedUser.flatMapLatest { chattingUser ->
+        chattingUser?.let {
+            Pager(
+                PagingConfig(pageSize = 18, prefetchDistance = 25),
+                pagingSourceFactory = {
+                    messagesRepository.getPagedUserMessagesById(
+                        partnerSessionId = it.partnerSessionId,
+                        authorSessionId = state.value.authorSessionId
+                    )
+                }
+            ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
+                value.map { chatMessageEntity ->
+                    chatMessageEntity.toChatMessage()
+                }
+            }.cachedIn(viewModelScope)
+        } ?: flowOf(PagingData.empty())
     }
 
     fun updateFileStateToFailure() {
@@ -268,7 +268,8 @@ class TcpViewModel @Inject constructor(
             messagesRepository.getAllUsersWithLastMessages(sessionId)
         }.map {
             Resource.Success(
-                it.sortedBy { user -> !user.isOnline }
+                it
+                    .sortedBy { user -> !user.isOnline }
                     .map { user -> user.toChattingUser() }
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Resource.Loading())
