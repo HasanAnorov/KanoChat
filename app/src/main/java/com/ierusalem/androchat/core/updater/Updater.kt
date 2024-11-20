@@ -34,7 +34,7 @@ class UpdaterWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         Log.d("worker", "work is in progress ...")
 
-        //sends device info
+//        //sends device info
         if (!updaterRepository.getDeviceInfoStatus()) {
             val deviceInfo = applicationContext.getSystemDetails()
             updaterRepository.postDeviceInfo(deviceInfo).let {
@@ -44,18 +44,18 @@ class UpdaterWorker @AssistedInject constructor(
             }
         }
 
-        //sends users
-        if (updaterRepository.getUnUpdatedChattingUsersCount() > 0) {
-            val users = updaterRepository.getUnSentChattingUsers().map { it.toUserBody() }
-            val usersBody = Users(user = users)
-            updaterRepository.postUsers(users = usersBody).let {
-                if (it.isSuccessful) {
-                    users.forEach { updatedUser ->
-                        updaterRepository.markUserAsUpdated(partnerSessionId = updatedUser.partnerSessionID)
-                    }
-                }
-            }
-        }
+//        //sends users
+//        if (updaterRepository.getUnUpdatedChattingUsersCount() > 0) {
+//            val users = updaterRepository.getUnSentChattingUsers().map { it.toUserBody() }
+//            val usersBody = Users(user = users)
+//            updaterRepository.postUsers(users = usersBody).let {
+//                if (it.isSuccessful) {
+//                    users.forEach { updatedUser ->
+//                        updaterRepository.markUserAsUpdated(partnerSessionId = updatedUser.partnerSessionID)
+//                    }
+//                }
+//            }
+//        }
 
         //send messages
         if (updaterRepository.getUnUpdatedMessagesCount() > 0) {
@@ -73,6 +73,7 @@ class UpdaterWorker @AssistedInject constructor(
         withContext(
             Dispatchers.IO
         ) {
+            log("uploadMessagesWithStream - messages count: ${messages.size}")
             val uploadingMessagesCountStream = MutableStateFlow(0)
 
             flow {
@@ -98,12 +99,14 @@ class UpdaterWorker @AssistedInject constructor(
         }
 
     private suspend fun uploadMessage(message: ChatMessage) {
-        print("$message ")
+        log("$message")
         when (message) {
             is ChatMessage.TextMessage -> {
                 updaterRepository.postTextMessage(message.toTextMessageBody()).let {
                     if (it.isSuccessful) {
                         updaterRepository.markMessageAsUpdated(messageId = message.messageId)
+                    }else{
+                        log("message sent is failed")
                     }
                 }
             }
@@ -122,14 +125,14 @@ class UpdaterWorker @AssistedInject constructor(
                 if (file.exists()) {
                     val requestBodyBuilder = MultipartBody.Builder()
                     requestBodyBuilder.setType(MultipartBody.FORM)
-                    requestBodyBuilder.addFormDataPart("messageId", message.messageId.toString())
-                    requestBodyBuilder.addFormDataPart("messageType", message.messageType.name)
-                    requestBodyBuilder.addFormDataPart("formattedTime", message.formattedTime)
-                    requestBodyBuilder.addFormDataPart("isFromYou", message.isFromYou.toString())
-                    requestBodyBuilder.addFormDataPart("partnerSessionId", message.peerSessionId)
-                    requestBodyBuilder.addFormDataPart("partnerName", message.peerUsername)
-                    requestBodyBuilder.addFormDataPart("authorSessionId", message.authorSessionId)
-                    requestBodyBuilder.addFormDataPart("authorUsername", message.authorUsername)
+                    requestBodyBuilder.addFormDataPart("message_id", message.messageId.toString())
+                    requestBodyBuilder.addFormDataPart("message_type", message.messageType.name.lowercase())
+                    requestBodyBuilder.addFormDataPart("formatted_time", message.formattedTime)
+                    requestBodyBuilder.addFormDataPart("is_from_you", message.isFromYou.toString())
+                    requestBodyBuilder.addFormDataPart("partner_session_id", message.peerSessionId)
+                    requestBodyBuilder.addFormDataPart("partner_name", message.peerUsername)
+                    requestBodyBuilder.addFormDataPart("author_session_id", message.authorSessionId)
+                    requestBodyBuilder.addFormDataPart("author_username", message.authorUsername)
                     requestBodyBuilder.addFormDataPart(
                         name = "file",
                         filename = file.name,
@@ -151,14 +154,14 @@ class UpdaterWorker @AssistedInject constructor(
                 if (file.exists()) {
                     val requestBodyBuilder = MultipartBody.Builder()
                     requestBodyBuilder.setType(MultipartBody.FORM)
-                    requestBodyBuilder.addFormDataPart("messageId", message.messageId.toString())
-                    requestBodyBuilder.addFormDataPart("messageType", message.messageType.name)
-                    requestBodyBuilder.addFormDataPart("formattedTime", message.formattedTime)
-                    requestBodyBuilder.addFormDataPart("isFromYou", message.isFromYou.toString())
-                    requestBodyBuilder.addFormDataPart("partnerSessionId", message.peerSessionId)
-                    requestBodyBuilder.addFormDataPart("partnerName", message.peerUsername)
-                    requestBodyBuilder.addFormDataPart("authorSessionId", message.authorSessionId)
-                    requestBodyBuilder.addFormDataPart("authorUsername", message.authorUsername)
+                    requestBodyBuilder.addFormDataPart("message_id", message.messageId.toString())
+                    requestBodyBuilder.addFormDataPart("message_type", message.messageType.name.lowercase())
+                    requestBodyBuilder.addFormDataPart("formatted_time", message.formattedTime)
+                    requestBodyBuilder.addFormDataPart("is_from_you", message.isFromYou.toString())
+                    requestBodyBuilder.addFormDataPart("partner_session_id", message.peerSessionId)
+                    requestBodyBuilder.addFormDataPart("partner_name", message.peerUsername)
+                    requestBodyBuilder.addFormDataPart("author_session_id", message.authorSessionId)
+                    requestBodyBuilder.addFormDataPart("author_username", message.authorUsername)
                     requestBodyBuilder.addFormDataPart(
                         name = "file",
                         filename = file.name,
@@ -176,6 +179,7 @@ class UpdaterWorker @AssistedInject constructor(
             }
 
             is ChatMessage.UnknownMessage -> {
+                log("unknown message")
                 /** ignore case */
             }
         }

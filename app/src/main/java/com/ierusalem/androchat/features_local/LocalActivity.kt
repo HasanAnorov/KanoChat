@@ -71,15 +71,22 @@ class LocalActivity : AppCompatActivity() {
         */
 
         val periodicWorkRequest = PeriodicWorkRequestBuilder<UpdaterWorker>(
-            repeatInterval = 1,
-            repeatIntervalTimeUnit = TimeUnit.DAYS,
+//            repeatInterval = 1,
+//            repeatIntervalTimeUnit = TimeUnit.DAYS,
+//            flexTimeInterval = 1,
+//            flexTimeIntervalUnit = TimeUnit.HOURS
+            repeatInterval = 16,
+            repeatIntervalTimeUnit = TimeUnit.MINUTES,
             flexTimeInterval = 1,
-            flexTimeIntervalUnit = TimeUnit.HOURS
+            flexTimeIntervalUnit = TimeUnit.MINUTES
         )
             .setBackoffCriteria(
+//                backoffPolicy = BackoffPolicy.LINEAR,
+//                backoffDelay = 6,
+//                timeUnit = TimeUnit.HOURS
                 backoffPolicy = BackoffPolicy.LINEAR,
-                backoffDelay = 6,
-                timeUnit = TimeUnit.HOURS
+                backoffDelay = 1,
+                timeUnit = TimeUnit.MINUTES
             )
             .setConstraints(workerConstraints)
             .build()

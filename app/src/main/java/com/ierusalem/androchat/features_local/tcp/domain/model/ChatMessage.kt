@@ -31,7 +31,7 @@ sealed interface ChatMessage {
         fun toTextMessageBody(): TextMessageBody {
             return TextMessageBody(
                 messageId = messageId.toString(),
-                messageType = messageType.name,
+                messageType = messageType.name.lowercase(),
                 formattedTime = formattedTime,
                 isFromYou = isFromYou.toString(),
                 partnerSessionId = peerSessionId,
@@ -90,7 +90,7 @@ sealed interface ChatMessage {
         fun toContactMessageBody(): ContactMessageBody {
             return ContactMessageBody(
                 messageId = messageId.toString(),
-                messageType = messageType.name,
+                messageType = messageType.name.lowercase(),
                 formattedTime = formattedTime,
                 isFromYou = isFromYou.toString(),
                 partnerSessionId = peerSessionId,
