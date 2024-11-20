@@ -220,7 +220,10 @@ private fun PreviewLightFileItemPeer() {
                     isFromYou = false,
                     messageId = 0L,
                     peerUsername = "Khasan",
-                    isFileMessageAvailable = true
+                    isFileMessageAvailable = true,
+                    peerSessionId = "3242",
+                    authorUsername = "Alex",
+                    authorSessionId = "242"
                 ),
                 onFileItemClick = {}
             )
@@ -244,7 +247,10 @@ private fun PreviewDarkFileItem() {
                     isFromYou = true,
                     messageId = 0L,
                     peerUsername = "Khasan",
-                    isFileMessageAvailable = true
+                    isFileMessageAvailable = true,
+                    peerSessionId = "3242",
+                    authorUsername = "Alex",
+                    authorSessionId = "242"
                 ),
                 onFileItemClick = {}
             )
@@ -269,7 +275,10 @@ private fun PreviewLightFileItem() {
                     isFromYou = true,
                     messageId = 0L,
                     peerUsername = "Khasan",
-                    isFileMessageAvailable = true
+                    isFileMessageAvailable = true,
+                    peerSessionId = "3242",
+                    authorUsername = "Alex",
+                    authorSessionId = "242"
                 ),
                 onFileItemClick = {}
             )
@@ -294,7 +303,10 @@ private fun PreviewDarkFileItemPeer() {
                     isFromYou = false,
                     messageId = 0L,
                     peerUsername = "Khasan",
-                    isFileMessageAvailable = true
+                    isFileMessageAvailable = true,
+                    peerSessionId = "3242",
+                    authorUsername = "Alex",
+                    authorSessionId = "242"
                 ),
                 onFileItemClick = {}
             )

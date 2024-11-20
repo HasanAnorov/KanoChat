@@ -116,7 +116,10 @@ private fun PreviewLightContactItem() {
                 contactName = "Anorov Hasan",
                 isFromYou = true,
                 messageId = 0L,
-                peerUsername = "Khasan"
+                peerUsername = "Khasan",
+                peerSessionId = "3242",
+                authorUsername = "Alex",
+                authorSessionId = "242"
             ),
             onContactNumberClick = {}
         )
@@ -134,7 +137,10 @@ private fun PreviewDarkContactItem() {
                 contactName = "Anorov Hasan",
                 isFromYou = true,
                 messageId = 0L,
-                peerUsername = "Khasan"
+                peerUsername = "Khasan",
+                peerSessionId = "3242",
+                authorUsername = "Alex",
+                authorSessionId = "242"
             ),
             onContactNumberClick = {}
         )
@@ -152,7 +158,10 @@ private fun PreviewLightContactItemPeer() {
                 contactName = "Anorov Hasan",
                 isFromYou = false,
                 messageId = 0L,
-                peerUsername = "Khasan"
+                peerUsername = "Khasan",
+                peerSessionId = "3242",
+                authorUsername = "Alex",
+                authorSessionId = "242"
             ),
             onContactNumberClick = {}
         )
@@ -170,7 +179,10 @@ private fun PreviewDarkContactItemPeer() {
                 contactName = "Anorov Hasan",
                 isFromYou = false,
                 messageId = 0L,
-                peerUsername = "Khasan"
+                peerUsername = "Khasan",
+                peerSessionId = "3242",
+                authorUsername = "Alex",
+                authorSessionId = "242"
             ),
             onContactNumberClick = {}
         )

@@ -49,7 +49,6 @@ class WiFiDirectBroadcastReceiver(
             }
 
             WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION -> {
-                Log.d("ahi3646", "handleDiscoveryChangedAction: ")
                 networkEventHandler(WiFiNetworkEvent.DiscoveryChanged)
             }
 

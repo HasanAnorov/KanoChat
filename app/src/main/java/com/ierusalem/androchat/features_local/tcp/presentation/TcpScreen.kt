@@ -16,7 +16,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.ierusalem.androchat.R
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
+import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.core.utils.UiText
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.components.NetworkErrorDialog
 import com.ierusalem.androchat.features_local.tcp.presentation.components.TcpAppBar
@@ -31,6 +33,7 @@ fun TcpScreen(
     allTabs: SnapshotStateList<TcpView>,
     pagerState: PagerState,
     uiState: TcpScreenUiState,
+    chattingUsers: Resource<List<ChattingUser>> ,
     onTabChanged: (TcpView) -> Unit
 ) {
     Scaffold(
@@ -38,13 +41,13 @@ fun TcpScreen(
             .fillMaxSize()
             .imePadding()
     ) { pv ->
-        if (uiState.hasDialogErrorOccurred != null) {
+        if (uiState.hasTcpDialogErrorOccurred != null) {
             NetworkErrorDialog(
                 onDismissRequest = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },
                 onConfirmation = { eventHandler(TcpScreenEvents.OnDialogErrorOccurred(null)) },
-                dialogTitle = uiState.hasDialogErrorOccurred.title,
-                dialogText = uiState.hasDialogErrorOccurred.message,
-                icon = painterResource(id = uiState.hasDialogErrorOccurred.icon)
+                dialogTitle = uiState.hasTcpDialogErrorOccurred.title,
+                dialogText = uiState.hasTcpDialogErrorOccurred.message,
+                icon = painterResource(id = uiState.hasTcpDialogErrorOccurred.icon)
             )
         }
 
@@ -69,6 +72,7 @@ fun TcpScreen(
                 pagerState = pagerState,
                 eventHandler = eventHandler,
                 state = uiState,
+                chattingUsers = chattingUsers,
                 onCreateNetworkClick = { onTabChanged(TcpView.NETWORKING) }
             )
         }
@@ -90,7 +94,8 @@ private fun TcpScreenPreview() {
                 pageCount = { allTabs.size },
             ),
             onTabChanged = {},
-            uiState = TcpScreenUiState()
+            uiState = TcpScreenUiState(),
+            chattingUsers = Resource.Loading()
         )
     }
 }

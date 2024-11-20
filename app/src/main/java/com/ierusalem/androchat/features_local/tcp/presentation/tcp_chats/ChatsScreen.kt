@@ -24,10 +24,8 @@ import com.ierusalem.androchat.core.ui.components.ErrorScreen
 import com.ierusalem.androchat.core.ui.components.ErrorType
 import com.ierusalem.androchat.core.ui.components.LoadingScreen
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
-import com.ierusalem.androchat.core.utils.Constants.getRandomColor
 import com.ierusalem.androchat.core.utils.Resource
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
-import com.ierusalem.androchat.features_local.tcp.domain.state.TcpScreenUiState
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpScreenEvents
 import com.ierusalem.androchat.features_local.tcp.presentation.tcp_chats.components.NoMessagesScreen
 import com.ierusalem.androchat.features_local.tcp.presentation.tcp_chats.components.TcpContactItem
@@ -35,16 +33,16 @@ import com.ierusalem.androchat.features_local.tcp.presentation.tcp_chats.compone
 @Composable
 fun ChatsScreen(
     modifier: Modifier = Modifier,
-    uiState: TcpScreenUiState,
+    chattingUsers: Resource<List<ChattingUser>>,
     onCreateNetworkClick: () -> Unit = {},
-    eventHandler: (TcpScreenEvents) -> Unit
+    eventHandler: (TcpScreenEvents) -> Unit,
 ) {
-    when (val state = uiState.chattingUsers) {
+    when (chattingUsers) {
         is Resource.Loading -> LoadingScreen(modifier)
 
         is Resource.Success -> {
 
-            val users = state.data ?: emptyList()
+            val users = chattingUsers.data ?: emptyList()
 
             // open navigation drawer swiper from left to right on initial page
             val isVisible = rememberSaveable { mutableStateOf(true) }
@@ -121,9 +119,7 @@ fun ContactsScreenPreview() {
         ChatsScreen(
             modifier = Modifier,
             eventHandler = {},
-            uiState = TcpScreenUiState(
-                contacts = Resource.Failure("Something went wrong")
-            )
+            chattingUsers = Resource.Loading()
         )
     }
 }
@@ -135,82 +131,7 @@ fun ContactsScreenPreviewSuccess() {
         ChatsScreen(
             modifier = Modifier,
             eventHandler = {},
-            uiState = TcpScreenUiState(
-                chattingUsers = Resource.Success(
-                    listOf(
-                        ChattingUser(
-                            partnerSessionID = "123",
-                            partnerUsername = "Ahmed",
-                            isOnline = true,
-                            avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null,
-                        ),
-                        ChattingUser(
-                            partnerSessionID = "123",
-                            partnerUsername = "Ahmed",
-                            isOnline = true,
-                            avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null,
-                        ),
-                        ChattingUser(
-                            partnerSessionID = "123",
-                            partnerUsername = "Ahmed",
-                            isOnline = false,
-                            avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null,
-                        ),
-                        ChattingUser(
-                            partnerSessionID = "123",
-                            partnerUsername = "Ahmed",
-                            isOnline = false,
-                            avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null,
-                        ),
-                        ChattingUser(
-                            partnerSessionID = "123",
-                            partnerUsername = "Ahmed",
-                            isOnline = false,
-                            avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null,
-                        ),
-                        ChattingUser(
-                            partnerSessionID = "123",
-                            partnerUsername = "Ahmed",
-                            isOnline = false,
-                            avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null,
-                        ),
-                        ChattingUser(
-                            partnerSessionID = "123",
-                            partnerUsername = "Ahmed",
-                            isOnline = false,
-                            avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null,
-                        ),
-                        ChattingUser(
-                            partnerSessionID = "123",
-                            partnerUsername = "Ahmed",
-                            isOnline = false,
-                            avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null,
-                        ),
-                        ChattingUser(
-                            partnerSessionID = "123",
-                            partnerUsername = "Ahmed",
-                            isOnline = false,
-                            avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null,
-                        ),
-                        ChattingUser(
-                            partnerSessionID = "123",
-                            partnerUsername = "Ahmed",
-                            isOnline = false,
-                            avatarBackgroundColor = getRandomColor(),
-                            lastMessage = null,
-                        )
-                    )
-                )
-            )
+            chattingUsers = Resource.Loading()
         )
     }
 }
@@ -222,9 +143,7 @@ fun ContactsScreenPreviewDark() {
         ChatsScreen(
             modifier = Modifier,
             eventHandler = {},
-            uiState = TcpScreenUiState(
-                chattingUsers = Resource.Success(listOf())
-            )
+            chattingUsers = Resource.Loading()
         )
     }
 }
@@ -236,9 +155,7 @@ fun ContactsScreenPreviewDarkError() {
         ChatsScreen(
             modifier = Modifier,
             eventHandler = {},
-            uiState = TcpScreenUiState(
-                chattingUsers = Resource.Failure("Something went wrong")
-            )
+            chattingUsers = Resource.Loading()
         )
     }
 }

@@ -3,6 +3,7 @@ package com.ierusalem.androchat.features_local.tcp.data.db.entity
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.ierusalem.androchat.core.updater.UserBody
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 
 @Entity("chatting_users")
@@ -12,7 +13,9 @@ data class ChattingUserEntity(
     val authorSessionId:String,
     val avatarBackgroundColor: Int,
     val isOnline: Boolean,
-    val createdAt: String
+    val createdAt: String,
+    //uncaring parameter
+    val isUpdated: Boolean = false
 ){
     fun toChattingUser(): ChattingUser{
         return ChattingUser(
@@ -21,6 +24,16 @@ data class ChattingUserEntity(
             avatarBackgroundColor = avatarBackgroundColor,
             lastMessage = null,
             isOnline = isOnline
+        )
+    }
+
+    fun toUserBody(): UserBody{
+        return UserBody(
+            partnerSessionID = partnerSessionID,
+            partnerUsername = partnerUsername,
+            authorSessionId = authorSessionId,
+            avatarBackgroundColor = avatarBackgroundColor,
+            createdAt = createdAt
         )
     }
 }

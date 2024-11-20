@@ -66,9 +66,11 @@ import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.Reason
 import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiNetworkEvent
 import com.ierusalem.androchat.features_local.tcp.domain.model.AudioState
 import com.ierusalem.androchat.features_local.tcp.domain.model.ChatMessage
+import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import com.ierusalem.androchat.features_local.tcp.domain.state.ClientConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactItem
 import com.ierusalem.androchat.features_local.tcp.domain.state.ContactMessageItem
+import com.ierusalem.androchat.features_local.tcp.domain.state.ConversationScreenDialogErrors
 import com.ierusalem.androchat.features_local.tcp.domain.state.FileMessageState
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralConnectionStatus
 import com.ierusalem.androchat.features_local.tcp.domain.state.GeneralNetworkingStatus
@@ -88,6 +90,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -99,6 +102,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -170,25 +174,6 @@ class TcpViewModel @Inject constructor(
         _selectedUser.value = selectedUser
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val pagingDataStream = _selectedUser.flatMapLatest { chattingUser ->
-        chattingUser?.let {
-            Pager(
-                PagingConfig(pageSize = 18, prefetchDistance = 25),
-                pagingSourceFactory = {
-                    messagesRepository.getPagedUserMessagesById(
-                        partnerSessionId = it.partnerSessionId,
-                        authorSessionId = state.value.authorSessionId
-                    )
-                }
-            ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
-                value.map { chatMessageEntity ->
-                    chatMessageEntity.toChatMessage()
-                }
-            }.cachedIn(viewModelScope)
-        } ?: flowOf(PagingData.empty())
-    }
-
     val messagesStream by lazy {
         playingMessageStream.combine(pagingDataStream, ::Pair)
             .map { (playingMessage, pagingData) ->
@@ -210,16 +195,33 @@ class TcpViewModel @Inject constructor(
             }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val pagingDataStream = _selectedUser.flatMapLatest { chattingUser ->
+        chattingUser?.let {
+            Pager(
+                PagingConfig(pageSize = 18, prefetchDistance = 25),
+                pagingSourceFactory = {
+                    messagesRepository.getPagedUserMessagesById(
+                        partnerSessionId = it.partnerSessionId,
+                        authorSessionId = state.value.authorSessionId
+                    )
+                }
+            ).flow.mapNotNull { value: PagingData<ChatMessageEntity> ->
+                value.map { chatMessageEntity ->
+                    chatMessageEntity.toChatMessage()
+                }
+            }.cachedIn(viewModelScope)
+        } ?: flowOf(PagingData.empty())
+    }
+
     fun updateFileStateToFailure() {
         viewModelScope.launch(Dispatchers.IO) {
             messagesRepository.updateFileStateToFailure()
         }
     }
 
-    //todo - there is no need to add delay but i can't fix it without delay
     fun logout(onFinished: () -> Unit) {
         viewModelScope.launch {
-
             when (state.value.generalConnectionStatus) {
                 GeneralConnectionStatus.Idle -> {}
                 GeneralConnectionStatus.ConnectedAsHost -> {
@@ -254,30 +256,23 @@ class TcpViewModel @Inject constructor(
             }
             //delay for shutting down servers
             delay(200)
-            updateHasErrorOccurredDialog(null)
+            updateHasTcpErrorOccurredDialog(null)
             onFinished()
         }
     }
 
     /** Initializing Functions*/
-
-    fun loadChattingUsers() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val authorSessionID = runBlocking { dataStorePreferenceRepository.getSessionId.first() }
-            log("author session id - $authorSessionID")
-            messagesRepository.getAllUsersWithLastMessages(authorSessionID).collect { users ->
-                _state.update {
-                    it.copy(
-                        chattingUsers = Resource.Success(
-                            users
-                                .sortedBy { user -> !user.isOnline }
-                                .map { user -> user.toChattingUser() }
-                        )
-                    )
-                }
-            }
-        }
-    }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val chattingUsersStream: StateFlow<Resource<List<ChattingUser>>> =
+        dataStorePreferenceRepository.getSessionId.flatMapLatest { sessionId ->
+            messagesRepository.getAllUsersWithLastMessages(sessionId)
+        }.map {
+            Resource.Success(
+                it
+                    .sortedBy { user -> !user.isOnline }
+                    .map { user -> user.toChattingUser() }
+            )
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Resource.Loading())
 
     fun initializeAuthorSessionId() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -328,7 +323,6 @@ class TcpViewModel @Inject constructor(
     @SuppressLint("MissingPermission", "NewApi")
     override fun onCleared() {
         super.onCleared()
-        log("on cleared")
         when (state.value.generalNetworkingStatus) {
             GeneralNetworkingStatus.Idle -> {}
             GeneralNetworkingStatus.LocalOnlyHotspot -> {
@@ -366,7 +360,7 @@ class TcpViewModel @Inject constructor(
                 "ahi3646",
                 "sendMessage server: dataOutputStream is closed io exception "
             )
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+            updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.IOException)
             try {
                 writer.close()
             } catch (ex: IOException) {
@@ -458,7 +452,7 @@ class TcpViewModel @Inject constructor(
 
     private suspend fun createServer(portNumber: Int) = withContext(Dispatchers.IO) {
         log("creating server ...")
-        log("group address - ${state.value.groupOwnerAddress} \ncreating server ...")
+        log("group address - ${state.value.groupOwnerAddress} ")
         updateHostConnectionStatus(HostConnectionStatus.Creating)
 
         try {
@@ -528,7 +522,8 @@ class TcpViewModel @Inject constructor(
                         //if the IP address of the host could not be determined.
                         log("createServer while: EOFException")
                         closeClientServerSocket()
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.EOException)
+//                        updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.EOException)
+                        updateHasConversationErrorOccurredDialog(ConversationScreenDialogErrors.EOException)
                         updateUserOnlineStatus(
                             userUniqueId = state.value.peerUserUniqueId,
                             isOnline = false
@@ -545,7 +540,8 @@ class TcpViewModel @Inject constructor(
                         // or another I/O error occurs
                         log("createServer while: io exception ")
                         closeClientServerSocket()
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+//                        updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+                        updateHasConversationErrorOccurredDialog(ConversationScreenDialogErrors.IOException)
                         updateUserOnlineStatus(
                             userUniqueId = state.value.peerUserUniqueId,
                             isOnline = false
@@ -561,7 +557,8 @@ class TcpViewModel @Inject constructor(
                         //if the bytes do not represent a valid modified UTF-8 encoding of a string.
                         log("createServer while: UTFDataFormatException exception ")
                         closeClientServerSocket()
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.UTFDataFormatException)
+//                        updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.UTFDataFormatException)
+                        updateHasConversationErrorOccurredDialog(ConversationScreenDialogErrors.UTFDataFormatException)
                         updateUserOnlineStatus(
                             userUniqueId = state.value.peerUserUniqueId,
                             isOnline = false
@@ -575,7 +572,8 @@ class TcpViewModel @Inject constructor(
                         e.printStackTrace()
                         log("createServer while: unknown exception ")
                         closeClientServerSocket()
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.UnknownException)
+//                        updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.UnknownException)
+                        updateHasConversationErrorOccurredDialog(ConversationScreenDialogErrors.UnknownException)
                         updateUserOnlineStatus(
                             userUniqueId = state.value.peerUserUniqueId,
                             isOnline = false
@@ -588,7 +586,7 @@ class TcpViewModel @Inject constructor(
             log("createServer: IOException ")
             closeServeSocket()
             updateHostConnectionStatus(HostConnectionStatus.Failure)
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+            updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.IOException)
             updateUserOnlineStatus(
                 userUniqueId = state.value.peerUserUniqueId,
                 isOnline = false
@@ -599,7 +597,7 @@ class TcpViewModel @Inject constructor(
             log("createServer: SecurityException ")
             closeServeSocket()
             updateHostConnectionStatus(HostConnectionStatus.Failure)
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.SecurityException)
+            updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.SecurityException)
             updateUserOnlineStatus(
                 userUniqueId = state.value.peerUserUniqueId,
                 isOnline = false
@@ -611,7 +609,7 @@ class TcpViewModel @Inject constructor(
             log("createServer: IllegalArgumentException ")
             closeServeSocket()
             updateHostConnectionStatus(HostConnectionStatus.Failure)
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IllegalArgumentException)
+            updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.IllegalArgumentException)
             updateUserOnlineStatus(
                 userUniqueId = state.value.peerUserUniqueId,
                 isOnline = false
@@ -621,7 +619,7 @@ class TcpViewModel @Inject constructor(
             log("createServer: unknown exception ")
             closeServeSocket()
             updateHostConnectionStatus(HostConnectionStatus.Failure)
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.UnknownException)
+            updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.UnknownException)
         }
     }
 
@@ -732,7 +730,8 @@ class TcpViewModel @Inject constructor(
                         log("connectToServer: EOFException ")
                         closeClientSocket()
                         updateClientConnectionStatus(ClientConnectionStatus.Failure)
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.EOException)
+//                        updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.EOException)
+                        updateHasConversationErrorOccurredDialog(ConversationScreenDialogErrors.EOException)
                         updateUserOnlineStatus(
                             userUniqueId = state.value.peerUserUniqueId,
                             isOnline = false
@@ -750,7 +749,8 @@ class TcpViewModel @Inject constructor(
                         log("connectToServer: ioexception ")
                         closeClientSocket()
                         updateClientConnectionStatus(ClientConnectionStatus.Failure)
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+//                        updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+                        updateHasConversationErrorOccurredDialog(ConversationScreenDialogErrors.IOException)
                         updateUserOnlineStatus(
                             userUniqueId = state.value.peerUserUniqueId,
                             isOnline = false
@@ -766,7 +766,8 @@ class TcpViewModel @Inject constructor(
                         log("connectToServer: UTFDataFormatException exception ")
                         closeClientSocket()
                         updateClientConnectionStatus(ClientConnectionStatus.Failure)
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.UTFDataFormatException)
+//                        updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.UTFDataFormatException)
+                        updateHasConversationErrorOccurredDialog(ConversationScreenDialogErrors.UTFDataFormatException)
                         updateUserOnlineStatus(
                             userUniqueId = state.value.peerUserUniqueId,
                             isOnline = false
@@ -780,8 +781,8 @@ class TcpViewModel @Inject constructor(
                 }
             } catch (exception: UnknownHostException) {
                 exception.printStackTrace()
-                log("unknown host exception".uppercase())
-                updateHasErrorOccurredDialog(TcpScreenDialogErrors.UnknownHostException)
+                log("unknown host exception")
+                updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.UnknownHostException)
                 updateClientConnectionStatus(ClientConnectionStatus.Failure)
                 updateUserOnlineStatus(
                     userUniqueId = state.value.peerUserUniqueId,
@@ -790,8 +791,8 @@ class TcpViewModel @Inject constructor(
             } catch (exception: IOException) {
                 exception.printStackTrace()
                 //could not connect to a server
-                log("connectToServer: IOException ".uppercase())
-                updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+                log("connectToServer: IOException ")
+                updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.IOException)
                 updateClientConnectionStatus(ClientConnectionStatus.Failure)
                 updateUserOnlineStatus(
                     userUniqueId = state.value.peerUserUniqueId,
@@ -800,8 +801,8 @@ class TcpViewModel @Inject constructor(
             } catch (e: SecurityException) {
                 e.printStackTrace()
                 //if a security manager exists and its checkConnect method doesn't allow the operation.
-                log("connectToServer: SecurityException".uppercase())
-                updateHasErrorOccurredDialog(TcpScreenDialogErrors.SecurityException)
+                log("connectToServer: SecurityException")
+                updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.SecurityException)
                 updateClientConnectionStatus(ClientConnectionStatus.Failure)
                 updateUserOnlineStatus(
                     userUniqueId = state.value.peerUserUniqueId,
@@ -811,8 +812,8 @@ class TcpViewModel @Inject constructor(
                 e.printStackTrace()
                 //if the port parameter is outside the specified range of valid port values,
                 // which is between 0 and 65535, inclusive.
-                log("connectToServer: IllegalArgumentException".uppercase())
-                updateHasErrorOccurredDialog(TcpScreenDialogErrors.IllegalArgumentException)
+                log("connectToServer: IllegalArgumentException")
+                updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.IllegalArgumentException)
                 updateClientConnectionStatus(ClientConnectionStatus.Failure)
                 updateUserOnlineStatus(
                     userUniqueId = state.value.peerUserUniqueId,
@@ -859,7 +860,7 @@ class TcpViewModel @Inject constructor(
             }
         } else {
             log("send client message: client socket is closed ")
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
+            updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
         }
     }
 
@@ -898,7 +899,7 @@ class TcpViewModel @Inject constructor(
             }
         } else {
             log("send host message: client socket is closed ")
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
+            updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
         }
     }
 
@@ -918,7 +919,7 @@ class TcpViewModel @Inject constructor(
                 "ahi3646",
                 "sendMessage server: dataOutputStream is closed io exception "
             )
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+            updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.IOException)
             try {
                 writer.close()
             } catch (ex: IOException) {
@@ -1053,7 +1054,7 @@ class TcpViewModel @Inject constructor(
                 "ahi3646",
                 "sendMessage server: dataOutputStream is closed io exception "
             )
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.IOException)
+            updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.IOException)
             try {
                 writer.close()
             } catch (ex: IOException) {
@@ -1317,7 +1318,7 @@ class TcpViewModel @Inject constructor(
                 log("file receiving process failed: ${e.message}")
                 try {
                     reader.close()
-                }catch (e: Exception){
+                } catch (e: Exception) {
                     e.printStackTrace()
                 }
             }
@@ -1590,7 +1591,7 @@ class TcpViewModel @Inject constructor(
             override fun onFailure(reason: Int) {
                 val r = Reason.parseReason(reason)
                 log("Unable to create Wifi Direct Group - ${r.displayReason}")
-                updateHasErrorOccurredDialog(TcpScreenDialogErrors.FailedToCreateHotspot)
+                updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.FailedToCreateHotspot)
                 updateHotspotDiscoveryStatus(HotspotNetworkingStatus.Failure)
             }
         }
@@ -2127,6 +2128,10 @@ class TcpViewModel @Inject constructor(
     fun handleEvents(event: TcpScreenEvents) {
         when (event) {
 
+            TcpScreenEvents.ResetConversationDialogError -> {
+                updateHasConversationErrorOccurredDialog(null)
+            }
+
             TcpScreenEvents.OnVoiceRecordStart -> {
                 startRecording()
             }
@@ -2211,7 +2216,7 @@ class TcpViewModel @Inject constructor(
             }
 
             is TcpScreenEvents.OnDialogErrorOccurred -> {
-                updateHasErrorOccurredDialog(event.error)
+                updateHasTcpErrorOccurredDialog(event.error)
             }
 
             TcpScreenEvents.DiscoverLocalOnlyHotSpotClick -> {
@@ -2221,7 +2226,7 @@ class TcpViewModel @Inject constructor(
                             return
                         }
                         if (!isValidVersionForLocalOnlyHotspot()) {
-                            updateHasErrorOccurredDialog(TcpScreenDialogErrors.LocalOnlyHotspotNotSupported)
+                            updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.LocalOnlyHotspotNotSupported)
                             return
                         }
                         createLocalOnlyHotspotNetwork()
@@ -2292,7 +2297,7 @@ class TcpViewModel @Inject constructor(
                     GeneralConnectionStatus.Idle -> {
                         //Establish connection to send message
                         log("idle connection")
-                        updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
+                        updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
                     }
 
                     GeneralConnectionStatus.ConnectedAsClient -> {
@@ -2353,7 +2358,7 @@ class TcpViewModel @Inject constructor(
                 }
 
                 if (state.value.generalNetworkingStatus == GeneralNetworkingStatus.Idle) {
-                    updateHasErrorOccurredDialog(TcpScreenDialogErrors.ServerCreationWithoutNetworking)
+                    updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.ServerCreationWithoutNetworking)
                     return
                 }
 
@@ -2371,7 +2376,6 @@ class TcpViewModel @Inject constructor(
 
                     HostConnectionStatus.Created -> {
                         //request for stop
-
                     }
 
                     HostConnectionStatus.Failure -> {
@@ -2537,7 +2541,7 @@ class TcpViewModel @Inject constructor(
     private fun handlePickingMultipleMedia(medias: List<Uri>) {
         when (state.value.generalConnectionStatus) {
             GeneralConnectionStatus.Idle -> {
-                updateHasErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
+                updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.EstablishConnectionToSendMessage)
             }
 
             GeneralConnectionStatus.ConnectedAsHost -> {
@@ -2743,7 +2747,7 @@ class TcpViewModel @Inject constructor(
     private fun showWifiNotEnabledDialog() {
         val wifiNotEnabledDialog = VisibleActionDialogs.WifiEnableRequest(
             onPositiveButtonClick = {
-                visibleActionDialogQueue.removeFirst()
+                visibleActionDialogQueue.removeAt(0)
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     // Use alternative approach
@@ -2754,7 +2758,7 @@ class TcpViewModel @Inject constructor(
                 }
             },
             onNegativeButtonClick = {
-                visibleActionDialogQueue.removeFirst()
+                visibleActionDialogQueue.removeAt(0)
             }
 
         )
@@ -2767,15 +2771,23 @@ class TcpViewModel @Inject constructor(
      */
     private fun hasOtherNetworkingIsRunning(): Boolean {
         if (state.value.generalNetworkingStatus != GeneralNetworkingStatus.Idle) {
-            updateHasErrorOccurredDialog(TcpScreenDialogErrors.OtherNetworkingIsRunning)
+            updateHasTcpErrorOccurredDialog(TcpScreenDialogErrors.OtherNetworkingIsRunning)
             return true
         } else return false
     }
 
-    private fun updateHasErrorOccurredDialog(dialog: TcpScreenDialogErrors?) {
+    private fun updateHasTcpErrorOccurredDialog(dialog: TcpScreenDialogErrors?) {
         _state.update {
             it.copy(
-                hasDialogErrorOccurred = dialog
+                hasTcpDialogErrorOccurred = dialog
+            )
+        }
+    }
+
+    private fun updateHasConversationErrorOccurredDialog(dialog: ConversationScreenDialogErrors?) {
+        _state.update {
+            it.copy(
+                hasConversationDialogErrorOccurred = dialog
             )
         }
     }

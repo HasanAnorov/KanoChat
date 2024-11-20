@@ -291,7 +291,10 @@ private fun PreviewLightVoiceMessageItemPeer() {
                     audioState = AudioState.Paused(6000),
                     fileState = FileMessageState.Failure,
                     messageId = 0L,
-                    peerUsername = "Khasan"
+                    peerUsername = "Khasan",
+                    peerSessionId = "3242",
+                    authorUsername = "Alex",
+                    authorSessionId = "242"
                 ),
                 onPlayClick = {},
                 onPauseClick = {},
@@ -315,7 +318,10 @@ private fun PreviewDarkVoiceMessageItemPeer() {
                     duration = 80,
                     fileState = FileMessageState.Success,
                     messageId = 0L,
-                    peerUsername = "Khasan"
+                    peerUsername = "Khasan",
+                    peerSessionId = "3242",
+                    authorUsername = "Alex",
+                    authorSessionId = "242"
                 ),
                 onPlayClick = {},
                 onPauseClick = {},
@@ -340,7 +346,10 @@ private fun PreviewLightVoiceMessageItem() {
                     audioState = AudioState.Paused(6000),
                     fileState = FileMessageState.Failure,
                     messageId = 0L,
-                    peerUsername = "Khasan"
+                    peerUsername = "Khasan",
+                    peerSessionId = "3242",
+                    authorUsername = "Alex",
+                    authorSessionId = "242"
                 ),
                 onPlayClick = {},
                 onPauseClick = {},
@@ -364,7 +373,10 @@ private fun PreviewDarkVoiceMessageItem() {
                     duration = 80,
                     fileState = FileMessageState.Success,
                     messageId = 0L,
-                    peerUsername = "Khasan"
+                    peerUsername = "Khasan",
+                    peerSessionId = "3242",
+                    authorUsername = "Alex",
+                    authorSessionId = "242"
                 ),
                 onPlayClick = {},
                 onPauseClick = {},

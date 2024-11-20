@@ -64,18 +64,29 @@ class LocalActivity : AppCompatActivity() {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        //min interval time unit is - 15 minutes
-        //mn flex interval time unit is - 5 minutes
+        /**
+        * min interval time unit is - 15 minutes
+        *
+        * min flex interval time unit is - 5 minutes
+        */
+
         val periodicWorkRequest = PeriodicWorkRequestBuilder<UpdaterWorker>(
-            repeatInterval = 20,
+//            repeatInterval = 1,
+//            repeatIntervalTimeUnit = TimeUnit.DAYS,
+//            flexTimeInterval = 1,
+//            flexTimeIntervalUnit = TimeUnit.HOURS
+            repeatInterval = 16,
             repeatIntervalTimeUnit = TimeUnit.MINUTES,
-            flexTimeInterval = 5,
+            flexTimeInterval = 1,
             flexTimeIntervalUnit = TimeUnit.MINUTES
         )
             .setBackoffCriteria(
+//                backoffPolicy = BackoffPolicy.LINEAR,
+//                backoffDelay = 6,
+//                timeUnit = TimeUnit.HOURS
                 backoffPolicy = BackoffPolicy.LINEAR,
-                backoffDelay = 15,
-                timeUnit = TimeUnit.SECONDS
+                backoffDelay = 1,
+                timeUnit = TimeUnit.MINUTES
             )
             .setConstraints(workerConstraints)
             .build()
@@ -91,7 +102,7 @@ class LocalActivity : AppCompatActivity() {
             workManager.getWorkInfosForUniqueWorkFlow(UPDATER_WORKER_NAME)
                 .collectLatest { workInfo ->
                     workInfo.forEach { info ->
-                        log("worker - ${info.state}")
+                        log("info - ${info.state}")
                     }
                 }
         }

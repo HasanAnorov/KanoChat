@@ -30,20 +30,21 @@ import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.core.utils.longToast
 import com.ierusalem.androchat.core.utils.openAppSettings
 import com.ierusalem.androchat.core.utils.openWifiSettings
-import com.ierusalem.androchat.features_local.tcp.data.server.permission.PermissionGuardImpl
+import com.ierusalem.androchat.features_local.tcp.data.server.permission.PermissionGuard
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import com.ierusalem.androchat.features_local.tcp.presentation.components.rememberTcpAllTabs
 import com.ierusalem.androchat.features_local.tcp.presentation.tcp_networking.components.ActionRequestDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class TcpFragment : Fragment() {
 
     private val viewModel: TcpViewModel by activityViewModels()
 
-    private lateinit var permissionGuard: PermissionGuardImpl
+    @Inject lateinit var permissionGuard: PermissionGuard
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -78,17 +79,13 @@ class TcpFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        log("tcp on create")
         viewModel.initializeAuthorSessionId()
-        viewModel.loadChattingUsers()
     }
 
     @OptIn(ExperimentalFoundationApi::class)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        permissionGuard = PermissionGuardImpl(requireContext())
-
         return ComposeView(requireContext()).apply {
             setContent {
                 val uiState by viewModel.state.collectAsStateWithLifecycle()
@@ -187,11 +184,12 @@ class TcpFragment : Fragment() {
                     }
 
                     TcpScreen(
+                        pagerState = pagerState,
                         uiState = uiState,
                         eventHandler = viewModel::handleEvents,
                         allTabs = allTabs,
-                        pagerState = pagerState,
-                        onTabChanged = { handleTabSelected(it) }
+                        onTabChanged = { handleTabSelected(it) },
+                        chattingUsers = viewModel.chattingUsersStream.collectAsStateWithLifecycle().value
                     )
                 }
             }

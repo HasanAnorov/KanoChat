@@ -16,7 +16,6 @@ import com.ierusalem.androchat.features_local.tcp.domain.model.ChattingUser
 import kotlinx.coroutines.flow.MutableStateFlow
 
 data class TcpScreenUiState(
-
     val isReadContactsGranted: Boolean = false,
     val showBottomSheet: Boolean = false,
     val contacts: Resource<List<ContactItem>> = Resource.Loading(),
@@ -64,12 +63,11 @@ data class TcpScreenUiState(
     val availableWifiNetworks: List<WifiP2pDevice> = emptyList(),
     val connectedWifiNetworks: List<WifiP2pDevice> = emptyList(),
 
-    //contacts
-    val chattingUsers: Resource<List<ChattingUser>> = Resource.Loading(),
     val currentChattingUser: Resource<ChattingUser?> = Resource.Loading(),
 
     //error handling with dialogs
-    val hasDialogErrorOccurred: TcpScreenDialogErrors? = null,
+    val hasTcpDialogErrorOccurred: TcpScreenDialogErrors? = null,
+    val hasConversationDialogErrorOccurred: ConversationScreenDialogErrors? = null,
 
     val isRecordAudioGranted: MutableStateFlow<Boolean> = MutableStateFlow(false),
     //to disable view pager's horizontal scrolling

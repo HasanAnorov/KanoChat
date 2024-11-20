@@ -32,6 +32,7 @@ class DataStorePreferenceRepository(context: Context) {
             stringPreferencesKey(name = Constants.PREFERENCE_BROADCAST_FREQUENCY)
         val PREF_THEME = booleanPreferencesKey(name = Constants.PREFERENCE_THEME)
         val PREF_LOGGING_STATUS = booleanPreferencesKey(name = Constants.PREFERENCE_LOGGING_STATUS)
+        val PREF_DEVICE_INFO_STATUS = booleanPreferencesKey(name = Constants.PREFERENCE_DEVICE_INFO_STATUS)
         val PREF_USERNAME = stringPreferencesKey(name = Constants.PREFERENCE_USERNAME)
         val PREF_HOTSPOT_NAME = stringPreferencesKey(name = Constants.PREFERENCE_HOTSPOT_NAME)
         val PREF_PORT_NUMBER = stringPreferencesKey(name = Constants.PREFERENCE_PORT_NUMBER)
@@ -69,6 +70,17 @@ class DataStorePreferenceRepository(context: Context) {
     private val getLoggingStatus: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[PREF_LOGGING_STATUS] ?: false
+        }
+
+    suspend fun setDeviceInfoStatus(isSent: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PREF_DEVICE_INFO_STATUS] = isSent
+        }
+    }
+
+    val getDeviceInfoStatus: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[PREF_DEVICE_INFO_STATUS] ?: false
         }
 
     suspend fun hasUserLoggedIn(): Boolean {

@@ -31,20 +31,10 @@ enum class TcpScreenDialogErrors(
         R.string.you_should_be_on_network_to_connect_to_server,
         R.drawable.wifi_off
     ),
-    EOException(
-        R.string.network_error_occurred,
-        R.string.your_network_connection_was_interrupted_check_your_connection_and_try_again,
-        R.drawable.wifi_off
-    ),
     IOException(
         R.string.network_error_occurred,
         R.string.your_network_connection_was_interrupted_check_your_connection_and_try_again,
         R.drawable.wifi_off
-    ),
-    UTFDataFormatException(
-        R.string.network_error_occurred,
-        R.string.incoming_messages_are_not_in_utf_8_format_the_data_do_not_represent_a_valid_modified_utf_8_encoding_of_a_string,
-        R.drawable.error_prompt
     ),
     UnknownHostException(
         R.string.invalid_host_ip_address,
@@ -75,6 +65,33 @@ enum class TcpScreenDialogErrors(
         R.string.illegal_argument_exception_occurred,
         R.string.illegal_argument_exception_occurred_definition,
         R.drawable.info
+    ),
+    UnknownException(
+        R.string.unknown_exception_occurred,
+        R.string.unknown_exception_occurred_definition,
+        R.drawable.info
+    )
+}
+
+enum class ConversationScreenDialogErrors(
+    @StringRes val title: Int,
+    @StringRes val message: Int,
+    @DrawableRes val icon: Int
+) {
+    EOException(
+        R.string.network_error_occurred,
+        R.string.your_network_connection_was_interrupted_check_your_connection_and_try_again,
+        R.drawable.wifi_off
+    ),
+    IOException(
+        R.string.network_error_occurred,
+        R.string.your_network_connection_was_interrupted_check_your_connection_and_try_again,
+        R.drawable.wifi_off
+    ),
+    UTFDataFormatException(
+        R.string.network_error_occurred,
+        R.string.incoming_messages_are_not_in_utf_8_format_the_data_do_not_represent_a_valid_modified_utf_8_encoding_of_a_string,
+        R.drawable.error_prompt
     ),
     UnknownException(
         R.string.unknown_exception_occurred,
