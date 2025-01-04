@@ -1,5 +1,5 @@
 [versions]
-agp = "8.5.2"
+agp = "8.7.3"
 library = "4.0.0"
 libraryNoOp = "4.0.0"
 loggingInterceptor = "5.0.0-alpha.11"
