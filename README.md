@@ -1,1 +1,1 @@
-Local Communication Application 
+Application for local communication using local networking ;)
