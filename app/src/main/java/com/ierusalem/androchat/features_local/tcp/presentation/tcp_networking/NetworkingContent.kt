@@ -32,13 +32,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -60,6 +64,7 @@ import com.ierusalem.androchat.features_local.tcp.presentation.tcp_networking.co
 import com.ierusalem.androchat.features_local.tcp.presentation.tcp_networking.components.StatusProperty
 import com.ierusalem.androchat.features_local.tcp.presentation.tcp_networking.components.WifiLazyItem
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun NetworkingContent(
     modifier: Modifier = Modifier,
@@ -206,6 +211,8 @@ fun NetworkingContent(
                             )
                             Row(
                                 modifier = Modifier
+                                    .semantics { testTagsAsResourceId = true }
+                                    .testTag(tag = "group_networking")
                                     .clickable {
                                         if(uiState.canUseCustomConfigForHotspot){
                                             when{
@@ -231,7 +238,8 @@ fun NetworkingContent(
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 Text(
-                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    modifier = Modifier
+                                        .padding(vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.onBackground,
                                     text = stringResource(id = uiState.hotspotNetworkingStatus.res),
                                     textAlign = TextAlign.Center,
