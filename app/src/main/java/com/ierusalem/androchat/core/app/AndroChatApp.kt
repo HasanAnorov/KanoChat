@@ -46,11 +46,12 @@ class AndroChatApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
 
-        val isRunningOnEmulatorDetector = EmulatorDetector.isRunningOnEmulator()
-        if (isRunningOnEmulatorDetector != null && isRunningOnEmulatorDetector) {
-            log("Emulator detected!")
-            throw IllegalStateException("Mobile Device Required!")
-        }
+        //todo - don't forget to uncomment these lines before release
+//        val isRunningOnEmulatorDetector = false
+//        if (isRunningOnEmulatorDetector != null && isRunningOnEmulatorDetector) {
+//            log("Emulator detected!")
+//            throw IllegalStateException("Mobile Device Required!")
+//        }
 
         GlobalScope.launch(Dispatchers.IO) {
             dataStorePreferenceRepository.getUniqueDeviceId.collect { uniqueDeviceId ->

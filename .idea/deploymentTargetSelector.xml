@@ -2,23 +2,12 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
-      <SelectionState runConfigName="PreviewRecordingButton">
-        <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-07-06T14:20:43.645498800Z">
-          <Target type="DEFAULT_BOOT">
-            <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=39acb951" />
-            </handle>
-          </Target>
-        </DropdownSelection>
-        <DialogSelection />
-      </SelectionState>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-10-10T09:40:02.685608900Z">
+        <DropdownSelection timestamp="2025-08-10T14:41:44.689574Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=a7be0982" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/user/.android/avd/Medium_Phone.avd" />
             </handle>
           </Target>
         </DropdownSelection>
