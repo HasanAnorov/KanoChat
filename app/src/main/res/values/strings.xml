@@ -7,7 +7,7 @@
     <string name="_1024_65000" translatable="false"><![CDATA[1024< ... < 65000]]></string>
 
     <!-- App Name-->
-    <string name="app_name" translatable="false">FastChat</string>
+    <string name="app_name" translatable="false">KanoMessenger</string>
 
     <!-- Temp strings-->
     <string name="functionality_not_available">Functionality not available!</string>
