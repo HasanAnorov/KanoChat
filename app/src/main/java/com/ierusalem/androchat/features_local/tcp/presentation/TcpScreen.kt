@@ -53,7 +53,7 @@ fun TcpScreen(
 
         Column {
             TcpAppBar(
-                title = UiText.StringResource(R.string.local_connection),
+                title = UiText.StringResource(R.string.app_name),
                 onNavIconClick = { eventHandler(TcpScreenEvents.OnNavIconClick) },
                 onSettingsIconClick = { eventHandler(TcpScreenEvents.OnSettingIconClick) },
                 allTabs = allTabs,

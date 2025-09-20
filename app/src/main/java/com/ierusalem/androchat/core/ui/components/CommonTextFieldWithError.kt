@@ -11,14 +11,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun CommonTextFieldWithError(
     modifier: Modifier = Modifier,
@@ -30,6 +35,7 @@ fun CommonTextFieldWithError(
     Column(modifier= modifier) {
         TextField(
             modifier = Modifier
+                .semantics { testTagsAsResourceId = true }.testTag("username")
                 .fillMaxWidth(),
             value = value,
             textStyle = MaterialTheme.typography.titleMedium,

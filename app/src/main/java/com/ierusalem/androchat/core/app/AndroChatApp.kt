@@ -46,6 +46,7 @@ class AndroChatApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
 
+
         val isRunningOnEmulatorDetector = EmulatorDetector.isRunningOnEmulator()
         if (isRunningOnEmulatorDetector != null && isRunningOnEmulatorDetector) {
             log("Emulator detected!")

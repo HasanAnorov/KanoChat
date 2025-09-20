@@ -1,5 +1,6 @@
 package com.ierusalem.androchat.features_local.tcp.presentation.components
 
+import android.util.Log
 import androidx.annotation.CheckResult
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,7 +46,9 @@ fun rememberTcpAllTabs(): SnapshotStateList<TcpView> {
     return remember { TcpView.entries.toMutableStateList() }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class,
+    ExperimentalComposeUiApi::class
+)
 @Composable
 fun TcpAppBar(
     modifier: Modifier = Modifier,
@@ -100,6 +107,7 @@ fun TcpAppBar(
             tabs = {
                 for (index in allTabs.indices) {
                     val tab = allTabs[index]
+                    Log.d("test_maestro", "TcpAppBar index: ${tab.testIdentifier.lowercase()}")
                     val isSelected =
                         remember(
                             index,
@@ -108,6 +116,9 @@ fun TcpAppBar(
                             index == currentPage
                         }
                     AndroChatTab(
+                        modifier = Modifier
+                            .semantics { testTagsAsResourceId = true }
+                            .testTag(tag = tab.testIdentifier),
                         isSelected = isSelected,
                         onSelected = { onTabChanged(tab) },
                         tab = tab.displayName
