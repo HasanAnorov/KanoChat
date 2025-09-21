@@ -5,7 +5,7 @@ import android.os.Build
 /**
  * An Object Class to detect if the user is running on an emulator
  *
- * Created by Andro on 06/04/2024.
+ * Created by Kano on 06/04/2024.
  */
 object EmulatorDetector {
     private var isRunningOnEmulator: Boolean? = null

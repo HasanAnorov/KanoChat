@@ -7,35 +7,37 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+/**
+import androidx.lifecycle.lifecycleScope
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.ierusalem.androchat.R
-import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.updater.UpdaterWorker
 import com.ierusalem.androchat.core.utils.Constants.UPDATER_WORKER_NAME
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
+*/
+import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.data.DataStorePreferenceRepository
 import com.ierusalem.androchat.core.utils.log
 import com.ierusalem.androchat.features_local.tcp.data.server.wifidirect.WiFiDirectBroadcastReceiver
 import com.ierusalem.androchat.features_local.tcp.domain.TcpViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
  * NavActivity
  *
- * @author A.H.I "andro" on 28/08/2024
+ * @author A.H.I "kano" on 28/08/2024
  */
 
 @AndroidEntryPoint
@@ -60,52 +62,54 @@ class LocalActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets -> insets }
 
-        val workerConstraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
-
-        /**
-        * min interval time unit is - 15 minutes
-        *
-        * min flex interval time unit is - 5 minutes
-        */
-
-        val periodicWorkRequest = PeriodicWorkRequestBuilder<UpdaterWorker>(
-//            repeatInterval = 1,
-//            repeatIntervalTimeUnit = TimeUnit.DAYS,
+/**
+//        val workerConstraints = Constraints.Builder()
+//            .setRequiredNetworkType(NetworkType.CONNECTED)
+//            .build()
+//
+//        /**
+//        * min interval time unit is - 15 minutes
+//        *
+//        * min flex interval time unit is - 5 minutes
+//        */
+//
+//        val periodicWorkRequest = PeriodicWorkRequestBuilder<UpdaterWorker>(
+////            repeatInterval = 1,
+////            repeatIntervalTimeUnit = TimeUnit.DAYS,
+////            flexTimeInterval = 1,
+////            flexTimeIntervalUnit = TimeUnit.HOURS
+//            repeatInterval = 16,
+//            repeatIntervalTimeUnit = TimeUnit.MINUTES,
 //            flexTimeInterval = 1,
-//            flexTimeIntervalUnit = TimeUnit.HOURS
-            repeatInterval = 16,
-            repeatIntervalTimeUnit = TimeUnit.MINUTES,
-            flexTimeInterval = 1,
-            flexTimeIntervalUnit = TimeUnit.MINUTES
-        )
-            .setBackoffCriteria(
+//            flexTimeIntervalUnit = TimeUnit.MINUTES
+//        )
+//            .setBackoffCriteria(
+////                backoffPolicy = BackoffPolicy.LINEAR,
+////                backoffDelay = 6,
+////                timeUnit = TimeUnit.HOURS
 //                backoffPolicy = BackoffPolicy.LINEAR,
-//                backoffDelay = 6,
-//                timeUnit = TimeUnit.HOURS
-                backoffPolicy = BackoffPolicy.LINEAR,
-                backoffDelay = 1,
-                timeUnit = TimeUnit.MINUTES
-            )
-            .setConstraints(workerConstraints)
-            .build()
-
-        val workManager = WorkManager.getInstance(applicationContext)
-        workManager.enqueueUniquePeriodicWork(
-            UPDATER_WORKER_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            periodicWorkRequest
-        )
-
-        lifecycleScope.launch {
-            workManager.getWorkInfosForUniqueWorkFlow(UPDATER_WORKER_NAME)
-                .collectLatest { workInfo ->
-                    workInfo.forEach { info ->
-                        log("info - ${info.state}")
-                    }
-                }
-        }
+//                backoffDelay = 1,
+//                timeUnit = TimeUnit.MINUTES
+//            )
+//            .setConstraints(workerConstraints)
+//            .build()
+//
+//        val workManager = WorkManager.getInstance(applicationContext)
+//        workManager.enqueueUniquePeriodicWork(
+//            UPDATER_WORKER_NAME,
+//            ExistingPeriodicWorkPolicy.KEEP,
+//            periodicWorkRequest
+//        )
+//
+//        lifecycleScope.launch {
+//            workManager.getWorkInfosForUniqueWorkFlow(UPDATER_WORKER_NAME)
+//                .collectLatest { workInfo ->
+//                    workInfo.forEach { info ->
+//                        log("info - ${info.state}")
+//                    }
+//                }
+//        }
+*/
 
         //as long as you are saving isOnline in DB, initial value should be false for all users
         viewModel.updateAllUsersOnlineStatus(false)

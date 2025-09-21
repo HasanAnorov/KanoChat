@@ -1,10 +1,12 @@
 package com.ierusalem.androchat.core.ui.components
 
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.core.utils.UiText
 
@@ -15,8 +17,9 @@ fun AndroChatTab(
     onSelected: () -> Unit,
     tab: UiText
 ) {
+    val minTabWidth = 120.dp   // adjust to fit your longest title
     Tab(
-        modifier = modifier,
+        modifier = modifier.widthIn(min = minTabWidth),  // 👈 forces equal minimum width,
         selected = isSelected,
         selectedContentColor = MaterialTheme.colorScheme.onBackground,
         unselectedContentColor = MaterialTheme.colorScheme.onBackground.copy(
