@@ -43,7 +43,7 @@ KanoMessenger is actively evolving. Two major features currently in development:
 
 
 ### 1️⃣ Login
-<img src="screenshots/login.jpg" width="250">
+<img src="https://github.com/HasanAnorov/KanoMessenger/blob/feature/server/app/src/main/screenshots/login.png" width="250">
 
 Simple greeting screen with a username field and **Login** button.  
 Once logged in, you are taken to the **Home** page.
@@ -62,7 +62,11 @@ Home is divided into **three tabs**.
 ---
 
 ### 3️⃣ Networking (second tab)
-<img src="screenshots/networking.jpg" width="250">
+
+| Networking Idle State | Group Networking | Local Only Hotspot | Peer to Peer Networking |
+|-----------:|:-----------:|:--------:|:--------:|
+| <img src="https://github.com/HasanAnorov/KanoMessenger/blob/feature/server/app/src/main/screenshots/networking.png" width="250" alt="Networking Idle State"> | <img src="https://github.com/HasanAnorov/KanoMessenger/blob/feature/server/app/src/main/screenshots/networking_hotspot.png" width="250" alt="Group Networking"> | <img src="https://github.com/HasanAnorov/KanoMessenger/blob/feature/server/app/src/main/screenshots/networking_local_only.png" width="250" alt="Local Only Hotspot"> | <img src="https://github.com/HasanAnorov/KanoMessenger/blob/feature/server/app/src/main/screenshots/networking_p2p.png" width="250" alt="Peer to Peer Networking"> |
+
 
 Core of KanoMessenger: choose how to establish an offline network.
 
@@ -94,7 +98,9 @@ Additional info shown on this page:
 ---
 
 ### 4️⃣ Connections (third tab)
-<img src="screenshots/connections.jpg" width="250">
+| Connection Idle | Connection created as Server | 
+|-----------:|:-----------:|
+| <img src="https://github.com/HasanAnorov/KanoMessenger/blob/feature/server/app/src/main/screenshots/connections.png" width="250" alt="Connection Idle"> | <img src="https://github.com/HasanAnorov/KanoMessenger/blob/feature/server/app/src/main/screenshots/connection_server.png" width="250" alt="Connection created as Server"> |
 
 Where actual messaging sockets are created.
 
@@ -107,7 +113,10 @@ This tab powers all real-time messaging once devices are on the same network.
 ---
 
 ### 5️⃣ Chats (first tab)
-<img src="screenshots/chats.jpg" width="250">
+| Chats No Users | Chats with User | 
+|-----------:|:-----------:|
+| <img src="https://github.com/HasanAnorov/KanoMessenger/blob/feature/server/app/src/main/screenshots/chats_empty.png" width="250" alt="Chats No Users"> | <img src="https://github.com/HasanAnorov/KanoMessenger/blob/feature/server/app/src/main/screenshots/chats_online_user.png" width="250" alt="Chats with User"> |
+
 
 - Shows all previous conversations.  
 - If none exist, displays a **create-network** prompt.
@@ -115,7 +124,7 @@ This tab powers all real-time messaging once devices are on the same network.
 Open any chat to see full history and partner presence (online/offline).
 
 **Conversation view**  
-<img src="screenshots/conversation.jpg" width="250">
+<img src="https://github.com/HasanAnorov/KanoMessenger/blob/feature/server/app/src/main/screenshots/conversation_voice_recording.png" width="250">
 
 - Supports **text, audio, file, contact, emoji, and photo** messages.
 - Bottom bar includes:
@@ -130,7 +139,7 @@ Messages are exchanged instantly when both users are online within the chosen ne
 ---
 
 ### 6️⃣ Settings
-<img src="screenshots/settings.jpg" width="250">
+<img src="https://github.com/HasanAnorov/KanoMessenger/blob/feature/server/app/src/main/screenshots/settings.png" width="250">
 
 - **General**  
   - Language selector  
