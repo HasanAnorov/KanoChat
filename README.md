@@ -190,8 +190,3 @@ Developer of KanoMessenger
 
 > ⚠️ **Privacy Note**  
 > KanoMessenger never requires Internet and does not send user data to external servers.
-
-
-
-
-
