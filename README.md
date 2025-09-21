@@ -26,7 +26,8 @@ Built with **Kotlin**, **Jetpack Compose**, and low-level **socket networking**.
 
 ---
 
-## 🖼 App Screens & Flow
+## 📱 App Screens & Flow
+
 
 ### 1️⃣ Login
 <img src="screenshots/login.jpg" width="250">
