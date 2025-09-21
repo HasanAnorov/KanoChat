@@ -1,6 +1,5 @@
 package com.ierusalem.androchat.features_local.tcp.presentation.components
 
-import android.util.Log
 import androidx.annotation.CheckResult
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
@@ -16,9 +15,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -27,15 +23,12 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ierusalem.androchat.R
+import com.ierusalem.androchat.core.ui.components.AdaptiveTcpTabRow
 import com.ierusalem.androchat.core.ui.components.AndroChatAppBar
-import com.ierusalem.androchat.core.ui.components.AndroChatTab
 import com.ierusalem.androchat.core.ui.theme.AndroChatTheme
 import com.ierusalem.androchat.core.utils.UiText
 import com.ierusalem.androchat.features_local.tcp.presentation.TcpView
@@ -91,42 +84,14 @@ fun TcpAppBar(
         )
 
         val currentPage = pagerState.currentPage
-        ScrollableTabRow(
-            modifier = Modifier.fillMaxWidth(),
-            selectedTabIndex = currentPage,
-            edgePadding = 0.dp,
-            indicator = { tabPositions ->
-                if (currentPage < tabPositions.size) {
-                    TabRowDefaults.SecondaryIndicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[currentPage]),
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-            },
-            contentColor = MaterialTheme.colorScheme.onBackground,
-            divider = {},
-            tabs = {
-                for (index in allTabs.indices) {
-                    val tab = allTabs[index]
-                    Log.d("test_maestro", "TcpAppBar index: ${tab.testIdentifier.lowercase()}")
-                    val isSelected =
-                        remember(
-                            index,
-                            currentPage,
-                        ) {
-                            index == currentPage
-                        }
-                    AndroChatTab(
-                        modifier = Modifier
-                            .semantics { testTagsAsResourceId = true }
-                            .testTag(tag = tab.testIdentifier),
-                        isSelected = isSelected,
-                        onSelected = { onTabChanged(tab) },
-                        tab = tab.displayName
-                    )
-                }
-            }
+
+        AdaptiveTcpTabRow(
+            allTabs = allTabs,
+            currentPage = currentPage,
+            onTabChanged = onTabChanged,
+            minTabWidth = 120.dp
         )
+
     }
 }
 
