@@ -24,6 +24,19 @@ Built with **Kotlin**, **Jetpack Compose**, and low-level **socket networking**.
   - Light/Dark theme toggle.
   - Adjustable broadcast frequency (2.4 GHz / 5 GHz).
 
+## 🛠 Upcoming Features
+
+KanoMessenger is actively evolving. Two major features currently in development:
+
+- **Mesh Networking**  
+  Build a resilient local mesh network so that devices can relay messages for each other.  
+  This will extend the range of local communication beyond a single hotspot or Wi-Fi Direct group, enabling true peer-to-peer coverage across larger areas.
+
+- **Local Audio & Video Calling**  
+  Real-time **voice and video calls** inside the same local network, with no Internet required.  
+  This will complement text and file messaging with richer communication options.
+
+
 ---
 
 ## 📱 App Screens & Flow
