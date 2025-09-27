@@ -53,6 +53,8 @@ Once logged in, you are taken to the **Home** page.
 ### 2️⃣ Home – Tabs Overview
 Home is divided into **three tabs**.
 
+<img src="https://github.com/HasanAnorov/KanoMessenger/blob/feature/server/app/src/main/screenshots/tabs.png" width="250">
+
 | Tab | Purpose |
 |-----|---------|
 | **Chats** | View and open past conversations. |
