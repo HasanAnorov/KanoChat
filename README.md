@@ -156,6 +156,12 @@ Messages are exchanged instantly when both users are online within the chosen ne
 
 ---
 
+### Demo Video
+[▶️ Watch the demo](https://github.com/HasanAnorov/KanoMessenger/blob/main/demo/kano_chat.mp4)
+
+
+---
+
 ## 🛠 Tech Stack & Architecture
 - **Language**: Kotlin (100%) + some Java
 - **UI**: Jetpack Compose
