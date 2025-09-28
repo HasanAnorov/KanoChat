@@ -8,6 +8,9 @@ Built with **Kotlin**, **Jetpack Compose**, and low-level **socket networking**.
 ---
 
 ## ✨ Features at a Glance
+
+-  **Emulator Prevention** – The app now detects and blocks execution on emulators or other test environments.  
+  This ensures the application runs only on real devices, improving security and reducing the risk of unauthorized testing.
 - **Three Local Communication Modes**
   - **Local-Only Hotspot**: temporary Wi-Fi access point without Internet sharing.
   - **Group Networking**: Wi-Fi Direct group owner for configurable multi-device LAN.
