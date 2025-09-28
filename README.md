@@ -157,7 +157,9 @@ Messages are exchanged instantly when both users are online within the chosen ne
 ---
 
 ### Demo Video
-[▶️ Watch the demo](https://drive.google.com/file/d/1V093-UPvdaQ4nM745byMW8Ga7aHISz23/view?usp=drive_link)
+![Short preview](https://github.com/HasanAnorov/KanoMessenger/blob/main/demo/thumbnail.gif)
+
+[▶️ Watch the full demo (MP4)](https://drive.google.com/file/d/1V093-UPvdaQ4nM745byMW8Ga7aHISz23/view?usp=sharing)
 
 
 ---
